@@ -10,6 +10,7 @@
 # - 4H + 1H ana yön filtresi, 15M/5M giriş zamanlama filtresi
 # - ATR tabanlı SL/TP, Risk/Reward ve yaklaşık lot hesabı
 # - Multi-timeframe backtest: canlı sistemdeki 4H + 1H ana yön filtresi ve 15M/5M giriş teyidi ile uyumlu çalışır
+# - Parite tarayıcı, seans filtresi, cooldown filtresi, long/short ayrı performans ve işlem günlüğü
 # - Streamlit Cloud uyumlu: pandas yeni sürümlerde "4h" kullanılır, st.rerun() kullanılır
 
 from __future__ import annotations
@@ -119,6 +120,14 @@ PRICE_CHANGE_WINDOWS = {
     "Son 1 gün": 1440,
 }
 
+TRADING_SESSIONS = {
+    "Tüm Gün": None,
+    "Asya": (3, 12),
+    "Londra": (10, 19),
+    "New York": (16, 1),
+    "Londra + New York Kesişimi": (16, 19),
+}
+
 # =============================================================================
 # HELPERS
 # =============================================================================
@@ -201,6 +210,39 @@ def _fix_cols(df: pd.DataFrame) -> pd.DataFrame:
         df["Volume"] = 0
     df = df.dropna(subset=["Open", "High", "Low", "Close"])
     return df
+
+
+def _to_istanbul_timestamp(ts) -> pd.Timestamp:
+    t = pd.Timestamp(ts)
+    if t.tzinfo is None:
+        t = t.tz_localize("UTC")
+    else:
+        t = t.tz_convert("UTC")
+    return t.tz_convert(TR_TZ)
+
+
+def is_in_trading_session(ts, session_name: str) -> bool:
+    """Backtest girişlerini seçilen işlem seansına göre filtreler."""
+    hours = TRADING_SESSIONS.get(session_name)
+    if hours is None:
+        return True
+
+    start_hour, end_hour = hours
+    local_hour = _to_istanbul_timestamp(ts).hour
+
+    if start_hour < end_hour:
+        return start_hour <= local_hour < end_hour
+
+    # Gece yarısını aşan seanslar: örn. New York 16:00-01:00
+    return local_hour >= start_hour or local_hour < end_hour
+
+
+def session_description(session_name: str) -> str:
+    hours = TRADING_SESSIONS.get(session_name)
+    if hours is None:
+        return "Tüm gün aktif"
+    start_hour, end_hour = hours
+    return f"Europe/Istanbul saatine göre {start_hour:02d}:00–{end_hour:02d}:00"
 
 # =============================================================================
 # DATA
@@ -863,6 +905,9 @@ def run_backtest(
     signal_threshold: float,
     spread_pips: float,
     pip_value_per_lot: float,
+    cooldown_bars: int = 0,
+    session_filter: str = "Tüm Gün",
+    max_same_direction_trades: int = 3,
 ) -> BacktestResult:
     """
     Multi-timeframe backtest.
@@ -903,6 +948,10 @@ def run_backtest(
     equity_rows = []
     trades = []
     open_trade = None
+    last_exit_i = -10**9
+    last_entry_i = -10**9
+    last_entry_side: Optional[str] = None
+    same_direction_entries = 0
 
     for i in range(1, len(df)):
         current = df.iloc[i]
@@ -968,6 +1017,7 @@ def run_backtest(
                     "15M Score": open_trade["M15Score"],
                     "MTF Reason": open_trade["Reason"],
                 })
+                last_exit_i = i
                 open_trade = None
 
         if open_trade is None:
@@ -978,6 +1028,22 @@ def run_backtest(
             m15_score = entry_score if tf_name == "15 Dakika" else _aligned_value(aligned_scores.get("15 Dakika"), prev_ts)
 
             sig, reason = mtf_signal_decision(entry_score, h4_score, h1_score, m15_score, tf_name, signal_threshold)
+
+            if sig != "NONE" and not is_in_trading_session(ts, session_filter):
+                sig = "NONE"
+                reason = f"Seans filtresi dışında: {session_filter}"
+
+            if sig != "NONE" and cooldown_bars > 0 and (i - last_exit_i) <= cooldown_bars:
+                sig = "NONE"
+                reason = f"Cooldown filtresi: son işlemden sonra {cooldown_bars} mum bekleniyor"
+
+            # Aynı yön filtresi: uzun süre sonra gelen yeni setup yeni trend dalgası kabul edilir.
+            if sig != "NONE" and last_entry_side == sig and (i - last_entry_i) > max(cooldown_bars * 3, 20):
+                same_direction_entries = 0
+
+            if sig != "NONE" and last_entry_side == sig and same_direction_entries >= max_same_direction_trades:
+                sig = "NONE"
+                reason = f"Tekrar sinyal filtresi: aynı yönde maksimum {max_same_direction_trades} işlem sınırı"
 
             if sig != "NONE":
                 atr = float(previous["ATR14"])
@@ -1009,6 +1075,12 @@ def run_backtest(
                         "M15Score": m15_score,
                         "Reason": reason,
                     }
+                    if last_entry_side == sig:
+                        same_direction_entries += 1
+                    else:
+                        last_entry_side = sig
+                        same_direction_entries = 1
+                    last_entry_i = i
 
         equity_rows.append({"Time": ts, "Balance": balance})
 
@@ -1103,6 +1175,9 @@ def make_backtest_key(
     atr_mult: float,
     signal_threshold: float,
     spread_pips: float,
+    cooldown_bars: int,
+    session_filter: str,
+    max_same_direction_trades: int,
 ) -> tuple:
     """
     Canlı risk planını hangi backtest sonucuna bağladığımızı anlamak için kullanılır.
@@ -1117,6 +1192,9 @@ def make_backtest_key(
         round(float(atr_mult), 4),
         round(float(signal_threshold), 4),
         round(float(spread_pips), 4),
+        int(cooldown_bars),
+        str(session_filter),
+        int(max_same_direction_trades),
     )
 
 
@@ -1126,6 +1204,194 @@ def get_matching_backtest_quality(current_key: tuple) -> Optional[dict]:
     if saved_key == current_key and saved_quality:
         return saved_quality
     return None
+
+
+def side_performance_table(trades: pd.DataFrame) -> pd.DataFrame:
+    """Backtest işlemlerini LONG/SHORT bazında ayrı performans tablosuna çevirir."""
+    if trades is None or trades.empty:
+        return pd.DataFrame(columns=["Yön", "İşlem", "Win Rate", "PnL", "Profit Factor", "Ortalama Pips", "Maks. Ardışık Zarar"])
+
+    rows = []
+    for side in ["LONG", "SHORT"]:
+        part = trades[trades["Side"] == side].copy()
+        if part.empty:
+            rows.append([side, 0, "-", "0.00", "-", "-", 0])
+            continue
+
+        wins = part[part["PnL"] > 0]
+        losses = part[part["PnL"] <= 0]
+        loss_sum = abs(losses["PnL"].sum()) if not losses.empty else 0.0
+        pf = wins["PnL"].sum() / loss_sum if loss_sum > 0 else np.nan
+        win_rate = 100 * len(wins) / len(part)
+
+        # Maksimum ardışık zarar
+        max_loss_streak = 0
+        current_streak = 0
+        for pnl in part["PnL"]:
+            if pnl <= 0:
+                current_streak += 1
+                max_loss_streak = max(max_loss_streak, current_streak)
+            else:
+                current_streak = 0
+
+        rows.append([
+            side,
+            len(part),
+            f"{win_rate:.2f}%",
+            f"{part['PnL'].sum():.2f}",
+            "-" if pd.isna(pf) else f"{pf:.2f}",
+            f"{part['Pips'].mean():.2f}",
+            max_loss_streak,
+        ])
+
+    return pd.DataFrame(rows, columns=["Yön", "İşlem", "Win Rate", "PnL", "Profit Factor", "Ortalama Pips", "Maks. Ardışık Zarar"])
+
+
+def trade_duration_table(trades: pd.DataFrame) -> pd.DataFrame:
+    """İşlem sürelerini özetler."""
+    if trades is None or trades.empty:
+        return pd.DataFrame(columns=["Metrik", "Değer"])
+
+    t = trades.copy()
+    t["Entry Time"] = pd.to_datetime(t["Entry Time"], utc=True, errors="coerce")
+    t["Exit Time"] = pd.to_datetime(t["Exit Time"], utc=True, errors="coerce")
+    t["Duration Min"] = (t["Exit Time"] - t["Entry Time"]).dt.total_seconds() / 60
+
+    return pd.DataFrame([
+        ["Ortalama Süre (dk)", f"{t['Duration Min'].mean():.1f}"],
+        ["Medyan Süre (dk)", f"{t['Duration Min'].median():.1f}"],
+        ["En Uzun İşlem (dk)", f"{t['Duration Min'].max():.1f}"],
+        ["En Kısa İşlem (dk)", f"{t['Duration Min'].min():.1f}"],
+    ], columns=["Metrik", "Değer"])
+
+
+def scan_symbol_live(symbol: str, change_window_minutes: int) -> dict:
+    """Tek sembol için canlı çoklu zaman dilimi özetini üretir."""
+    summary, _ = analyse_symbol(symbol)
+    label, score, note = global_bias(summary)
+    price_info = fetch_price_change(symbol, change_window_minutes)
+    pct = price_info.get("pct") if price_info else None
+
+    return {
+        "Sembol": symbol,
+        "Genel Bias": label,
+        "Skor": round(float(score), 1),
+        "Değişim %": None if pct is None else round(float(pct), 2),
+        "4H": summary.loc[summary["Zaman Dilimi"] == "4 Saat", "Bias"].iloc[0] if not summary.empty else "-",
+        "1H": summary.loc[summary["Zaman Dilimi"] == "1 Saat", "Bias"].iloc[0] if not summary.empty else "-",
+        "15M": summary.loc[summary["Zaman Dilimi"] == "15 Dakika", "Bias"].iloc[0] if not summary.empty else "-",
+        "5M": summary.loc[summary["Zaman Dilimi"] == "5 Dakika", "Bias"].iloc[0] if not summary.empty else "-",
+        "Not": note,
+    }
+
+
+def extract_metric(metrics: pd.DataFrame, metric_name: str) -> Optional[str]:
+    if metrics is None or metrics.empty:
+        return None
+    row = metrics[metrics["Metrik"] == metric_name]
+    if row.empty:
+        return None
+    return str(row["Değer"].iloc[0])
+
+
+def run_symbol_scanner(
+    symbols: list[str],
+    change_window_minutes: int,
+    include_backtest: bool,
+    scanner_tf: str,
+    scanner_period: str,
+    initial_balance: float,
+    risk_pct: float,
+    rr: float,
+    atr_mult: float,
+    signal_threshold: float,
+    spread_pips: float,
+    pip_value_per_lot: float,
+    cooldown_bars: int,
+    session_filter: str,
+    max_same_direction_trades: int,
+) -> pd.DataFrame:
+    rows = []
+    progress = st.progress(0, text="Pariteler taranıyor...")
+
+    for i, sym in enumerate(symbols, start=1):
+        row = scan_symbol_live(sym, change_window_minutes)
+
+        if include_backtest:
+            bt = run_backtest(
+                symbol=sym,
+                tf_name=scanner_tf,
+                period=scanner_period,
+                initial_balance=initial_balance,
+                risk_pct=risk_pct,
+                rr=rr,
+                atr_mult=atr_mult,
+                signal_threshold=signal_threshold,
+                spread_pips=spread_pips,
+                pip_value_per_lot=pip_value_per_lot,
+                cooldown_bars=cooldown_bars,
+                session_filter=session_filter,
+                max_same_direction_trades=max_same_direction_trades,
+            )
+            q_label, _, _ = assess_backtest_quality(bt)
+            row["Backtest Kalitesi"] = q_label
+            row["PF"] = extract_metric(bt.metrics, "Profit Factor")
+            row["Drawdown"] = extract_metric(bt.metrics, "Maks. Drawdown")
+            row["İşlem Sayısı"] = extract_metric(bt.metrics, "İşlem Sayısı")
+        else:
+            row["Backtest Kalitesi"] = "-"
+            row["PF"] = "-"
+            row["Drawdown"] = "-"
+            row["İşlem Sayısı"] = "-"
+
+        if row["Genel Bias"] == "İşlem Yok":
+            decision = "PAS"
+        elif row["Backtest Kalitesi"] in {"Zayıf", "Yetersiz", "Yetersiz Örnek"}:
+            decision = "PAS"
+        elif row["Backtest Kalitesi"] in {"İyi", "Orta"}:
+            decision = "İZLE"
+        else:
+            decision = "ÖN İZLEME"
+        row["Karar"] = decision
+
+        rows.append(row)
+        progress.progress(i / len(symbols), text=f"{sym} tarandı ({i}/{len(symbols)})")
+
+    progress.empty()
+    result = pd.DataFrame(rows)
+
+    # En işe yarar sıralama: önce aksiyon alınabilecekler, sonra skor.
+    decision_order = {"İZLE": 0, "ÖN İZLEME": 1, "PAS": 2}
+    result["_order"] = result["Karar"].map(decision_order).fillna(9)
+    result = result.sort_values(["_order", "Skor"], ascending=[True, False]).drop(columns=["_order"])
+    return result
+
+
+def init_trade_journal() -> None:
+    if "trade_journal" not in st.session_state:
+        st.session_state["trade_journal"] = []
+
+
+def add_trade_journal_entry(entry: dict) -> None:
+    init_trade_journal()
+    st.session_state["trade_journal"].append(entry)
+
+
+def journal_dataframe() -> pd.DataFrame:
+    init_trade_journal()
+    return pd.DataFrame(st.session_state["trade_journal"])
+
+
+def calculate_manual_pips(symbol: str, side: str, entry: float, exit_price: float) -> Optional[float]:
+    if entry is None or exit_price is None or entry <= 0 or exit_price <= 0:
+        return None
+    pip = get_pip_size(symbol)
+    if side == "LONG":
+        return (exit_price - entry) / pip
+    if side == "SHORT":
+        return (entry - exit_price) / pip
+    return None
+
 
 # =============================================================================
 # PLOTS
@@ -1281,8 +1547,19 @@ with st.sidebar:
     bt_period = st.text_input("Backtest period", value=default_period, help="Örn: 5d, 30d, 90d, 120d. Yahoo Finance limitlerine bağlıdır.")
     signal_threshold = st.slider("Sinyal eşiği", min_value=25, max_value=85, value=60, step=5)
     spread_pips = st.number_input("Spread / maliyet (pip)", min_value=0.0, value=1.5, step=0.1)
+    session_filter = st.selectbox("İşlem seansı", list(TRADING_SESSIONS.keys()), index=0, help="Backtest girişlerini seçilen seansla sınırlar.")
+    cooldown_bars = st.number_input("Cooldown / işlem sonrası bekleme (mum)", min_value=0, max_value=200, value=5, step=1)
+    max_same_direction_trades = st.number_input("Aynı yönde maksimum tekrar işlem", min_value=1, max_value=10, value=2, step=1)
 
     run_bt_requested = st.button("Backtest Çalıştır / Planı Onayla")
+
+    st.divider()
+    st.subheader("Parite Tarayıcı")
+    scanner_tf = st.selectbox("Tarayıcı backtest zaman dilimi", tf_options, index=tf_options.index(selected_tf))
+    scanner_period = st.text_input("Tarayıcı backtest period", value=BACKTEST_PERIODS.get(scanner_tf, "30d"))
+    scanner_include_backtest = st.checkbox("Tarayıcıda backtest kalitesi hesapla (yavaş)", value=False)
+    scanner_limit = st.number_input("Taranacak maksimum parite", min_value=1, max_value=len(SYMBOL_LIST), value=min(12, len(SYMBOL_LIST)), step=1)
+    run_scanner_requested = st.button("Pariteleri Tara")
 
     if st.button("Veriyi Yenile"):
         fetch_ohlc.clear()
@@ -1302,6 +1579,9 @@ current_bt_key = make_backtest_key(
     atr_mult=atr_mult,
     signal_threshold=float(signal_threshold),
     spread_pips=spread_pips,
+    cooldown_bars=int(cooldown_bars),
+    session_filter=session_filter,
+    max_same_direction_trades=int(max_same_direction_trades),
 )
 
 if run_bt_requested:
@@ -1317,6 +1597,9 @@ if run_bt_requested:
             signal_threshold=float(signal_threshold),
             spread_pips=spread_pips,
             pip_value_per_lot=pip_value_per_lot,
+            cooldown_bars=int(cooldown_bars),
+            session_filter=session_filter,
+            max_same_direction_trades=int(max_same_direction_trades),
         )
         q_label, q_css, q_text = assess_backtest_quality(bt_result)
         st.session_state["last_bt_key"] = current_bt_key
@@ -1326,6 +1609,28 @@ if run_bt_requested:
             "css": q_css,
             "text": q_text,
         }
+
+if run_scanner_requested:
+    scan_symbols = SYMBOL_LIST[:int(scanner_limit)]
+    with st.spinner("Parite tarayıcı çalışıyor..."):
+        scanner_df = run_symbol_scanner(
+            symbols=scan_symbols,
+            change_window_minutes=change_window_minutes,
+            include_backtest=scanner_include_backtest,
+            scanner_tf=scanner_tf,
+            scanner_period=scanner_period,
+            initial_balance=account_size,
+            risk_pct=risk_pct,
+            rr=rr,
+            atr_mult=atr_mult,
+            signal_threshold=float(signal_threshold),
+            spread_pips=spread_pips,
+            pip_value_per_lot=pip_value_per_lot,
+            cooldown_bars=int(cooldown_bars),
+            session_filter=session_filter,
+            max_same_direction_trades=int(max_same_direction_trades),
+        )
+        st.session_state["scanner_df"] = scanner_df
 
 # Top metrics
 price_info = fetch_price_change(symbol, change_window_minutes)
@@ -1344,6 +1649,18 @@ with m3:
         st.metric(change_window_label, "-")
 with m4:
     st.metric("Pip Size", get_pip_size(symbol))
+
+# Scanner results
+if "scanner_df" in st.session_state and isinstance(st.session_state["scanner_df"], pd.DataFrame):
+    st.subheader("Parite Tarayıcı")
+    scanner_view = st.session_state["scanner_df"].copy()
+    st.dataframe(scanner_view, width="stretch", height=360)
+    st.download_button(
+        "Tarayıcı Sonucunu CSV İndir",
+        data=scanner_view.to_csv(index=False).encode("utf-8-sig"),
+        file_name="forex_pair_scanner.csv",
+        mime="text/csv",
+    )
 
 # Main analysis
 summary_df, detail_df = analyse_symbol(symbol)
@@ -1377,6 +1694,9 @@ with right_col:
         atr_mult=atr_mult,
         signal_threshold=float(signal_threshold),
         spread_pips=spread_pips,
+        cooldown_bars=int(cooldown_bars),
+        session_filter=session_filter,
+        max_same_direction_trades=int(max_same_direction_trades),
     )
     matched_quality = get_matching_backtest_quality(plan_bt_key)
 
@@ -1460,6 +1780,15 @@ if saved_bt is not None and saved_bt_key == current_bt_key:
     with c2:
         st.plotly_chart(plot_equity_curve(bt.equity), width="stretch")
 
+    if not bt.trades.empty:
+        s1, s2 = st.columns([1.2, 1.0])
+        with s1:
+            st.subheader("Long / Short Ayrı Performans")
+            st.dataframe(side_performance_table(bt.trades), width="stretch", hide_index=True)
+        with s2:
+            st.subheader("İşlem Süresi Özeti")
+            st.dataframe(trade_duration_table(bt.trades), width="stretch", hide_index=True)
+
     st.subheader("İşlem Listesi")
     if bt.trades.empty:
         st.info("Bu ayarlarla işlem oluşmadı veya yeterli veri yok.")
@@ -1472,6 +1801,76 @@ if saved_bt is not None and saved_bt_key == current_bt_key:
         st.dataframe(view.tail(100), width="stretch", height=360)
 else:
     st.info("Backtest sonuçlarını görmek ve Risk Planı'nı kalite kontrolüne bağlamak için sidebar'daki 'Backtest Çalıştır / Planı Onayla' butonuna bas.")
+
+st.divider()
+st.header("İşlem Günlüğü")
+st.caption("Bu günlük Streamlit oturumu içinde tutulur. Kalıcı saklamak için CSV indirip ayrıca kaydetmelisin.")
+
+init_trade_journal()
+journal_setup = build_trade_setup(symbol, selected_tf, final_label, account_size, risk_pct, rr, atr_mult, pip_value_per_lot)
+default_side = journal_setup.side if journal_setup is not None else ("LONG" if "Alım" in final_label else "SHORT")
+default_entry = float(journal_setup.entry) if journal_setup is not None else (float(price) if price is not None else 0.0)
+default_sl = float(journal_setup.stop) if journal_setup is not None else 0.0
+default_tp = float(journal_setup.target) if journal_setup is not None else 0.0
+
+with st.form("trade_journal_form"):
+    j1, j2, j3, j4 = st.columns(4)
+    with j1:
+        journal_side = st.selectbox("Yön", ["LONG", "SHORT"], index=0 if default_side == "LONG" else 1)
+    with j2:
+        journal_result = st.selectbox("Sonuç", ["Açık", "TP", "SL", "Manuel Kâr", "Manuel Zarar", "İptal"], index=0)
+    with j3:
+        journal_entry = st.number_input("Gerçek Entry", min_value=0.0, value=float(default_entry), step=get_pip_size(symbol), format="%.5f")
+    with j4:
+        journal_exit = st.number_input("Gerçek Exit", min_value=0.0, value=0.0, step=get_pip_size(symbol), format="%.5f")
+
+    j5, j6, j7 = st.columns(3)
+    with j5:
+        journal_lot = st.number_input("Gerçek Lot", min_value=0.0, value=float(journal_setup.estimated_lot) if journal_setup else 0.0, step=0.01)
+    with j6:
+        journal_sl = st.number_input("Plan SL", min_value=0.0, value=float(default_sl), step=get_pip_size(symbol), format="%.5f")
+    with j7:
+        journal_tp = st.number_input("Plan TP", min_value=0.0, value=float(default_tp), step=get_pip_size(symbol), format="%.5f")
+
+    journal_notes = st.text_area("Not", value="")
+    submit_journal = st.form_submit_button("Günlüğe Ekle")
+
+    if submit_journal:
+        manual_pips = calculate_manual_pips(symbol, journal_side, journal_entry, journal_exit) if journal_exit > 0 else None
+        add_trade_journal_entry({
+            "Tarih": datetime.now(TR_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+            "Sembol": symbol,
+            "Zaman Dilimi": selected_tf,
+            "Genel Bias": final_label,
+            "Skor": round(float(final_score), 2),
+            "Backtest Kalitesi": matched_quality["label"] if "matched_quality" in locals() and matched_quality else "-",
+            "Yön": journal_side,
+            "Sonuç": journal_result,
+            "Plan Entry": round(float(default_entry), price_decimals(symbol)) if default_entry else None,
+            "Gerçek Entry": journal_entry,
+            "Gerçek Exit": journal_exit if journal_exit > 0 else None,
+            "Plan SL": journal_sl if journal_sl > 0 else None,
+            "Plan TP": journal_tp if journal_tp > 0 else None,
+            "Lot": journal_lot,
+            "Pips": None if manual_pips is None else round(float(manual_pips), 2),
+            "Not": journal_notes,
+        })
+        st.success("İşlem günlüğe eklendi.")
+
+journal_df = journal_dataframe()
+if journal_df.empty:
+    st.info("Henüz işlem günlüğü kaydı yok.")
+else:
+    st.dataframe(journal_df.tail(100), width="stretch", height=300)
+    st.download_button(
+        "İşlem Günlüğünü CSV İndir",
+        data=journal_df.to_csv(index=False).encode("utf-8-sig"),
+        file_name="forex_trade_journal.csv",
+        mime="text/csv",
+    )
+    if st.button("İşlem Günlüğünü Temizle"):
+        st.session_state["trade_journal"] = []
+        st.rerun()
 
 st.divider()
 st.markdown(
