@@ -109,6 +109,16 @@ BACKTEST_PERIODS = {
     "4 Saat": "120d",
 }
 
+PRICE_CHANGE_WINDOWS = {
+    "Son 5 dakika": 5,
+    "Son 10 dakika": 10,
+    "Son 15 dakika": 15,
+    "Son 30 dakika": 30,
+    "Son 1 saat": 60,
+    "Son 4 saat": 240,
+    "Son 1 gün": 1440,
+}
+
 # =============================================================================
 # HELPERS
 # =============================================================================
@@ -241,6 +251,62 @@ def fetch_last_price(symbol: str) -> Optional[float]:
         if df.empty:
             return None
         return float(df["Close"].iloc[-1])
+    except Exception:
+        return None
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def fetch_price_change(symbol: str, lookback_minutes: int) -> Optional[dict]:
+    """
+    Sembol seçildiği andan değil, kullanıcının seçtiği geçmiş pencereye göre yüzde değişim hesaplar.
+    Örn: Son 5 dakika, Son 1 saat.
+    """
+    symbol = normalize_symbol(symbol)
+    try:
+        # 1m veri Yahoo tarafında genelde son birkaç gün için erişilebilir.
+        period = "5d" if lookback_minutes > 1440 else "2d"
+        df = yf.download(symbol, period=period, interval="1m", progress=False, auto_adjust=False, threads=False)
+        if df is None or df.empty:
+            return None
+
+        df = _fix_cols(df)
+        if df.empty or len(df) < 2:
+            return None
+
+        df = _utc_index_df(df)
+        close = df["Close"].astype(float).dropna()
+        if close.empty:
+            return None
+
+        latest_time = close.index[-1]
+        latest_price = float(close.iloc[-1])
+        target_time = latest_time - pd.Timedelta(minutes=int(lookback_minutes))
+
+        ref_candidates = close[close.index <= target_time]
+        if ref_candidates.empty:
+            return {
+                "latest": latest_price,
+                "reference": None,
+                "pct": None,
+                "latest_time": latest_time,
+                "reference_time": None,
+            }
+
+        reference_time = ref_candidates.index[-1]
+        reference_price = float(ref_candidates.iloc[-1])
+
+        if reference_price == 0:
+            pct = None
+        else:
+            pct = 100 * (latest_price - reference_price) / reference_price
+
+        return {
+            "latest": latest_price,
+            "reference": reference_price,
+            "pct": pct,
+            "latest_time": latest_time,
+            "reference_time": reference_time,
+        }
     except Exception:
         return None
 
@@ -718,6 +784,18 @@ def score_series_for_backtest(df: pd.DataFrame) -> pd.Series:
     return _utc_index_series(score.dropna())
 
 
+def _filter_period_for_tf(tf_name: str, fallback_period: str) -> str:
+    """
+    Giriş zaman dilimi kısa olsa bile 4H/1H/15M filtre skorları daha uzun veriyle hesaplanır.
+    Böylece EMA200 ve trend skorları 5M backtestte sadece birkaç günlük veriye sıkışmaz.
+    """
+    return {
+        "4 Saat": "120d",
+        "1 Saat": "90d",
+        "15 Dakika": "30d",
+    }.get(tf_name, fallback_period)
+
+
 def _fetch_score_for_tf(symbol: str, tf_name: str, period: str, shift_closed_bar: bool = True) -> pd.Series:
     """Her zaman dilimi için skor üretir. shift_closed_bar=True, üst zaman diliminde ileri bakışı engeller."""
     prm = TIMEFRAMES[tf_name]
@@ -813,7 +891,8 @@ def run_backtest(
     for tf in ["4 Saat", "1 Saat", "15 Dakika"]:
         if tf == tf_name:
             continue
-        score = _fetch_score_for_tf(symbol, tf, period, shift_closed_bar=True)
+        score_period = _filter_period_for_tf(tf, period)
+        score = _fetch_score_for_tf(symbol, tf, score_period, shift_closed_bar=True)
         if score.empty:
             aligned_scores[tf] = pd.Series(index=df.index, dtype=float)
         else:
@@ -1014,6 +1093,40 @@ def assess_backtest_quality(bt: BacktestResult) -> tuple[str, str, str]:
 
     return "Zayıf", "bad-box", f"PF {'-' if pd.isna(pf) else f'{pf:.2f}'}, toplam PnL {total_pnl:.2f}, ortalama pip {avg_pips:.2f}. Bu ayarla gerçek işlem için pas geçmek daha güvenli."
 
+
+def make_backtest_key(
+    symbol: str,
+    tf_name: str,
+    period: str,
+    risk_pct: float,
+    rr: float,
+    atr_mult: float,
+    signal_threshold: float,
+    spread_pips: float,
+) -> tuple:
+    """
+    Canlı risk planını hangi backtest sonucuna bağladığımızı anlamak için kullanılır.
+    Hesap büyüklüğü ve pip değeri kaliteyi doğrudan değiştirmediği için anahtar dışında bırakıldı.
+    """
+    return (
+        normalize_symbol(symbol),
+        tf_name,
+        str(period),
+        round(float(risk_pct), 4),
+        round(float(rr), 4),
+        round(float(atr_mult), 4),
+        round(float(signal_threshold), 4),
+        round(float(spread_pips), 4),
+    )
+
+
+def get_matching_backtest_quality(current_key: tuple) -> Optional[dict]:
+    saved_key = st.session_state.get("last_bt_key")
+    saved_quality = st.session_state.get("last_bt_quality")
+    if saved_key == current_key and saved_quality:
+        return saved_quality
+    return None
+
 # =============================================================================
 # PLOTS
 # =============================================================================
@@ -1148,6 +1261,11 @@ with st.sidebar:
     selected_tf = st.radio("Grafik / Giriş Zaman Dilimi", list(TIMEFRAMES.keys()), index=1)
 
     st.divider()
+    st.subheader("Fiyat Değişim Filtresi")
+    change_window_label = st.selectbox("Yüzde değişim periyodu", list(PRICE_CHANGE_WINDOWS.keys()), index=1)
+    change_window_minutes = PRICE_CHANGE_WINDOWS[change_window_label]
+
+    st.divider()
     st.subheader("Risk Ayarları")
     account_size = st.number_input("Hesap büyüklüğü", min_value=100.0, value=10000.0, step=500.0)
     risk_pct = st.number_input("İşlem başına risk %", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
@@ -1157,26 +1275,61 @@ with st.sidebar:
 
     st.divider()
     st.subheader("Backtest Ayarları")
-    bt_tf = st.selectbox("Backtest zaman dilimi", list(TIMEFRAMES.keys()), index=1)
+    tf_options = list(TIMEFRAMES.keys())
+    bt_tf = st.selectbox("Backtest zaman dilimi", tf_options, index=tf_options.index(selected_tf))
     default_period = BACKTEST_PERIODS.get(bt_tf, "30d")
     bt_period = st.text_input("Backtest period", value=default_period, help="Örn: 5d, 30d, 90d, 120d. Yahoo Finance limitlerine bağlıdır.")
     signal_threshold = st.slider("Sinyal eşiği", min_value=25, max_value=85, value=60, step=5)
     spread_pips = st.number_input("Spread / maliyet (pip)", min_value=0.0, value=1.5, step=0.1)
 
+    run_bt_requested = st.button("Backtest Çalıştır / Planı Onayla")
+
     if st.button("Veriyi Yenile"):
         fetch_ohlc.clear()
         fetch_last_price.clear()
+        fetch_price_change.clear()
         st.rerun()
 
 st.title("Forex Analyzer Pro")
 st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
 
+current_bt_key = make_backtest_key(
+    symbol=symbol,
+    tf_name=bt_tf,
+    period=bt_period,
+    risk_pct=risk_pct,
+    rr=rr,
+    atr_mult=atr_mult,
+    signal_threshold=float(signal_threshold),
+    spread_pips=spread_pips,
+)
+
+if run_bt_requested:
+    with st.spinner("Backtest çalışıyor ve risk planı kalite kontrolüne bağlanıyor..."):
+        bt_result = run_backtest(
+            symbol=symbol,
+            tf_name=bt_tf,
+            period=bt_period,
+            initial_balance=account_size,
+            risk_pct=risk_pct,
+            rr=rr,
+            atr_mult=atr_mult,
+            signal_threshold=float(signal_threshold),
+            spread_pips=spread_pips,
+            pip_value_per_lot=pip_value_per_lot,
+        )
+        q_label, q_css, q_text = assess_backtest_quality(bt_result)
+        st.session_state["last_bt_key"] = current_bt_key
+        st.session_state["last_bt_result"] = bt_result
+        st.session_state["last_bt_quality"] = {
+            "label": q_label,
+            "css": q_css,
+            "text": q_text,
+        }
+
 # Top metrics
-price = fetch_last_price(symbol)
-base_key = f"base_price_{symbol}"
-if base_key not in st.session_state and price is not None:
-    st.session_state[base_key] = price
-base_price = st.session_state.get(base_key)
+price_info = fetch_price_change(symbol, change_window_minutes)
+price = price_info["latest"] if price_info and price_info.get("latest") is not None else fetch_last_price(symbol)
 
 m1, m2, m3, m4 = st.columns(4)
 with m1:
@@ -1185,11 +1338,10 @@ with m2:
     dec = price_decimals(symbol)
     st.metric("Güncel Fiyat", f"{price:.{dec}f}" if price is not None else "-")
 with m3:
-    if price is not None and base_price:
-        change_pct = 100 * (price - base_price) / base_price
-        st.metric("Açılıştan beri", f"{change_pct:+.2f}%")
+    if price_info and price_info.get("pct") is not None:
+        st.metric(change_window_label, f"{price_info['pct']:+.2f}%")
     else:
-        st.metric("Açılıştan beri", "-")
+        st.metric(change_window_label, "-")
 with m4:
     st.metric("Pip Size", get_pip_size(symbol))
 
@@ -1214,31 +1366,68 @@ with right_col:
     else:
         st.markdown(f"<div class='bad-box'><b>{final_label}</b><br>{filter_note}</div>", unsafe_allow_html=True)
 
-    setup = build_trade_setup(symbol, selected_tf, final_label, account_size, risk_pct, rr, atr_mult, pip_value_per_lot)
     st.subheader("Risk Planı")
-    if setup is None:
-        st.info("Şu anda işlem planı üretmiyorum. Ana yön veya veri koşulları yeterli değil.")
-    else:
-        dec = price_decimals(symbol)
+
+    plan_bt_key = make_backtest_key(
+        symbol=symbol,
+        tf_name=selected_tf,
+        period=bt_period,
+        risk_pct=risk_pct,
+        rr=rr,
+        atr_mult=atr_mult,
+        signal_threshold=float(signal_threshold),
+        spread_pips=spread_pips,
+    )
+    matched_quality = get_matching_backtest_quality(plan_bt_key)
+
+    if bt_tf != selected_tf:
         st.markdown(
-            f"""
-            <div class='risk-box'>
-            <b>Yön:</b> {setup.side}<br>
-            <b>İşlem Tipi:</b> {setup.action}<br>
-            <b>Entry:</b> {setup.entry:.{dec}f}<br>
-            <b>SL:</b> {setup.stop:.{dec}f} ({setup.stop_pips:.1f} pip)<br>
-            <b>TP:</b> {setup.target:.{dec}f} ({setup.target_pips:.1f} pip)<br>
-            <b>RR:</b> {setup.rr:.2f}<br>
-            <b>Risk:</b> {setup.risk_amount:.2f}<br>
-            <b>Yaklaşık Lot:</b> {setup.estimated_lot:.2f}<br><br>
-            <b>Aktivasyon:</b> {setup.activation_rule}<br>
-            <b>Teyit:</b> {setup.confirmation_rule}<br>
-            <b>İptal:</b> {setup.invalidation_rule}
-            </div>
-            """,
+            "<div class='warn-box'><b>Risk Planı Kilitli</b><br>"
+            "Risk planını onaylamak için Backtest zaman dilimi ile Grafik/Giriş zaman dilimi aynı olmalı.</div>",
             unsafe_allow_html=True,
         )
-        st.caption(setup.note)
+    elif matched_quality is None:
+        st.markdown(
+            "<div class='warn-box'><b>Risk Planı Kilitli</b><br>"
+            "Bu sembol ve giriş zaman dilimi için önce sidebar üzerinden 'Backtest Çalıştır / Planı Onayla' butonuna bas.</div>",
+            unsafe_allow_html=True,
+        )
+    elif matched_quality["label"] not in {"İyi", "Orta"}:
+        st.markdown(
+            f"<div class='{matched_quality['css']}'><b>PAS GEÇ — Strateji Kalitesi: {matched_quality['label']}</b><br>"
+            f"{matched_quality['text']}</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f"<div class='{matched_quality['css']}'><b>Backtest Onayı: {matched_quality['label']}</b><br>"
+            f"{matched_quality['text']}</div>",
+            unsafe_allow_html=True,
+        )
+        setup = build_trade_setup(symbol, selected_tf, final_label, account_size, risk_pct, rr, atr_mult, pip_value_per_lot)
+        if setup is None:
+            st.info("Şu anda işlem planı üretmiyorum. Ana yön veya veri koşulları yeterli değil.")
+        else:
+            dec = price_decimals(symbol)
+            st.markdown(
+                f"""
+                <div class='risk-box'>
+                <b>Yön:</b> {setup.side}<br>
+                <b>İşlem Tipi:</b> {setup.action}<br>
+                <b>Entry:</b> {setup.entry:.{dec}f}<br>
+                <b>SL:</b> {setup.stop:.{dec}f} ({setup.stop_pips:.1f} pip)<br>
+                <b>TP:</b> {setup.target:.{dec}f} ({setup.target_pips:.1f} pip)<br>
+                <b>RR:</b> {setup.rr:.2f}<br>
+                <b>Risk:</b> {setup.risk_amount:.2f}<br>
+                <b>Yaklaşık Lot:</b> {setup.estimated_lot:.2f}<br><br>
+                <b>Aktivasyon:</b> {setup.activation_rule}<br>
+                <b>Teyit:</b> {setup.confirmation_rule}<br>
+                <b>İptal:</b> {setup.invalidation_rule}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.caption(setup.note)
 
 st.subheader("Çoklu Zaman Dilimi Karar Tablosu")
 st.dataframe(summary_df, width="stretch", height=190)
@@ -1253,31 +1442,21 @@ st.divider()
 st.header("Backtest")
 st.caption("Bu MTF backtest, canlı sistemle aynı ana mantığı kullanır: 4H + 1H yön filtresi, 5M için 15M teyidi, sinyal barı kapandıktan sonra sonraki bar açılışı. Aynı mumda hem TP hem SL görülürse muhafazakâr olarak SL kabul edilir.")
 
-run_bt = st.button("Backtest Çalıştır")
-if run_bt:
-    with st.spinner("Backtest çalışıyor..."):
-        bt = run_backtest(
-            symbol=symbol,
-            tf_name=bt_tf,
-            period=bt_period,
-            initial_balance=account_size,
-            risk_pct=risk_pct,
-            rr=rr,
-            atr_mult=atr_mult,
-            signal_threshold=float(signal_threshold),
-            spread_pips=spread_pips,
-            pip_value_per_lot=pip_value_per_lot,
-        )
+saved_bt = st.session_state.get("last_bt_result")
+saved_bt_key = st.session_state.get("last_bt_key")
+saved_quality = st.session_state.get("last_bt_quality")
 
+if saved_bt is not None and saved_bt_key == current_bt_key:
+    bt = saved_bt
     c1, c2 = st.columns([1.0, 2.0])
     with c1:
         st.subheader("Performans")
         st.dataframe(bt.metrics, width="stretch", hide_index=True)
-        q_label, q_css, q_text = assess_backtest_quality(bt)
-        st.markdown(
-            f"<div class='{q_css}'><b>Strateji Kalitesi: {q_label}</b><br>{q_text}</div>",
-            unsafe_allow_html=True,
-        )
+        if saved_quality:
+            st.markdown(
+                f"<div class='{saved_quality['css']}'><b>Strateji Kalitesi: {saved_quality['label']}</b><br>{saved_quality['text']}</div>",
+                unsafe_allow_html=True,
+            )
     with c2:
         st.plotly_chart(plot_equity_curve(bt.equity), width="stretch")
 
@@ -1292,12 +1471,13 @@ if run_bt:
             view[col] = view[col].astype(float).round(2)
         st.dataframe(view.tail(100), width="stretch", height=360)
 else:
-    st.info("Backtest sonuçlarını görmek için 'Backtest Çalıştır' butonuna bas.")
+    st.info("Backtest sonuçlarını görmek ve Risk Planı'nı kalite kontrolüne bağlamak için sidebar'daki 'Backtest Çalıştır / Planı Onayla' butonuna bas.")
 
 st.divider()
 st.markdown(
     """
     **Kullanım Notu:** Bu sistem emir vermek için değil, karar disiplinini korumak için tasarlanmıştır. 
-    4H ve 1H yönü çelişiyorsa işlem filtresi devreye girer. Backtest de aynı MTF filtre mantığıyla çalışır; 15M/5M yalnızca giriş zamanlaması için kullanılmalıdır.
+    4H ve 1H yönü çelişiyorsa işlem filtresi devreye girer. Risk Planı, aynı sembol ve giriş zaman dilimi için çalıştırılmış MTF backtest kalitesi İyi/Orta değilse kilitli kalır. 
+    15M/5M yalnızca giriş zamanlaması için kullanılmalıdır.
     """
 )
