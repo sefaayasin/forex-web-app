@@ -9,7 +9,7 @@
 # - "Kesin Al/Sat" yerine bias yaklaşımı: Güçlü Alım Yönlü / Alım Yönlü / İşlem Yok / Satış Yönlü / Güçlü Satış Yönlü
 # - 4H + 1H ana yön filtresi, 15M/5M giriş zamanlama filtresi
 # - ATR tabanlı SL/TP, Risk/Reward ve yaklaşık lot hesabı
-# - Basit ama muhafazakâr backtest: TP/SL, spread ve işlem maliyeti dikkate alınır
+# - Multi-timeframe backtest: canlı sistemdeki 4H + 1H ana yön filtresi ve 15M/5M giriş teyidi ile uyumlu çalışır
 # - Streamlit Cloud uyumlu: pandas yeni sürümlerde "4h" kullanılır, st.rerun() kullanılır
 
 from __future__ import annotations
@@ -212,7 +212,7 @@ def fetch_ohlc(symbol: str, interval: str, period: str) -> pd.DataFrame:
 
         # Pandas yeni sürümlerde büyük H kabul etmeyebilir; bu yüzden "4h" kullanıyoruz.
         out = (
-            base.resample("4h")
+            base.resample("4h", label="right", closed="right")
             .agg({
                 "Open": "first",
                 "High": "max",
@@ -545,6 +545,10 @@ class TradeSetup:
     rr: float
     risk_amount: float
     estimated_lot: float
+    action: str
+    activation_rule: str
+    confirmation_rule: str
+    invalidation_rule: str
     note: str
 
 
@@ -569,6 +573,7 @@ def build_trade_setup(
     if df.empty or len(df) < 80:
         return None
 
+    # Kapanmış son bar üzerinden plan üret.
     df = add_indicators(df.iloc[:-1])
     row = latest_valid_row(df)
     if row is None:
@@ -590,9 +595,17 @@ def build_trade_setup(
     if side == "LONG":
         stop = entry - stop_distance
         target = entry + target_distance
+        action = "Breakout / trend devamı bekle"
+        activation_rule = f"{entry:.{price_decimals(symbol)}f} üzerinde {selected_tf} mum kapanışı gelirse plan aktif sayılır."
+        confirmation_rule = "4H ve 1H alım yönünde kalmalı; 15M ters satışa dönerse bekle; 5M alım yönüne dönerse giriş kalitesi artar."
+        invalidation_rule = f"Fiyat {stop:.{price_decimals(symbol)}f} altına iner veya 1H Satış/İşlem Yok'a dönerse plan iptal."
     else:
         stop = entry + stop_distance
         target = entry - target_distance
+        action = "Breakdown / trend devamı bekle"
+        activation_rule = f"{entry:.{price_decimals(symbol)}f} altında {selected_tf} mum kapanışı gelirse plan aktif sayılır."
+        confirmation_rule = "4H ve 1H satış yönünde kalmalı; 15M ters alıma dönerse bekle; 5M satış yönüne dönerse giriş kalitesi artar."
+        invalidation_rule = f"Fiyat {stop:.{price_decimals(symbol)}f} üstüne çıkar veya 1H Alım/İşlem Yok'a dönerse plan iptal."
 
     risk_amount = account_size * (risk_pct / 100)
     if stop_pips <= 0 or pip_value_per_lot <= 0:
@@ -610,6 +623,10 @@ def build_trade_setup(
         rr=rr,
         risk_amount=risk_amount,
         estimated_lot=estimated_lot,
+        action=action,
+        activation_rule=activation_rule,
+        confirmation_rule=confirmation_rule,
+        invalidation_rule=invalidation_rule,
         note="Lot hesabı yaklaşık değerdir. Broker, hesap para birimi ve pariteye göre pip değeri değişebilir.",
     )
 
@@ -624,7 +641,32 @@ class BacktestResult:
     equity: pd.DataFrame
 
 
+def _utc_index_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Backtest hizalaması için tüm verileri UTC indeksine çeker."""
+    if df.empty:
+        return df
+    out = df.copy()
+    if out.index.tz is None:
+        out.index = out.index.tz_localize("UTC")
+    else:
+        out.index = out.index.tz_convert("UTC")
+    return out.sort_index()
+
+
+def _utc_index_series(s: pd.Series) -> pd.Series:
+    if s.empty:
+        return s
+    out = s.copy()
+    if out.index.tz is None:
+        out.index = out.index.tz_localize("UTC")
+    else:
+        out.index = out.index.tz_convert("UTC")
+    return out.sort_index()
+
+
 def signal_from_score(score: float, threshold: float) -> str:
+    if pd.isna(score):
+        return "NONE"
     if score >= threshold:
         return "LONG"
     if score <= -threshold:
@@ -673,7 +715,63 @@ def score_series_for_backtest(df: pd.DataFrame) -> pd.Series:
     score += np.where(band_pos < 0.05, -3, 0)
 
     score = score.clip(-100, 100)
-    return score.dropna()
+    return _utc_index_series(score.dropna())
+
+
+def _fetch_score_for_tf(symbol: str, tf_name: str, period: str, shift_closed_bar: bool = True) -> pd.Series:
+    """Her zaman dilimi için skor üretir. shift_closed_bar=True, üst zaman diliminde ileri bakışı engeller."""
+    prm = TIMEFRAMES[tf_name]
+    df = fetch_ohlc(symbol, prm["interval"], period)
+    if df.empty:
+        return pd.Series(dtype=float)
+    df = _utc_index_df(df)
+    score = score_series_for_backtest(df)
+    if shift_closed_bar:
+        score = score.shift(1).dropna()
+    return score
+
+
+def _aligned_value(series: Optional[pd.Series], ts) -> float:
+    if series is None or series.empty:
+        return np.nan
+    try:
+        value = series.loc[ts]
+        if isinstance(value, pd.Series):
+            value = value.iloc[-1]
+        return float(value)
+    except Exception:
+        return np.nan
+
+
+def mtf_signal_decision(
+    entry_score: float,
+    h4_score: float,
+    h1_score: float,
+    m15_score: float,
+    tf_name: str,
+    threshold: float,
+) -> tuple[str, str]:
+    """Canlı sistem mantığını backtestte uygular: 4H + 1H ana yön, 15M/5M giriş teyidi."""
+    if pd.isna(entry_score) or pd.isna(h4_score) or pd.isna(h1_score):
+        return "NONE", "Ana zaman dilimi skorları yetersiz"
+
+    htf_long = h4_score >= 25 and h1_score >= 25
+    htf_short = h4_score <= -25 and h1_score <= -25
+
+    if tf_name == "5 Dakika":
+        # 5M ile giriş aranıyorsa 15M aynı yönü desteklemeli.
+        m15_long_ok = not pd.isna(m15_score) and m15_score >= 25
+        m15_short_ok = not pd.isna(m15_score) and m15_score <= -25
+    else:
+        m15_long_ok = True
+        m15_short_ok = True
+
+    if htf_long and m15_long_ok and entry_score >= threshold:
+        return "LONG", "4H+1H long uyumlu; giriş skoru eşiği geçti"
+    if htf_short and m15_short_ok and entry_score <= -threshold:
+        return "SHORT", "4H+1H short uyumlu; giriş skoru eşiği geçti"
+
+    return "NONE", "MTF filtre veya giriş skoru uygun değil"
 
 
 def run_backtest(
@@ -688,16 +786,38 @@ def run_backtest(
     spread_pips: float,
     pip_value_per_lot: float,
 ) -> BacktestResult:
+    """
+    Multi-timeframe backtest.
+    - 4H ve 1H aynı yönde değilse işlem açmaz.
+    - 5M giriş için ayrıca 15M yön teyidi ister.
+    - Sinyal barı kapandıktan sonra sonraki bar açılışından giriş yapar.
+    """
     prm = TIMEFRAMES[tf_name]
-    df = fetch_ohlc(symbol, prm["interval"], period)
-    if df.empty or len(df) < 220:
+    raw = fetch_ohlc(symbol, prm["interval"], period)
+    if raw.empty or len(raw) < 120:
         empty_metrics = pd.DataFrame({"Metrik": ["Durum"], "Değer": ["Yeterli veri yok"]})
         return BacktestResult(empty_metrics, pd.DataFrame(), pd.DataFrame())
 
+    df = _utc_index_df(raw)
     df = add_indicators(df)
-    score = score_series_for_backtest(df)
-    df = df.join(score.rename("Score"), how="left")
+    entry_score_series = score_series_for_backtest(df)
+    df = df.join(entry_score_series.rename("Score"), how="left")
     df = df.dropna(subset=["Open", "High", "Low", "Close", "ATR14", "Score"])
+
+    if len(df) < 80:
+        empty_metrics = pd.DataFrame({"Metrik": ["Durum"], "Değer": ["İndikatörler sonrası yeterli veri yok"]})
+        return BacktestResult(empty_metrics, pd.DataFrame(), pd.DataFrame())
+
+    # Üst zaman dilimi skorlarını giriş zaman dilimine hizala.
+    aligned_scores: dict[str, pd.Series] = {}
+    for tf in ["4 Saat", "1 Saat", "15 Dakika"]:
+        if tf == tf_name:
+            continue
+        score = _fetch_score_for_tf(symbol, tf, period, shift_closed_bar=True)
+        if score.empty:
+            aligned_scores[tf] = pd.Series(index=df.index, dtype=float)
+        else:
+            aligned_scores[tf] = score.reindex(df.index, method="ffill")
 
     pip = get_pip_size(symbol)
     balance = initial_balance
@@ -705,11 +825,11 @@ def run_backtest(
     trades = []
     open_trade = None
 
-    # İşleme giriş: sinyal barı kapandıktan sonra sonraki barın open fiyatı.
     for i in range(1, len(df)):
         current = df.iloc[i]
         previous = df.iloc[i - 1]
         ts = df.index[i]
+        prev_ts = df.index[i - 1]
 
         if open_trade is not None:
             side = open_trade["Side"]
@@ -718,9 +838,6 @@ def run_backtest(
             target = open_trade["Target"]
             lot = open_trade["Lot"]
             risk_amount = open_trade["RiskAmount"]
-
-            hit_stop = False
-            hit_target = False
 
             if side == "LONG":
                 hit_stop = float(current["Low"]) <= stop
@@ -731,12 +848,9 @@ def run_backtest(
 
             exit_reason = None
             exit_price = None
-            pnl = 0.0
-            pnl_pips = 0.0
 
             if hit_stop and hit_target:
-                # Muhafazakâr varsayım: aynı mumda TP ve SL görüldüyse önce SL çalıştı kabul edilir.
-                exit_reason = "SL"
+                exit_reason = "SL"  # muhafazakâr kabul
                 exit_price = stop
             elif hit_stop:
                 exit_reason = "SL"
@@ -769,12 +883,23 @@ def run_backtest(
                     "Result": exit_reason,
                     "Lot": lot,
                     "Risk Amount": risk_amount,
-                    "Score": open_trade["Score"],
+                    "Entry Score": open_trade["EntryScore"],
+                    "4H Score": open_trade["H4Score"],
+                    "1H Score": open_trade["H1Score"],
+                    "15M Score": open_trade["M15Score"],
+                    "MTF Reason": open_trade["Reason"],
                 })
                 open_trade = None
 
         if open_trade is None:
-            sig = signal_from_score(float(previous["Score"]), signal_threshold)
+            entry_score = float(previous["Score"])
+
+            h4_score = entry_score if tf_name == "4 Saat" else _aligned_value(aligned_scores.get("4 Saat"), prev_ts)
+            h1_score = entry_score if tf_name == "1 Saat" else _aligned_value(aligned_scores.get("1 Saat"), prev_ts)
+            m15_score = entry_score if tf_name == "15 Dakika" else _aligned_value(aligned_scores.get("15 Dakika"), prev_ts)
+
+            sig, reason = mtf_signal_decision(entry_score, h4_score, h1_score, m15_score, tf_name, signal_threshold)
+
             if sig != "NONE":
                 atr = float(previous["ATR14"])
                 entry = float(current["Open"])
@@ -783,7 +908,7 @@ def run_backtest(
                 risk_amount = balance * (risk_pct / 100)
                 lot = risk_amount / (stop_pips * pip_value_per_lot) if stop_pips > 0 and pip_value_per_lot > 0 else 0.0
 
-                if lot > 0:
+                if lot > 0 and np.isfinite(lot):
                     if sig == "LONG":
                         stop = entry - stop_distance
                         target = entry + stop_distance * rr
@@ -799,7 +924,11 @@ def run_backtest(
                         "Target": target,
                         "Lot": lot,
                         "RiskAmount": risk_amount,
-                        "Score": float(previous["Score"]),
+                        "EntryScore": entry_score,
+                        "H4Score": h4_score,
+                        "H1Score": h1_score,
+                        "M15Score": m15_score,
+                        "Reason": reason,
                     }
 
         equity_rows.append({"Time": ts, "Balance": balance})
@@ -808,26 +937,30 @@ def run_backtest(
     equity_df = pd.DataFrame(equity_rows)
 
     if trades_df.empty:
-        metrics = pd.DataFrame({"Metrik": ["İşlem Sayısı"], "Değer": [0]})
+        metrics = pd.DataFrame({"Metrik": ["İşlem Sayısı", "Not"], "Değer": [0, "MTF filtrelerle bu periyotta işlem oluşmadı"]})
         return BacktestResult(metrics, trades_df, equity_df)
 
     wins = trades_df[trades_df["PnL"] > 0]
     losses = trades_df[trades_df["PnL"] <= 0]
     total_pnl = trades_df["PnL"].sum()
     win_rate = 100 * len(wins) / len(trades_df)
-    profit_factor = wins["PnL"].sum() / abs(losses["PnL"].sum()) if not losses.empty and losses["PnL"].sum() != 0 else np.nan
+    loss_sum = abs(losses["PnL"].sum()) if not losses.empty else 0.0
+    profit_factor = wins["PnL"].sum() / loss_sum if loss_sum > 0 else np.nan
 
     if not equity_df.empty:
         eq = equity_df["Balance"]
         peak = eq.cummax()
         dd = eq - peak
-        max_dd = dd.min()
-        max_dd_pct = 100 * max_dd / peak.loc[dd.idxmin()] if len(dd) > 0 and peak.loc[dd.idxmin()] else 0
+        max_dd = float(dd.min())
+        max_dd_idx = dd.idxmin()
+        peak_at_dd = float(peak.loc[max_dd_idx]) if len(peak) > 0 else initial_balance
+        max_dd_pct = 100 * max_dd / peak_at_dd if peak_at_dd else 0
     else:
-        max_dd = 0
-        max_dd_pct = 0
+        max_dd = 0.0
+        max_dd_pct = 0.0
 
     metrics = pd.DataFrame([
+        ["Backtest Tipi", "MTF filtreli"],
         ["İşlem Sayısı", len(trades_df)],
         ["Kazanan İşlem", len(wins)],
         ["Kaybeden İşlem", len(losses)],
@@ -840,6 +973,46 @@ def run_backtest(
     ], columns=["Metrik", "Değer"])
 
     return BacktestResult(metrics, trades_df, equity_df)
+
+
+def assess_backtest_quality(bt: BacktestResult) -> tuple[str, str, str]:
+    """Backtest sonucunu canlı karar ekranında kullanılabilir kalite etiketine çevirir."""
+    if bt.trades is None or bt.trades.empty:
+        return "Yetersiz", "warn-box", "MTF filtrelerle işlem oluşmadı veya veri yetersiz. Bu sonuçla gerçek işlem kararı verilmemeli."
+
+    trades = bt.trades.copy()
+    wins = trades[trades["PnL"] > 0]
+    losses = trades[trades["PnL"] <= 0]
+    pf = np.nan
+    loss_sum = abs(losses["PnL"].sum()) if not losses.empty else 0.0
+    if loss_sum > 0:
+        pf = wins["PnL"].sum() / loss_sum
+
+    total_pnl = float(trades["PnL"].sum())
+    avg_pips = float(trades["Pips"].mean())
+    trade_count = len(trades)
+
+    if bt.equity is not None and not bt.equity.empty:
+        eq = bt.equity["Balance"]
+        peak = eq.cummax()
+        dd = eq - peak
+        max_dd = float(dd.min())
+        max_dd_idx = dd.idxmin()
+        peak_at_dd = float(peak.loc[max_dd_idx]) if len(peak) > 0 else 0.0
+        dd_pct = 100 * max_dd / peak_at_dd if peak_at_dd else 0.0
+    else:
+        dd_pct = 0.0
+
+    if trade_count < 30:
+        return "Yetersiz Örnek", "warn-box", f"Sadece {trade_count} işlem var. Profit Factor yanıltıcı olabilir; daha uzun periyot veya farklı parite test edilmeli."
+
+    if pd.notna(pf) and pf >= 1.30 and total_pnl > 0 and avg_pips > 0 and dd_pct > -15:
+        return "İyi", "ok-box", f"PF {pf:.2f}, ortalama {avg_pips:.2f} pip ve drawdown {dd_pct:.2f}%. Bu ayar izlemeye değer; yine de demo doğrulama gerekir."
+
+    if pd.notna(pf) and pf >= 1.10 and total_pnl > 0 and avg_pips > 0:
+        return "Orta", "warn-box", f"PF {pf:.2f}. Sistem pozitif ama marj dar; spread/kayma sonucu bozabilir. Küçük risk veya demo daha uygun."
+
+    return "Zayıf", "bad-box", f"PF {'-' if pd.isna(pf) else f'{pf:.2f}'}, toplam PnL {total_pnl:.2f}, ortalama pip {avg_pips:.2f}. Bu ayarla gerçek işlem için pas geçmek daha güvenli."
 
 # =============================================================================
 # PLOTS
@@ -1051,12 +1224,16 @@ with right_col:
             f"""
             <div class='risk-box'>
             <b>Yön:</b> {setup.side}<br>
+            <b>İşlem Tipi:</b> {setup.action}<br>
             <b>Entry:</b> {setup.entry:.{dec}f}<br>
             <b>SL:</b> {setup.stop:.{dec}f} ({setup.stop_pips:.1f} pip)<br>
             <b>TP:</b> {setup.target:.{dec}f} ({setup.target_pips:.1f} pip)<br>
             <b>RR:</b> {setup.rr:.2f}<br>
             <b>Risk:</b> {setup.risk_amount:.2f}<br>
-            <b>Yaklaşık Lot:</b> {setup.estimated_lot:.2f}
+            <b>Yaklaşık Lot:</b> {setup.estimated_lot:.2f}<br><br>
+            <b>Aktivasyon:</b> {setup.activation_rule}<br>
+            <b>Teyit:</b> {setup.confirmation_rule}<br>
+            <b>İptal:</b> {setup.invalidation_rule}
             </div>
             """,
             unsafe_allow_html=True,
@@ -1074,7 +1251,7 @@ st.plotly_chart(plot_live_trigger(symbol, selected_tf, final_label), width="stre
 
 st.divider()
 st.header("Backtest")
-st.caption("Bu basit backtest, sinyal barı kapandıktan sonra sonraki barın açılışından işleme girer. Aynı mumda hem TP hem SL görülürse muhafazakâr olarak SL kabul edilir.")
+st.caption("Bu MTF backtest, canlı sistemle aynı ana mantığı kullanır: 4H + 1H yön filtresi, 5M için 15M teyidi, sinyal barı kapandıktan sonra sonraki bar açılışı. Aynı mumda hem TP hem SL görülürse muhafazakâr olarak SL kabul edilir.")
 
 run_bt = st.button("Backtest Çalıştır")
 if run_bt:
@@ -1096,6 +1273,11 @@ if run_bt:
     with c1:
         st.subheader("Performans")
         st.dataframe(bt.metrics, width="stretch", hide_index=True)
+        q_label, q_css, q_text = assess_backtest_quality(bt)
+        st.markdown(
+            f"<div class='{q_css}'><b>Strateji Kalitesi: {q_label}</b><br>{q_text}</div>",
+            unsafe_allow_html=True,
+        )
     with c2:
         st.plotly_chart(plot_equity_curve(bt.equity), width="stretch")
 
@@ -1106,7 +1288,7 @@ if run_bt:
         view = bt.trades.copy()
         for col in ["Entry", "Exit", "SL", "TP"]:
             view[col] = view[col].astype(float).round(price_decimals(symbol))
-        for col in ["Pips", "PnL", "Balance", "Lot", "Risk Amount", "Score"]:
+        for col in ["Pips", "PnL", "Balance", "Lot", "Risk Amount", "Entry Score", "4H Score", "1H Score", "15M Score"]:
             view[col] = view[col].astype(float).round(2)
         st.dataframe(view.tail(100), width="stretch", height=360)
 else:
@@ -1116,6 +1298,6 @@ st.divider()
 st.markdown(
     """
     **Kullanım Notu:** Bu sistem emir vermek için değil, karar disiplinini korumak için tasarlanmıştır. 
-    4H ve 1H yönü çelişiyorsa işlem filtresi devreye girer. 15M/5M ise yalnızca giriş zamanlaması için kullanılmalıdır.
+    4H ve 1H yönü çelişiyorsa işlem filtresi devreye girer. Backtest de aynı MTF filtre mantığıyla çalışır; 15M/5M yalnızca giriş zamanlaması için kullanılmalıdır.
     """
 )
