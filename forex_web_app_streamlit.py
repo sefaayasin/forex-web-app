@@ -38,37 +38,44 @@ st.markdown(
     """
     <style>
         .small-muted { color:#6c757d; font-size:0.9rem; }
-        .risk-box { padding: 14px; border-radius: 12px; background: #f8f9fa; border: 1px solid #e9ecef; }
+        .risk-box {
+            padding: 14px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            color: #212529 !important;
+            font-weight: 500;
+        }
+        .risk-box, .risk-box * {
+            color: #212529 !important;
+        }
         .warn-box {
-    padding: 12px;
-    border-radius: 12px;
-    background: #fff3cd;
-    border: 1px solid #ffe69c;
-    color: #664d03 !important;
-    font-weight: 500;
-}
-
-.ok-box {
-    padding: 12px;
-    border-radius: 12px;
-    background: #d1e7dd;
-    border: 1px solid #badbcc;
-    color: #0f5132 !important;
-    font-weight: 500;
-}
-
-.bad-box {
-    padding: 12px;
-    border-radius: 12px;
-    background: #f8d7da;
-    border: 1px solid #f5c2c7;
-    color: #842029 !important;
-    font-weight: 500;
-}
-
-.warn-box b, .ok-box b, .bad-box b {
-    color: inherit !important;
-}
+            padding: 12px;
+            border-radius: 12px;
+            background: #fff3cd;
+            border: 1px solid #ffe69c;
+            color: #664d03 !important;
+            font-weight: 500;
+        }
+        .ok-box {
+            padding: 12px;
+            border-radius: 12px;
+            background: #d1e7dd;
+            border: 1px solid #badbcc;
+            color: #0f5132 !important;
+            font-weight: 500;
+        }
+        .bad-box {
+            padding: 12px;
+            border-radius: 12px;
+            background: #f8d7da;
+            border: 1px solid #f5c2c7;
+            color: #842029 !important;
+            font-weight: 500;
+        }
+        .warn-box b, .ok-box b, .bad-box b, .risk-box b {
+            color: inherit !important;
+        }
     </style>
     """,
     unsafe_allow_html=True,
