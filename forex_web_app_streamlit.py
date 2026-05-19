@@ -28,7 +28,6 @@ import pytz
 import streamlit as st
 import yfinance as yf
 from plotly.subplots import make_subplots
-from streamlit_autorefresh import st_autorefresh
 
 TR_TZ = pytz.timezone("Europe/Istanbul")
 
@@ -3349,10 +3348,6 @@ def plot_live_trigger(symbol: str, selected_tf: str, global_label: str) -> go.Fi
 with st.sidebar:
     st.header("Kontrol Paneli")
 
-    with st.expander("Otomatik yenileme", expanded=False):
-        auto_refresh = st.checkbox("Otomatik yenile", value=True)
-        refresh_seconds = st.selectbox("Yenileme aralığı", [30, 60, 120, 300], index=1)
-
     screen_mode = st.radio("Ekran", ["İşlem Asistanı", "Parite Alarm Ekranı"], index=0)
 
     tf_options = list(TIMEFRAMES.keys())
@@ -3366,7 +3361,8 @@ with st.sidebar:
     symbol = normalize_symbol(manual_symbol) if manual_symbol.strip() else selected_symbol
     st.session_state["symbol"] = symbol
 
-    selected_tf = st.radio("Grafik zamanı", tf_options, index=1)
+    chart_tf = st.radio("Grafik zamanı", tf_options, index=1)
+    st.caption("Bu seçim grafiği değiştirir. Yeni Başlayan Modu açıksa işlem kararı yine 4H + 1H ana yön ve 15M giriş mantığıyla hesaplanır.")
 
     st.divider()
     st.subheader("Temel Risk")
@@ -3416,7 +3412,7 @@ with st.sidebar:
         alert_sort_mode = st.selectbox("Sıralama", ["Önce LONG/SHORT", "Sadece LONG-SHORT üstte", "En yüksek skor"], index=0)
         st.caption("Alarm ekranı hızlı takip içindir. Yeni başlayan kullanımda 15 Dakika önerilir.")
 
-    decision_tf = "15 Dakika" if beginner_mode else selected_tf
+    decision_tf = "15 Dakika" if beginner_mode else chart_tf
     if beginner_mode:
         st.caption("Yeni Başlayan Modu aktif: karar 4H+1H ana yön + 15M giriş mantığıyla tek sonuca indirilir. 5M yorumu sana gösterilmez.")
 
@@ -3438,7 +3434,7 @@ with st.sidebar:
     run_bt_requested = st.button("Yeniden Hesapla", type="primary", use_container_width=True)
 
     with st.expander("Parite tarayıcı", expanded=False):
-        scanner_tf = st.selectbox("Tarayıcı backtest zamanı", tf_options, index=tf_options.index(selected_tf))
+        scanner_tf = st.selectbox("Tarayıcı backtest zamanı", tf_options, index=tf_options.index(chart_tf))
         scanner_period = st.text_input("Tarayıcı period", value=BACKTEST_PERIODS.get(scanner_tf, "30d"), key=f"scanner_period_{scanner_tf}")
         scanner_include_backtest = st.checkbox("Backtest kalitesi hesapla", value=False)
         scanner_limit = st.number_input("Maksimum parite", min_value=1, max_value=len(SYMBOL_LIST), value=min(12, len(SYMBOL_LIST)), step=1)
@@ -3450,9 +3446,10 @@ with st.sidebar:
         fetch_price_change.clear()
         st.rerun()
 
-# Yeni başlayan modda kullanıcıya 4H/1H/15M/5M seçtirmiyoruz; karar zamanı 15M olur.
-if 'beginner_mode' in locals() and beginner_mode:
-    selected_tf = decision_tf
+# İşlem kararı için kullanılan zaman dilimi.
+# Yeni Başlayan Modu açıksa karar zamanı sabit 15M'dir.
+# Grafik zamanı ise chart_tf değişkeniyle bağımsız çalışır.
+selected_tf = decision_tf
 
 st.title("Forex Analyzer Pro")
 st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
@@ -3570,6 +3567,11 @@ with m3:
         st.metric(change_window_label, "-")
 with m4:
     st.metric("Pip Size", get_pip_size(symbol))
+
+if beginner_mode:
+    st.caption(f"Grafik zamanı: {chart_tf} | İşlem karar zamanı: {selected_tf} (Yeni Başlayan Modu)")
+else:
+    st.caption(f"Grafik zamanı / İşlem karar zamanı: {selected_tf}")
 
 # Main analysis
 summary_df, detail_df = analyse_symbol(symbol)
@@ -3748,7 +3750,7 @@ if show_position_tracker:
 left_col, right_col = st.columns([2.2, 1.0])
 
 with left_col:
-    fig, chart_df = plot_main_figure(symbol, selected_tf)
+    fig, chart_df = plot_main_figure(symbol, chart_tf)
     st.plotly_chart(fig, use_container_width=True)
 
 with right_col:
@@ -3844,7 +3846,7 @@ with st.expander("Teknik Detaylar", expanded=False):
     st.subheader("Skor Detayı")
     st.dataframe(detail_df, use_container_width=True)
     st.subheader("Giriş Tetikleyici Paneli")
-    st.plotly_chart(plot_live_trigger(symbol, selected_tf, final_label), use_container_width=True)
+    st.plotly_chart(plot_live_trigger(symbol, chart_tf, final_label), use_container_width=True)
 
 st.divider()
 st.header("Backtest")
