@@ -11,7 +11,7 @@
 # - ATR tabanlı SL/TP, Risk/Reward ve yaklaşık lot hesabı
 # - Multi-timeframe backtest: canlı sistemdeki 4H + 1H ana yön filtresi ve 15M/5M giriş teyidi ile uyumlu çalışır
 # - Parite tarayıcı, seans filtresi, cooldown filtresi, long/short ayrı performans ve işlem günlüğü
-# - Basit İşlem Modu, Pozisyon Takip Modu ve Sert Güvenli Mod filtresi
+# - Basit İşlem Modu, Pozisyon Takip Modu, pratik/güvenli filtre ve daha anlaşılır backtest onayı
 # - Streamlit Cloud uyumlu: pandas yeni sürümlerde "4h" kullanılır, st.rerun() kullanılır
 
 from __future__ import annotations
@@ -223,6 +223,29 @@ def price_decimals(symbol: str) -> int:
     if quote == "JPY":
         return 3
     return 5
+
+
+def estimate_pip_value_per_lot_usd(symbol: str, reference_price: Optional[float] = None) -> Optional[float]:
+    """Standart 100k lot için yaklaşık USD pip değeri üretir."""
+    base, quote = symbol_pair(symbol)
+    contract_units = 100_000
+    quote_pip_value = get_pip_size(symbol) * contract_units
+
+    if quote == "USD":
+        return float(quote_pip_value)
+
+    if base == "USD" and reference_price and reference_price > 0:
+        return float(quote_pip_value / reference_price)
+
+    direct = fetch_last_price(f"{quote}USD=X")
+    if direct and direct > 0:
+        return float(quote_pip_value * direct)
+
+    inverse = fetch_last_price(f"USD{quote}=X")
+    if inverse and inverse > 0:
+        return float(quote_pip_value / inverse)
+
+    return None
 
 
 def to_tz_index(df: pd.DataFrame) -> pd.DataFrame:
@@ -649,13 +672,14 @@ def analyse_symbol(symbol: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     return summary, detail
 
 
-def global_bias(summary: pd.DataFrame) -> tuple[str, float, str]:
+def global_bias(summary: pd.DataFrame, selected_tf: Optional[str] = None) -> tuple[str, float, str]:
     if summary.empty:
         return "İşlem Yok", 0.0, "Veri yok"
 
     total_weight = 0
     weighted_score = 0.0
     labels_by_tf = {}
+    scores_by_tf = {}
     for _, row in summary.iterrows():
         tf = row["Zaman Dilimi"]
         label = row["Bias"]
@@ -664,23 +688,41 @@ def global_bias(summary: pd.DataFrame) -> tuple[str, float, str]:
         weighted_score += score * w
         total_weight += w
         labels_by_tf[tf] = label
+        scores_by_tf[tf] = score
 
     final_score = weighted_score / total_weight if total_weight else 0.0
     final_label = label_from_score(final_score)
 
-    # Ana yön filtresi: 4H ve 1H ters ise işlem yok.
+    # Ana yön filtresi: backtest ile aynı şekilde 4H ve 1H aynı yönde olmalı.
     h4 = labels_by_tf.get("4 Saat", "İşlem Yok")
     h1 = labels_by_tf.get("1 Saat", "İşlem Yok")
+    h4_score = scores_by_tf.get("4 Saat", np.nan)
+    h1_score = scores_by_tf.get("1 Saat", np.nan)
+    m15_score = scores_by_tf.get("15 Dakika", np.nan)
     long_set = {"Alım Yönlü", "Güçlü Alım Yönlü"}
     short_set = {"Satış Yönlü", "Güçlü Satış Yönlü"}
+    htf_long = not pd.isna(h4_score) and not pd.isna(h1_score) and h4_score >= 25 and h1_score >= 25
+    htf_short = not pd.isna(h4_score) and not pd.isna(h1_score) and h4_score <= -25 and h1_score <= -25
 
     if (h4 in long_set and h1 in short_set) or (h4 in short_set and h1 in long_set):
         return "İşlem Yok", final_score, "4H ve 1H yönleri çelişiyor. İşlem filtresi devrede."
 
-    if h4 == "İşlem Yok" and h1 == "İşlem Yok":
-        return "İşlem Yok", final_score, "Ana zaman dilimleri yön vermiyor."
+    if not htf_long and not htf_short:
+        return "İşlem Yok", final_score, "4H ve 1H aynı yönde yeterli skor üretmiyor."
 
-    return final_label, final_score, "Ana yön filtresi uygun."
+    if selected_tf == "5 Dakika":
+        if htf_long and (pd.isna(m15_score) or m15_score < 25):
+            return "İşlem Yok", final_score, "5M giriş için 15M alım yönü teyidi yok."
+        if htf_short and (pd.isna(m15_score) or m15_score > -25):
+            return "İşlem Yok", final_score, "5M giriş için 15M satış yönü teyidi yok."
+
+    if htf_long and final_label in long_set:
+        return final_label, final_score, "4H + 1H ana yön filtresi alım tarafında uygun."
+
+    if htf_short and final_label in short_set:
+        return final_label, final_score, "4H + 1H ana yön filtresi satış tarafında uygun."
+
+    return "İşlem Yok", final_score, "Ağırlıklı skor, ana yön filtresiyle aynı yönde yeterli sinyal üretmiyor."
 
 # =============================================================================
 # TRADE SETUP / RISK
@@ -952,6 +994,7 @@ def run_backtest(
     cooldown_bars: int = 0,
     session_filter: str = "Tüm Gün",
     max_same_direction_trades: int = 3,
+    min_trades_required: int = 20,
 ) -> BacktestResult:
     """
     Multi-timeframe backtest.
@@ -997,74 +1040,80 @@ def run_backtest(
     last_entry_side: Optional[str] = None
     same_direction_entries = 0
 
+    def resolve_bar_exit(trade: dict, bar: pd.Series) -> tuple[Optional[str], Optional[float]]:
+        side = trade["Side"]
+        stop = trade["Stop"]
+        target = trade["Target"]
+
+        if side == "LONG":
+            hit_stop = float(bar["Low"]) <= stop
+            hit_target = float(bar["High"]) >= target
+        else:
+            hit_stop = float(bar["High"]) >= stop
+            hit_target = float(bar["Low"]) <= target
+
+        if hit_stop and hit_target:
+            return "SL", stop  # OHLC içinde sıra bilinmediği için muhafazakar kabul.
+        if hit_stop:
+            return "SL", stop
+        if hit_target:
+            return "TP", target
+        return None, None
+
+    def close_trade(trade: dict, exit_price: float, exit_time, exit_reason: str) -> None:
+        nonlocal balance
+
+        side = trade["Side"]
+        entry = trade["Entry"]
+        lot = trade["Lot"]
+        risk_amount = trade["RiskAmount"]
+
+        if side == "LONG":
+            pnl_pips = (exit_price - entry) / pip
+        else:
+            pnl_pips = (entry - exit_price) / pip
+
+        pnl_pips -= spread_pips
+        pnl = pnl_pips * pip_value_per_lot * lot
+        balance += pnl
+
+        trades.append({
+            "Entry Time": trade["EntryTime"],
+            "Exit Time": exit_time,
+            "Side": side,
+            "Entry": entry,
+            "Exit": exit_price,
+            "SL": trade["Stop"],
+            "TP": trade["Target"],
+            "Pips": pnl_pips,
+            "PnL": pnl,
+            "Balance": balance,
+            "Result": exit_reason,
+            "Lot": lot,
+            "Risk Amount": risk_amount,
+            "Entry Score": trade["EntryScore"],
+            "4H Score": trade["H4Score"],
+            "1H Score": trade["H1Score"],
+            "15M Score": trade["M15Score"],
+            "MTF Reason": trade["Reason"],
+        })
+
     for i in range(1, len(df)):
         current = df.iloc[i]
         previous = df.iloc[i - 1]
         ts = df.index[i]
         prev_ts = df.index[i - 1]
+        closed_this_bar = False
 
         if open_trade is not None:
-            side = open_trade["Side"]
-            entry = open_trade["Entry"]
-            stop = open_trade["Stop"]
-            target = open_trade["Target"]
-            lot = open_trade["Lot"]
-            risk_amount = open_trade["RiskAmount"]
-
-            if side == "LONG":
-                hit_stop = float(current["Low"]) <= stop
-                hit_target = float(current["High"]) >= target
-            else:
-                hit_stop = float(current["High"]) >= stop
-                hit_target = float(current["Low"]) <= target
-
-            exit_reason = None
-            exit_price = None
-
-            if hit_stop and hit_target:
-                exit_reason = "SL"  # muhafazakâr kabul
-                exit_price = stop
-            elif hit_stop:
-                exit_reason = "SL"
-                exit_price = stop
-            elif hit_target:
-                exit_reason = "TP"
-                exit_price = target
-
+            exit_reason, exit_price = resolve_bar_exit(open_trade, current)
             if exit_reason is not None:
-                if side == "LONG":
-                    pnl_pips = (exit_price - entry) / pip
-                else:
-                    pnl_pips = (entry - exit_price) / pip
-
-                pnl_pips -= spread_pips
-                pnl = pnl_pips * pip_value_per_lot * lot
-                balance += pnl
-
-                trades.append({
-                    "Entry Time": open_trade["EntryTime"],
-                    "Exit Time": ts,
-                    "Side": side,
-                    "Entry": entry,
-                    "Exit": exit_price,
-                    "SL": stop,
-                    "TP": target,
-                    "Pips": pnl_pips,
-                    "PnL": pnl,
-                    "Balance": balance,
-                    "Result": exit_reason,
-                    "Lot": lot,
-                    "Risk Amount": risk_amount,
-                    "Entry Score": open_trade["EntryScore"],
-                    "4H Score": open_trade["H4Score"],
-                    "1H Score": open_trade["H1Score"],
-                    "15M Score": open_trade["M15Score"],
-                    "MTF Reason": open_trade["Reason"],
-                })
+                close_trade(open_trade, float(exit_price), ts, exit_reason)
                 last_exit_i = i
                 open_trade = None
+                closed_this_bar = True
 
-        if open_trade is None:
+        if open_trade is None and not closed_this_bar:
             entry_score = float(previous["Score"])
 
             h4_score = entry_score if tf_name == "4 Saat" else _aligned_value(aligned_scores.get("4 Saat"), prev_ts)
@@ -1105,7 +1154,7 @@ def run_backtest(
                         stop = entry + stop_distance
                         target = entry - stop_distance * rr
 
-                    open_trade = {
+                    candidate_trade = {
                         "EntryTime": ts,
                         "Side": sig,
                         "Entry": entry,
@@ -1126,7 +1175,27 @@ def run_backtest(
                         same_direction_entries = 1
                     last_entry_i = i
 
+                    # İşlem current bar açılışından girildiği için aynı bar içinde
+                    # SL/TP görülürse sonucu bu mumda kapatmak gerekir.
+                    immediate_reason, immediate_price = resolve_bar_exit(candidate_trade, current)
+                    if immediate_reason is not None:
+                        close_trade(candidate_trade, float(immediate_price), ts, immediate_reason)
+                        last_exit_i = i
+                        open_trade = None
+                    else:
+                        open_trade = candidate_trade
+
         equity_rows.append({"Time": ts, "Balance": balance})
+
+    if open_trade is not None and not df.empty:
+        final_ts = df.index[-1]
+        final_close = float(df.iloc[-1]["Close"])
+        close_trade(open_trade, final_close, final_ts, "EOD")
+        open_trade = None
+        if equity_rows:
+            equity_rows[-1]["Balance"] = balance
+        else:
+            equity_rows.append({"Time": final_ts, "Balance": balance})
 
     trades_df = pd.DataFrame(trades)
     equity_df = pd.DataFrame(equity_rows)
@@ -1170,7 +1239,7 @@ def run_backtest(
     return BacktestResult(metrics, trades_df, equity_df)
 
 
-def assess_backtest_quality(bt: BacktestResult) -> tuple[str, str, str]:
+def assess_backtest_quality(bt: BacktestResult, min_trades_required: int = 20) -> tuple[str, str, str]:
     """Backtest sonucunu canlı karar ekranında kullanılabilir kalite etiketine çevirir."""
     if bt.trades is None or bt.trades.empty:
         return "Yetersiz", "warn-box", "MTF filtrelerle işlem oluşmadı veya veri yetersiz. Bu sonuçla gerçek işlem kararı verilmemeli."
@@ -1198,8 +1267,8 @@ def assess_backtest_quality(bt: BacktestResult) -> tuple[str, str, str]:
     else:
         dd_pct = 0.0
 
-    if trade_count < 30:
-        return "Yetersiz Örnek", "warn-box", f"Sadece {trade_count} işlem var. Profit Factor yanıltıcı olabilir; daha uzun periyot veya farklı parite test edilmeli."
+    if trade_count < int(min_trades_required):
+        return "Yetersiz Örnek", "warn-box", f"Sadece {trade_count} işlem var. Minimum {int(min_trades_required)} işlem istendiği için sonuç henüz güvenilir sayılmadı. Daha uzun periyot veya daha yüksek zaman dilimi test edilmeli."
 
     if pd.notna(pf) and pf >= 1.30 and total_pnl > 0 and avg_pips > 0 and dd_pct > -15:
         return "İyi", "ok-box", f"PF {pf:.2f}, ortalama {avg_pips:.2f} pip ve drawdown {dd_pct:.2f}%. Bu ayar izlemeye değer; yine de demo doğrulama gerekir."
@@ -1222,6 +1291,7 @@ def make_backtest_key(
     cooldown_bars: int,
     session_filter: str,
     max_same_direction_trades: int,
+    min_trades_required: int,
 ) -> tuple:
     """
     Canlı risk planını hangi backtest sonucuna bağladığımızı anlamak için kullanılır.
@@ -1239,6 +1309,7 @@ def make_backtest_key(
         int(cooldown_bars),
         str(session_filter),
         int(max_same_direction_trades),
+        int(min_trades_required),
     )
 
 
@@ -1309,10 +1380,10 @@ def trade_duration_table(trades: pd.DataFrame) -> pd.DataFrame:
     ], columns=["Metrik", "Değer"])
 
 
-def scan_symbol_live(symbol: str, change_window_minutes: int) -> dict:
+def scan_symbol_live(symbol: str, change_window_minutes: int, selected_tf: Optional[str] = None) -> dict:
     """Tek sembol için canlı çoklu zaman dilimi özetini üretir."""
     summary, _ = analyse_symbol(symbol)
-    label, score, note = global_bias(summary)
+    label, score, note = global_bias(summary, selected_tf)
     price_info = fetch_price_change(symbol, change_window_minutes)
     pct = price_info.get("pct") if price_info else None
 
@@ -1354,12 +1425,13 @@ def run_symbol_scanner(
     cooldown_bars: int,
     session_filter: str,
     max_same_direction_trades: int,
+    min_trades_required: int,
 ) -> pd.DataFrame:
     rows = []
     progress = st.progress(0, text="Pariteler taranıyor...")
 
     for i, sym in enumerate(symbols, start=1):
-        row = scan_symbol_live(sym, change_window_minutes)
+        row = scan_symbol_live(sym, change_window_minutes, scanner_tf)
 
         if include_backtest:
             bt = run_backtest(
@@ -1376,8 +1448,9 @@ def run_symbol_scanner(
                 cooldown_bars=cooldown_bars,
                 session_filter=session_filter,
                 max_same_direction_trades=max_same_direction_trades,
+                min_trades_required=min_trades_required,
             )
-            q_label, _, _ = assess_backtest_quality(bt)
+            q_label, _, _ = assess_backtest_quality(bt, min_trades_required=min_trades_required)
             row["Backtest Kalitesi"] = q_label
             row["PF"] = extract_metric(bt.metrics, "Profit Factor")
             row["Drawdown"] = extract_metric(bt.metrics, "Maks. Drawdown")
@@ -1496,7 +1569,7 @@ def build_simple_trade_decision(
             "class": "simple-wait",
             "subtitle": "Önce strateji kontrolü gerekiyor.",
             "reason": "Bu sembol ve zaman dilimi için backtest onayı yok.",
-            "steps": ["Sidebar'dan Backtest Çalıştır / Planı Onayla butonuna bas.", "Strateji Kalitesi İyi/Orta değilse işlem açma.", "Sert Güvenli Mod açıksa sadece İyi kalite kabul edilir."],
+            "steps": ["Sidebar'dan Backtest Çalıştır / Planı Onayla butonuna bas.", "Strateji Kalitesi Orta veya İyi değilse işlem açma.", "Sert Güvenli Mod açıksa sadece İyi kalite kabul edilir."],
         })
         return base
 
@@ -1552,12 +1625,12 @@ def build_simple_trade_decision(
     if side == "LONG":
         if price is not None and price >= setup.entry:
             return {
-                "action": "AL",
-                "class": "simple-buy",
-                "subtitle": f"{symbol} için alım planı aktif görünüyor.",
-                "reason": f"Ana yön alım tarafında ve backtest onayı: {quality_text}.",
+                "action": "AL İÇİN KAPANIŞ BEKLE",
+                "class": "simple-wait",
+                "subtitle": f"{symbol} alım planı izleme bölgesinde.",
+                "reason": f"Anlık fiyat giriş seviyesinde/üstünde; kapanış teyidi olmadan AL sinyali verilmez. Backtest onayı: {quality_text}.",
                 "steps": [
-                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} üstünde kaldığını kontrol et.",
+                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} üstünde kaldığını görmeden alış açma.",
                     f"Alış açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
                     f"Kâr al seviyesini {setup.target:.{dec}f} yap.",
                     "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
@@ -1580,12 +1653,12 @@ def build_simple_trade_decision(
     if side == "SHORT":
         if price is not None and price <= setup.entry:
             return {
-                "action": "SAT",
-                "class": "simple-sell",
-                "subtitle": f"{symbol} için satış planı aktif görünüyor.",
-                "reason": f"Ana yön satış tarafında ve backtest onayı: {quality_text}.",
+                "action": "SAT İÇİN KAPANIŞ BEKLE",
+                "class": "simple-wait",
+                "subtitle": f"{symbol} satış planı izleme bölgesinde.",
+                "reason": f"Anlık fiyat giriş seviyesinde/altında; kapanış teyidi olmadan SAT sinyali verilmez. Backtest onayı: {quality_text}.",
                 "steps": [
-                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} altında kaldığını kontrol et.",
+                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} altında kaldığını görmeden satış açma.",
                     f"Satış açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
                     f"Kâr al seviyesini {setup.target:.{dec}f} yap.",
                     "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
@@ -1857,7 +1930,7 @@ with st.sidebar:
     st.divider()
     st.subheader("Basit Kullanım")
     enable_simple_mode = st.checkbox("Basit İşlem Modu", value=True, help="Teknik terimleri azaltıp AL / SAT / BEKLE / PAS GEÇ olarak gösterir.")
-    strict_safety_mode = st.checkbox("Sert Güvenli Mod", value=True, help="Sadece güçlü yön + iyi backtest kalitesi varsa işlem planına izin verir.")
+    strict_safety_mode = st.checkbox("Sert Güvenli Mod", value=False, help="Açık olursa sadece güçlü yön + İyi backtest kalitesi varsa AL/SAT verir. Kapalıyken Orta kalite de izlenebilir.")
     show_position_tracker = st.checkbox("Pozisyon Takip Modu", value=True, help="Açık pozisyonun için TUT / ÇIK / KÂR AL gibi sade durum üretir.")
 
     st.divider()
@@ -1871,26 +1944,43 @@ with st.sidebar:
     risk_pct = st.number_input("İşlem başına risk %", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
     rr = st.number_input("Risk/Reward", min_value=0.5, max_value=5.0, value=1.5, step=0.1)
     atr_mult = st.number_input("ATR Stop Çarpanı", min_value=0.5, max_value=5.0, value=1.5, step=0.1)
-    pip_value_per_lot = st.number_input("1 lot için yaklaşık pip değeri", min_value=0.1, value=10.0, step=0.5)
+    pip_value_estimate = estimate_pip_value_per_lot_usd(symbol, fetch_last_price(symbol))
+    pip_value_default = round(float(pip_value_estimate), 2) if pip_value_estimate and pip_value_estimate > 0 else 10.0
+    pip_value_per_lot = st.number_input(
+        "1 lot için yaklaşık pip değeri",
+        min_value=0.1,
+        value=float(pip_value_default),
+        step=0.5,
+        key=f"pip_value_per_lot_{symbol}",
+    )
+    if pip_value_estimate and pip_value_estimate > 0:
+        st.caption(f"USD hesap varsayımıyla otomatik tahmin: {pip_value_estimate:.2f}. Broker/hesap para birimine göre kontrol et.")
+    else:
+        st.caption("Pip değeri otomatik tahmin edilemedi; brokerındaki gerçek pip değerini gir.")
 
     st.divider()
     st.subheader("Backtest Ayarları")
     tf_options = list(TIMEFRAMES.keys())
-    bt_tf = st.selectbox("Backtest zaman dilimi", tf_options, index=tf_options.index(selected_tf))
+    if enable_simple_mode:
+        bt_tf = selected_tf
+        st.caption(f"Basit İşlem Modu açık olduğu için backtest zamanı otomatik olarak giriş zamanı ile aynı kullanılır: {bt_tf}")
+    else:
+        bt_tf = st.selectbox("Backtest zaman dilimi", tf_options, index=tf_options.index(selected_tf))
     default_period = BACKTEST_PERIODS.get(bt_tf, "30d")
-    bt_period = st.text_input("Backtest period", value=default_period, help="Örn: 5d, 30d, 90d, 120d. Yahoo Finance limitlerine bağlıdır.")
+    bt_period = st.text_input("Backtest period", value=default_period, key=f"bt_period_{bt_tf}", help="Örn: 5d, 30d, 90d, 120d. Yahoo Finance limitlerine bağlıdır.")
     signal_threshold = st.slider("Sinyal eşiği", min_value=25, max_value=85, value=60, step=5)
     spread_pips = st.number_input("Spread / maliyet (pip)", min_value=0.0, value=1.5, step=0.1)
     session_filter = st.selectbox("İşlem seansı", list(TRADING_SESSIONS.keys()), index=0, help="Backtest girişlerini seçilen seansla sınırlar.")
     cooldown_bars = st.number_input("Cooldown / işlem sonrası bekleme (mum)", min_value=0, max_value=200, value=5, step=1)
     max_same_direction_trades = st.number_input("Aynı yönde maksimum tekrar işlem", min_value=1, max_value=10, value=2, step=1)
+    min_trades_required = st.number_input("Minimum backtest işlem sayısı", min_value=10, max_value=100, value=20, step=5, help="Çok düşük olursa sonuç yanıltabilir; çok yüksek olursa kısa periyotta sık Yetersiz Örnek görürsün.")
 
     run_bt_requested = st.button("Backtest Çalıştır / Planı Onayla")
 
     st.divider()
     st.subheader("Parite Tarayıcı")
     scanner_tf = st.selectbox("Tarayıcı backtest zaman dilimi", tf_options, index=tf_options.index(selected_tf))
-    scanner_period = st.text_input("Tarayıcı backtest period", value=BACKTEST_PERIODS.get(scanner_tf, "30d"))
+    scanner_period = st.text_input("Tarayıcı backtest period", value=BACKTEST_PERIODS.get(scanner_tf, "30d"), key=f"scanner_period_{scanner_tf}")
     scanner_include_backtest = st.checkbox("Tarayıcıda backtest kalitesi hesapla (yavaş)", value=False)
     scanner_limit = st.number_input("Taranacak maksimum parite", min_value=1, max_value=len(SYMBOL_LIST), value=min(12, len(SYMBOL_LIST)), step=1)
     run_scanner_requested = st.button("Pariteleri Tara")
@@ -1905,6 +1995,8 @@ st.title("Forex Analyzer Pro")
 st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
 if strict_safety_mode:
     st.info("Sert Güvenli Mod aktif: yalnızca güçlü yön + İyi backtest kalitesi olan işlemler için AL/SAT kartı gösterilir.")
+else:
+    st.info("Pratik Mod aktif: İyi veya Orta backtest kalitesi izlenebilir; yine de gerçek işlemden önce demo/onay önerilir.")
 
 current_bt_key = make_backtest_key(
     symbol=symbol,
@@ -1918,6 +2010,7 @@ current_bt_key = make_backtest_key(
     cooldown_bars=int(cooldown_bars),
     session_filter=session_filter,
     max_same_direction_trades=int(max_same_direction_trades),
+    min_trades_required=int(min_trades_required),
 )
 
 if run_bt_requested:
@@ -1936,8 +2029,9 @@ if run_bt_requested:
             cooldown_bars=int(cooldown_bars),
             session_filter=session_filter,
             max_same_direction_trades=int(max_same_direction_trades),
+            min_trades_required=int(min_trades_required),
         )
-        q_label, q_css, q_text = assess_backtest_quality(bt_result)
+        q_label, q_css, q_text = assess_backtest_quality(bt_result, min_trades_required=int(min_trades_required))
         st.session_state["last_bt_key"] = current_bt_key
         st.session_state["last_bt_result"] = bt_result
         st.session_state["last_bt_quality"] = {
@@ -1965,6 +2059,7 @@ if run_scanner_requested:
             cooldown_bars=int(cooldown_bars),
             session_filter=session_filter,
             max_same_direction_trades=int(max_same_direction_trades),
+            min_trades_required=int(min_trades_required),
         )
         st.session_state["scanner_df"] = scanner_df
 
@@ -1997,10 +2092,11 @@ if "scanner_df" in st.session_state and isinstance(st.session_state["scanner_df"
         file_name="forex_pair_scanner.csv",
         mime="text/csv",
     )
+    st.caption("Not: 'Yetersiz Örnek' görürsen minimum işlem sayısını düşürebilir veya 15 Dakika / 1 Saat gibi daha uzun backtest periyodu kullanabilirsin. 5 Dakika verisi Yahoo tarafında kısa geçmiş sunduğu için sık yetersiz kalabilir.")
 
 # Main analysis
 summary_df, detail_df = analyse_symbol(symbol)
-final_label, final_score, filter_note = global_bias(summary_df)
+final_label, final_score, filter_note = global_bias(summary_df, selected_tf)
 
 plan_bt_key = make_backtest_key(
     symbol=symbol,
@@ -2014,6 +2110,7 @@ plan_bt_key = make_backtest_key(
     cooldown_bars=int(cooldown_bars),
     session_filter=session_filter,
     max_same_direction_trades=int(max_same_direction_trades),
+    min_trades_required=int(min_trades_required),
 )
 matched_quality = get_matching_backtest_quality(plan_bt_key)
 allowed_quality_labels = {"İyi"} if strict_safety_mode else {"İyi", "Orta"}
@@ -2272,6 +2369,6 @@ st.markdown(
     """
     **Kullanım Notu:** Bu sistem emir vermek için değil, karar disiplinini korumak için tasarlanmıştır. 
     4H ve 1H yönü çelişiyorsa işlem filtresi devreye girer. Risk Planı, aynı sembol ve giriş zaman dilimi için çalıştırılmış MTF backtest kalitesi uygun değilse kilitli kalır. 
-    Sert Güvenli Mod açıksa yalnızca güçlü yön + İyi backtest kalitesi kabul edilir. 15M/5M yalnızca giriş zamanlaması için kullanılmalıdır.
+    Sert Güvenli Mod açıksa yalnızca güçlü yön + İyi backtest kalitesi kabul edilir; Pratik Modda Orta kalite de izlenebilir. 15M/5M yalnızca giriş zamanlaması için kullanılmalıdır.
     """
 )
