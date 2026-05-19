@@ -872,7 +872,7 @@ def evaluate_bias(df: pd.DataFrame) -> BiasResult:
         momentum_score -= 8
         reasons.append("MACD histogram zayıflıyor")
 
-    # Bollinger/volatilite skoru: tek başına AL/SAT değil, pozisyon kalitesi filtresi.
+    # Bollinger/volatilite skoru: tek başına LONG/SHORT değil, pozisyon kalitesi filtresi.
     volatility_score = 0.0
     if bb_up > bb_low:
         band_pos = (close - bb_low) / (bb_up - bb_low)
@@ -1754,16 +1754,16 @@ def _is_short_bias(label: str) -> bool:
 def _mini_tf_text(label: str) -> str:
     label = str(label)
     if "Alım" in label:
-        return "AL"
+        return "LONG"
     if "Satış" in label:
-        return "SAT"
+        return "SHORT"
     if label == "Veri yok":
         return "YOK"
     return "BEKLE"
 
 
 def alert_decision_from_row(row: dict, alert_entry_tf: str = "15 Dakika") -> tuple[str, str, float]:
-    """Alarm ekranı için teknik sonuçları AL / SAT / BEKLE şeklinde sadeleştirir."""
+    """Alarm ekranı için teknik sonuçları LONG / SHORT / BEKLE şeklinde sadeleştirir."""
     h4 = str(row.get("4H", "İşlem Yok"))
     h1 = str(row.get("1H", "İşlem Yok"))
     m15 = str(row.get("15M", "İşlem Yok"))
@@ -1790,13 +1790,13 @@ def alert_decision_from_row(row: dict, alert_entry_tf: str = "15 Dakika") -> tup
         wait_short = short_base
 
     if long_ready:
-        return "AL", "4H + 1H yukarı ve giriş teyidi alım yönünde.", abs(score)
+        return "LONG", "4H + 1H yukarı ve giriş teyidi long yönünde.", abs(score)
     if short_ready:
-        return "SAT", "4H + 1H aşağı ve giriş teyidi satış yönünde.", abs(score)
+        return "SHORT", "4H + 1H aşağı ve giriş teyidi short yönünde.", abs(score)
     if wait_long:
-        return "BEKLE", "Ana yön alım tarafında; giriş teyidi bekleniyor.", abs(score) * 0.65
+        return "BEKLE", "Ana yön long tarafında; giriş teyidi bekleniyor.", abs(score) * 0.65
     if wait_short:
-        return "BEKLE", "Ana yön satış tarafında; giriş teyidi bekleniyor.", abs(score) * 0.65
+        return "BEKLE", "Ana yön short tarafında; giriş teyidi bekleniyor.", abs(score) * 0.65
     return "BEKLE", "4H + 1H aynı yönde net izin vermiyor.", abs(score) * 0.35
 
 
@@ -1816,16 +1816,16 @@ def build_alert_board_rows(symbols: list[str], change_window_minutes: int, alert
     df = pd.DataFrame(rows)
     if df.empty:
         return df
-    order = {"AL": 0, "SAT": 1, "BEKLE": 2}
+    order = {"LONG": 0, "SHORT": 1, "BEKLE": 2}
     df["_order"] = df["Alarm"].map(order).fillna(9)
     return df.sort_values(["_order", "Alarm Skoru", "Skor"], ascending=[True, False, False]).drop(columns=["_order"])
 
 
 def render_alert_card(row: dict) -> None:
     alarm = str(row.get("Alarm", "BEKLE"))
-    css = {"AL": "alert-buy", "SAT": "alert-sell", "BEKLE": "alert-wait"}.get(alarm, "alert-wait")
-    status_css = {"AL": "alert-status-buy", "SAT": "alert-status-sell", "BEKLE": "alert-status-wait"}.get(alarm, "alert-status-wait")
-    icon = {"AL": "🟢", "SAT": "🔴", "BEKLE": "🟡"}.get(alarm, "🟡")
+    css = {"LONG": "alert-buy", "SHORT": "alert-sell", "BEKLE": "alert-wait"}.get(alarm, "alert-wait")
+    status_css = {"LONG": "alert-status-buy", "SHORT": "alert-status-sell", "BEKLE": "alert-status-wait"}.get(alarm, "alert-status-wait")
+    icon = {"LONG": "🟢", "SHORT": "🔴", "BEKLE": "🟡"}.get(alarm, "🟡")
     symbol_txt = escape(str(row.get("Sembol", "-"))).replace("=X", "")
     reason = escape(str(row.get("Alarm Nedeni", "-")))
     score = escape(str(row.get("Alarm Skoru", "-")))
@@ -1882,7 +1882,7 @@ def render_pair_alert_screen(
     alert_sort_mode: str,
 ) -> None:
     st.header("Parite Alarm Ekranı")
-    st.caption("Major ve minör pariteleri tek bakışta AL / SAT / BEKLE olarak gösterir. Bu ekran hızlı takip içindir; gerçek işlem için İşlem Asistanı karar kartı ve demo doğrulama kullanılmalı.")
+    st.caption("Major ve minör pariteleri tek bakışta LONG / SHORT / BEKLE olarak gösterir. Bu ekran hızlı takip içindir; gerçek işlem için İşlem Asistanı karar kartı ve demo doğrulama kullanılmalı.")
 
     selected_symbols: list[str] = []
     for group in alert_groups:
@@ -1900,24 +1900,24 @@ def render_pair_alert_screen(
         st.warning("Alarm ekranı için veri alınamadı.")
         return
 
-    if alert_sort_mode == "Önce AL/SAT":
-        order = {"AL": 0, "SAT": 1, "BEKLE": 2}
+    if alert_sort_mode == "Önce LONG/SHORT":
+        order = {"LONG": 0, "SHORT": 1, "BEKLE": 2}
         board = board.assign(_sort=board["Alarm"].map(order).fillna(9)).sort_values(["_sort", "Alarm Skoru"], ascending=[True, False]).drop(columns=["_sort"])
-    elif alert_sort_mode == "Sadece AL-SAT üstte":
-        order = {"AL": 0, "SAT": 0, "BEKLE": 1}
+    elif alert_sort_mode == "Sadece LONG-SHORT üstte":
+        order = {"LONG": 0, "SHORT": 0, "BEKLE": 1}
         board = board.assign(_sort=board["Alarm"].map(order).fillna(9)).sort_values(["_sort", "Alarm Skoru"], ascending=[True, False]).drop(columns=["_sort"])
     else:
         board = board.sort_values("Alarm Skoru", ascending=False)
 
-    al_count = int((board["Alarm"] == "AL").sum())
-    sat_count = int((board["Alarm"] == "SAT").sum())
+    al_count = int((board["Alarm"] == "LONG").sum())
+    sat_count = int((board["Alarm"] == "SHORT").sum())
     wait_count = int((board["Alarm"] == "BEKLE").sum())
 
     st.markdown(
         f"""
         <div class="alert-summary-row">
-            <div class="alert-summary-box"><b>AL</b><span>🟢 {al_count}</span></div>
-            <div class="alert-summary-box"><b>SAT</b><span>🔴 {sat_count}</span></div>
+            <div class="alert-summary-box"><b>LONG</b><span>🟢 {al_count}</span></div>
+            <div class="alert-summary-box"><b>SHORT</b><span>🔴 {sat_count}</span></div>
             <div class="alert-summary-box"><b>BEKLE</b><span>🟡 {wait_count}</span></div>
             <div class="alert-summary-box"><b>Filtre</b><span>{escape(alert_entry_tf)}</span></div>
         </div>
@@ -2219,9 +2219,9 @@ def scanner_opportunity_from_row(row: dict, signal_mode: str) -> tuple[str, str,
         return "PAS", "Yön yok", score
 
     if "Alım" in bias:
-        side = "AL"
+        side = "LONG"
     elif "Satış" in bias:
-        side = "SAT"
+        side = "SHORT"
     else:
         return "PAS", "Yön okunamadı", score
 
@@ -2252,14 +2252,14 @@ def build_simple_trade_decision(
     signal_mode: str = "Dengeli Sinyal",
     allowed_quality_labels: Optional[set[str]] = None,
 ) -> dict:
-    """Teknik ekranı acemi kullanıcı için AL/SAT/BEKLE/PAS GEÇ kararına indirger."""
+    """Teknik ekranı acemi kullanıcı için LONG/SHORT/BEKLE/PAS GEÇ kararına indirger."""
     dec = price_decimals(symbol)
     base = {
         "action": "BEKLE",
         "class": "simple-wait",
         "subtitle": "Henüz net işlem yok.",
         "reason": filter_note,
-        "steps": ["Yeni işlem açma.", "Pariteyi izlemeye devam et.", "Backtest ve ana yön uyumu oluşmadan işlem alma."],
+        "steps": ["Yeni pozisyon açma.", "Pariteyi izlemeye devam et.", "Backtest ve ana yön uyumu oluşmadan işlem alma."],
         "levels": {},
     }
     if allowed_quality_labels is None:
@@ -2287,7 +2287,7 @@ def build_simple_trade_decision(
             "class": "simple-wait",
             "subtitle": "Önce strateji kontrolü gerekiyor.",
             "reason": "Bu sembol ve zaman dilimi için backtest onayı yok.",
-            "steps": ["Sidebar'dan Yeniden Hesapla butonuna bas.", "Strateji Kalitesi Orta veya İyi değilse işlem açma.", "Sert Güvenli Mod açıksa sadece İyi kalite kabul edilir."],
+            "steps": ["Sidebar'dan Yeniden Hesapla butonuna bas.", "Strateji Kalitesi Orta veya İyi değilse yeni pozisyon açma.", "Sert Güvenli Mod açıksa sadece İyi kalite kabul edilir."],
         })
         return base
 
@@ -2297,7 +2297,7 @@ def build_simple_trade_decision(
             "class": "simple-pass",
             "subtitle": "Kalite filtresi bu işlemi reddetti.",
             "reason": matched_quality.get("text", "Strateji kalitesi zayıf/yetersiz.") if matched_quality else quality_info["text"],
-            "steps": ["Bu ayarla işlem açma.", "Başka parite veya daha yüksek zaman dilimi dene.", "Kalite filtresi düzelmeden gerçek işlem alma."],
+            "steps": ["Bu ayarla yeni pozisyon açma.", "Başka parite veya daha yüksek zaman dilimi dene.", "Kalite filtresi düzelmeden gerçek pozisyon açma."],
         })
         return base
 
@@ -2308,7 +2308,7 @@ def build_simple_trade_decision(
             "class": "simple-pass",
             "subtitle": "Ana sinyal yeterince güçlü değil.",
             "reason": f"{signal_mode} için 'Güçlü Alım' veya 'Güçlü Satış' gerekli. Mevcut: {final_label}.",
-            "steps": ["Bu paritede şimdilik işlem açma.", "4H ve 1H güçlü aynı yöne dönene kadar bekle.", "Tarayıcıdan daha net fırsat ara."],
+            "steps": ["Bu paritede şimdilik yeni pozisyon açma.", "4H ve 1H güçlü aynı yöne dönene kadar bekle.", "Tarayıcıdan daha net fırsat ara."],
         })
         return base
 
@@ -2318,7 +2318,7 @@ def build_simple_trade_decision(
             "class": "simple-wait",
             "subtitle": "Sistem işlem planı üretmiyor.",
             "reason": filter_note,
-            "steps": ["Yeni işlem açma.", "Ana yön netleşene kadar bekle.", "Risk Planı oluşmadan emir girme."],
+            "steps": ["Yeni pozisyon açma.", "Ana yön netleşene kadar bekle.", "Risk Planı oluşmadan emir girme."],
         })
         return base
 
@@ -2334,26 +2334,26 @@ def build_simple_trade_decision(
     if side == "LONG":
         if price is not None and price >= setup.entry:
             return {
-                "action": "ŞİMDİ ALMA",
+                "action": "LONG AÇMA — TEYİT BEKLE",
                 "class": "simple-wait",
-                "subtitle": f"{symbol} için alım ancak mum kapanışıyla teyit edilirse değerlendirilmeli.",
+                "subtitle": f"{symbol} için long pozisyon ancak mum kapanışıyla teyit edilirse değerlendirilmeli.",
                 "reason": f"Fiyat giriş seviyesinde/üstünde ama {selected_tf} mum kapanışı teyidi bekleniyor. Backtest onayı: {quality_text}.",
                 "steps": [
-                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} üstünde kaldığını görmeden alış açma.",
-                    f"Alış açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
+                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} üstünde kaldığını görmeden LONG pozisyon açma.",
+                    f"LONG açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
                     f"Kâr al seviyesini {setup.target:.{dec}f} yap.",
                     "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
                 ],
                 "levels": levels,
             }
         return {
-            "action": "ALIM İÇİN BEKLE",
+            "action": "LONG İÇİN BEKLE",
             "class": "simple-wait",
-            "subtitle": f"{symbol} alım yönünde izlenebilir ama giriş henüz aktif değil.",
+            "subtitle": f"{symbol} long yönünde izlenebilir ama giriş henüz aktif değil.",
             "reason": f"Fiyat giriş seviyesinin altında. Giriş seviyesi: {setup.entry:.{dec}f}.",
             "steps": [
-                f"Fiyat {setup.entry:.{dec}f} üstünde {selected_tf} mum kapanışı yaparsa AL düşün.",
-                f"Alış açarsan stop {setup.stop:.{dec}f}, kâr al {setup.target:.{dec}f}.",
+                f"Fiyat {setup.entry:.{dec}f} üstünde {selected_tf} mum kapanışı yaparsa LONG açmayı düşün.",
+                f"LONG açarsan stop {setup.stop:.{dec}f}, kâr al {setup.target:.{dec}f}.",
                 "Fiyat girişe gelmeden acele etme.",
             ],
             "levels": levels,
@@ -2362,26 +2362,26 @@ def build_simple_trade_decision(
     if side == "SHORT":
         if price is not None and price <= setup.entry:
             return {
-                "action": "ŞİMDİ SATMA",
+                "action": "SHORT AÇMA — TEYİT BEKLE",
                 "class": "simple-wait",
-                "subtitle": f"{symbol} için satış ancak mum kapanışıyla teyit edilirse değerlendirilmeli.",
+                "subtitle": f"{symbol} için short pozisyon ancak mum kapanışıyla teyit edilirse değerlendirilmeli.",
                 "reason": f"Fiyat giriş seviyesinde/altında ama {selected_tf} mum kapanışı teyidi bekleniyor. Backtest onayı: {quality_text}.",
                 "steps": [
-                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} altında kaldığını görmeden satış açma.",
-                    f"Satış açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
+                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} altında kaldığını görmeden SHORT pozisyon açma.",
+                    f"SHORT açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
                     f"Kâr al seviyesini {setup.target:.{dec}f} yap.",
                     "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
                 ],
                 "levels": levels,
             }
         return {
-            "action": "SATIŞ İÇİN BEKLE",
+            "action": "SHORT İÇİN BEKLE",
             "class": "simple-wait",
-            "subtitle": f"{symbol} satış yönünde izlenebilir ama giriş henüz aktif değil.",
+            "subtitle": f"{symbol} short yönünde izlenebilir ama giriş henüz aktif değil.",
             "reason": f"Fiyat giriş seviyesinin üstünde. Giriş seviyesi: {setup.entry:.{dec}f}.",
             "steps": [
-                f"Fiyat {setup.entry:.{dec}f} altında {selected_tf} mum kapanışı yaparsa SAT düşün.",
-                f"Satış açarsan stop {setup.stop:.{dec}f}, kâr al {setup.target:.{dec}f}.",
+                f"Fiyat {setup.entry:.{dec}f} altında {selected_tf} mum kapanışı yaparsa SHORT açmayı düşün.",
+                f"SHORT açarsan stop {setup.stop:.{dec}f}, kâr al {setup.target:.{dec}f}.",
                 "Fiyat girişe gelmeden acele etme.",
             ],
             "levels": levels,
@@ -2643,7 +2643,7 @@ def build_entry_signal_tracker(
     signal_mode: str = "Dengeli Sinyal",
     market_regime: Optional[dict] = None,
 ) -> dict:
-    """Son kapanan giriş mumuna göre kullanıcıya net AL/SAT/BEKLE takibi verir."""
+    """Son kapanan giriş mumuna göre kullanıcıya net LONG/SHORT/BEKLE takibi verir."""
     dec = price_decimals(symbol)
     current_price_label = "-" if price is None else f"{price:.{dec}f}"
     current_price_value = float(price) if price is not None else None
@@ -2684,7 +2684,7 @@ def build_entry_signal_tracker(
         direction_ok = False
 
     side = setup.side if setup is not None else None
-    side_word = "AL" if side == "LONG" else ("SAT" if side == "SHORT" else "BEKLE")
+    side_word = "LONG AÇ" if side == "LONG" else ("SHORT AÇ" if side == "SHORT" else "BEKLE")
     compare_word = "üstünde" if side == "LONG" else "altında"
     trigger_level = "-" if setup is None else f"{setup.entry:.{dec}f}"
     trigger_condition = (
@@ -2739,11 +2739,11 @@ def build_entry_signal_tracker(
         summary = "Henüz takip edilecek giriş seviyesi yok. Önce ana yön, backtest ve risk planı hazır olmalı."
         final_step_text = "Risk planı bekleniyor"
         primary_blocker = "Risk planı yok"
-        primary_blocker_text = "Ana yön veya veri koşulları giriş seviyesi üretmedi."
+        primary_blocker_text = "Ana yön veya veri koşulları yeni pozisyon için giriş seviyesi üretmedi."
     elif not same_tf_ok:
         action = "BEKLE"
         status_class = "entry-signal-pass"
-        summary = "Backtest zamanı ile giriş zamanı aynı olmadığı için giriş sinyali kilitli."
+        summary = "Backtest zamanı ile giriş zamanı aynı olmadığı için yeni pozisyon sinyali kilitli."
         final_step_text = "Zaman dilimi eşleşmiyor"
         primary_blocker = "Zaman dilimi eşleşmiyor"
         primary_blocker_text = "Backtest zamanı, giriş zamanı ile aynı olmalı."
@@ -2751,14 +2751,14 @@ def build_entry_signal_tracker(
         if quality_status == "blocked":
             action = "PAS GEÇ"
             status_class = "entry-signal-pass"
-            summary = f"Piyasa yönü güçlü olabilir ama {quality_text}. Bu yüzden sistem giriş sinyali vermez."
+            summary = f"Piyasa yönü güçlü olabilir ama {quality_text}. Bu yüzden sistem yeni pozisyon sinyali vermez."
             final_step_text = "Plan kalitesi yetersiz"
             primary_blocker = "Kalite filtresi reddetti"
             primary_blocker_text = quality_text
         else:
             action = "BEKLE"
             status_class = "entry-signal-wait"
-            summary = "Plan kontrolü yapılmadan giriş sinyali verilmez."
+            summary = "Plan kontrolü yapılmadan yeni pozisyon sinyali verilmez."
             final_step_text = "Plan kontrolü bekleniyor"
             primary_blocker = "Plan kontrolü bekleniyor"
             primary_blocker_text = "Planı Kontrol Et butonu ile kalite sonucu alınmalı."
@@ -2860,7 +2860,7 @@ def apply_entry_signal_to_decision(decision: dict, tracker: dict) -> dict:
 
     out = dict(decision)
     side = tracker.get("side")
-    side_word = tracker.get("side_word", "AL" if side == "LONG" else "SAT")
+    side_word = tracker.get("side_word", "LONG AÇ" if side == "LONG" else "SHORT AÇ")
     out.update({
         "action": tracker.get("action", f"SİSTEM {side_word} SİNYALİ"),
         "class": tracker.get("decision_class", "simple-buy" if side == "LONG" else "simple-sell"),
@@ -2875,13 +2875,13 @@ def apply_entry_signal_to_decision(decision: dict, tracker: dict) -> dict:
         out["levels"] = tracker["levels"]
     if side == "LONG":
         out["steps"] = [
-            f"{tracker.get('action', 'Sistem AL sinyali')} üretildi; broker fiyatını ve spreadi kontrol et.",
+            f"{tracker.get('action', 'Sistem LONG AÇ sinyali')} üretildi; broker fiyatını ve spreadi kontrol et.",
             "İşleme girersen stop ve kâr al seviyelerini değiştirme.",
             "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
         ]
     else:
         out["steps"] = [
-            f"{tracker.get('action', 'Sistem SAT sinyali')} üretildi; broker fiyatını ve spreadi kontrol et.",
+            f"{tracker.get('action', 'Sistem SHORT AÇ sinyali')} üretildi; broker fiyatını ve spreadi kontrol et.",
             "İşleme girersen stop ve kâr al seviyelerini değiştirme.",
             "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
         ]
@@ -2997,14 +2997,14 @@ def build_beginner_single_decision(
             "subtitle": "Ana yön net değil.",
             "reason": "4H ve 1H aynı yönde güçlü sinyal üretmiyor. Alt zaman dilimleri ne derse desin işlem açma.",
             "steps": [
-                "Yeni işlem açma.",
+                "Yeni pozisyon açma.",
                 "4H ve 1H aynı yöne dönene kadar bekle.",
-                "15M veya 5M tek başına AL/SAT sebebi değildir.",
+                "15M veya 5M tek başına LONG/SHORT sebebi değildir.",
             ],
             "levels": {},
         }
 
-    side_word = "AL" if side == "LONG" else "SAT"
+    side_word = "LONG AÇ" if side == "LONG" else "SHORT AÇ"
     side_text = "alım" if side == "LONG" else "satış"
     trigger_word = "üstünde" if side == "LONG" else "altında"
     m15_ok = (side == "LONG" and not pd.isna(m15) and m15 >= 25) or (side == "SHORT" and not pd.isna(m15) and m15 <= -25)
@@ -3032,7 +3032,7 @@ def build_beginner_single_decision(
             "steps": [
                 "Bu paritede bu ayarla işlem açma.",
                 "Başka parite tara veya daha yüksek zaman dilimi dene.",
-                "Kalite filtresi düzelmeden gerçek işlem alma.",
+                "Kalite filtresi düzelmeden gerçek pozisyon açma.",
             ],
             "levels": {},
         }
@@ -3146,30 +3146,30 @@ def build_position_tracker_result(
     if side == "SHORT" and "Alım" in final_label:
         opposite = True
 
-    action = "TUT"
+    action = "POZİSYONU TUT"
     css = "simple-buy" if pips is not None and pips >= 0 else "simple-wait"
     reason = "Plan bozulmadı. Stop ve kâr al seviyelerini takip et."
 
     if side == "LONG":
         if stop > 0 and current_price <= stop:
-            action, css, reason = "ÇIK", "simple-sell", f"Fiyat stop seviyesine geldi/altına indi: {stop:.{dec}f}."
+            action, css, reason = "POZİSYONU KAPAT", "simple-sell", f"Fiyat stop seviyesine geldi/altına indi: {stop:.{dec}f}."
         elif target > 0 and current_price >= target:
-            action, css, reason = "KÂR AL", "simple-buy", f"Fiyat hedef seviyeye geldi/üstüne çıktı: {target:.{dec}f}."
+            action, css, reason = "KÂR AL / POZİSYONU KAPAT", "simple-buy", f"Fiyat hedef seviyeye geldi/üstüne çıktı: {target:.{dec}f}."
         elif to_target_pips is not None and target_distance_pips and 0 <= to_target_pips <= max(target_distance_pips * 0.15, 2):
-            action, css, reason = "KÂR AL YAKLAŞTI", "simple-buy", "Fiyat hedefe yaklaştı; plan dışı acele etmeden hedef/stop takibi yap."
+            action, css, reason = "KÂR AL SEVİYESİNE YAKLAŞTI", "simple-buy", "Fiyat hedefe yaklaştı; plan dışı acele etmeden kâr al/stop takibi yap."
         elif opposite:
-            action, css, reason = "ÇIKMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
+            action, css, reason = "KAPATMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
         elif neutral and pips is not None and pips < 0:
             action, css, reason = "DİKKAT", "simple-wait", "Ana yön kararsız ve pozisyon zararda. Stopa sadık kal."
     else:
         if stop > 0 and current_price >= stop:
-            action, css, reason = "ÇIK", "simple-sell", f"Fiyat stop seviyesine geldi/üstüne çıktı: {stop:.{dec}f}."
+            action, css, reason = "POZİSYONU KAPAT", "simple-sell", f"Fiyat stop seviyesine geldi/üstüne çıktı: {stop:.{dec}f}."
         elif target > 0 and current_price <= target:
-            action, css, reason = "KÂR AL", "simple-buy", f"Fiyat hedef seviyeye geldi/altına indi: {target:.{dec}f}."
+            action, css, reason = "KÂR AL / POZİSYONU KAPAT", "simple-buy", f"Fiyat hedef seviyeye geldi/altına indi: {target:.{dec}f}."
         elif to_target_pips is not None and target_distance_pips and 0 <= to_target_pips <= max(target_distance_pips * 0.15, 2):
-            action, css, reason = "KÂR AL YAKLAŞTI", "simple-buy", "Fiyat hedefe yaklaştı; plan dışı acele etmeden hedef/stop takibi yap."
+            action, css, reason = "KÂR AL SEVİYESİNE YAKLAŞTI", "simple-buy", "Fiyat hedefe yaklaştı; plan dışı acele etmeden kâr al/stop takibi yap."
         elif opposite:
-            action, css, reason = "ÇIKMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
+            action, css, reason = "KAPATMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
         elif neutral and pips is not None and pips < 0:
             action, css, reason = "DİKKAT", "simple-wait", "Ana yön kararsız ve pozisyon zararda. Stopa sadık kal."
 
@@ -3204,13 +3204,13 @@ def render_position_tracker_result(result: dict, current_price: Optional[float],
     target_txt = "-" if result.get("to_target_pips") is None else f"{result['to_target_pips']:.1f} pip"
 
     card_class = escape(str(result.get("class", "simple-wait")))
-    action = escape(str(result.get("action", "TUT")))
+    action = escape(str(result.get("action", "POZİSYONU TUT")))
     reason = escape(str(result.get("text", "")))
     risk_note = escape(str(result.get("risk_note", "")))
     html = (
         f"<div class='simple-card {card_class}'>"
         f"<div class='simple-action'>{action}</div>"
-        f"<div class='simple-subtitle'>Pozisyon takip sonucu</div>"
+        f"<div class='simple-subtitle'>Açık pozisyon takip sonucu</div>"
         f"<div><b>Sebep:</b> {reason}</div>"
         f"<div style='margin-top:6px;'><b>Risk Notu:</b> {risk_note}</div>"
         f"<div class='simple-levels'>"
@@ -3408,7 +3408,7 @@ with st.sidebar:
     with st.expander("Alarm ekranı ayarları", expanded=screen_mode == "Parite Alarm Ekranı"):
         alert_groups = st.multiselect("Gösterilecek gruplar", list(ALERT_PAIR_GROUPS.keys()), default=list(ALERT_PAIR_GROUPS.keys()))
         alert_entry_tf = st.selectbox("Alarm giriş teyidi", ["15 Dakika", "5 Dakika", "1 Saat"], index=0)
-        alert_sort_mode = st.selectbox("Sıralama", ["Önce AL/SAT", "Sadece AL-SAT üstte", "En yüksek skor"], index=0)
+        alert_sort_mode = st.selectbox("Sıralama", ["Önce LONG/SHORT", "Sadece LONG-SHORT üstte", "En yüksek skor"], index=0)
         st.caption("Alarm ekranı hızlı takip içindir. Yeni başlayan kullanımda 15 Dakika önerilir.")
 
     decision_tf = "15 Dakika" if beginner_mode else selected_tf
@@ -3451,10 +3451,12 @@ if 'beginner_mode' in locals() and beginner_mode:
 
 st.title("Forex Analyzer Pro")
 st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
+
+st.info("Terim notu: LONG AÇ = yükseliş beklentisiyle yeni pozisyon açmak. SHORT AÇ = düşüş beklentisiyle yeni pozisyon açmak. POZİSYONU KAPAT = açık işlemi sonlandırmak.")
 if beginner_mode:
-    st.info("Yeni Başlayan Modu aktif: 4H ana yön, 1H işlem izni, 15M giriş şartı olarak kullanılır. Sen sadece AL / SAT / BEKLE / PAS GEÇ kararını takip et.")
+    st.info("Yeni Başlayan Modu aktif: 4H ana yön, 1H işlem izni, 15M giriş şartı olarak kullanılır. Sen sadece LONG / SHORT / BEKLE / PAS GEÇ kararını takip et.")
 elif strict_safety_mode:
-    st.info("Sert Güvenli Mod aktif: yalnızca güçlü yön + İyi backtest kalitesi olan işlemler için AL/SAT kartı gösterilir.")
+    st.info("Sert Güvenli Mod aktif: yalnızca güçlü yön + İyi backtest kalitesi olan işlemler için LONG/SHORT kartı gösterilir.")
 else:
     mode_note = signal_mode_settings(signal_mode)["description"]
     if practical_signal_mode:
@@ -3747,7 +3749,7 @@ with left_col:
 with right_col:
     st.subheader("Piyasa Yönü")
     st.plotly_chart(gauge_figure(final_label, final_score), use_container_width=True)
-    st.caption("Bu gösterge sadece yön gücüdür; AL/SAT kararı için İşlem Kararı ve Canlı Giriş Takibi geçmeli.")
+    st.caption("Bu gösterge sadece yön gücüdür; LONG/SHORT kararı için İşlem Kararı ve Canlı Giriş Takibi geçmeli.")
     regime_css = "ok-box" if market_regime.get("state") == "ok" else "warn-box"
     st.markdown(
         f"<div class='{regime_css}'><b>Piyasa Tipi: {market_regime.get('label', '-')}</b><br>{market_regime.get('text', '-')}</div>",
@@ -3958,6 +3960,6 @@ st.markdown(
     """
     **Kullanım Notu:** Bu sistem emir vermek için değil, karar disiplinini korumak için tasarlanmıştır.
     Yeni Başlayan Modu açıksa 4H ve 1H sadece ana yönü belirler, 15M giriş zamanıdır, 5M karar verici olarak gösterilmez.
-    Ekrandaki tek karar kartı AL / SAT / BEKLE / PAS GEÇ sonucunu verir; teknik detaylar yalnızca kontrol amaçlıdır.
+    Ekrandaki tek karar kartı LONG / SHORT / BEKLE / PAS GEÇ sonucunu verir; teknik detaylar yalnızca kontrol amaçlıdır.
     """
 )
