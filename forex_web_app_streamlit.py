@@ -28,6 +28,7 @@ import pytz
 import streamlit as st
 import yfinance as yf
 from plotly.subplots import make_subplots
+from streamlit_autorefresh import st_autorefresh
 
 TR_TZ = pytz.timezone("Europe/Istanbul")
 
@@ -3347,6 +3348,10 @@ def plot_live_trigger(symbol: str, selected_tf: str, global_label: str) -> go.Fi
 
 with st.sidebar:
     st.header("Kontrol Paneli")
+
+    with st.expander("Otomatik yenileme", expanded=False):
+        auto_refresh = st.checkbox("Otomatik yenile", value=True)
+        refresh_seconds = st.selectbox("Yenileme aralığı", [30, 60, 120, 300], index=1)
 
     screen_mode = st.radio("Ekran", ["İşlem Asistanı", "Parite Alarm Ekranı"], index=0)
 
