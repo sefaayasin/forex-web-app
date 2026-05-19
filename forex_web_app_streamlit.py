@@ -29,6 +29,16 @@ import streamlit as st
 import yfinance as yf
 from plotly.subplots import make_subplots
 
+try:
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.metrics import accuracy_score, roc_auc_score
+    SKLEARN_AVAILABLE = True
+except Exception:
+    RandomForestClassifier = None
+    accuracy_score = None
+    roc_auc_score = None
+    SKLEARN_AVAILABLE = False
+
 TR_TZ = pytz.timezone("Europe/Istanbul")
 
 # =============================================================================
@@ -3341,6 +3351,325 @@ def plot_live_trigger(symbol: str, selected_tf: str, global_label: str) -> go.Fi
     fig.update_layout(height=340, margin=dict(l=30, r=20, t=45, b=30), title=f"{selected_tf} Giriş Tetikleyici | Ana Yön Filtresi: {global_label}")
     return fig
 
+
+
+# =============================================================================
+# MACHINE LEARNING FILTER
+# =============================================================================
+
+ML_FEATURE_COLUMNS = [
+    "side_long",
+    "entry_score_aligned",
+    "h4_score_aligned",
+    "h1_score_aligned",
+    "m15_score_aligned",
+    "abs_entry_score",
+    "agreement_count",
+    "hour",
+    "weekday",
+]
+
+
+def _safe_float_col(df: pd.DataFrame, col: str) -> pd.Series:
+    if col not in df.columns:
+        return pd.Series(np.nan, index=df.index)
+    return pd.to_numeric(df[col], errors="coerce")
+
+
+def build_ml_dataset_from_trades(trades: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
+    """
+    Backtest işlemlerini ML eğitim verisine çevirir.
+    Hedef: Bu sinyal TP/pozitif sonuç verdi mi?
+    """
+    if trades is None or trades.empty:
+        return pd.DataFrame(columns=ML_FEATURE_COLUMNS), pd.Series(dtype=int)
+
+    needed = ["Side", "Entry Score", "4H Score", "1H Score", "15M Score", "Entry Time", "PnL"]
+    missing = [c for c in needed if c not in trades.columns]
+    if missing:
+        return pd.DataFrame(columns=ML_FEATURE_COLUMNS), pd.Series(dtype=int)
+
+    t = trades.copy()
+    t["Entry Time"] = pd.to_datetime(t["Entry Time"], utc=True, errors="coerce")
+    t = t.dropna(subset=["Entry Time", "Side", "PnL"])
+
+    entry_score = _safe_float_col(t, "Entry Score")
+    h4_score = _safe_float_col(t, "4H Score")
+    h1_score = _safe_float_col(t, "1H Score")
+    m15_score = _safe_float_col(t, "15M Score")
+    pnl = _safe_float_col(t, "PnL")
+
+    side_long = (t["Side"].astype(str).str.upper() == "LONG").astype(int)
+    side_mult = np.where(side_long == 1, 1.0, -1.0)
+
+    x = pd.DataFrame(index=t.index)
+    x["side_long"] = side_long
+    x["entry_score_aligned"] = entry_score * side_mult
+    x["h4_score_aligned"] = h4_score * side_mult
+    x["h1_score_aligned"] = h1_score * side_mult
+    x["m15_score_aligned"] = m15_score * side_mult
+    x["abs_entry_score"] = entry_score.abs()
+    aligned_parts = pd.concat([
+        x["entry_score_aligned"],
+        x["h4_score_aligned"],
+        x["h1_score_aligned"],
+        x["m15_score_aligned"],
+    ], axis=1)
+    x["agreement_count"] = (aligned_parts >= 25).sum(axis=1)
+    x["hour"] = t["Entry Time"].dt.hour
+    x["weekday"] = t["Entry Time"].dt.weekday
+
+    y = (pnl > 0).astype(int)
+    valid = x.replace([np.inf, -np.inf], np.nan).dropna().index
+    x = x.loc[valid, ML_FEATURE_COLUMNS].astype(float)
+    y = y.loc[valid].astype(int)
+    return x, y
+
+
+def train_ml_model_from_backtest(bt_result: Optional[BacktestResult], min_samples: int = 50) -> dict:
+    """
+    Backtest sonuçlarından basit bir RandomForest sınıflandırıcı eğitir.
+    Not: Bu model karar verici değil, sinyal kalite filtresidir.
+    """
+    if not SKLEARN_AVAILABLE:
+        return {
+            "status": "not_available",
+            "label": "ML pasif",
+            "text": "scikit-learn kurulu değil. requirements.txt içine scikit-learn eklenmeli.",
+        }
+
+    if bt_result is None or bt_result.trades is None or bt_result.trades.empty:
+        return {
+            "status": "no_data",
+            "label": "ML bekliyor",
+            "text": "ML eğitimi için önce backtest sonucunda işlem oluşmalı.",
+        }
+
+    x, y = build_ml_dataset_from_trades(bt_result.trades)
+    n = len(x)
+    if n < int(min_samples):
+        return {
+            "status": "insufficient",
+            "label": "ML yetersiz örnek",
+            "text": f"ML eğitimi için {int(min_samples)} işlem isteniyor; mevcut örnek: {n}.",
+            "sample_count": n,
+        }
+
+    if y.nunique() < 2:
+        return {
+            "status": "one_class",
+            "label": "ML eğitilemedi",
+            "text": "Backtest işlemlerinde tek sınıf var. Hem kazanan hem kaybeden örnek gerekli.",
+            "sample_count": n,
+        }
+
+    split = int(n * 0.70)
+    split = max(10, min(split, n - 5))
+    x_train, x_test = x.iloc[:split], x.iloc[split:]
+    y_train, y_test = y.iloc[:split], y.iloc[split:]
+
+    if y_train.nunique() < 2 or y_test.nunique() < 2:
+        # Yine de eğitilebilir; fakat test kalitesi zayıf kabul edilir.
+        quality_note = "Train/test sınıf dağılımı zayıf; ML metrikleri dikkatli yorumlanmalı."
+    else:
+        quality_note = ""
+
+    model = RandomForestClassifier(
+        n_estimators=220,
+        max_depth=5,
+        min_samples_leaf=3,
+        random_state=42,
+        class_weight="balanced",
+    )
+    model.fit(x_train, y_train)
+
+    pred = model.predict(x_test)
+    proba = model.predict_proba(x_test)[:, 1] if hasattr(model, "predict_proba") else pred.astype(float)
+
+    accuracy = float(accuracy_score(y_test, pred)) if accuracy_score is not None and len(y_test) else np.nan
+    try:
+        auc = float(roc_auc_score(y_test, proba)) if y_test.nunique() == 2 else np.nan
+    except Exception:
+        auc = np.nan
+
+    return {
+        "status": "ready",
+        "label": "ML hazır",
+        "text": quality_note or "ML modeli backtest sinyallerinden eğitildi.",
+        "model": model,
+        "feature_columns": ML_FEATURE_COLUMNS,
+        "sample_count": n,
+        "train_count": len(x_train),
+        "test_count": len(x_test),
+        "test_accuracy": accuracy,
+        "test_auc": auc,
+        "historical_win_rate": float(y.mean()),
+    }
+
+
+def build_current_ml_feature(summary: pd.DataFrame, selected_tf: str, setup: Optional[TradeSetup], final_score: float) -> Optional[pd.DataFrame]:
+    if setup is None:
+        return None
+
+    side = setup.side
+    side_long = 1 if side == "LONG" else 0
+    side_mult = 1.0 if side == "LONG" else -1.0
+
+    entry_score = _tf_score(summary, selected_tf)
+    if pd.isna(entry_score):
+        entry_score = final_score
+
+    h4_score = _tf_score(summary, "4 Saat")
+    h1_score = _tf_score(summary, "1 Saat")
+    m15_score = _tf_score(summary, "15 Dakika")
+
+    vals = {
+        "side_long": side_long,
+        "entry_score_aligned": float(entry_score) * side_mult,
+        "h4_score_aligned": float(0 if pd.isna(h4_score) else h4_score) * side_mult,
+        "h1_score_aligned": float(0 if pd.isna(h1_score) else h1_score) * side_mult,
+        "m15_score_aligned": float(0 if pd.isna(m15_score) else m15_score) * side_mult,
+        "abs_entry_score": abs(float(entry_score)),
+        "agreement_count": 0.0,
+        "hour": float(pd.Timestamp.now(tz=TR_TZ).hour),
+        "weekday": float(pd.Timestamp.now(tz=TR_TZ).weekday()),
+    }
+
+    aligned_scores = [
+        vals["entry_score_aligned"],
+        vals["h4_score_aligned"],
+        vals["h1_score_aligned"],
+        vals["m15_score_aligned"],
+    ]
+    vals["agreement_count"] = float(sum(v >= 25 for v in aligned_scores))
+
+    return pd.DataFrame([vals], columns=ML_FEATURE_COLUMNS).astype(float)
+
+
+def build_live_ml_prediction(
+    bt_result: Optional[BacktestResult],
+    summary: pd.DataFrame,
+    selected_tf: str,
+    setup: Optional[TradeSetup],
+    final_score: float,
+    min_samples: int = 50,
+) -> dict:
+    model_info = train_ml_model_from_backtest(bt_result, min_samples=min_samples)
+    if model_info.get("status") != "ready":
+        return model_info
+
+    x_live = build_current_ml_feature(summary, selected_tf, setup, final_score)
+    if x_live is None:
+        model_info.update({
+            "status": "no_setup",
+            "label": "ML bekliyor",
+            "text": "ML olasılığı için önce LONG/SHORT yönünde risk planı oluşmalı.",
+        })
+        return model_info
+
+    model = model_info["model"]
+    try:
+        probability = float(model.predict_proba(x_live[ML_FEATURE_COLUMNS])[:, 1][0])
+    except Exception:
+        probability = np.nan
+
+    model_info["probability"] = probability
+    model_info["probability_pct"] = None if pd.isna(probability) else probability * 100
+    model_info["side"] = setup.side if setup is not None else None
+    model_info["label"] = "ML tahmini hazır"
+    model_info["text"] = (
+        "Bu olasılık, geçmişte benzer teknik sinyallerin pozitif sonuç verme ihtimalidir. "
+        "Kesinlik değil, ek filtre olarak kullanılmalıdır."
+    )
+    return model_info
+
+
+def ml_should_block_trade(ml_prediction: dict, threshold_pct: float, filter_enabled: bool) -> tuple[bool, str]:
+    if not filter_enabled:
+        return False, "ML filtresi kapalı."
+
+    status = ml_prediction.get("status")
+    if status != "ready":
+        return True, ml_prediction.get("text", "ML modeli hazır değil.")
+
+    prob = ml_prediction.get("probability_pct")
+    if prob is None or pd.isna(prob):
+        return True, "ML olasılığı hesaplanamadı."
+
+    if float(prob) < float(threshold_pct):
+        return True, f"ML güveni %{float(prob):.1f}; minimum eşik %{float(threshold_pct):.0f}."
+
+    return False, f"ML güveni %{float(prob):.1f}; eşik geçildi."
+
+
+def is_new_position_decision(action: str) -> bool:
+    a = str(action).upper()
+    if "PAS" in a:
+        return False
+    if "KAPAT" in a or "TUT" in a:
+        return False
+    return ("LONG" in a or "SHORT" in a)
+
+
+def apply_ml_filter_to_decision(decision: dict, ml_prediction: dict, filter_enabled: bool, threshold_pct: float) -> dict:
+    if not filter_enabled:
+        return decision
+
+    action = str(decision.get("action", ""))
+    if not is_new_position_decision(action):
+        return decision
+
+    block, reason = ml_should_block_trade(ml_prediction, threshold_pct, filter_enabled)
+    if not block:
+        out = dict(decision)
+        out["reason"] = f"{out.get('reason', '')} ML filtresi geçti: {reason}"
+        return out
+
+    out = dict(decision)
+    out.update({
+        "action": "PAS GEÇ",
+        "class": "simple-pass",
+        "subtitle": "ML filtresi yeni pozisyonu reddetti.",
+        "reason": reason,
+        "steps": [
+            "Bu sinyalde yeni pozisyon açma.",
+            "ML güveni eşik üstüne çıkmadan veya yeni backtest oluşmadan bekle.",
+            "Başka pariteyi Alarm Ekranı veya İşlem Asistanı ile kontrol et.",
+        ],
+    })
+    return out
+
+
+def render_ml_prediction_card(ml_prediction: dict, threshold_pct: float, filter_enabled: bool) -> None:
+    if not filter_enabled:
+        return
+
+    status = ml_prediction.get("status", "unknown")
+    label = escape(str(ml_prediction.get("label", "ML")))
+    text = escape(str(ml_prediction.get("text", "")))
+
+    if status == "ready":
+        prob = ml_prediction.get("probability_pct")
+        prob_txt = "-" if prob is None or pd.isna(prob) else f"%{float(prob):.1f}"
+        acc = ml_prediction.get("test_accuracy")
+        auc = ml_prediction.get("test_auc")
+        acc_txt = "-" if acc is None or pd.isna(acc) else f"%{float(acc)*100:.1f}"
+        auc_txt = "-" if auc is None or pd.isna(auc) else f"{float(auc):.2f}"
+        sample_count = ml_prediction.get("sample_count", "-")
+        css = "ok-box" if prob is not None and not pd.isna(prob) and float(prob) >= float(threshold_pct) else "bad-box"
+        st.markdown(
+            f"<div class='{css}'><b>{label}</b><br>"
+            f"Pozitif işlem olasılığı: <b>{prob_txt}</b> | Minimum eşik: %{float(threshold_pct):.0f}<br>"
+            f"Örnek: {sample_count} | Test doğruluk: {acc_txt} | AUC: {auc_txt}<br>"
+            f"{text}</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f"<div class='warn-box'><b>{label}</b><br>{text}</div>",
+            unsafe_allow_html=True,
+        )
+
 # =============================================================================
 # UI
 # =============================================================================
@@ -3405,6 +3734,19 @@ with st.sidebar:
         change_window_label = st.selectbox("Yüzde değişim periyodu", list(PRICE_CHANGE_WINDOWS.keys()), index=1)
         change_window_minutes = PRICE_CHANGE_WINDOWS[change_window_label]
 
+    with st.expander("Makine öğrenmesi", expanded=False):
+        ml_filter_enabled = st.checkbox(
+            "ML filtresi aktif",
+            value=False,
+            help="Açık olursa teknik sinyalin geçmiş benzer örneklerdeki başarı olasılığı hesaplanır. Eşik altında yeni pozisyon reddedilir.",
+        )
+        ml_threshold_pct = st.slider("Minimum ML güveni %", min_value=50, max_value=80, value=60, step=5)
+        ml_min_samples = st.number_input("ML minimum işlem örneği", min_value=20, max_value=500, value=50, step=10)
+        if not SKLEARN_AVAILABLE:
+            st.warning("ML için scikit-learn kurulu değil. requirements.txt içine scikit-learn ekle.")
+        else:
+            st.caption("ML modeli, son backtestte oluşan işlemlerden otomatik eğitilir. Karar verici değil, ek kalite filtresidir.")
+
 
     with st.expander("Alarm ekranı ayarları", expanded=screen_mode == "Parite Alarm Ekranı"):
         alert_groups = st.multiselect("Gösterilecek gruplar", list(ALERT_PAIR_GROUPS.keys()), default=list(ALERT_PAIR_GROUPS.keys()))
@@ -3454,7 +3796,7 @@ selected_tf = decision_tf
 st.title("Forex Analyzer Pro")
 st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
 
-st.info("Terim notu: LONG AÇ = yükseliş beklentisiyle yeni pozisyon açmak. SHORT AÇ = düşüş beklentisiyle yeni pozisyon açmak. POZİSYONU KAPAT = açık işlemi sonlandırmak.")
+st.info("Terim notu: LONG AÇ = yükseliş beklentisiyle yeni pozisyon açmak. SHORT AÇ = düşüş beklentisiyle yeni pozisyon açmak. POZİSYONU KAPAT = açık işlemi sonlandırmak. ML filtresi açıksa teknik sinyal ayrıca geçmiş benzer sinyallerle karşılaştırılır.")
 if beginner_mode:
     st.info("Yeni Başlayan Modu aktif: 4H ana yön, 1H işlem izni, 15M giriş şartı olarak kullanılır. Sen sadece LONG / SHORT / BEKLE / PAS GEÇ kararını takip et.")
 elif strict_safety_mode:
@@ -3645,8 +3987,26 @@ if beginner_mode:
         price=price,
     )
 
+bt_result_for_ml = st.session_state.get("last_bt_result") if st.session_state.get("last_bt_key") == plan_bt_key else None
+ml_prediction = build_live_ml_prediction(
+    bt_result=bt_result_for_ml,
+    summary=summary_df,
+    selected_tf=selected_tf,
+    setup=preview_setup,
+    final_score=final_score,
+    min_samples=int(ml_min_samples),
+)
+simple_decision = apply_ml_filter_to_decision(
+    decision=simple_decision,
+    ml_prediction=ml_prediction,
+    filter_enabled=ml_filter_enabled,
+    threshold_pct=float(ml_threshold_pct),
+)
+ml_blocks_trade, ml_block_reason = ml_should_block_trade(ml_prediction, float(ml_threshold_pct), ml_filter_enabled)
+
 st.header("Tek Karar")
 render_top_decision_panel(simple_decision)
+render_ml_prediction_card(ml_prediction, float(ml_threshold_pct), ml_filter_enabled)
 if beginner_mode:
     render_simple_decision_card(simple_decision)
     render_beginner_path(summary_df, matched_quality, entry_signal_tracker, selected_tf)
@@ -3793,6 +4153,11 @@ with right_col:
                 "Bu sembol ve giriş zaman dilimi için önce sidebar üzerinden 'Yeniden Hesapla' butonuna bas.</div>",
                 unsafe_allow_html=True,
             )
+    elif ml_filter_enabled and ml_blocks_trade:
+        st.markdown(
+            f"<div class='bad-box'><b>Risk Planı Kilitli — ML Filtresi</b><br>{escape(str(ml_block_reason))}</div>",
+            unsafe_allow_html=True,
+        )
     elif current_quality_info["status"] == "blocked":
         strict_note = "Güvenli mod açık olduğu için daha yüksek kalite gerekir." if (strict_safety_mode or signal_mode == "Güvenli Sinyal") else "İşlem için en az Orta kalite gerekir."
         st.markdown(
