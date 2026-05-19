@@ -163,6 +163,75 @@ st.markdown(
         .check-ok { border-color:#badbcc; background:#f0f8f4; }
         .check-warn { border-color:#ffe69c; background:#fff9e6; }
         .check-bad { border-color:#f5c2c7; background:#fff1f2; }
+        .entry-signal-shell {
+            padding: 16px 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.08);
+            margin: 4px 0 12px 0;
+        }
+        .entry-signal-title {
+            font-size: 0.86rem;
+            font-weight: 800;
+            opacity: 0.78;
+            margin-bottom: 4px;
+        }
+        .entry-signal-action {
+            font-size: 1.75rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+        .entry-signal-summary {
+            font-size: 0.98rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .entry-signal-meta {
+            display:grid;
+            grid-template-columns: repeat(4, minmax(130px, 1fr));
+            gap: 8px;
+        }
+        .entry-signal-meta div {
+            background: rgba(255,255,255,0.62);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 8px;
+            padding: 9px 10px;
+        }
+        .entry-signal-meta b {
+            display:block;
+            font-size: 0.78rem;
+            opacity: 0.72;
+            margin-bottom: 3px;
+        }
+        .entry-signal-meta span {
+            display:block;
+            font-size: 0.95rem;
+            font-weight: 800;
+        }
+        .entry-step-grid {
+            display:grid;
+            grid-template-columns: repeat(5, minmax(130px, 1fr));
+            gap: 10px;
+            margin: 8px 0 18px 0;
+        }
+        .entry-step {
+            padding: 11px 12px;
+            border-radius: 8px;
+            background:#ffffff;
+            border: 1px solid #e9ecef;
+            color:#212529 !important;
+            min-height: 74px;
+        }
+        .entry-step b { display:block; font-size:0.86rem; margin-bottom:4px; color:#212529 !important; }
+        .entry-step span { display:block; font-size:0.9rem; color:#495057 !important; }
+        .entry-step-ok { border-color:#badbcc; background:#f0f8f4; }
+        .entry-step-warn { border-color:#ffe69c; background:#fff9e6; }
+        .entry-step-bad { border-color:#f5c2c7; background:#fff1f2; }
+        .entry-signal-buy { background:#d1e7dd; color:#0f5132 !important; }
+        .entry-signal-sell { background:#f8d7da; color:#842029 !important; }
+        .entry-signal-wait { background:#fff3cd; color:#664d03 !important; }
+        .entry-signal-pass { background:#e9ecef; color:#212529 !important; }
+        .entry-signal-shell, .entry-signal-shell * { color: inherit !important; }
         .action-row {
             display:flex;
             gap:10px;
@@ -171,12 +240,12 @@ st.markdown(
             margin: 4px 0 14px 0;
         }
         @media (max-width: 900px) {
-            .simple-levels, .check-grid {
+            .simple-levels, .check-grid, .entry-signal-meta, .entry-step-grid {
                 grid-template-columns: repeat(2, minmax(120px, 1fr));
             }
         }
         @media (max-width: 520px) {
-            .simple-levels, .check-grid {
+            .simple-levels, .check-grid, .entry-signal-meta, .entry-step-grid {
                 grid-template-columns: 1fr;
             }
             .simple-action, .decision-shell h2 {
@@ -1687,10 +1756,10 @@ def build_simple_trade_decision(
     if side == "LONG":
         if price is not None and price >= setup.entry:
             return {
-                "action": "AL İÇİN KAPANIŞ BEKLE",
+                "action": "ŞİMDİ ALMA",
                 "class": "simple-wait",
-                "subtitle": f"{symbol} alım planı izleme bölgesinde.",
-                "reason": f"Anlık fiyat giriş seviyesinde/üstünde; kapanış teyidi olmadan AL sinyali verilmez. Backtest onayı: {quality_text}.",
+                "subtitle": f"{symbol} için alım ancak mum kapanışıyla teyit edilirse değerlendirilmeli.",
+                "reason": f"Fiyat giriş seviyesinde/üstünde ama {selected_tf} mum kapanışı teyidi bekleniyor. Backtest onayı: {quality_text}.",
                 "steps": [
                     f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} üstünde kaldığını görmeden alış açma.",
                     f"Alış açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
@@ -1715,10 +1784,10 @@ def build_simple_trade_decision(
     if side == "SHORT":
         if price is not None and price <= setup.entry:
             return {
-                "action": "SAT İÇİN KAPANIŞ BEKLE",
+                "action": "ŞİMDİ SATMA",
                 "class": "simple-wait",
-                "subtitle": f"{symbol} satış planı izleme bölgesinde.",
-                "reason": f"Anlık fiyat giriş seviyesinde/altında; kapanış teyidi olmadan SAT sinyali verilmez. Backtest onayı: {quality_text}.",
+                "subtitle": f"{symbol} için satış ancak mum kapanışıyla teyit edilirse değerlendirilmeli.",
+                "reason": f"Fiyat giriş seviyesinde/altında ama {selected_tf} mum kapanışı teyidi bekleniyor. Backtest onayı: {quality_text}.",
                 "steps": [
                     f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} altında kaldığını görmeden satış açma.",
                     f"Satış açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
@@ -1868,6 +1937,235 @@ def build_readiness_items(
         {"label": "Backtest", "state": bt_state, "text": bt_text},
         {"label": "Risk Planı", "state": risk_state, "text": risk_text},
     ]
+
+
+def _format_tracker_time(ts) -> str:
+    if ts is None:
+        return "-"
+    try:
+        return _to_istanbul_timestamp(ts).strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return "-"
+
+
+def _quality_state_text(matched_quality: Optional[dict], allowed_quality_labels: set[str]) -> tuple[str, str]:
+    if matched_quality is None:
+        return "warn", "Plan kontrolü bekliyor"
+    label = matched_quality.get("label", "-")
+    if label in allowed_quality_labels:
+        return "ok", f"Kalite: {label}"
+    return "bad", f"Kalite: {label}"
+
+
+def build_entry_signal_tracker(
+    symbol: str,
+    selected_tf: str,
+    bt_tf: str,
+    final_label: str,
+    setup: Optional[TradeSetup],
+    matched_quality: Optional[dict],
+    allowed_quality_labels: set[str],
+    strict_safety_mode: bool,
+    price: Optional[float],
+) -> dict:
+    """Son kapanan giriş mumuna göre kullanıcıya net AL/SAT/BEKLE takibi verir."""
+    dec = price_decimals(symbol)
+    current_price_label = "-" if price is None else f"{price:.{dec}f}"
+    last_closed_time = "-"
+    last_closed_close_label = "-"
+    last_closed_close: Optional[float] = None
+
+    prm = TIMEFRAMES[selected_tf]
+    candle_df = fetch_ohlc(symbol, prm["interval"], prm["period"])
+    if candle_df is not None and not candle_df.empty:
+        candle_df = to_tz_index(candle_df)
+        closed_i = -2 if len(candle_df) > 1 else -1
+        closed_row = candle_df.iloc[closed_i]
+        last_closed_time = _format_tracker_time(candle_df.index[closed_i])
+        last_closed_close = float(closed_row["Close"])
+        last_closed_close_label = f"{last_closed_close:.{dec}f}"
+        current_price_label = f"{float(candle_df['Close'].iloc[-1]):.{dec}f}"
+
+    quality_state, quality_text = _quality_state_text(matched_quality, allowed_quality_labels)
+    quality_ok = quality_state == "ok"
+    same_tf_ok = bt_tf == selected_tf
+    blocked_by_strict = strict_safety_mode and final_label not in {"Güçlü Alım Yönlü", "Güçlü Satış Yönlü"}
+    direction_ok = setup is not None and (
+        (setup.side == "LONG" and final_label in {"Alım Yönlü", "Güçlü Alım Yönlü"})
+        or (setup.side == "SHORT" and final_label in {"Satış Yönlü", "Güçlü Satış Yönlü"})
+    )
+    if blocked_by_strict:
+        direction_ok = False
+
+    side = setup.side if setup is not None else None
+    side_word = "AL" if side == "LONG" else ("SAT" if side == "SHORT" else "BEKLE")
+    compare_word = "üstünde" if side == "LONG" else "altında"
+    trigger_level = "-" if setup is None else f"{setup.entry:.{dec}f}"
+    trigger_condition = (
+        "Önce risk planı oluşmalı."
+        if setup is None
+        else f"{selected_tf} mumu {trigger_level} {compare_word} kapanmalı."
+    )
+
+    if setup is None or last_closed_close is None:
+        candle_ok = False
+    elif side == "LONG":
+        candle_ok = last_closed_close > setup.entry
+    else:
+        candle_ok = last_closed_close < setup.entry
+
+    risk_ok = setup is not None and same_tf_ok and quality_ok and direction_ok
+    signal_now = bool(risk_ok and candle_ok)
+
+    if signal_now:
+        action = "SİSTEM AL SİNYALİ" if side == "LONG" else "SİSTEM SAT SİNYALİ"
+        status_class = "entry-signal-buy" if side == "LONG" else "entry-signal-sell"
+        summary = f"Son kapanan {selected_tf} mumu giriş şartını geçti. Sistem {side_word} sinyali üretiyor."
+        final_step_text = f"{side_word} sinyali üretildi"
+    elif setup is None:
+        action = "BEKLE"
+        status_class = "entry-signal-wait"
+        summary = "Henüz takip edilecek giriş seviyesi yok. Önce ana yön, backtest ve risk planı hazır olmalı."
+        final_step_text = "Risk planı bekleniyor"
+    elif not same_tf_ok:
+        action = "BEKLE"
+        status_class = "entry-signal-pass"
+        summary = "Backtest zamanı ile giriş zamanı aynı olmadığı için giriş sinyali kilitli."
+        final_step_text = "Zaman dilimi eşleşmiyor"
+    elif not quality_ok:
+        action = "BEKLE"
+        status_class = "entry-signal-wait" if quality_state == "warn" else "entry-signal-pass"
+        summary = "Plan kontrolü uygun olmadan giriş sinyali verilmez."
+        final_step_text = "Plan kontrolü bekleniyor"
+    elif not direction_ok:
+        action = "BEKLE"
+        status_class = "entry-signal-wait"
+        summary = "Ana yön koşulu giriş için yeterli değil."
+        final_step_text = "Ana yön bekleniyor"
+    else:
+        action = "BEKLE"
+        status_class = "entry-signal-wait"
+        summary = f"Son kapanan {selected_tf} mumu henüz giriş seviyesini teyit etmedi."
+        final_step_text = "Mum kapanışı bekleniyor"
+
+    if setup is None:
+        candle_text = "Giriş seviyesi yok"
+    elif last_closed_close is None:
+        candle_text = "Mum verisi bekleniyor"
+    elif candle_ok:
+        candle_text = f"Kapanış {last_closed_close_label}, şart geçti"
+    else:
+        candle_text = f"Kapanış {last_closed_close_label}, {trigger_level} {compare_word} değil"
+
+    steps = [
+        {
+            "label": "1. Zaman",
+            "state": "ok" if same_tf_ok else "bad",
+            "text": "Giriş ve backtest aynı" if same_tf_ok else "Backtest zamanı farklı",
+        },
+        {"label": "2. Plan", "state": quality_state, "text": quality_text},
+        {
+            "label": "3. Ana Yön",
+            "state": "ok" if direction_ok else ("bad" if blocked_by_strict else "warn"),
+            "text": "Yön uygun" if direction_ok else "Yön bekleniyor",
+        },
+        {
+            "label": "4. Mum",
+            "state": "ok" if candle_ok else "warn",
+            "text": candle_text,
+        },
+        {
+            "label": "5. Sinyal",
+            "state": "ok" if signal_now else ("bad" if not same_tf_ok else "warn"),
+            "text": final_step_text,
+        },
+    ]
+
+    return {
+        "action": action,
+        "status_class": status_class,
+        "signal_now": signal_now,
+        "side": side,
+        "side_word": side_word,
+        "summary": summary,
+        "selected_tf": selected_tf,
+        "condition": trigger_condition,
+        "trigger_level": trigger_level,
+        "last_closed_time": last_closed_time,
+        "last_closed_close": last_closed_close_label,
+        "current_price": current_price_label,
+        "steps": steps,
+    }
+
+
+def apply_entry_signal_to_decision(decision: dict, tracker: dict) -> dict:
+    if not tracker.get("signal_now"):
+        return decision
+
+    out = dict(decision)
+    side = tracker.get("side")
+    side_word = tracker.get("side_word", "AL" if side == "LONG" else "SAT")
+    out.update({
+        "action": tracker.get("action", f"SİSTEM {side_word} SİNYALİ"),
+        "class": "simple-buy" if side == "LONG" else "simple-sell",
+        "subtitle": f"{tracker.get('selected_tf', '')} mum kapanışı giriş şartını teyit etti.",
+        "reason": (
+            f"Son kapanan mum {tracker.get('trigger_level', '-')} seviyesini geçti. "
+            "Plan, ana yön ve mum kapanışı adımları tamam."
+        ),
+    })
+    if side == "LONG":
+        out["steps"] = [
+            "Sistem AL sinyali üretti; broker fiyatını ve spreadi kontrol et.",
+            "İşleme girersen stop ve kâr al seviyelerini değiştirme.",
+            "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
+        ]
+    else:
+        out["steps"] = [
+            "Sistem SAT sinyali üretti; broker fiyatını ve spreadi kontrol et.",
+            "İşleme girersen stop ve kâr al seviyelerini değiştirme.",
+            "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
+        ]
+    return out
+
+
+def render_entry_signal_tracker(tracker: dict) -> None:
+    status_class = escape(str(tracker.get("status_class", "entry-signal-wait")))
+    action = escape(str(tracker.get("action", "BEKLE")))
+    summary = escape(str(tracker.get("summary", "")))
+    selected_tf = escape(str(tracker.get("selected_tf", "-")))
+    condition = escape(str(tracker.get("condition", "-")))
+    last_closed = escape(f"{tracker.get('last_closed_time', '-')} / {tracker.get('last_closed_close', '-')}")
+    current_price = escape(str(tracker.get("current_price", "-")))
+
+    st.markdown(
+        (
+            f"<div class='entry-signal-shell {status_class}'>"
+            "<div class='entry-signal-title'>Canlı Giriş Takibi</div>"
+            f"<div class='entry-signal-action'>{action}</div>"
+            f"<div class='entry-signal-summary'>{summary}</div>"
+            "<div class='entry-signal-meta'>"
+            f"<div><b>Takip Edilen Mum</b><span>{selected_tf}</span></div>"
+            f"<div><b>Giriş Şartı</b><span>{condition}</span></div>"
+            f"<div><b>Son Kapanan Mum</b><span>{last_closed}</span></div>"
+            f"<div><b>Anlık/Son Fiyat</b><span>{current_price}</span></div>"
+            "</div>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+    state_symbol = {"ok": "Geçti", "warn": "Bekle", "bad": "Kilitli"}
+    parts = []
+    for step in tracker.get("steps", []):
+        state = str(step.get("state", "warn"))
+        parts.append(
+            f"<div class='entry-step entry-step-{escape(state)}'>"
+            f"<b>{escape(str(step.get('label', 'Adım')))}: {escape(state_symbol.get(state, 'Bekle'))}</b>"
+            f"<span>{escape(str(step.get('text', '')))}</span>"
+            f"</div>"
+        )
+    st.markdown("<div class='entry-step-grid'>" + "".join(parts) + "</div>", unsafe_allow_html=True)
 
 
 def render_readiness_checklist(items: list[dict]) -> None:
@@ -2281,6 +2579,18 @@ simple_decision = build_simple_trade_decision(
     matched_quality=matched_quality,
     strict_safety_mode=strict_safety_mode,
 )
+entry_signal_tracker = build_entry_signal_tracker(
+    symbol=symbol,
+    selected_tf=selected_tf,
+    bt_tf=bt_tf,
+    final_label=final_label,
+    setup=preview_setup,
+    matched_quality=matched_quality,
+    allowed_quality_labels=allowed_quality_labels,
+    strict_safety_mode=strict_safety_mode,
+    price=price,
+)
+simple_decision = apply_entry_signal_to_decision(simple_decision, entry_signal_tracker)
 
 st.header("Karar Özeti")
 render_top_decision_panel(simple_decision)
@@ -2294,6 +2604,7 @@ render_readiness_checklist(
         setup=preview_setup,
     )
 )
+render_entry_signal_tracker(entry_signal_tracker)
 
 action_col, quality_col, risk_col = st.columns([1.2, 1.0, 1.0])
 with action_col:
