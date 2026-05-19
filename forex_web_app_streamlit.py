@@ -275,6 +275,110 @@ st.markdown(
             flex-wrap:wrap;
             margin: 4px 0 14px 0;
         }
+
+        .alert-toolbar {
+            display:flex;
+            gap:10px;
+            align-items:center;
+            flex-wrap:wrap;
+            margin: 8px 0 16px 0;
+        }
+        .alert-section-title {
+            margin: 22px 0 10px 0;
+            font-size: 1.35rem;
+            font-weight: 900;
+        }
+        .alert-grid {
+            display:grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .alert-card {
+            padding: 14px 14px 12px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.16);
+            box-shadow: 0 6px 22px rgba(0,0,0,0.16);
+            min-height: 150px;
+        }
+        .alert-card, .alert-card * { color: #212529 !important; }
+        .alert-buy { background: #d1e7dd; border-color:#badbcc; }
+        .alert-sell { background: #f8d7da; border-color:#f5c2c7; }
+        .alert-wait { background: #fff3cd; border-color:#ffe69c; }
+        .alert-card-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:10px;
+            margin-bottom: 10px;
+        }
+        .alert-symbol {
+            font-size: 1.12rem;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+        .alert-status {
+            font-size: 1.35rem;
+            font-weight: 950;
+            line-height: 1.0;
+            text-align:right;
+            white-space:nowrap;
+        }
+        .alert-status-buy { color:#0f5132 !important; }
+        .alert-status-sell { color:#842029 !important; }
+        .alert-status-wait { color:#664d03 !important; }
+        .alert-mini-grid {
+            display:grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin: 8px 0 10px 0;
+        }
+        .alert-mini {
+            background: rgba(255,255,255,0.62);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 8px;
+            padding: 6px 5px;
+            text-align:center;
+            font-size:0.78rem;
+            font-weight:800;
+        }
+        .alert-reason {
+            font-size:0.86rem;
+            font-weight:600;
+            min-height: 38px;
+        }
+        .alert-meta {
+            display:flex;
+            justify-content:space-between;
+            gap: 10px;
+            margin-top: 8px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            opacity: 0.86;
+        }
+        .alert-summary-row {
+            display:grid;
+            grid-template-columns: repeat(4, minmax(160px, 1fr));
+            gap: 12px;
+            margin: 14px 0 18px 0;
+        }
+        .alert-summary-box {
+            background:#f8f9fa;
+            border:1px solid #e9ecef;
+            border-radius: 14px;
+            padding: 12px 14px;
+            color:#212529 !important;
+        }
+        .alert-summary-box, .alert-summary-box * { color:#212529 !important; }
+        .alert-summary-box b { display:block; font-size:0.85rem; opacity:.72; }
+        .alert-summary-box span { display:block; font-size:1.4rem; font-weight:950; margin-top:2px; }
+        @media (max-width: 1200px) {
+            .alert-grid { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
+        }
+        @media (max-width: 850px) {
+            .alert-grid, .alert-summary-row { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+        }
+
         @media (max-width: 900px) {
             .simple-levels, .check-grid, .entry-signal-meta, .entry-step-grid {
                 grid-template-columns: repeat(2, minmax(120px, 1fr));
@@ -306,6 +410,17 @@ SYMBOL_LIST = [
     "NZDCAD=X", "NZDCHF=X", "NZDJPY=X",
     "EURZAR=X",
 ]
+
+MAJOR_PAIRS = [
+    "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "USDCHF=X", "NZDUSD=X",
+]
+
+MINOR_PAIRS = [s for s in SYMBOL_LIST if s not in MAJOR_PAIRS]
+
+ALERT_PAIR_GROUPS = {
+    "Major": MAJOR_PAIRS,
+    "Minör": MINOR_PAIRS,
+}
 
 TIMEFRAMES = {
     "4 Saat": {"interval": "4h", "period": "60d", "weight": 4},
@@ -1655,6 +1770,210 @@ def run_symbol_scanner(
     return result
 
 
+
+
+def _is_long_bias(label: str) -> bool:
+    return str(label) in {"Alım Yönlü", "Güçlü Alım Yönlü"}
+
+
+def _is_short_bias(label: str) -> bool:
+    return str(label) in {"Satış Yönlü", "Güçlü Satış Yönlü"}
+
+
+def _mini_tf_text(label: str) -> str:
+    label = str(label)
+    if "Alım" in label:
+        return "AL"
+    if "Satış" in label:
+        return "SAT"
+    if label == "Veri yok":
+        return "YOK"
+    return "BEKLE"
+
+
+def alert_decision_from_row(row: dict, alert_entry_tf: str = "15 Dakika") -> tuple[str, str, float]:
+    """Major/minör alarm ekranı için teknik sonuçları AL / SAT / BEKLE şeklinde sadeleştirir."""
+    h4 = str(row.get("4H", "İşlem Yok"))
+    h1 = str(row.get("1H", "İşlem Yok"))
+    m15 = str(row.get("15M", "İşlem Yok"))
+    m5 = str(row.get("5M", "İşlem Yok"))
+    score = float(row.get("Skor", 0) or 0)
+
+    long_base = _is_long_bias(h4) and _is_long_bias(h1)
+    short_base = _is_short_bias(h4) and _is_short_bias(h1)
+
+    if alert_entry_tf == "5 Dakika":
+        long_ready = long_base and _is_long_bias(m15) and _is_long_bias(m5)
+        short_ready = short_base and _is_short_bias(m15) and _is_short_bias(m5)
+        wait_long = long_base and (_is_long_bias(m15) or _is_long_bias(m5))
+        wait_short = short_base and (_is_short_bias(m15) or _is_short_bias(m5))
+    elif alert_entry_tf == "15 Dakika":
+        long_ready = long_base and _is_long_bias(m15)
+        short_ready = short_base and _is_short_bias(m15)
+        wait_long = long_base
+        wait_short = short_base
+    else:
+        long_ready = long_base
+        short_ready = short_base
+        wait_long = long_base
+        wait_short = short_base
+
+    if long_ready:
+        return "AL", "4H + 1H yukarı ve giriş teyidi alım yönünde.", abs(score)
+    if short_ready:
+        return "SAT", "4H + 1H aşağı ve giriş teyidi satış yönünde.", abs(score)
+    if wait_long:
+        return "BEKLE", "Ana yön alım tarafında; giriş teyidi bekleniyor.", abs(score) * 0.65
+    if wait_short:
+        return "BEKLE", "Ana yön satış tarafında; giriş teyidi bekleniyor.", abs(score) * 0.65
+    return "BEKLE", "4H + 1H aynı yönde net izin vermiyor.", abs(score) * 0.35
+
+
+def build_alert_board_rows(symbols: list[str], change_window_minutes: int, alert_entry_tf: str) -> pd.DataFrame:
+    rows = []
+    progress = st.progress(0, text="Alarm ekranı hazırlanıyor...")
+    for i, sym in enumerate(symbols, start=1):
+        row = scan_symbol_live(sym, change_window_minutes, alert_entry_tf)
+        decision, reason, alert_score = alert_decision_from_row(row, alert_entry_tf)
+        row["Alarm"] = decision
+        row["Alarm Nedeni"] = reason
+        row["Alarm Skoru"] = round(float(alert_score), 1)
+        rows.append(row)
+        progress.progress(i / max(len(symbols), 1), text=f"{sym} kontrol edildi ({i}/{len(symbols)})")
+    progress.empty()
+
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return df
+    order = {"AL": 0, "SAT": 1, "BEKLE": 2}
+    df["_order"] = df["Alarm"].map(order).fillna(9)
+    return df.sort_values(["_order", "Alarm Skoru", "Skor"], ascending=[True, False, False]).drop(columns=["_order"])
+
+
+def render_alert_card(row: dict) -> None:
+    alarm = str(row.get("Alarm", "BEKLE"))
+    css = {"AL": "alert-buy", "SAT": "alert-sell", "BEKLE": "alert-wait"}.get(alarm, "alert-wait")
+    status_css = {"AL": "alert-status-buy", "SAT": "alert-status-sell", "BEKLE": "alert-status-wait"}.get(alarm, "alert-status-wait")
+    icon = {"AL": "🟢", "SAT": "🔴", "BEKLE": "🟡"}.get(alarm, "🟡")
+    symbol_txt = escape(str(row.get("Sembol", "-"))).replace("=X", "")
+    reason = escape(str(row.get("Alarm Nedeni", "-")))
+    score = escape(str(row.get("Alarm Skoru", "-")))
+    change = row.get("Değişim %", None)
+    change_text = "-" if pd.isna(change) else f"{float(change):+.2f}%"
+    h4 = _mini_tf_text(row.get("4H", "-"))
+    h1 = _mini_tf_text(row.get("1H", "-"))
+    m15 = _mini_tf_text(row.get("15M", "-"))
+    m5 = _mini_tf_text(row.get("5M", "-"))
+
+    st.markdown(
+        f"""
+        <div class="alert-card {css}">
+            <div class="alert-card-header">
+                <div class="alert-symbol">{symbol_txt}</div>
+                <div class="alert-status {status_css}">{icon} {alarm}</div>
+            </div>
+            <div class="alert-mini-grid">
+                <div class="alert-mini">4H<br>{escape(h4)}</div>
+                <div class="alert-mini">1H<br>{escape(h1)}</div>
+                <div class="alert-mini">15M<br>{escape(m15)}</div>
+                <div class="alert-mini">5M<br>{escape(m5)}</div>
+            </div>
+            <div class="alert-reason">{reason}</div>
+            <div class="alert-meta">
+                <span>Skor: {score}</span>
+                <span>Değişim: {escape(change_text)}</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_alert_section(title: str, df: pd.DataFrame) -> None:
+    st.markdown(f"<div class='alert-section-title'>{escape(title)}</div>", unsafe_allow_html=True)
+    if df.empty:
+        st.info("Bu grupta gösterilecek parite yok.")
+        return
+    rows = df.to_dict("records")
+    cols_per_row = 4
+    for start in range(0, len(rows), cols_per_row):
+        cols = st.columns(cols_per_row)
+        for col, row in zip(cols, rows[start:start + cols_per_row]):
+            with col:
+                render_alert_card(row)
+
+
+def render_pair_alert_screen(
+    change_window_minutes: int,
+    change_window_label: str,
+    alert_entry_tf: str,
+    alert_groups: list[str],
+    alert_sort_mode: str,
+) -> None:
+    st.header("Parite Alarm Ekranı")
+    st.caption("Bu ekran tüm pariteleri tek bakışta AL / SAT / BEKLE şeklinde gösterir. Backtest onayı yerine hızlı canlı MTF filtre kullanır; gerçek işlem öncesi ana karar kartı ve demo doğrulama yine önemlidir.")
+
+    selected_symbols: list[str] = []
+    for group in alert_groups:
+        selected_symbols.extend(ALERT_PAIR_GROUPS.get(group, []))
+    selected_symbols = list(dict.fromkeys(selected_symbols))
+
+    if not selected_symbols:
+        st.warning("En az bir parite grubu seçmelisin.")
+        return
+
+    with st.spinner("Major/minör pariteler taranıyor..."):
+        board = build_alert_board_rows(selected_symbols, change_window_minutes, alert_entry_tf)
+
+    if board.empty:
+        st.warning("Alarm ekranı için veri alınamadı.")
+        return
+
+    if alert_sort_mode == "Önce AL/SAT":
+        order = {"AL": 0, "SAT": 1, "BEKLE": 2}
+        board = board.assign(_sort=board["Alarm"].map(order).fillna(9)).sort_values(["_sort", "Alarm Skoru"], ascending=[True, False]).drop(columns=["_sort"])
+    elif alert_sort_mode == "Sadece AL/SAT üstte":
+        order = {"AL": 0, "SAT": 0, "BEKLE": 1}
+        board = board.assign(_sort=board["Alarm"].map(order).fillna(9)).sort_values(["_sort", "Alarm Skoru"], ascending=[True, False]).drop(columns=["_sort"])
+    else:
+        board = board.sort_values("Alarm Skoru", ascending=False)
+
+    al_count = int((board["Alarm"] == "AL").sum())
+    sat_count = int((board["Alarm"] == "SAT").sum())
+    wait_count = int((board["Alarm"] == "BEKLE").sum())
+
+    st.markdown(
+        f"""
+        <div class="alert-summary-row">
+            <div class="alert-summary-box"><b>AL</b><span>🟢 {al_count}</span></div>
+            <div class="alert-summary-box"><b>SAT</b><span>🔴 {sat_count}</span></div>
+            <div class="alert-summary-box"><b>BEKLE</b><span>🟡 {wait_count}</span></div>
+            <div class="alert-summary-box"><b>Filtre</b><span>{escape(alert_entry_tf)}</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.info(f"Alarm mantığı: 4H + 1H ana yön aynı olmalı; {alert_entry_tf} giriş teyidi verir. 5M varsayılan olarak karar verici değildir.")
+
+    major_df = board[board["Sembol"].isin(MAJOR_PAIRS)]
+    minor_df = board[board["Sembol"].isin(MINOR_PAIRS)]
+
+    if "Major" in alert_groups:
+        render_alert_section("Major Pariteler", major_df)
+    if "Minör" in alert_groups:
+        render_alert_section("Minör Pariteler", minor_df)
+
+    with st.expander("Tablo görünümü", expanded=False):
+        table_cols = ["Sembol", "Alarm", "Alarm Skoru", "Değişim %", "4H", "1H", "15M", "5M", "Alarm Nedeni"]
+        st.dataframe(board[table_cols], use_container_width=True, height=420)
+        st.download_button(
+            "Alarm Tablosunu CSV İndir",
+            data=board[table_cols].to_csv(index=False).encode("utf-8-sig"),
+            file_name="forex_alert_board.csv",
+            mime="text/csv",
+        )
+
 def init_trade_journal() -> None:
     if "trade_journal" not in st.session_state:
         st.session_state["trade_journal"] = []
@@ -1986,7 +2305,7 @@ def build_simple_trade_decision(
             "class": "simple-wait",
             "subtitle": "Backtest zaman dilimi ile giriş zaman dilimi eşleşmiyor.",
             "reason": "Basit karar için Backtest zaman dilimi, Grafik/Giriş zaman dilimi ile aynı olmalı.",
-            "steps": ["Sidebar'dan backtest zaman dilimini giriş zaman dilimiyle aynı seç.", "Yeniden Hesapla butonuna bas.", "Sonra bu karttaki kararı takip et."],
+            "steps": ["Sidebar'dan backtest zaman dilimini giriş zaman dilimiyle aynı seç.", "Backtest Çalıştır / Planı Onayla butonuna bas.", "Sonra bu karttaki kararı takip et."],
         })
         return base
 
@@ -1996,7 +2315,7 @@ def build_simple_trade_decision(
             "class": "simple-wait",
             "subtitle": "Önce strateji kontrolü gerekiyor.",
             "reason": "Bu sembol ve zaman dilimi için backtest onayı yok.",
-            "steps": ["Sidebar'dan Yeniden Hesapla butonuna bas.", "Strateji Kalitesi Orta veya İyi değilse işlem açma.", "Sert Güvenli Mod açıksa sadece İyi kalite kabul edilir."],
+            "steps": ["Sidebar'dan Backtest Çalıştır / Planı Onayla butonuna bas.", "Strateji Kalitesi Orta veya İyi değilse işlem açma.", "Sert Güvenli Mod açıksa sadece İyi kalite kabul edilir."],
         })
         return base
 
@@ -2650,174 +2969,6 @@ def render_readiness_checklist(items: list[dict]) -> None:
     st.markdown("<div class='check-grid'>" + "".join(parts) + "</div>", unsafe_allow_html=True)
 
 
-def _tf_score(summary: pd.DataFrame, tf_name: str) -> float:
-    return _summary_score(summary, tf_name)
-
-
-def _tf_bias(summary: pd.DataFrame, tf_name: str) -> str:
-    if summary is None or summary.empty:
-        return "Veri yok"
-    row = summary[summary["Zaman Dilimi"] == tf_name]
-    if row.empty:
-        return "Veri yok"
-    return str(row["Bias"].iloc[0])
-
-
-def _beginner_side_from_scores(summary: pd.DataFrame) -> Optional[str]:
-    h4 = _tf_score(summary, "4 Saat")
-    h1 = _tf_score(summary, "1 Saat")
-    if not pd.isna(h4) and not pd.isna(h1) and h4 >= 25 and h1 >= 25:
-        return "LONG"
-    if not pd.isna(h4) and not pd.isna(h1) and h4 <= -25 and h1 <= -25:
-        return "SHORT"
-    return None
-
-
-def build_beginner_single_decision(
-    symbol: str,
-    summary: pd.DataFrame,
-    selected_tf: str,
-    setup: Optional[TradeSetup],
-    matched_quality: Optional[dict],
-    allowed_quality_labels: set[str],
-    tracker: dict,
-    price: Optional[float],
-) -> dict:
-    """Yeni başlayan kullanıcı için 4H/1H/15M/5M karmaşasını tek karara indirir."""
-    dec = price_decimals(symbol)
-    side = _beginner_side_from_scores(summary)
-    m15 = _tf_score(summary, "15 Dakika")
-    quality_label = None if matched_quality is None else str(matched_quality.get("label", "-"))
-
-    def levels_from_setup() -> dict:
-        if setup is None:
-            return {}
-        return {
-            "Giriş": f"{setup.entry:.{dec}f}",
-            "Stop": f"{setup.stop:.{dec}f}",
-            "Kâr Al": f"{setup.target:.{dec}f}",
-            "Lot": f"{setup.estimated_lot:.2f}",
-        }
-
-    if side is None:
-        return {
-            "action": "PAS GEÇ",
-            "class": "simple-pass",
-            "subtitle": "Ana yön net değil.",
-            "reason": "4H ve 1H aynı yönde güçlü sinyal üretmiyor. Alt zaman dilimleri ne derse desin işlem açma.",
-            "steps": [
-                "Yeni işlem açma.",
-                "4H ve 1H aynı yöne dönene kadar bekle.",
-                "15M veya 5M tek başına AL/SAT sebebi değildir.",
-            ],
-            "levels": {},
-        }
-
-    side_word = "AL" if side == "LONG" else "SAT"
-    side_text = "alım" if side == "LONG" else "satış"
-    trigger_word = "üstünde" if side == "LONG" else "altında"
-    m15_ok = (side == "LONG" and not pd.isna(m15) and m15 >= 25) or (side == "SHORT" and not pd.isna(m15) and m15 <= -25)
-
-    if matched_quality is None:
-        return {
-            "action": "BEKLE",
-            "class": "simple-wait",
-            "subtitle": "Strateji kontrolü yapılıyor.",
-            "reason": "Plan kontrolü henüz tamamlanmadı. Otomatik kontrol açık değilse Yeniden Hesapla butonuna bas.",
-            "steps": [
-                "Şimdilik işlem açma.",
-                "Strateji Kalitesi İyi/Orta olmadan gerçek işlem alma.",
-                "Kontrol bitince bu kart tek karar verecek.",
-            ],
-            "levels": {},
-        }
-
-    if quality_label not in allowed_quality_labels:
-        return {
-            "action": "PAS GEÇ",
-            "class": "simple-pass",
-            "subtitle": "Backtest kalite filtresi işlemi reddetti.",
-            "reason": f"Ana yön {side_text} olabilir ama strateji kalitesi {quality_label}. İşlem için kalite {', '.join(sorted(allowed_quality_labels))} olmalı.",
-            "steps": [
-                "Bu paritede bu ayarla işlem açma.",
-                "Başka parite tara veya daha yüksek zaman dilimi dene.",
-                "Kalite filtresi düzelmeden gerçek işlem alma.",
-            ],
-            "levels": {},
-        }
-
-    if setup is None:
-        return {
-            "action": "BEKLE",
-            "class": "simple-wait",
-            "subtitle": "Yön var ama giriş planı yok.",
-            "reason": "Risk planı üretilemedi. Veri veya ATR koşulları yeterli değil.",
-            "steps": ["İşlem açma.", "Veri yenile veya başka parite dene.", "Risk planı oluşmadan işlem alma."],
-            "levels": {},
-        }
-
-    if not m15_ok:
-        return {
-            "action": f"{side_word} İÇİN BEKLE",
-            "class": "simple-wait",
-            "subtitle": f"4H + 1H {side_text} yönünde ama 15M henüz hazır değil.",
-            "reason": "Ana yön var; giriş zamanı için 15M teyidi bekleniyor. 5M sinyali bu aşamada dikkate alınmaz.",
-            "steps": [
-                f"15M {side_text} yönüne dönmeden işlem açma.",
-                f"Giriş seviyesi oluşursa {setup.entry:.{dec}f} seviyesini takip et.",
-                "Fiyat koşulu gelmeden acele etme.",
-            ],
-            "levels": levels_from_setup(),
-        }
-
-    if tracker.get("signal_now"):
-        return {
-            "action": side_word,
-            "class": "simple-buy" if side == "LONG" else "simple-sell",
-            "subtitle": f"Giriş şartı tamamlandı: {side_word} sinyali aktif.",
-            "reason": f"4H+1H yön uygun, 15M teyit var, kalite {quality_label}. Broker fiyatı/spread kontrolü yapmadan emir verme.",
-            "steps": [
-                f"Broker fiyatı uygunsa {side_word} işlemi değerlendir.",
-                f"Giriş: {setup.entry:.{dec}f} | Stop: {setup.stop:.{dec}f} | Kâr Al: {setup.target:.{dec}f}",
-                "Stop seviyesini büyütme; plan bozulursa çık.",
-            ],
-            "levels": levels_from_setup(),
-        }
-
-    return {
-        "action": f"{side_word} İÇİN BEKLE",
-        "class": "simple-wait",
-        "subtitle": f"Yön {side_text}; son mum giriş şartını henüz tamamlamadı.",
-        "reason": f"15M teyit var ama son kapanış giriş seviyesini geçmedi. Şart: 15M mum {setup.entry:.{dec}f} {trigger_word} kapanmalı.",
-        "steps": [
-            f"15M mum {setup.entry:.{dec}f} {trigger_word} kapanmadan işlem açma.",
-            f"Şart geçerse stop {setup.stop:.{dec}f}, kâr al {setup.target:.{dec}f} kullan.",
-            "Fiyat girişe yaklaşsa bile mum kapanışı olmadan acele etme.",
-        ],
-        "levels": levels_from_setup(),
-    }
-
-
-def render_beginner_path(summary: pd.DataFrame, matched_quality: Optional[dict], tracker: dict, selected_tf: str) -> None:
-    """Yeni başlayan modda sadece karar hunisini gösterir; 4 ayrı zaman dilimini yorumlatmaz."""
-    side = _beginner_side_from_scores(summary)
-    side_text = "Alım" if side == "LONG" else ("Satış" if side == "SHORT" else "Yok")
-    m15 = _tf_score(summary, "15 Dakika")
-    m15_ok = (side == "LONG" and not pd.isna(m15) and m15 >= 25) or (side == "SHORT" and not pd.isna(m15) and m15 <= -25)
-    quality_label = "Bekliyor" if matched_quality is None else str(matched_quality.get("label", "-"))
-    quality_ok = quality_label in {"İyi", "Orta"}
-    signal_now = bool(tracker.get("signal_now"))
-
-    items = [
-        {"label": "1. Ana Yön", "state": "ok" if side else "bad", "text": f"4H + 1H sonucu: {side_text}"},
-        {"label": "2. Giriş Zamanı", "state": "ok" if m15_ok else "warn", "text": "15M teyit var" if m15_ok else "15M teyit bekleniyor"},
-        {"label": "3. Strateji Kalitesi", "state": "ok" if quality_ok else "bad", "text": f"Kalite: {quality_label}"},
-        {"label": "4. Son Mum", "state": "ok" if signal_now else "warn", "text": "Giriş şartı geçti" if signal_now else str(tracker.get("primary_blocker_text", "Kapanış bekleniyor"))},
-        {"label": "5M", "state": "ok", "text": "Yeni başlayan modda karar verici değil"},
-    ]
-    render_readiness_checklist(items)
-
-
 def build_position_tracker_result(
     symbol: str,
     side: str,
@@ -3057,6 +3208,8 @@ def plot_live_trigger(symbol: str, selected_tf: str, global_label: str) -> go.Fi
 with st.sidebar:
     st.header("Kontrol Paneli")
 
+    screen_mode = st.radio("Ekran", ["İşlem Asistanı", "Parite Alarm Ekranı"], index=0)
+
     tf_options = list(TIMEFRAMES.keys())
     default_symbol = st.session_state.get("symbol", "EURUSD=X")
     selected_symbol = st.selectbox(
@@ -3068,7 +3221,7 @@ with st.sidebar:
     symbol = normalize_symbol(manual_symbol) if manual_symbol.strip() else selected_symbol
     st.session_state["symbol"] = symbol
 
-    selected_tf = st.radio("Grafik zamanı", tf_options, index=1)
+    selected_tf = st.radio("Giriş zamanı", tf_options, index=1)
 
     st.divider()
     st.subheader("Temel Risk")
@@ -3093,16 +3246,6 @@ with st.sidebar:
             st.caption("Pip değeri otomatik tahmin edilemedi; brokerındaki değeri gir.")
 
     with st.expander("Ekran ve güvenlik", expanded=False):
-        beginner_mode = st.checkbox(
-            "Yeni Başlayan Modu (tek karar)",
-            value=True,
-            help="4H/1H/15M/5M ayrımını sana yorumlatmaz. 4H+1H ana yön, 15M giriş, 5M ise sadece arka planda kalır.",
-        )
-        auto_plan_control = st.checkbox(
-            "Otomatik plan kontrolü",
-            value=True,
-            help="Parite, grafik zamanı veya risk ayarı değişince backtest/kalite kontrolünü otomatik yeniler.",
-        )
         enable_simple_mode = st.checkbox("Basit İşlem Modu", value=True)
         practical_signal_mode = st.checkbox("Pratik Sinyal Modu", value=True)
         signal_mode = st.selectbox("Sinyal modu", SIGNAL_MODES, index=0)
@@ -3111,16 +3254,18 @@ with st.sidebar:
         change_window_label = st.selectbox("Yüzde değişim periyodu", list(PRICE_CHANGE_WINDOWS.keys()), index=1)
         change_window_minutes = PRICE_CHANGE_WINDOWS[change_window_label]
 
-    decision_tf = "15 Dakika" if beginner_mode else selected_tf
-    if beginner_mode:
-        st.caption("Yeni Başlayan Modu aktif: karar 4H+1H ana yön + 15M giriş mantığıyla tek sonuca indirilir. 5M yorumu sana gösterilmez.")
+    with st.expander("Alarm ekranı ayarları", expanded=screen_mode == "Parite Alarm Ekranı"):
+        alert_groups = st.multiselect("Gösterilecek gruplar", list(ALERT_PAIR_GROUPS.keys()), default=list(ALERT_PAIR_GROUPS.keys()))
+        alert_entry_tf = st.selectbox("Alarm giriş teyidi", ["15 Dakika", "5 Dakika", "1 Saat"], index=0)
+        alert_sort_mode = st.selectbox("Sıralama", ["Önce AL/SAT", "Sadece AL/SAT üstte", "En yüksek skor"], index=0)
+        st.caption("Yeni başlayan kullanım için 15 Dakika önerilir. 5 Dakika daha hızlı ama daha gürültülüdür.")
 
     with st.expander("Backtest ayarları", expanded=False):
         if enable_simple_mode:
-            bt_tf = decision_tf
-            st.caption(f"Backtest zamanı karar zamanı ile aynı: {bt_tf}")
+            bt_tf = selected_tf
+            st.caption(f"Backtest zamanı giriş zamanı ile aynı: {bt_tf}")
         else:
-            bt_tf = st.selectbox("Backtest zaman dilimi", tf_options, index=tf_options.index(decision_tf))
+            bt_tf = st.selectbox("Backtest zaman dilimi", tf_options, index=tf_options.index(selected_tf))
         default_period = BACKTEST_PERIODS.get(bt_tf, "30d")
         bt_period = st.text_input("Backtest period", value=default_period, key=f"bt_period_{bt_tf}", help="Örn: 5d, 30d, 90d, 120d")
         signal_threshold = st.slider("Sinyal eşiği", min_value=25, max_value=85, value=60, step=5)
@@ -3130,7 +3275,7 @@ with st.sidebar:
         max_same_direction_trades = st.number_input("Aynı yönde maksimum tekrar", min_value=1, max_value=10, value=2, step=1)
         min_trades_required = st.number_input("Minimum backtest işlem sayısı", min_value=10, max_value=100, value=20, step=5)
 
-    run_bt_requested = st.button("Yeniden Hesapla", type="primary", use_container_width=True)
+    run_bt_requested = st.button("Planı Kontrol Et", type="primary", use_container_width=True)
 
     with st.expander("Parite tarayıcı", expanded=False):
         scanner_tf = st.selectbox("Tarayıcı backtest zamanı", tf_options, index=tf_options.index(selected_tf))
@@ -3145,15 +3290,9 @@ with st.sidebar:
         fetch_price_change.clear()
         st.rerun()
 
-# Yeni başlayan modda kullanıcıya 4H/1H/15M/5M seçtirmiyoruz; karar zamanı 15M olur.
-if 'beginner_mode' in locals() and beginner_mode:
-    selected_tf = decision_tf
-
 st.title("Forex Analyzer Pro")
 st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
-if beginner_mode:
-    st.info("Yeni Başlayan Modu aktif: 4H ana yön, 1H işlem izni, 15M giriş şartı olarak kullanılır. Sen sadece AL / SAT / BEKLE / PAS GEÇ kararını takip et.")
-elif strict_safety_mode:
+if strict_safety_mode:
     st.info("Sert Güvenli Mod aktif: yalnızca güçlü yön + İyi backtest kalitesi olan işlemler için AL/SAT kartı gösterilir.")
 else:
     mode_note = signal_mode_settings(signal_mode)["description"]
@@ -3161,6 +3300,16 @@ else:
         st.info(f"Pratik Sinyal Modu aktif ({signal_mode}): {mode_note} Gerçek işlem öncesi demo/broker doğrulaması önerilir.")
     else:
         st.info(f"Standart Mod aktif ({signal_mode}): {mode_note}")
+
+if screen_mode == "Parite Alarm Ekranı":
+    render_pair_alert_screen(
+        change_window_minutes=change_window_minutes,
+        change_window_label=change_window_label,
+        alert_entry_tf=alert_entry_tf,
+        alert_groups=alert_groups,
+        alert_sort_mode=alert_sort_mode,
+    )
+    st.stop()
 
 current_bt_key = make_backtest_key(
     symbol=symbol,
@@ -3204,9 +3353,6 @@ def run_and_store_backtest() -> None:
             "text": q_text,
         }
 
-
-if auto_plan_control and st.session_state.get("last_bt_key") != current_bt_key:
-    run_and_store_backtest()
 
 if run_bt_requested:
     run_and_store_backtest()
@@ -3313,58 +3459,39 @@ entry_signal_tracker = build_entry_signal_tracker(
     market_regime=market_regime,
 )
 simple_decision = apply_entry_signal_to_decision(simple_decision, entry_signal_tracker)
-if beginner_mode:
-    simple_decision = build_beginner_single_decision(
-        symbol=symbol,
+
+st.header("İşlem Kararı")
+render_top_decision_panel(simple_decision)
+render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
+render_wait_reason_box(simple_decision, entry_signal_tracker)
+render_entry_alarm_box(entry_signal_tracker)
+render_direction_trade_explanation(
+    final_label=final_label,
+    final_score=final_score,
+    selected_tf=selected_tf,
+    simple_decision=simple_decision,
+    matched_quality=matched_quality,
+    allowed_quality_labels=allowed_quality_labels,
+    entry_signal_tracker=entry_signal_tracker,
+)
+render_readiness_checklist(
+    build_readiness_items(
         summary=summary_df,
         selected_tf=selected_tf,
+        bt_tf=bt_tf,
+        matched_quality=matched_quality,
+        allowed_quality_labels=allowed_quality_labels,
         setup=preview_setup,
-        matched_quality=matched_quality,
-        allowed_quality_labels=allowed_quality_labels,
-        tracker=entry_signal_tracker,
-        price=price,
+        practical_signal_mode=practical_signal_mode,
+        signal_mode=signal_mode,
     )
-
-st.header("Tek Karar")
-render_top_decision_panel(simple_decision)
-if beginner_mode:
-    render_simple_decision_card(simple_decision)
-    render_beginner_path(summary_df, matched_quality, entry_signal_tracker, selected_tf)
-    with st.expander("Neden böyle dedi?", expanded=False):
-        render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
-        render_entry_alarm_box(entry_signal_tracker)
-        render_entry_signal_tracker(entry_signal_tracker)
-else:
-    render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
-    render_wait_reason_box(simple_decision, entry_signal_tracker)
-    render_entry_alarm_box(entry_signal_tracker)
-    render_direction_trade_explanation(
-        final_label=final_label,
-        final_score=final_score,
-        selected_tf=selected_tf,
-        simple_decision=simple_decision,
-        matched_quality=matched_quality,
-        allowed_quality_labels=allowed_quality_labels,
-        entry_signal_tracker=entry_signal_tracker,
-    )
-    render_readiness_checklist(
-        build_readiness_items(
-            summary=summary_df,
-            selected_tf=selected_tf,
-            bt_tf=bt_tf,
-            matched_quality=matched_quality,
-            allowed_quality_labels=allowed_quality_labels,
-            setup=preview_setup,
-            practical_signal_mode=practical_signal_mode,
-            signal_mode=signal_mode,
-        )
-    )
-    render_entry_signal_tracker(entry_signal_tracker)
+)
+render_entry_signal_tracker(entry_signal_tracker)
 
 action_col, quality_col, risk_col = st.columns([1.2, 1.0, 1.0])
 with action_col:
     main_run_bt_requested = st.button(
-        "Yeniden Hesapla",
+        "Planı Kontrol Et",
         type="primary",
         use_container_width=True,
         disabled=bt_tf != selected_tf,
@@ -3379,9 +3506,8 @@ if main_run_bt_requested:
     run_and_store_backtest()
     st.rerun()
 
-if not beginner_mode:
-    with st.expander("Kararın adımları", expanded=False):
-        render_simple_decision_card(simple_decision)
+with st.expander("Kararın adımları", expanded=False):
+    render_simple_decision_card(simple_decision)
 
 if "scanner_df" in st.session_state and isinstance(st.session_state["scanner_df"], pd.DataFrame):
     with st.expander("Parite Tarayıcı Sonuçları", expanded=False):
@@ -3470,7 +3596,7 @@ with right_col:
         else:
             st.markdown(
                 "<div class='warn-box'><b>Risk Planı Kilitli</b><br>"
-                "Bu sembol ve giriş zaman dilimi için önce sidebar üzerinden 'Yeniden Hesapla' butonuna bas.</div>",
+                "Bu sembol ve giriş zaman dilimi için önce sidebar üzerinden 'Backtest Çalıştır / Planı Onayla' butonuna bas.</div>",
                 unsafe_allow_html=True,
             )
     elif current_quality_info["status"] == "blocked":
@@ -3570,7 +3696,7 @@ if saved_bt is not None and saved_bt_key == current_bt_key:
             view[col] = view[col].astype(float).round(2)
         st.dataframe(view.tail(100), use_container_width=True, height=360)
 else:
-    st.info("Backtest sonuçlarını görmek ve Risk Planı'nı kalite kontrolüne bağlamak için otomatik plan kontrolünü aç veya 'Yeniden Hesapla' butonuna bas.")
+    st.info("Backtest sonuçlarını görmek ve Risk Planı'nı kalite kontrolüne bağlamak için sidebar'daki 'Backtest Çalıştır / Planı Onayla' butonuna bas.")
 
 st.divider()
 st.header("İşlem Günlüğü")
@@ -3645,8 +3771,8 @@ else:
 st.divider()
 st.markdown(
     """
-    **Kullanım Notu:** Bu sistem emir vermek için değil, karar disiplinini korumak için tasarlanmıştır.
-    Yeni Başlayan Modu açıksa 4H ve 1H sadece ana yönü belirler, 15M giriş zamanıdır, 5M karar verici olarak gösterilmez.
-    Ekrandaki tek karar kartı AL / SAT / BEKLE / PAS GEÇ sonucunu verir; teknik detaylar yalnızca kontrol amaçlıdır.
+    **Kullanım Notu:** Bu sistem emir vermek için değil, karar disiplinini korumak için tasarlanmıştır. 
+    4H ve 1H yönü çelişiyorsa işlem filtresi devreye girer. Risk Planı, aynı sembol ve giriş zaman dilimi için çalıştırılmış MTF backtest kalitesi uygun değilse kilitli kalır. 
+    Sert Güvenli Mod açıksa yalnızca güçlü yön + İyi backtest kalitesi kabul edilir; Pratik Modda Orta kalite de izlenebilir. 15M/5M yalnızca giriş zamanlaması için kullanılmalıdır.
     """
 )
