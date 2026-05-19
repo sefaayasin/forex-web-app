@@ -347,6 +347,22 @@ st.markdown(
             font-weight:800;
         }
         .alert-reason { font-size:.88rem; font-weight:650; min-height:42px; }
+        .alert-decision {
+            margin-top:8px;
+            padding:8px 10px;
+            border-radius:12px;
+            background: rgba(255,255,255,.70);
+            border: 1px solid rgba(0,0,0,.08);
+            font-size:.88rem;
+            font-weight:900;
+        }
+        .alert-decision small {
+            display:block;
+            font-size:.76rem;
+            font-weight:700;
+            opacity:.80;
+            margin-top:2px;
+        }
         .alert-meta {
             display:flex;
             justify-content:space-between;
@@ -1810,6 +1826,36 @@ def alert_decision_from_row(row: dict, alert_entry_tf: str = "15 Dakika") -> tup
     return "BEKLE", "4H + 1H aynı yönde net izin vermiyor.", abs(score) * 0.35
 
 
+def alert_board_single_decision(row: dict) -> tuple[str, str]:
+    """Alarm kartı için sade tek karar üretir.
+
+    Alarm ekranı hızlı takip ekranıdır. Backtest/risk planı her kartta çalışmadığı için
+    LONG/SHORT alarmını doğrudan 'pozisyon aç' olarak değil, 'izle/adaya al' olarak gösterir.
+    Eğer ileride row içinde Backtest Kalitesi gelirse, karar buna göre sertleştirilir.
+    """
+    alarm = str(row.get("Alarm", "BEKLE"))
+    quality = str(row.get("Backtest Kalitesi", "") or "").strip()
+
+    good_quality = quality in {"İyi", "Orta"}
+    bad_quality = quality in {"Zayıf", "Kötü", "Yetersiz Örnek", "Yetersiz", "ML yetersiz örnek"}
+
+    if alarm == "LONG":
+        if good_quality:
+            return "LONG AÇ ADAYI", f"Alarm long yönünde ve kalite {quality}."
+        if bad_quality:
+            return "PAS GEÇ", f"Alarm long olsa da kalite {quality}; İşlem Asistanı onayı olmadan açma."
+        return "LONG İÇİN İZLE", "Alarm long yönünde. Detay için İşlem Asistanı ekranında risk/backtest kontrolü yap."
+
+    if alarm == "SHORT":
+        if good_quality:
+            return "SHORT AÇ ADAYI", f"Alarm short yönünde ve kalite {quality}."
+        if bad_quality:
+            return "PAS GEÇ", f"Alarm short olsa da kalite {quality}; İşlem Asistanı onayı olmadan açma."
+        return "SHORT İÇİN İZLE", "Alarm short yönünde. Detay için İşlem Asistanı ekranında risk/backtest kontrolü yap."
+
+    return "BEKLE", "4H + 1H ve giriş teyidi aynı yönde net izin vermiyor."
+
+
 def build_alert_board_rows(symbols: list[str], change_window_minutes: int, alert_entry_tf: str) -> pd.DataFrame:
     rows = []
     progress = st.progress(0, text="Alarm ekranı hazırlanıyor...")
@@ -1819,6 +1865,9 @@ def build_alert_board_rows(symbols: list[str], change_window_minutes: int, alert
         row["Alarm"] = decision
         row["Alarm Nedeni"] = reason
         row["Alarm Skoru"] = round(float(alert_score), 1)
+        tek_karar, tek_karar_notu = alert_board_single_decision(row)
+        row["Tek Karar"] = tek_karar
+        row["Tek Karar Notu"] = tek_karar_notu
         rows.append(row)
         progress.progress(i / max(len(symbols), 1), text=f"{sym} kontrol edildi ({i}/{len(symbols)})")
     progress.empty()
@@ -1838,6 +1887,8 @@ def render_alert_card(row: dict) -> None:
     icon = {"LONG": "🟢", "SHORT": "🔴", "BEKLE": "🟡"}.get(alarm, "🟡")
     symbol_txt = escape(str(row.get("Sembol", "-"))).replace("=X", "")
     reason = escape(str(row.get("Alarm Nedeni", "-")))
+    tek_karar = escape(str(row.get("Tek Karar", "-")))
+    tek_karar_notu = escape(str(row.get("Tek Karar Notu", "")))
     score = escape(str(row.get("Alarm Skoru", "-")))
     change = row.get("Değişim %", None)
     change_text = "-" if pd.isna(change) else f"{float(change):+.2f}%"
@@ -1860,6 +1911,7 @@ def render_alert_card(row: dict) -> None:
                 <div class="alert-mini">5M<br>{escape(m5)}</div>
             </div>
             <div class="alert-reason">{reason}</div>
+            <div class="alert-decision">Tek Karar: {tek_karar}<small>{tek_karar_notu}</small></div>
             <div class="alert-meta">
                 <span>Skor: {score}</span>
                 <span>Değişim: {escape(change_text)}</span>
@@ -1935,7 +1987,10 @@ def render_pair_alert_screen(
         unsafe_allow_html=True,
     )
 
-    st.info(f"Alarm mantığı: 4H + 1H ana yön aynı olmalı; {alert_entry_tf} giriş teyidi verir. Yeni başlayan kullanım için 15 Dakika önerilir.")
+    st.info(
+        f"Alarm mantığı: 4H + 1H ana yön aynı olmalı; {alert_entry_tf} giriş teyidi verir. "
+        f"Değişim %, sol menüdeki '{change_window_label}' seçimine göre Yahoo 1 dakikalık kapanış verisinden hesaplanır."
+    )
 
     major_df = board[board["Sembol"].isin(MAJOR_PAIRS)]
     minor_df = board[board["Sembol"].isin(MINOR_PAIRS)]
@@ -1946,7 +2001,7 @@ def render_pair_alert_screen(
         render_alert_section("Minör Pariteler", minor_df)
 
     with st.expander("Tablo görünümü", expanded=False):
-        table_cols = ["Sembol", "Alarm", "Alarm Skoru", "Değişim %", "4H", "1H", "15M", "5M", "Alarm Nedeni"]
+        table_cols = ["Sembol", "Alarm", "Tek Karar", "Tek Karar Notu", "Alarm Skoru", "Değişim %", "4H", "1H", "15M", "5M", "Alarm Nedeni"]
         st.dataframe(board[table_cols], use_container_width=True, height=420)
         st.download_button(
             "Alarm Tablosunu CSV İndir",
