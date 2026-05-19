@@ -231,7 +231,20 @@ st.markdown(
         .entry-signal-sell { background:#f8d7da; color:#842029 !important; }
         .entry-signal-wait { background:#fff3cd; color:#664d03 !important; }
         .entry-signal-pass { background:#e9ecef; color:#212529 !important; }
-        .entry-signal-shell, .entry-signal-shell * { color: inherit !important; }
+        .entry-signal-shell.entry-signal-buy, .entry-signal-shell.entry-signal-buy * { color:#0f5132 !important; }
+        .entry-signal-shell.entry-signal-sell, .entry-signal-shell.entry-signal-sell * { color:#842029 !important; }
+        .entry-signal-shell.entry-signal-wait, .entry-signal-shell.entry-signal-wait * { color:#664d03 !important; }
+        .entry-signal-shell.entry-signal-pass, .entry-signal-shell.entry-signal-pass * { color:#212529 !important; }
+        .entry-signal-shell .entry-signal-meta div {
+            background: rgba(255,255,255,0.72);
+            color:#212529 !important;
+        }
+        .entry-signal-shell .entry-signal-meta b {
+            color:#495057 !important;
+        }
+        .entry-signal-shell .entry-signal-meta span {
+            color:#212529 !important;
+        }
         .action-row {
             display:flex;
             gap:10px;
