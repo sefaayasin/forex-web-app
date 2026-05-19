@@ -275,6 +275,61 @@ st.markdown(
             flex-wrap:wrap;
             margin: 4px 0 14px 0;
         }
+
+        .auto-status-strip {
+            display:grid;
+            grid-template-columns: repeat(4, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 10px 0 18px 0;
+        }
+        .auto-status-card {
+            background:#f8f9fa;
+            border:1px solid #e9ecef;
+            color:#212529 !important;
+            border-radius:12px;
+            padding:12px 14px;
+            min-height:72px;
+        }
+        .auto-status-card, .auto-status-card * { color:#212529 !important; }
+        .auto-status-card b { display:block; font-size:0.85rem; color:#495057 !important; margin-bottom:5px; }
+        .auto-status-card span { display:block; font-size:1.02rem; font-weight:800; }
+        .auto-status-card small { display:block; margin-top:3px; color:#6c757d !important; }
+        .auto-ok { background:#f0f8f4; border-color:#badbcc; }
+        .auto-warn { background:#fff9e6; border-color:#ffe69c; }
+        .auto-bad { background:#fff1f2; border-color:#f5c2c7; }
+        .next-action-box {
+            background:#101820;
+            color:#f8f9fa !important;
+            border:1px solid rgba(255,255,255,0.14);
+            border-radius:16px;
+            padding:16px 18px;
+            margin: 8px 0 18px 0;
+        }
+        .next-action-box, .next-action-box * { color:#f8f9fa !important; }
+        .next-action-box b { color:#ffffff !important; }
+        .next-action-box ol { margin:8px 0 0 20px; padding:0; }
+        .next-action-box li { margin-bottom:4px; }
+        .top-level-grid {
+            display:grid;
+            grid-template-columns: repeat(4, minmax(110px, 1fr));
+            gap: 8px;
+            margin-top:12px;
+        }
+        .top-level-tile {
+            background: rgba(255,255,255,0.10);
+            border:1px solid rgba(255,255,255,0.16);
+            border-radius:10px;
+            padding:10px 12px;
+        }
+        .top-level-tile b { display:block; font-size:0.78rem; opacity:0.75; margin-bottom:4px; }
+        .top-level-tile span { font-size:1.1rem; font-weight:900; }
+        @media (max-width: 900px) {
+            .auto-status-strip, .top-level-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+        }
+        @media (max-width: 520px) {
+            .auto-status-strip, .top-level-grid { grid-template-columns: 1fr; }
+        }
+
         @media (max-width: 900px) {
             .simple-levels, .check-grid, .entry-signal-meta, .entry-step-grid {
                 grid-template-columns: repeat(2, minmax(120px, 1fr));
@@ -1986,7 +2041,7 @@ def build_simple_trade_decision(
             "class": "simple-wait",
             "subtitle": "Backtest zaman dilimi ile giriş zaman dilimi eşleşmiyor.",
             "reason": "Basit karar için Backtest zaman dilimi, Grafik/Giriş zaman dilimi ile aynı olmalı.",
-            "steps": ["Sidebar'dan backtest zaman dilimini giriş zaman dilimiyle aynı seç.", "Backtest Çalıştır / Planı Onayla butonuna bas.", "Sonra bu karttaki kararı takip et."],
+            "steps": ["Sidebar'dan backtest zaman dilimini giriş zaman dilimiyle aynı seç.", "Planı Kontrol Et / Yeniden Hesapla butonuna bas.", "Sonra bu karttaki kararı takip et."],
         })
         return base
 
@@ -1996,7 +2051,7 @@ def build_simple_trade_decision(
             "class": "simple-wait",
             "subtitle": "Önce strateji kontrolü gerekiyor.",
             "reason": "Bu sembol ve zaman dilimi için backtest onayı yok.",
-            "steps": ["Sidebar'dan Backtest Çalıştır / Planı Onayla butonuna bas.", "Strateji Kalitesi Orta veya İyi değilse işlem açma.", "Sert Güvenli Mod açıksa sadece İyi kalite kabul edilir."],
+            "steps": ["Sidebar'dan Planı Kontrol Et / Yeniden Hesapla butonuna bas.", "Strateji Kalitesi Orta veya İyi değilse işlem açma.", "Sert Güvenli Mod açıksa sadece İyi kalite kabul edilir."],
         })
         return base
 
@@ -2163,6 +2218,75 @@ def render_top_decision_panel(decision: dict) -> None:
         ),
         unsafe_allow_html=True,
     )
+
+
+def render_clean_action_summary(
+    decision: dict,
+    tracker: dict,
+    quality_info: dict,
+    market_regime: dict,
+    risk_amount: float,
+    auto_plan_check: bool,
+) -> None:
+    """Ana ekranda tek bakışta okunacak sade özet."""
+    levels = decision.get("levels") or tracker.get("levels") or {}
+    level_html = ""
+    if levels:
+        level_parts = []
+        for key, value in levels.items():
+            level_parts.append(
+                "<div class='top-level-tile'>"
+                f"<b>{escape(str(key))}</b>"
+                f"<span>{escape(str(value))}</span>"
+                "</div>"
+            )
+        level_html = "<div class='top-level-grid'>" + "".join(level_parts) + "</div>"
+
+    steps = decision.get("steps") or []
+    if not steps:
+        steps = ["Şu an yeni işlem açma."]
+    step_html = "".join(f"<li>{escape(str(step))}</li>" for step in steps[:4])
+    auto_text = "Otomatik" if auto_plan_check else "Manuel"
+    q_label = quality_info.get("label", "Bekliyor")
+    confidence = tracker.get("confidence_label", "-")
+    regime = market_regime.get("label", "-")
+    trigger = tracker.get("primary_blocker", "-")
+
+    st.markdown(
+        (
+            "<div class='next-action-box'>"
+            "<b>Şimdi ne yapacağım?</b>"
+            f"<ol>{step_html}</ol>"
+            f"{level_html}"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+    def state_for_quality() -> str:
+        status = quality_info.get("status")
+        if status == "approved":
+            return "auto-ok"
+        if status in {"low", "preview", "pending"}:
+            return "auto-warn"
+        return "auto-bad"
+
+    status_cards = [
+        ("Plan Kontrolü", f"{auto_text}", "Ayar değişince otomatik yenilenir" if auto_plan_check else "Butonla çalışır", "auto-ok" if auto_plan_check else "auto-warn"),
+        ("Strateji Kalitesi", str(q_label), quality_info.get("text", "-"), state_for_quality()),
+        ("Güven", str(confidence), f"Skor: {tracker.get('confidence_score', 0):.0f}/100", "auto-ok" if tracker.get("confidence_score", 0) >= 60 else "auto-warn"),
+        ("Piyasa", str(regime), market_regime.get("text", "-"), "auto-ok" if market_regime.get("state") == "ok" else "auto-warn"),
+        ("Risk", f"{risk_amount:.2f}", "İşlem başına planlanan risk", "auto-warn"),
+        ("Beklenen Adım", str(trigger), tracker.get("primary_blocker_text", "-"), "auto-warn" if not tracker.get("signal_now") else "auto-ok"),
+    ]
+    cards_html = "".join(
+        "<div class='auto-status-card {cls}'>"
+        "<b>{title}</b><span>{value}</span><small>{text}</small></div>".format(
+            cls=escape(cls), title=escape(title), value=escape(value), text=escape(text)
+        )
+        for title, value, text, cls in status_cards
+    )
+    st.markdown("<div class='auto-status-strip'>" + cards_html + "</div>", unsafe_allow_html=True)
 
 
 def render_signal_summary_card(decision: dict, tracker: dict, market_regime: dict, signal_mode: str) -> None:
@@ -2470,7 +2594,7 @@ def build_entry_signal_tracker(
             summary = "Plan kontrolü yapılmadan giriş sinyali verilmez."
             final_step_text = "Plan kontrolü bekleniyor"
             primary_blocker = "Plan kontrolü bekleniyor"
-            primary_blocker_text = "Planı Kontrol Et butonu ile kalite sonucu alınmalı."
+            primary_blocker_text = "Otomatik plan kontrolü bekleniyor veya Yeniden Hesapla kullanılmalı."
     elif not direction_ok:
         action = "BEKLE"
         status_class = "entry-signal-wait"
@@ -2927,6 +3051,11 @@ with st.sidebar:
     with st.expander("Ekran ve güvenlik", expanded=False):
         enable_simple_mode = st.checkbox("Basit İşlem Modu", value=True)
         practical_signal_mode = st.checkbox("Pratik Sinyal Modu", value=True)
+        auto_plan_check = st.checkbox(
+            "Otomatik Plan Kontrolü",
+            value=True,
+            help="Parite, giriş zamanı veya risk ayarları değiştiğinde backtest/kalite kontrolünü otomatik çalıştırır.",
+        )
         signal_mode = st.selectbox("Sinyal modu", SIGNAL_MODES, index=0)
         strict_safety_mode = st.checkbox("Sert Güvenli Mod", value=False)
         show_position_tracker = st.checkbox("Pozisyon Takip Modu", value=True)
@@ -2948,7 +3077,12 @@ with st.sidebar:
         max_same_direction_trades = st.number_input("Aynı yönde maksimum tekrar", min_value=1, max_value=10, value=2, step=1)
         min_trades_required = st.number_input("Minimum backtest işlem sayısı", min_value=10, max_value=100, value=20, step=5)
 
-    run_bt_requested = st.button("Planı Kontrol Et", type="primary", use_container_width=True)
+    run_bt_requested = st.button(
+        "Yeniden Hesapla" if auto_plan_check else "Planı Kontrol Et",
+        type="primary",
+        use_container_width=True,
+        help="Otomatik mod açıksa bu buton sadece manuel yenileme yapar.",
+    )
 
     with st.expander("Parite tarayıcı", expanded=False):
         scanner_tf = st.selectbox("Tarayıcı backtest zamanı", tf_options, index=tf_options.index(selected_tf))
@@ -3017,7 +3151,12 @@ def run_and_store_backtest() -> None:
         }
 
 
-if run_bt_requested:
+if auto_plan_check:
+    # Giriş zamanı, parite veya risk/backtest ayarları değişince plan otomatik yenilenir.
+    # Kullanıcı isterse aynı ayarla da "Yeniden Hesapla" butonuyla manuel tazeleyebilir.
+    if run_bt_requested or st.session_state.get("last_bt_key") != current_bt_key:
+        run_and_store_backtest()
+elif run_bt_requested:
     run_and_store_backtest()
 
 if run_scanner_requested:
@@ -3125,36 +3264,19 @@ simple_decision = apply_entry_signal_to_decision(simple_decision, entry_signal_t
 
 st.header("İşlem Kararı")
 render_top_decision_panel(simple_decision)
-render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
-render_wait_reason_box(simple_decision, entry_signal_tracker)
-render_entry_alarm_box(entry_signal_tracker)
-render_direction_trade_explanation(
-    final_label=final_label,
-    final_score=final_score,
-    selected_tf=selected_tf,
-    simple_decision=simple_decision,
-    matched_quality=matched_quality,
-    allowed_quality_labels=allowed_quality_labels,
-    entry_signal_tracker=entry_signal_tracker,
+render_clean_action_summary(
+    decision=simple_decision,
+    tracker=entry_signal_tracker,
+    quality_info=current_quality_info,
+    market_regime=market_regime,
+    risk_amount=account_size * (risk_pct / 100),
+    auto_plan_check=auto_plan_check,
 )
-render_readiness_checklist(
-    build_readiness_items(
-        summary=summary_df,
-        selected_tf=selected_tf,
-        bt_tf=bt_tf,
-        matched_quality=matched_quality,
-        allowed_quality_labels=allowed_quality_labels,
-        setup=preview_setup,
-        practical_signal_mode=practical_signal_mode,
-        signal_mode=signal_mode,
-    )
-)
-render_entry_signal_tracker(entry_signal_tracker)
 
 action_col, quality_col, risk_col = st.columns([1.2, 1.0, 1.0])
 with action_col:
     main_run_bt_requested = st.button(
-        "Planı Kontrol Et",
+        "Yeniden Hesapla" if auto_plan_check else "Planı Kontrol Et",
         type="primary",
         use_container_width=True,
         disabled=bt_tf != selected_tf,
@@ -3169,7 +3291,32 @@ if main_run_bt_requested:
     run_and_store_backtest()
     st.rerun()
 
-with st.expander("Kararın adımları", expanded=False):
+with st.expander("Canlı giriş ve karar detayları", expanded=False):
+    render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
+    render_wait_reason_box(simple_decision, entry_signal_tracker)
+    render_entry_alarm_box(entry_signal_tracker)
+    render_direction_trade_explanation(
+        final_label=final_label,
+        final_score=final_score,
+        selected_tf=selected_tf,
+        simple_decision=simple_decision,
+        matched_quality=matched_quality,
+        allowed_quality_labels=allowed_quality_labels,
+        entry_signal_tracker=entry_signal_tracker,
+    )
+    render_readiness_checklist(
+        build_readiness_items(
+            summary=summary_df,
+            selected_tf=selected_tf,
+            bt_tf=bt_tf,
+            matched_quality=matched_quality,
+            allowed_quality_labels=allowed_quality_labels,
+            setup=preview_setup,
+            practical_signal_mode=practical_signal_mode,
+            signal_mode=signal_mode,
+        )
+    )
+    render_entry_signal_tracker(entry_signal_tracker)
     render_simple_decision_card(simple_decision)
 
 if "scanner_df" in st.session_state and isinstance(st.session_state["scanner_df"], pd.DataFrame):
@@ -3259,7 +3406,7 @@ with right_col:
         else:
             st.markdown(
                 "<div class='warn-box'><b>Risk Planı Kilitli</b><br>"
-                "Bu sembol ve giriş zaman dilimi için önce sidebar üzerinden 'Backtest Çalıştır / Planı Onayla' butonuna bas.</div>",
+                "Bu sembol ve giriş zaman dilimi için önce sidebar üzerinden 'Planı Kontrol Et / Yeniden Hesapla' butonuna bas.</div>",
                 unsafe_allow_html=True,
             )
     elif current_quality_info["status"] == "blocked":
@@ -3318,118 +3465,122 @@ with st.expander("Teknik Detaylar", expanded=False):
     st.plotly_chart(plot_live_trigger(symbol, selected_tf, final_label), use_container_width=True)
 
 st.divider()
-st.header("Backtest")
-st.caption("Bu MTF backtest, canlı sistemle aynı ana mantığı kullanır: 4H + 1H yön filtresi, 5M için 15M teyidi, sinyal barı kapandıktan sonra sonraki bar açılışı. Aynı mumda hem TP hem SL görülürse muhafazakâr olarak SL kabul edilir.")
+with st.expander("Backtest Detayları", expanded=False):
+    st.header("Backtest")
+    st.caption("Bu MTF backtest, canlı sistemle aynı ana mantığı kullanır: 4H + 1H yön filtresi, 5M için 15M teyidi, sinyal barı kapandıktan sonra sonraki bar açılışı. Aynı mumda hem TP hem SL görülürse muhafazakâr olarak SL kabul edilir.")
 
-saved_bt = st.session_state.get("last_bt_result")
-saved_bt_key = st.session_state.get("last_bt_key")
-saved_quality = st.session_state.get("last_bt_quality")
+    saved_bt = st.session_state.get("last_bt_result")
+    saved_bt_key = st.session_state.get("last_bt_key")
+    saved_quality = st.session_state.get("last_bt_quality")
 
-if saved_bt is not None and saved_bt_key == current_bt_key:
-    bt = saved_bt
-    c1, c2 = st.columns([1.0, 2.0])
-    with c1:
-        st.subheader("Performans")
-        st.dataframe(bt.metrics, use_container_width=True, hide_index=True)
-        if saved_quality:
-            st.markdown(
-                f"<div class='{saved_quality['css']}'><b>Strateji Kalitesi: {saved_quality['label']}</b><br>{saved_quality['text']}</div>",
-                unsafe_allow_html=True,
-            )
-    with c2:
-        st.plotly_chart(plot_equity_curve(bt.equity), use_container_width=True)
+    if saved_bt is not None and saved_bt_key == current_bt_key:
+        bt = saved_bt
+        c1, c2 = st.columns([1.0, 2.0])
+        with c1:
+            st.subheader("Performans")
+            st.dataframe(bt.metrics, use_container_width=True, hide_index=True)
+            if saved_quality:
+                st.markdown(
+                    f"<div class='{saved_quality['css']}'><b>Strateji Kalitesi: {saved_quality['label']}</b><br>{saved_quality['text']}</div>",
+                    unsafe_allow_html=True,
+                )
+        with c2:
+            st.plotly_chart(plot_equity_curve(bt.equity), use_container_width=True)
 
-    if not bt.trades.empty:
-        s1, s2 = st.columns([1.2, 1.0])
-        with s1:
-            st.subheader("Long / Short Ayrı Performans")
-            st.dataframe(side_performance_table(bt.trades), use_container_width=True, hide_index=True)
-        with s2:
-            st.subheader("İşlem Süresi Özeti")
-            st.dataframe(trade_duration_table(bt.trades), use_container_width=True, hide_index=True)
+        if not bt.trades.empty:
+            s1, s2 = st.columns([1.2, 1.0])
+            with s1:
+                st.subheader("Long / Short Ayrı Performans")
+                st.dataframe(side_performance_table(bt.trades), use_container_width=True, hide_index=True)
+            with s2:
+                st.subheader("İşlem Süresi Özeti")
+                st.dataframe(trade_duration_table(bt.trades), use_container_width=True, hide_index=True)
 
-    st.subheader("İşlem Listesi")
-    if bt.trades.empty:
-        st.info("Bu ayarlarla işlem oluşmadı veya yeterli veri yok.")
+        st.subheader("İşlem Listesi")
+        if bt.trades.empty:
+            st.info("Bu ayarlarla işlem oluşmadı veya yeterli veri yok.")
+        else:
+            view = bt.trades.copy()
+            for col in ["Entry", "Exit", "SL", "TP"]:
+                view[col] = view[col].astype(float).round(price_decimals(symbol))
+            for col in ["Pips", "PnL", "Balance", "Lot", "Risk Amount", "Entry Score", "4H Score", "1H Score", "15M Score"]:
+                view[col] = view[col].astype(float).round(2)
+            st.dataframe(view.tail(100), use_container_width=True, height=360)
     else:
-        view = bt.trades.copy()
-        for col in ["Entry", "Exit", "SL", "TP"]:
-            view[col] = view[col].astype(float).round(price_decimals(symbol))
-        for col in ["Pips", "PnL", "Balance", "Lot", "Risk Amount", "Entry Score", "4H Score", "1H Score", "15M Score"]:
-            view[col] = view[col].astype(float).round(2)
-        st.dataframe(view.tail(100), use_container_width=True, height=360)
-else:
-    st.info("Backtest sonuçlarını görmek ve Risk Planı'nı kalite kontrolüne bağlamak için sidebar'daki 'Backtest Çalıştır / Planı Onayla' butonuna bas.")
+        st.info("Backtest sonuçlarını görmek ve Risk Planı'nı kalite kontrolüne bağlamak için sidebar'daki 'Planı Kontrol Et / Yeniden Hesapla' butonuna bas.")
+
 
 st.divider()
-st.header("İşlem Günlüğü")
-st.caption("Bu günlük Streamlit oturumu içinde tutulur. Kalıcı saklamak için CSV indirip ayrıca kaydetmelisin.")
+with st.expander("İşlem Günlüğü", expanded=False):
+    st.header("İşlem Günlüğü")
+    st.caption("Bu günlük Streamlit oturumu içinde tutulur. Kalıcı saklamak için CSV indirip ayrıca kaydetmelisin.")
 
-init_trade_journal()
-journal_setup = build_trade_setup(symbol, selected_tf, final_label, account_size, risk_pct, rr, atr_mult, pip_value_per_lot)
-default_side = journal_setup.side if journal_setup is not None else ("LONG" if "Alım" in final_label else "SHORT")
-default_entry = float(journal_setup.entry) if journal_setup is not None else (float(price) if price is not None else 0.0)
-default_sl = float(journal_setup.stop) if journal_setup is not None else 0.0
-default_tp = float(journal_setup.target) if journal_setup is not None else 0.0
+    init_trade_journal()
+    journal_setup = build_trade_setup(symbol, selected_tf, final_label, account_size, risk_pct, rr, atr_mult, pip_value_per_lot)
+    default_side = journal_setup.side if journal_setup is not None else ("LONG" if "Alım" in final_label else "SHORT")
+    default_entry = float(journal_setup.entry) if journal_setup is not None else (float(price) if price is not None else 0.0)
+    default_sl = float(journal_setup.stop) if journal_setup is not None else 0.0
+    default_tp = float(journal_setup.target) if journal_setup is not None else 0.0
 
-with st.form("trade_journal_form"):
-    j1, j2, j3, j4 = st.columns(4)
-    with j1:
-        journal_side = st.selectbox("Yön", ["LONG", "SHORT"], index=0 if default_side == "LONG" else 1)
-    with j2:
-        journal_result = st.selectbox("Sonuç", ["Açık", "TP", "SL", "Manuel Kâr", "Manuel Zarar", "İptal"], index=0)
-    with j3:
-        journal_entry = st.number_input("Gerçek Entry", min_value=0.0, value=float(default_entry), step=get_pip_size(symbol), format="%.5f")
-    with j4:
-        journal_exit = st.number_input("Gerçek Exit", min_value=0.0, value=0.0, step=get_pip_size(symbol), format="%.5f")
+    with st.form("trade_journal_form"):
+        j1, j2, j3, j4 = st.columns(4)
+        with j1:
+            journal_side = st.selectbox("Yön", ["LONG", "SHORT"], index=0 if default_side == "LONG" else 1)
+        with j2:
+            journal_result = st.selectbox("Sonuç", ["Açık", "TP", "SL", "Manuel Kâr", "Manuel Zarar", "İptal"], index=0)
+        with j3:
+            journal_entry = st.number_input("Gerçek Entry", min_value=0.0, value=float(default_entry), step=get_pip_size(symbol), format="%.5f")
+        with j4:
+            journal_exit = st.number_input("Gerçek Exit", min_value=0.0, value=0.0, step=get_pip_size(symbol), format="%.5f")
 
-    j5, j6, j7 = st.columns(3)
-    with j5:
-        journal_lot = st.number_input("Gerçek Lot", min_value=0.0, value=float(journal_setup.estimated_lot) if journal_setup else 0.0, step=0.01)
-    with j6:
-        journal_sl = st.number_input("Plan SL", min_value=0.0, value=float(default_sl), step=get_pip_size(symbol), format="%.5f")
-    with j7:
-        journal_tp = st.number_input("Plan TP", min_value=0.0, value=float(default_tp), step=get_pip_size(symbol), format="%.5f")
+        j5, j6, j7 = st.columns(3)
+        with j5:
+            journal_lot = st.number_input("Gerçek Lot", min_value=0.0, value=float(journal_setup.estimated_lot) if journal_setup else 0.0, step=0.01)
+        with j6:
+            journal_sl = st.number_input("Plan SL", min_value=0.0, value=float(default_sl), step=get_pip_size(symbol), format="%.5f")
+        with j7:
+            journal_tp = st.number_input("Plan TP", min_value=0.0, value=float(default_tp), step=get_pip_size(symbol), format="%.5f")
 
-    journal_notes = st.text_area("Not", value="")
-    submit_journal = st.form_submit_button("Günlüğe Ekle")
+        journal_notes = st.text_area("Not", value="")
+        submit_journal = st.form_submit_button("Günlüğe Ekle")
 
-    if submit_journal:
-        manual_pips = calculate_manual_pips(symbol, journal_side, journal_entry, journal_exit) if journal_exit > 0 else None
-        add_trade_journal_entry({
-            "Tarih": datetime.now(TR_TZ).strftime("%Y-%m-%d %H:%M:%S"),
-            "Sembol": symbol,
-            "Zaman Dilimi": selected_tf,
-            "Genel Bias": final_label,
-            "Skor": round(float(final_score), 2),
-            "Backtest Kalitesi": matched_quality["label"] if "matched_quality" in locals() and matched_quality else "-",
-            "Yön": journal_side,
-            "Sonuç": journal_result,
-            "Plan Entry": round(float(default_entry), price_decimals(symbol)) if default_entry else None,
-            "Gerçek Entry": journal_entry,
-            "Gerçek Exit": journal_exit if journal_exit > 0 else None,
-            "Plan SL": journal_sl if journal_sl > 0 else None,
-            "Plan TP": journal_tp if journal_tp > 0 else None,
-            "Lot": journal_lot,
-            "Pips": None if manual_pips is None else round(float(manual_pips), 2),
-            "Not": journal_notes,
-        })
-        st.success("İşlem günlüğe eklendi.")
+        if submit_journal:
+            manual_pips = calculate_manual_pips(symbol, journal_side, journal_entry, journal_exit) if journal_exit > 0 else None
+            add_trade_journal_entry({
+                "Tarih": datetime.now(TR_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+                "Sembol": symbol,
+                "Zaman Dilimi": selected_tf,
+                "Genel Bias": final_label,
+                "Skor": round(float(final_score), 2),
+                "Backtest Kalitesi": matched_quality["label"] if "matched_quality" in locals() and matched_quality else "-",
+                "Yön": journal_side,
+                "Sonuç": journal_result,
+                "Plan Entry": round(float(default_entry), price_decimals(symbol)) if default_entry else None,
+                "Gerçek Entry": journal_entry,
+                "Gerçek Exit": journal_exit if journal_exit > 0 else None,
+                "Plan SL": journal_sl if journal_sl > 0 else None,
+                "Plan TP": journal_tp if journal_tp > 0 else None,
+                "Lot": journal_lot,
+                "Pips": None if manual_pips is None else round(float(manual_pips), 2),
+                "Not": journal_notes,
+            })
+            st.success("İşlem günlüğe eklendi.")
 
-journal_df = journal_dataframe()
-if journal_df.empty:
-    st.info("Henüz işlem günlüğü kaydı yok.")
-else:
-    st.dataframe(journal_df.tail(100), use_container_width=True, height=300)
-    st.download_button(
-        "İşlem Günlüğünü CSV İndir",
-        data=journal_df.to_csv(index=False).encode("utf-8-sig"),
-        file_name="forex_trade_journal.csv",
-        mime="text/csv",
-    )
-    if st.button("İşlem Günlüğünü Temizle"):
-        st.session_state["trade_journal"] = []
-        st.rerun()
+    journal_df = journal_dataframe()
+    if journal_df.empty:
+        st.info("Henüz işlem günlüğü kaydı yok.")
+    else:
+        st.dataframe(journal_df.tail(100), use_container_width=True, height=300)
+        st.download_button(
+            "İşlem Günlüğünü CSV İndir",
+            data=journal_df.to_csv(index=False).encode("utf-8-sig"),
+            file_name="forex_trade_journal.csv",
+            mime="text/csv",
+        )
+        if st.button("İşlem Günlüğünü Temizle"):
+            st.session_state["trade_journal"] = []
+            st.rerun()
+
 
 st.divider()
 st.markdown(
