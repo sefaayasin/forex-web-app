@@ -134,11 +134,14 @@ st.markdown(
             line-height: 1.08;
         }
         .decision-shell p { margin: 0; font-size: 1rem; }
-        .decision-buy { background:#d1e7dd; color:#0f5132 !important; }
-        .decision-sell { background:#f8d7da; color:#842029 !important; }
-        .decision-wait { background:#fff3cd; color:#664d03 !important; }
-        .decision-pass { background:#e9ecef; color:#212529 !important; }
-        .decision-shell, .decision-shell * { color: inherit !important; }
+        .decision-buy { background:#d1e7dd; }
+        .decision-sell { background:#f8d7da; }
+        .decision-wait { background:#fff3cd; }
+        .decision-pass { background:#e9ecef; }
+        .decision-buy, .decision-buy * { color:#0f5132 !important; }
+        .decision-sell, .decision-sell * { color:#842029 !important; }
+        .decision-wait, .decision-wait * { color:#664d03 !important; }
+        .decision-pass, .decision-pass * { color:#212529 !important; }
         .check-grid {
             display:grid;
             grid-template-columns: repeat(5, minmax(120px, 1fr));
@@ -150,10 +153,13 @@ st.markdown(
             border-radius: 8px;
             background:#ffffff;
             border: 1px solid #e9ecef;
+            color:#212529 !important;
             min-height: 70px;
         }
         .check-item b { display:block; font-size:0.86rem; margin-bottom:4px; }
-        .check-item span { display:block; font-size:0.9rem; color:#495057; }
+        .check-item span { display:block; font-size:0.9rem; color:#495057 !important; }
+        .check-item, .check-item * { color:#212529 !important; }
+        .check-item span { color:#495057 !important; }
         .check-ok { border-color:#badbcc; background:#f0f8f4; }
         .check-warn { border-color:#ffe69c; background:#fff9e6; }
         .check-bad { border-color:#f5c2c7; background:#fff1f2; }
