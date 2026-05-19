@@ -11,6 +11,7 @@
 # - ATR tabanlı SL/TP, Risk/Reward ve yaklaşık lot hesabı
 # - Multi-timeframe backtest: canlı sistemdeki 4H + 1H ana yön filtresi ve 15M/5M giriş teyidi ile uyumlu çalışır
 # - Parite tarayıcı, seans filtresi, cooldown filtresi, long/short ayrı performans ve işlem günlüğü
+# - Basit İşlem Modu, Pozisyon Takip Modu ve Sert Güvenli Mod filtresi
 # - Streamlit Cloud uyumlu: pandas yeni sürümlerde "4h" kullanılır, st.rerun() kullanılır
 
 from __future__ import annotations
@@ -39,6 +40,43 @@ st.markdown(
     """
     <style>
         .small-muted { color:#6c757d; font-size:0.9rem; }
+        .simple-card {
+            padding: 20px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.16);
+            margin: 14px 0 18px 0;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+        }
+        .simple-buy { background: #d1e7dd; color: #0f5132 !important; }
+        .simple-sell { background: #f8d7da; color: #842029 !important; }
+        .simple-wait { background: #fff3cd; color: #664d03 !important; }
+        .simple-pass { background: #e9ecef; color: #212529 !important; }
+        .simple-card, .simple-card * { color: inherit !important; }
+        .simple-action { font-size: 2.2rem; font-weight: 900; margin-bottom: 6px; }
+        .simple-subtitle { font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; }
+        .simple-levels {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .simple-level {
+            background: rgba(255,255,255,0.55);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+        .simple-level b { display:block; font-size:0.84rem; opacity:0.75; margin-bottom:3px; }
+        .simple-level span { font-size:1.18rem; font-weight:800; }
+        .position-box {
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: #f8f9fa;
+            color: #212529 !important;
+            font-weight: 500;
+        }
+        .position-box, .position-box * { color: #212529 !important; }
         .risk-box {
             padding: 14px;
             border-radius: 12px;
@@ -1393,6 +1431,272 @@ def calculate_manual_pips(symbol: str, side: str, entry: float, exit_price: floa
     return None
 
 
+def _metric_to_float(value: Optional[str]) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        text = str(value).replace("%", "").replace(",", ".").strip()
+        if text == "-":
+            return None
+        # "-123.45 (-12.30%)" gibi değerlerde ilk sayıyı alır.
+        return float(text.split()[0])
+    except Exception:
+        return None
+
+
+def backtest_quality_allowed(matched_quality: Optional[dict], strict_safety_mode: bool) -> bool:
+    if not matched_quality:
+        return False
+    allowed = {"İyi"} if strict_safety_mode else {"İyi", "Orta"}
+    return matched_quality.get("label") in allowed
+
+
+def build_simple_trade_decision(
+    symbol: str,
+    selected_tf: str,
+    bt_tf: str,
+    final_label: str,
+    final_score: float,
+    filter_note: str,
+    price: Optional[float],
+    setup: Optional[TradeSetup],
+    matched_quality: Optional[dict],
+    strict_safety_mode: bool,
+) -> dict:
+    """Teknik ekranı acemi kullanıcı için AL/SAT/BEKLE/PAS GEÇ kararına indirger."""
+    dec = price_decimals(symbol)
+    base = {
+        "action": "BEKLE",
+        "class": "simple-wait",
+        "subtitle": "Henüz net işlem yok.",
+        "reason": filter_note,
+        "steps": ["Yeni işlem açma.", "Pariteyi izlemeye devam et.", "Backtest ve ana yön uyumu oluşmadan işlem alma."],
+        "levels": {},
+    }
+
+    if bt_tf != selected_tf:
+        base.update({
+            "action": "BEKLE",
+            "class": "simple-wait",
+            "subtitle": "Backtest zaman dilimi ile giriş zaman dilimi eşleşmiyor.",
+            "reason": "Basit karar için Backtest zaman dilimi, Grafik/Giriş zaman dilimi ile aynı olmalı.",
+            "steps": ["Sidebar'dan backtest zaman dilimini giriş zaman dilimiyle aynı seç.", "Backtest Çalıştır / Planı Onayla butonuna bas.", "Sonra bu karttaki kararı takip et."],
+        })
+        return base
+
+    if matched_quality is None:
+        base.update({
+            "action": "BEKLE",
+            "class": "simple-wait",
+            "subtitle": "Önce strateji kontrolü gerekiyor.",
+            "reason": "Bu sembol ve zaman dilimi için backtest onayı yok.",
+            "steps": ["Sidebar'dan Backtest Çalıştır / Planı Onayla butonuna bas.", "Strateji Kalitesi İyi/Orta değilse işlem açma.", "Sert Güvenli Mod açıksa sadece İyi kalite kabul edilir."],
+        })
+        return base
+
+    if strict_safety_mode and matched_quality.get("label") != "İyi":
+        base.update({
+            "action": "PAS GEÇ",
+            "class": "simple-pass",
+            "subtitle": "Sert Güvenli Mod bu işlemi reddetti.",
+            "reason": matched_quality.get("text", "Backtest kalitesi yeterli değil."),
+            "steps": ["Bu paritede işlem açma.", "Başka parite tara.", "Sadece Strateji Kalitesi İyi olan fırsatları değerlendir."],
+        })
+        return base
+
+    if (not strict_safety_mode) and matched_quality.get("label") not in {"İyi", "Orta"}:
+        base.update({
+            "action": "PAS GEÇ",
+            "class": "simple-pass",
+            "subtitle": "Backtest kalitesi işlem için yeterli değil.",
+            "reason": matched_quality.get("text", "Strateji kalitesi zayıf/yetersiz."),
+            "steps": ["Bu ayarla işlem açma.", "Başka parite veya daha yüksek zaman dilimi dene.", "Backtest kalitesi düzelmeden gerçek işlem alma."],
+        })
+        return base
+
+    if strict_safety_mode and final_label not in {"Güçlü Alım Yönlü", "Güçlü Satış Yönlü"}:
+        base.update({
+            "action": "PAS GEÇ",
+            "class": "simple-pass",
+            "subtitle": "Ana sinyal yeterince güçlü değil.",
+            "reason": f"Sert Güvenli Mod için 'Güçlü Alım' veya 'Güçlü Satış' gerekli. Mevcut: {final_label}.",
+            "steps": ["Bu paritede şimdilik işlem açma.", "4H ve 1H güçlü aynı yöne dönene kadar bekle.", "Tarayıcıdan daha net fırsat ara."],
+        })
+        return base
+
+    if final_label == "İşlem Yok" or setup is None:
+        base.update({
+            "action": "BEKLE",
+            "class": "simple-wait",
+            "subtitle": "Sistem işlem planı üretmiyor.",
+            "reason": filter_note,
+            "steps": ["Yeni işlem açma.", "Ana yön netleşene kadar bekle.", "Risk Planı oluşmadan emir girme."],
+        })
+        return base
+
+    side = setup.side
+    quality_text = matched_quality.get("label", "-")
+    levels = {
+        "Giriş": f"{setup.entry:.{dec}f}",
+        "Stop": f"{setup.stop:.{dec}f}",
+        "Kâr Al": f"{setup.target:.{dec}f}",
+        "Lot": f"{setup.estimated_lot:.2f}",
+    }
+
+    if side == "LONG":
+        if price is not None and price >= setup.entry:
+            return {
+                "action": "AL",
+                "class": "simple-buy",
+                "subtitle": f"{symbol} için alım planı aktif görünüyor.",
+                "reason": f"Ana yön alım tarafında ve backtest onayı: {quality_text}.",
+                "steps": [
+                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} üstünde kaldığını kontrol et.",
+                    f"Alış açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
+                    f"Kâr al seviyesini {setup.target:.{dec}f} yap.",
+                    "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
+                ],
+                "levels": levels,
+            }
+        return {
+            "action": "ALIM İÇİN BEKLE",
+            "class": "simple-wait",
+            "subtitle": f"{symbol} alım yönünde izlenebilir ama giriş henüz aktif değil.",
+            "reason": f"Fiyat giriş seviyesinin altında. Giriş seviyesi: {setup.entry:.{dec}f}.",
+            "steps": [
+                f"Fiyat {setup.entry:.{dec}f} üstünde {selected_tf} mum kapanışı yaparsa AL düşün.",
+                f"Alış açarsan stop {setup.stop:.{dec}f}, kâr al {setup.target:.{dec}f}.",
+                "Fiyat girişe gelmeden acele etme.",
+            ],
+            "levels": levels,
+        }
+
+    if side == "SHORT":
+        if price is not None and price <= setup.entry:
+            return {
+                "action": "SAT",
+                "class": "simple-sell",
+                "subtitle": f"{symbol} için satış planı aktif görünüyor.",
+                "reason": f"Ana yön satış tarafında ve backtest onayı: {quality_text}.",
+                "steps": [
+                    f"{selected_tf} mum kapanışının {setup.entry:.{dec}f} altında kaldığını kontrol et.",
+                    f"Satış açarsan stopu {setup.stop:.{dec}f} seviyesine koy.",
+                    f"Kâr al seviyesini {setup.target:.{dec}f} yap.",
+                    "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
+                ],
+                "levels": levels,
+            }
+        return {
+            "action": "SATIŞ İÇİN BEKLE",
+            "class": "simple-wait",
+            "subtitle": f"{symbol} satış yönünde izlenebilir ama giriş henüz aktif değil.",
+            "reason": f"Fiyat giriş seviyesinin üstünde. Giriş seviyesi: {setup.entry:.{dec}f}.",
+            "steps": [
+                f"Fiyat {setup.entry:.{dec}f} altında {selected_tf} mum kapanışı yaparsa SAT düşün.",
+                f"Satış açarsan stop {setup.stop:.{dec}f}, kâr al {setup.target:.{dec}f}.",
+                "Fiyat girişe gelmeden acele etme.",
+            ],
+            "levels": levels,
+        }
+
+    return base
+
+
+def render_simple_decision_card(decision: dict) -> None:
+    levels_html = ""
+    if decision.get("levels"):
+        parts = []
+        for k, v in decision["levels"].items():
+            parts.append(f"<div class='simple-level'><b>{k}</b><span>{v}</span></div>")
+        levels_html = "<div class='simple-levels'>" + "".join(parts) + "</div>"
+
+    steps_html = "".join([f"<li>{step}</li>" for step in decision.get("steps", [])])
+    html = f"""
+    <div class="simple-card {decision.get('class', 'simple-wait')}">
+        <div class="simple-action">{decision.get('action', 'BEKLE')}</div>
+        <div class="simple-subtitle">{decision.get('subtitle', '')}</div>
+        <div><b>Sebep:</b> {decision.get('reason', '')}</div>
+        {levels_html}
+        <div style="margin-top:12px;"><b>Ne yapacağım?</b><ol>{steps_html}</ol></div>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def build_position_tracker_result(
+    symbol: str,
+    side: str,
+    entry: float,
+    current_price: Optional[float],
+    stop: float,
+    target: float,
+    lot: float,
+    pip_value_per_lot: float,
+    final_label: str,
+) -> dict:
+    dec = price_decimals(symbol)
+    if current_price is None or entry <= 0:
+        return {"action": "BİLGİ YOK", "class": "simple-wait", "text": "Güncel fiyat veya giriş fiyatı alınamadı.", "pips": None, "pnl": None}
+
+    pips = calculate_manual_pips(symbol, side, entry, current_price)
+    pnl = None if pips is None else pips * pip_value_per_lot * lot
+
+    opposite = False
+    neutral = final_label == "İşlem Yok"
+    if side == "LONG" and "Satış" in final_label:
+        opposite = True
+    if side == "SHORT" and "Alım" in final_label:
+        opposite = True
+
+    action = "TUT"
+    css = "simple-buy" if pips is not None and pips >= 0 else "simple-wait"
+    reason = "Plan bozulmadı. Stop ve kâr al seviyelerini takip et."
+
+    if side == "LONG":
+        if stop > 0 and current_price <= stop:
+            action, css, reason = "ÇIK", "simple-sell", f"Fiyat stop seviyesine geldi/altına indi: {stop:.{dec}f}."
+        elif target > 0 and current_price >= target:
+            action, css, reason = "KÂR AL", "simple-buy", f"Fiyat hedef seviyeye geldi/üstüne çıktı: {target:.{dec}f}."
+        elif opposite:
+            action, css, reason = "ÇIKMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
+        elif neutral and pips is not None and pips < 0:
+            action, css, reason = "DİKKAT", "simple-wait", "Ana yön kararsız ve pozisyon zararda. Stopa sadık kal."
+    else:
+        if stop > 0 and current_price >= stop:
+            action, css, reason = "ÇIK", "simple-sell", f"Fiyat stop seviyesine geldi/üstüne çıktı: {stop:.{dec}f}."
+        elif target > 0 and current_price <= target:
+            action, css, reason = "KÂR AL", "simple-buy", f"Fiyat hedef seviyeye geldi/altına indi: {target:.{dec}f}."
+        elif opposite:
+            action, css, reason = "ÇIKMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
+        elif neutral and pips is not None and pips < 0:
+            action, css, reason = "DİKKAT", "simple-wait", "Ana yön kararsız ve pozisyon zararda. Stopa sadık kal."
+
+    return {"action": action, "class": css, "text": reason, "pips": pips, "pnl": pnl}
+
+
+def render_position_tracker_result(result: dict, current_price: Optional[float], symbol: str) -> None:
+    dec = price_decimals(symbol)
+    price_txt = "-" if current_price is None else f"{current_price:.{dec}f}"
+    pips_txt = "-" if result.get("pips") is None else f"{result['pips']:+.1f} pip"
+    pnl_txt = "-" if result.get("pnl") is None else f"{result['pnl']:+.2f}"
+    st.markdown(
+        f"""
+        <div class="simple-card {result.get('class','simple-wait')}">
+            <div class="simple-action">{result.get('action','TUT')}</div>
+            <div class="simple-subtitle">Pozisyon takip sonucu</div>
+            <div><b>Sebep:</b> {result.get('text','')}</div>
+            <div class="simple-levels">
+                <div class="simple-level"><b>Güncel Fiyat</b><span>{price_txt}</span></div>
+                <div class="simple-level"><b>Pip</b><span>{pips_txt}</span></div>
+                <div class="simple-level"><b>Tahmini PnL</b><span>{pnl_txt}</span></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+
 # =============================================================================
 # PLOTS
 # =============================================================================
@@ -1527,6 +1831,12 @@ with st.sidebar:
     selected_tf = st.radio("Grafik / Giriş Zaman Dilimi", list(TIMEFRAMES.keys()), index=1)
 
     st.divider()
+    st.subheader("Basit Kullanım")
+    enable_simple_mode = st.checkbox("Basit İşlem Modu", value=True, help="Teknik terimleri azaltıp AL / SAT / BEKLE / PAS GEÇ olarak gösterir.")
+    strict_safety_mode = st.checkbox("Sert Güvenli Mod", value=True, help="Sadece güçlü yön + iyi backtest kalitesi varsa işlem planına izin verir.")
+    show_position_tracker = st.checkbox("Pozisyon Takip Modu", value=True, help="Açık pozisyonun için TUT / ÇIK / KÂR AL gibi sade durum üretir.")
+
+    st.divider()
     st.subheader("Fiyat Değişim Filtresi")
     change_window_label = st.selectbox("Yüzde değişim periyodu", list(PRICE_CHANGE_WINDOWS.keys()), index=1)
     change_window_minutes = PRICE_CHANGE_WINDOWS[change_window_label]
@@ -1569,6 +1879,8 @@ with st.sidebar:
 
 st.title("Forex Analyzer Pro")
 st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
+if strict_safety_mode:
+    st.info("Sert Güvenli Mod aktif: yalnızca güçlü yön + İyi backtest kalitesi olan işlemler için AL/SAT kartı gösterilir.")
 
 current_bt_key = make_backtest_key(
     symbol=symbol,
@@ -1666,6 +1978,71 @@ if "scanner_df" in st.session_state and isinstance(st.session_state["scanner_df"
 summary_df, detail_df = analyse_symbol(symbol)
 final_label, final_score, filter_note = global_bias(summary_df)
 
+plan_bt_key = make_backtest_key(
+    symbol=symbol,
+    tf_name=selected_tf,
+    period=bt_period,
+    risk_pct=risk_pct,
+    rr=rr,
+    atr_mult=atr_mult,
+    signal_threshold=float(signal_threshold),
+    spread_pips=spread_pips,
+    cooldown_bars=int(cooldown_bars),
+    session_filter=session_filter,
+    max_same_direction_trades=int(max_same_direction_trades),
+)
+matched_quality = get_matching_backtest_quality(plan_bt_key)
+allowed_quality_labels = {"İyi"} if strict_safety_mode else {"İyi", "Orta"}
+preview_setup = build_trade_setup(symbol, selected_tf, final_label, account_size, risk_pct, rr, atr_mult, pip_value_per_lot)
+
+if enable_simple_mode:
+    st.header("Basit İşlem Modu")
+    simple_decision = build_simple_trade_decision(
+        symbol=symbol,
+        selected_tf=selected_tf,
+        bt_tf=bt_tf,
+        final_label=final_label,
+        final_score=final_score,
+        filter_note=filter_note,
+        price=price,
+        setup=preview_setup,
+        matched_quality=matched_quality,
+        strict_safety_mode=strict_safety_mode,
+    )
+    render_simple_decision_card(simple_decision)
+
+if show_position_tracker:
+    st.header("Pozisyon Takip Modu")
+    with st.expander("Açık pozisyonumu takip et", expanded=False):
+        default_side_tracker = preview_setup.side if preview_setup is not None else ("LONG" if "Alım" in final_label else "SHORT")
+        default_entry_tracker = float(preview_setup.entry) if preview_setup is not None else (float(price) if price is not None else 0.0)
+        default_stop_tracker = float(preview_setup.stop) if preview_setup is not None else 0.0
+        default_target_tracker = float(preview_setup.target) if preview_setup is not None else 0.0
+        dec_tracker = price_decimals(symbol)
+        pc1, pc2, pc3, pc4, pc5 = st.columns(5)
+        with pc1:
+            pos_side = st.selectbox("Pozisyon Yönü", ["LONG", "SHORT"], index=0 if default_side_tracker == "LONG" else 1, key="pos_side")
+        with pc2:
+            pos_entry = st.number_input("Giriş fiyatım", min_value=0.0, value=float(default_entry_tracker), step=get_pip_size(symbol), format=f"%.{dec_tracker}f", key="pos_entry")
+        with pc3:
+            pos_lot = st.number_input("Lot", min_value=0.0, value=float(preview_setup.estimated_lot) if preview_setup else 0.0, step=0.01, key="pos_lot")
+        with pc4:
+            pos_stop = st.number_input("Stop", min_value=0.0, value=float(default_stop_tracker), step=get_pip_size(symbol), format=f"%.{dec_tracker}f", key="pos_stop")
+        with pc5:
+            pos_target = st.number_input("Kâr Al", min_value=0.0, value=float(default_target_tracker), step=get_pip_size(symbol), format=f"%.{dec_tracker}f", key="pos_target")
+        tracker_result = build_position_tracker_result(
+            symbol=symbol,
+            side=pos_side,
+            entry=float(pos_entry),
+            current_price=price,
+            stop=float(pos_stop),
+            target=float(pos_target),
+            lot=float(pos_lot),
+            pip_value_per_lot=float(pip_value_per_lot),
+            final_label=final_label,
+        )
+        render_position_tracker_result(tracker_result, price, symbol)
+
 left_col, right_col = st.columns([2.2, 1.0])
 
 with left_col:
@@ -1685,20 +2062,7 @@ with right_col:
 
     st.subheader("Risk Planı")
 
-    plan_bt_key = make_backtest_key(
-        symbol=symbol,
-        tf_name=selected_tf,
-        period=bt_period,
-        risk_pct=risk_pct,
-        rr=rr,
-        atr_mult=atr_mult,
-        signal_threshold=float(signal_threshold),
-        spread_pips=spread_pips,
-        cooldown_bars=int(cooldown_bars),
-        session_filter=session_filter,
-        max_same_direction_trades=int(max_same_direction_trades),
-    )
-    matched_quality = get_matching_backtest_quality(plan_bt_key)
+    # Risk Planı, yukarıda hesaplanan aynı sembol + aynı giriş zaman dilimi backtest kalitesine bağlıdır.
 
     if bt_tf != selected_tf:
         st.markdown(
@@ -1712,10 +2076,17 @@ with right_col:
             "Bu sembol ve giriş zaman dilimi için önce sidebar üzerinden 'Backtest Çalıştır / Planı Onayla' butonuna bas.</div>",
             unsafe_allow_html=True,
         )
-    elif matched_quality["label"] not in {"İyi", "Orta"}:
+    elif matched_quality["label"] not in allowed_quality_labels:
+        strict_note = "Sert Güvenli Mod açık olduğu için yalnızca 'İyi' kalite kabul edilir." if strict_safety_mode else "İşlem için en az Orta kalite gerekir."
         st.markdown(
             f"<div class='{matched_quality['css']}'><b>PAS GEÇ — Strateji Kalitesi: {matched_quality['label']}</b><br>"
-            f"{matched_quality['text']}</div>",
+            f"{matched_quality['text']}<br>{strict_note}</div>",
+            unsafe_allow_html=True,
+        )
+    elif strict_safety_mode and final_label not in {"Güçlü Alım Yönlü", "Güçlü Satış Yönlü"}:
+        st.markdown(
+            f"<div class='warn-box'><b>Risk Planı Kilitli</b><br>"
+            f"Sert Güvenli Mod için yönün Güçlü Alım veya Güçlü Satış olması gerekir. Mevcut yön: {final_label}</div>",
             unsafe_allow_html=True,
         )
     else:
@@ -1876,7 +2247,7 @@ st.divider()
 st.markdown(
     """
     **Kullanım Notu:** Bu sistem emir vermek için değil, karar disiplinini korumak için tasarlanmıştır. 
-    4H ve 1H yönü çelişiyorsa işlem filtresi devreye girer. Risk Planı, aynı sembol ve giriş zaman dilimi için çalıştırılmış MTF backtest kalitesi İyi/Orta değilse kilitli kalır. 
-    15M/5M yalnızca giriş zamanlaması için kullanılmalıdır.
+    4H ve 1H yönü çelişiyorsa işlem filtresi devreye girer. Risk Planı, aynı sembol ve giriş zaman dilimi için çalıştırılmış MTF backtest kalitesi uygun değilse kilitli kalır. 
+    Sert Güvenli Mod açıksa yalnızca güçlü yön + İyi backtest kalitesi kabul edilir. 15M/5M yalnızca giriş zamanlaması için kullanılmalıdır.
     """
 )
