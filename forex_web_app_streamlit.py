@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from html import escape
 from typing import Optional
 
 import numpy as np
@@ -51,7 +52,12 @@ st.markdown(
         .simple-sell { background: #f8d7da; color: #842029 !important; }
         .simple-wait { background: #fff3cd; color: #664d03 !important; }
         .simple-pass { background: #e9ecef; color: #212529 !important; }
-        .simple-card, .simple-card * { color: inherit !important; }
+        .simple-card.simple-buy, .simple-card.simple-buy * { color: #0f5132 !important; }
+        .simple-card.simple-sell, .simple-card.simple-sell * { color: #842029 !important; }
+        .simple-card.simple-wait, .simple-card.simple-wait * { color: #664d03 !important; }
+        .simple-card.simple-pass, .simple-card.simple-pass * { color: #212529 !important; }
+        .simple-card ol { margin: 6px 0 0 22px; padding: 0; }
+        .simple-card li { margin-bottom: 4px; }
         .simple-action { font-size: 2.2rem; font-weight: 900; margin-bottom: 6px; }
         .simple-subtitle { font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; }
         .simple-levels {
@@ -1603,25 +1609,41 @@ def build_simple_trade_decision(
 
 
 def render_simple_decision_card(decision: dict) -> None:
+    """Basit karar kartını düz HTML olarak basar.
+
+    HTML kompakt üretilir; Streamlit markdown içinde girintili HTML bazen
+    kod bloğu gibi görünebildiği için burada çok satırlı/indentli HTML kullanılmaz.
+    """
+    card_class = escape(str(decision.get("class", "simple-wait")))
+    action = escape(str(decision.get("action", "BEKLE")))
+    subtitle = escape(str(decision.get("subtitle", "")))
+    reason = escape(str(decision.get("reason", "")))
+
     levels_html = ""
     if decision.get("levels"):
         parts = []
-        for k, v in decision["levels"].items():
-            parts.append(f"<div class='simple-level'><b>{k}</b><span>{v}</span></div>")
+        for key, value in decision["levels"].items():
+            parts.append(
+                "<div class='simple-level'>"
+                f"<b>{escape(str(key))}</b>"
+                f"<span>{escape(str(value))}</span>"
+                "</div>"
+            )
         levels_html = "<div class='simple-levels'>" + "".join(parts) + "</div>"
 
-    steps_html = "".join([f"<li>{step}</li>" for step in decision.get("steps", [])])
-    html = f"""
-    <div class="simple-card {decision.get('class', 'simple-wait')}">
-        <div class="simple-action">{decision.get('action', 'BEKLE')}</div>
-        <div class="simple-subtitle">{decision.get('subtitle', '')}</div>
-        <div><b>Sebep:</b> {decision.get('reason', '')}</div>
-        {levels_html}
-        <div style="margin-top:12px;"><b>Ne yapacağım?</b><ol>{steps_html}</ol></div>
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
+    steps = decision.get("steps", []) or []
+    steps_html = "".join(f"<li>{escape(str(step))}</li>" for step in steps) if steps else "<li>Şu an yeni işlem açma.</li>"
 
+    html = (
+        f"<div class='simple-card {card_class}'>"
+        f"<div class='simple-action'>{action}</div>"
+        f"<div class='simple-subtitle'>{subtitle}</div>"
+        f"<div><b>Sebep:</b> {reason}</div>"
+        f"{levels_html}"
+        f"<div style='margin-top:12px;'><b>Ne yapacağım?</b><ol>{steps_html}</ol></div>"
+        f"</div>"
+    )
+    st.markdown(html, unsafe_allow_html=True)
 
 def build_position_tracker_result(
     symbol: str,
@@ -1679,21 +1701,23 @@ def render_position_tracker_result(result: dict, current_price: Optional[float],
     price_txt = "-" if current_price is None else f"{current_price:.{dec}f}"
     pips_txt = "-" if result.get("pips") is None else f"{result['pips']:+.1f} pip"
     pnl_txt = "-" if result.get("pnl") is None else f"{result['pnl']:+.2f}"
-    st.markdown(
-        f"""
-        <div class="simple-card {result.get('class','simple-wait')}">
-            <div class="simple-action">{result.get('action','TUT')}</div>
-            <div class="simple-subtitle">Pozisyon takip sonucu</div>
-            <div><b>Sebep:</b> {result.get('text','')}</div>
-            <div class="simple-levels">
-                <div class="simple-level"><b>Güncel Fiyat</b><span>{price_txt}</span></div>
-                <div class="simple-level"><b>Pip</b><span>{pips_txt}</span></div>
-                <div class="simple-level"><b>Tahmini PnL</b><span>{pnl_txt}</span></div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+
+    card_class = escape(str(result.get("class", "simple-wait")))
+    action = escape(str(result.get("action", "TUT")))
+    reason = escape(str(result.get("text", "")))
+    html = (
+        f"<div class='simple-card {card_class}'>"
+        f"<div class='simple-action'>{action}</div>"
+        f"<div class='simple-subtitle'>Pozisyon takip sonucu</div>"
+        f"<div><b>Sebep:</b> {reason}</div>"
+        f"<div class='simple-levels'>"
+        f"<div class='simple-level'><b>Güncel Fiyat</b><span>{escape(price_txt)}</span></div>"
+        f"<div class='simple-level'><b>Pip</b><span>{escape(pips_txt)}</span></div>"
+        f"<div class='simple-level'><b>Tahmini PnL</b><span>{escape(pnl_txt)}</span></div>"
+        f"</div>"
+        f"</div>"
     )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 
