@@ -245,6 +245,29 @@ st.markdown(
         .entry-signal-shell .entry-signal-meta span {
             color:#212529 !important;
         }
+        .logic-note {
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #ffe69c;
+            background: #fff9e6;
+            color: #664d03 !important;
+            font-weight: 500;
+            margin: 0 0 14px 0;
+        }
+        .logic-note, .logic-note * { color:#664d03 !important; }
+        .logic-note b { font-weight: 900; }
+        .logic-note-ok {
+            border-color:#badbcc;
+            background:#f0f8f4;
+            color:#0f5132 !important;
+        }
+        .logic-note-ok, .logic-note-ok * { color:#0f5132 !important; }
+        .logic-note-pass {
+            border-color:#f5c2c7;
+            background:#fff1f2;
+            color:#842029 !important;
+        }
+        .logic-note-pass, .logic-note-pass * { color:#842029 !important; }
         .action-row {
             display:flex;
             gap:10px;
@@ -1570,6 +1593,7 @@ def run_symbol_scanner(
     session_filter: str,
     max_same_direction_trades: int,
     min_trades_required: int,
+    signal_mode: str = "Dengeli Sinyal",
 ) -> pd.DataFrame:
     rows = []
     progress = st.progress(0, text="Pariteler taranıyor...")
@@ -1605,15 +1629,18 @@ def run_symbol_scanner(
             row["Drawdown"] = "-"
             row["İşlem Sayısı"] = "-"
 
-        if row["Genel Bias"] == "İşlem Yok":
-            decision = "PAS"
-        elif row["Backtest Kalitesi"] in {"Zayıf", "Yetersiz", "Yetersiz Örnek"}:
-            decision = "PAS"
-        elif row["Backtest Kalitesi"] in {"İyi", "Orta"}:
-            decision = "İZLE"
+        opportunity, opportunity_reason, signal_score = scanner_opportunity_from_row(row, signal_mode)
+        row["Fırsat"] = opportunity
+        row["Fırsat Nedeni"] = opportunity_reason
+        row["Sinyal Skoru"] = round(float(signal_score), 1)
+        if opportunity == "PAS":
+            row["Karar"] = "PAS"
+        elif "DÜŞÜK GÜVEN" in opportunity:
+            row["Karar"] = "DEMO/İZLE"
+        elif "ÖN İZLEME" in opportunity:
+            row["Karar"] = "ÖN İZLEME"
         else:
-            decision = "ÖN İZLEME"
-        row["Karar"] = decision
+            row["Karar"] = "İZLE"
 
         rows.append(row)
         progress.progress(i / len(symbols), text=f"{sym} tarandı ({i}/{len(symbols)})")
@@ -1621,10 +1648,10 @@ def run_symbol_scanner(
     progress.empty()
     result = pd.DataFrame(rows)
 
-    # En işe yarar sıralama: önce aksiyon alınabilecekler, sonra skor.
-    decision_order = {"İZLE": 0, "ÖN İZLEME": 1, "PAS": 2}
+    # En işe yarar sıralama: önce aksiyon alınabilecekler, sonra sinyal skoru.
+    decision_order = {"İZLE": 0, "DEMO/İZLE": 1, "ÖN İZLEME": 2, "PAS": 3}
     result["_order"] = result["Karar"].map(decision_order).fillna(9)
-    result = result.sort_values(["_order", "Skor"], ascending=[True, False]).drop(columns=["_order"])
+    result = result.sort_values(["_order", "Sinyal Skoru", "Skor"], ascending=[True, False, False]).drop(columns=["_order"])
     return result
 
 
@@ -1674,6 +1701,251 @@ def backtest_quality_allowed(matched_quality: Optional[dict], strict_safety_mode
     return matched_quality.get("label") in allowed
 
 
+SIGNAL_MODES = ["Dengeli Sinyal", "Hızlı Sinyal", "Güvenli Sinyal"]
+LOW_SAMPLE_QUALITIES = {"Yetersiz", "Yetersiz Örnek"}
+TRADE_DIRECTIONS = {"Alım Yönlü", "Güçlü Alım Yönlü", "Satış Yönlü", "Güçlü Satış Yönlü"}
+
+
+def signal_mode_settings(signal_mode: str) -> dict:
+    settings = {
+        "Hızlı Sinyal": {
+            "allow_low_sample_signal": True,
+            "allow_preview_without_backtest": True,
+            "requires_strong_direction": False,
+            "confidence_adjust": -5,
+            "description": "Daha erken sinyal verir; düşük örnek ve ön sinyal durumlarını ayrıca işaretler.",
+        },
+        "Dengeli Sinyal": {
+            "allow_low_sample_signal": True,
+            "allow_preview_without_backtest": False,
+            "requires_strong_direction": False,
+            "confidence_adjust": 0,
+            "description": "Yön, mum kapanışı ve kalite dengesini varsayılan şekilde kullanır.",
+        },
+        "Güvenli Sinyal": {
+            "allow_low_sample_signal": False,
+            "allow_preview_without_backtest": False,
+            "requires_strong_direction": True,
+            "confidence_adjust": 8,
+            "description": "Daha az sinyal verir; güçlü yön ve iyi kalite arar.",
+        },
+    }
+    return settings.get(signal_mode, settings["Dengeli Sinyal"])
+
+
+def allowed_quality_for_mode(strict_safety_mode: bool, signal_mode: str) -> set[str]:
+    if strict_safety_mode or signal_mode == "Güvenli Sinyal":
+        return {"İyi"}
+    return {"İyi", "Orta"}
+
+
+def quality_signal_status(
+    matched_quality: Optional[dict],
+    allowed_quality_labels: set[str],
+    practical_signal_mode: bool,
+    signal_mode: str,
+) -> dict:
+    settings = signal_mode_settings(signal_mode)
+    if matched_quality is None:
+        if practical_signal_mode and settings["allow_preview_without_backtest"]:
+            return {
+                "status": "preview",
+                "state": "warn",
+                "label": "Ön Sinyal",
+                "text": "Plan kontrolü yok; sadece ön izleme sinyali.",
+                "blocks_trade": False,
+            }
+        return {
+            "status": "pending",
+            "state": "warn",
+            "label": "Bekliyor",
+            "text": "Plan kontrolü bekliyor",
+            "blocks_trade": True,
+        }
+
+    label = str(matched_quality.get("label", "-"))
+    if label in allowed_quality_labels:
+        return {
+            "status": "approved",
+            "state": "ok",
+            "label": label,
+            "text": f"Kalite: {label}",
+            "blocks_trade": False,
+        }
+
+    if practical_signal_mode and settings["allow_low_sample_signal"] and label in LOW_SAMPLE_QUALITIES and allowed_quality_labels != {"İyi"}:
+        return {
+            "status": "low",
+            "state": "warn",
+            "label": label,
+            "text": f"Düşük güven: {label}",
+            "blocks_trade": False,
+        }
+
+    return {
+        "status": "blocked",
+        "state": "bad",
+        "label": label,
+        "text": f"Kalite: {label}",
+        "blocks_trade": True,
+    }
+
+
+def confidence_label(score: float) -> str:
+    if score >= 80:
+        return "Yüksek Güven"
+    if score >= 60:
+        return "Orta Güven"
+    if score >= 40:
+        return "Düşük Güven"
+    return "Çok Düşük Güven"
+
+
+def classify_market_regime(symbol: str, selected_tf: str) -> dict:
+    prm = TIMEFRAMES[selected_tf]
+    df = fetch_ohlc(symbol, prm["interval"], prm["period"])
+    if df.empty or len(df) < 80:
+        return {
+            "label": "Bilinmiyor",
+            "state": "warn",
+            "text": "Piyasa tipi için yeterli veri yok.",
+            "score_adjust": 0,
+        }
+
+    ind = add_indicators(df.iloc[:-1].tail(260))
+    row = latest_valid_row(ind)
+    if row is None:
+        return {
+            "label": "Bilinmiyor",
+            "state": "warn",
+            "text": "Piyasa tipi için indikatör verisi yetersiz.",
+            "score_adjust": 0,
+        }
+
+    atr = float(row["ATR14"])
+    if not np.isfinite(atr) or atr <= 0:
+        return {
+            "label": "Bilinmiyor",
+            "state": "warn",
+            "text": "ATR okunamadığı için piyasa tipi belirsiz.",
+            "score_adjust": 0,
+        }
+
+    ema20 = float(row["EMA20"])
+    ema50 = float(row["EMA50"])
+    ema_gap_atr = abs(ema20 - ema50) / atr
+    ema50_slope_atr = abs(float(ind["EMA50"].iloc[-1] - ind["EMA50"].iloc[-20])) / atr if len(ind) > 20 else 0.0
+    bb_width_atr = abs(float(row["BBUp"] - row["BBLow"])) / atr if pd.notna(row.get("BBUp")) and pd.notna(row.get("BBLow")) else 0.0
+
+    if ema50_slope_atr >= 1.0 and ema_gap_atr >= 0.35:
+        return {
+            "label": "Trend",
+            "state": "ok",
+            "text": f"Trend piyasası: EMA eğimi {ema50_slope_atr:.2f} ATR, EMA açıklığı {ema_gap_atr:.2f} ATR.",
+            "score_adjust": 8,
+        }
+
+    if ema50_slope_atr <= 0.35 and ema_gap_atr <= 0.25 and bb_width_atr <= 3.5:
+        return {
+            "label": "Yatay",
+            "state": "warn",
+            "text": f"Yatay/sıkışık piyasa: EMA eğimi {ema50_slope_atr:.2f} ATR, EMA açıklığı {ema_gap_atr:.2f} ATR.",
+            "score_adjust": -10,
+        }
+
+    return {
+        "label": "Kararsız",
+        "state": "warn",
+        "text": f"Trend net değil: EMA eğimi {ema50_slope_atr:.2f} ATR, Bollinger genişliği {bb_width_atr:.2f} ATR.",
+        "score_adjust": -2,
+    }
+
+
+def build_wait_reason(decision: dict, tracker: Optional[dict] = None) -> tuple[str, str, str]:
+    action = str(decision.get("action", "BEKLE"))
+    if tracker and tracker.get("signal_now"):
+        return "Sinyal aktif", "Giriş şartları tamamlandı; risk ve spread kontrolü yapılmalı.", "ok"
+
+    if tracker:
+        blocker = str(tracker.get("primary_blocker", "")).strip()
+        blocker_text = str(tracker.get("primary_blocker_text", "")).strip()
+        if blocker or blocker_text:
+            return blocker or "Bekleme sebebi", blocker_text or str(decision.get("reason", "")), "warn"
+
+    if "PAS" in action:
+        return "Pas geçme sebebi", str(decision.get("reason", "")), "pass"
+    return "Bekleme sebebi", str(decision.get("reason", "")), "warn"
+
+
+def signal_class_for_status(side: Optional[str], quality_status: str) -> tuple[str, str]:
+    if quality_status == "approved":
+        return ("simple-buy" if side == "LONG" else "simple-sell", "entry-signal-buy" if side == "LONG" else "entry-signal-sell")
+    if quality_status in {"low", "preview"}:
+        return "simple-wait", "entry-signal-wait"
+    return "simple-pass", "entry-signal-pass"
+
+
+def calculate_signal_confidence(
+    final_score: float,
+    quality_status: str,
+    candle_ok: bool,
+    direction_ok: bool,
+    same_tf_ok: bool,
+    market_regime: Optional[dict],
+    signal_mode: str,
+) -> float:
+    score = min(55.0, abs(float(final_score)) * 0.55)
+    if direction_ok:
+        score += 12
+    if same_tf_ok:
+        score += 8
+    if candle_ok:
+        score += 12
+
+    if quality_status == "approved":
+        score += 18
+    elif quality_status == "low":
+        score += 5
+    elif quality_status == "preview":
+        score -= 8
+    elif quality_status == "blocked":
+        score -= 25
+    elif quality_status == "pending":
+        score -= 15
+
+    if market_regime:
+        score += float(market_regime.get("score_adjust", 0))
+    score += float(signal_mode_settings(signal_mode).get("confidence_adjust", 0))
+    return float(np.clip(score, 0, 100))
+
+
+def scanner_opportunity_from_row(row: dict, signal_mode: str) -> tuple[str, str, float]:
+    bias = str(row.get("Genel Bias", "İşlem Yok"))
+    quality = str(row.get("Backtest Kalitesi", "-"))
+    score = abs(float(row.get("Skor", 0) or 0))
+
+    if bias == "İşlem Yok":
+        return "PAS", "Yön yok", score
+
+    if "Alım" in bias:
+        side = "AL"
+    elif "Satış" in bias:
+        side = "SAT"
+    else:
+        return "PAS", "Yön okunamadı", score
+
+    if quality in {"İyi", "Orta"}:
+        return f"{side} ADAYI", f"Kalite: {quality}", score + (30 if quality == "İyi" else 20)
+
+    if quality in LOW_SAMPLE_QUALITIES and signal_mode != "Güvenli Sinyal":
+        return f"{side} DÜŞÜK GÜVEN", f"Örnek düşük: {quality}", score + 8
+
+    if quality == "-":
+        return f"{side} ÖN İZLEME", "Backtest hesaplanmadı", score + 5
+
+    return "PAS", f"Kalite: {quality}", score - 10
+
+
 def build_simple_trade_decision(
     symbol: str,
     selected_tf: str,
@@ -1685,6 +1957,9 @@ def build_simple_trade_decision(
     setup: Optional[TradeSetup],
     matched_quality: Optional[dict],
     strict_safety_mode: bool,
+    practical_signal_mode: bool = True,
+    signal_mode: str = "Dengeli Sinyal",
+    allowed_quality_labels: Optional[set[str]] = None,
 ) -> dict:
     """Teknik ekranı acemi kullanıcı için AL/SAT/BEKLE/PAS GEÇ kararına indirger."""
     dec = price_decimals(symbol)
@@ -1696,6 +1971,14 @@ def build_simple_trade_decision(
         "steps": ["Yeni işlem açma.", "Pariteyi izlemeye devam et.", "Backtest ve ana yön uyumu oluşmadan işlem alma."],
         "levels": {},
     }
+    if allowed_quality_labels is None:
+        allowed_quality_labels = allowed_quality_for_mode(strict_safety_mode, signal_mode)
+    quality_info = quality_signal_status(
+        matched_quality=matched_quality,
+        allowed_quality_labels=allowed_quality_labels,
+        practical_signal_mode=practical_signal_mode,
+        signal_mode=signal_mode,
+    )
 
     if bt_tf != selected_tf:
         base.update({
@@ -1707,7 +1990,7 @@ def build_simple_trade_decision(
         })
         return base
 
-    if matched_quality is None:
+    if quality_info["status"] == "pending":
         base.update({
             "action": "BEKLE",
             "class": "simple-wait",
@@ -1717,32 +2000,23 @@ def build_simple_trade_decision(
         })
         return base
 
-    if strict_safety_mode and matched_quality.get("label") != "İyi":
+    if quality_info["status"] == "blocked":
         base.update({
             "action": "PAS GEÇ",
             "class": "simple-pass",
-            "subtitle": "Sert Güvenli Mod bu işlemi reddetti.",
-            "reason": matched_quality.get("text", "Backtest kalitesi yeterli değil."),
-            "steps": ["Bu paritede işlem açma.", "Başka parite tara.", "Sadece Strateji Kalitesi İyi olan fırsatları değerlendir."],
+            "subtitle": "Kalite filtresi bu işlemi reddetti.",
+            "reason": matched_quality.get("text", "Strateji kalitesi zayıf/yetersiz.") if matched_quality else quality_info["text"],
+            "steps": ["Bu ayarla işlem açma.", "Başka parite veya daha yüksek zaman dilimi dene.", "Kalite filtresi düzelmeden gerçek işlem alma."],
         })
         return base
 
-    if (not strict_safety_mode) and matched_quality.get("label") not in {"İyi", "Orta"}:
-        base.update({
-            "action": "PAS GEÇ",
-            "class": "simple-pass",
-            "subtitle": "Backtest kalitesi işlem için yeterli değil.",
-            "reason": matched_quality.get("text", "Strateji kalitesi zayıf/yetersiz."),
-            "steps": ["Bu ayarla işlem açma.", "Başka parite veya daha yüksek zaman dilimi dene.", "Backtest kalitesi düzelmeden gerçek işlem alma."],
-        })
-        return base
-
-    if strict_safety_mode and final_label not in {"Güçlü Alım Yönlü", "Güçlü Satış Yönlü"}:
+    strong_required = strict_safety_mode or signal_mode_settings(signal_mode)["requires_strong_direction"]
+    if strong_required and final_label not in {"Güçlü Alım Yönlü", "Güçlü Satış Yönlü"}:
         base.update({
             "action": "PAS GEÇ",
             "class": "simple-pass",
             "subtitle": "Ana sinyal yeterince güçlü değil.",
-            "reason": f"Sert Güvenli Mod için 'Güçlü Alım' veya 'Güçlü Satış' gerekli. Mevcut: {final_label}.",
+            "reason": f"{signal_mode} için 'Güçlü Alım' veya 'Güçlü Satış' gerekli. Mevcut: {final_label}.",
             "steps": ["Bu paritede şimdilik işlem açma.", "4H ve 1H güçlü aynı yöne dönene kadar bekle.", "Tarayıcıdan daha net fırsat ara."],
         })
         return base
@@ -1758,7 +2032,7 @@ def build_simple_trade_decision(
         return base
 
     side = setup.side
-    quality_text = matched_quality.get("label", "-")
+    quality_text = quality_info.get("label", "-")
     levels = {
         "Giriş": f"{setup.entry:.{dec}f}",
         "Stop": f"{setup.stop:.{dec}f}",
@@ -1891,6 +2165,97 @@ def render_top_decision_panel(decision: dict) -> None:
     )
 
 
+def render_signal_summary_card(decision: dict, tracker: dict, market_regime: dict, signal_mode: str) -> None:
+    action = escape(str(decision.get("action", "BEKLE")))
+    confidence = escape(f"{tracker.get('confidence_score', 0):.0f}/100 - {tracker.get('confidence_label', '-')}")
+    trigger = escape(str(tracker.get("condition", "-")))
+    alarm = escape(str(tracker.get("alarm_text", "-")))
+    regime = escape(f"{market_regime.get('label', '-')} - {market_regime.get('text', '-')}")
+    mode = escape(signal_mode)
+    html = (
+        "<div class='risk-box'>"
+        f"<b>Sinyal Kartı:</b> {action}<br>"
+        f"<b>Güven:</b> {confidence}<br>"
+        f"<b>Mod:</b> {mode}<br>"
+        f"<b>Giriş Alarmı:</b> {alarm}<br>"
+        f"<b>Piyasa Tipi:</b> {regime}<br>"
+        f"<b>Giriş Şartı:</b> {trigger}"
+        "</div>"
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_wait_reason_box(decision: dict, tracker: dict) -> None:
+    title, text, state = build_wait_reason(decision, tracker)
+    css = "logic-note-ok" if state == "ok" else ("logic-note-pass" if state == "pass" else "")
+    st.markdown(
+        f"<div class='logic-note {css}'><b>{escape(title)}</b><br>{escape(text)}</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_entry_alarm_box(tracker: dict) -> None:
+    state = "logic-note-ok" if tracker.get("signal_now") else ""
+    st.markdown(
+        f"<div class='logic-note {state}'><b>Giriş Alarmı</b><br>{escape(str(tracker.get('alarm_text', '-')))}</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_direction_trade_explanation(
+    final_label: str,
+    final_score: float,
+    selected_tf: str,
+    simple_decision: dict,
+    matched_quality: Optional[dict],
+    allowed_quality_labels: set[str],
+    entry_signal_tracker: dict,
+) -> None:
+    """Genel yön ile gerçek işlem kararının neden farklı olabileceğini açıklar."""
+    decision_action = str(simple_decision.get("action", "BEKLE"))
+    quality_label = matched_quality.get("label") if matched_quality else None
+    allowed_text = " veya ".join(sorted(allowed_quality_labels))
+
+    if entry_signal_tracker.get("signal_now"):
+        quality_status = entry_signal_tracker.get("quality_status", "approved")
+        css = "logic-note logic-note-ok" if quality_status == "approved" else "logic-note"
+        title = "Yön ve işlem kararı uyumlu" if quality_status == "approved" else "Sinyal var, güven düşük"
+        text = (
+            f"Piyasa yönü {final_label} ({final_score:.1f} skor). "
+            f"Son {selected_tf} mum kapanışı giriş şartını geçti. "
+            f"Güven: {entry_signal_tracker.get('confidence_label', '-')}."
+        )
+    elif quality_label and quality_label not in allowed_quality_labels:
+        css = "logic-note logic-note-pass"
+        title = "Yön var ama işlem izni yok"
+        text = (
+            f"Piyasa yönü {final_label} ({final_score:.1f} skor) sadece yön bilgisidir. "
+            f"İşlem için strateji kalitesi {allowed_text} olmalı; şu an {quality_label}. "
+            f"Bu yüzden karar: {decision_action}."
+        )
+    elif matched_quality is None:
+        css = "logic-note"
+        title = "Yön ayrı, plan onayı ayrı"
+        text = (
+            f"Piyasa yönü {final_label} ({final_score:.1f} skor) olabilir; ancak işlem için önce "
+            "Planı Kontrol Et ile backtest/kalite onayı alınmalı."
+        )
+    elif not entry_signal_tracker.get("signal_now"):
+        css = "logic-note"
+        title = "Yön var, giriş mumu bekleniyor"
+        text = (
+            f"Piyasa yönü {final_label} ({final_score:.1f} skor). "
+            "İşlem kararı için ayrıca Canlı Giriş Takibi bölümündeki mum kapanışı adımı geçmeli."
+        )
+    else:
+        return
+
+    st.markdown(
+        f"<div class='{css}'><b>{escape(title)}</b><br>{escape(text)}</div>",
+        unsafe_allow_html=True,
+    )
+
+
 def _summary_score(summary: pd.DataFrame, tf_name: str) -> float:
     if summary is None or summary.empty:
         return np.nan
@@ -1910,6 +2275,8 @@ def build_readiness_items(
     matched_quality: Optional[dict],
     allowed_quality_labels: set[str],
     setup: Optional[TradeSetup],
+    practical_signal_mode: bool = True,
+    signal_mode: str = "Dengeli Sinyal",
 ) -> list[dict]:
     data_ok = summary is not None and not summary.empty and (summary["Bias"] != "Veri yok").any()
     h4_score = _summary_score(summary, "4 Saat")
@@ -1930,18 +2297,18 @@ def build_readiness_items(
     if bt_tf != selected_tf:
         bt_state = "bad"
         bt_text = "Giriş zamanıyla eşleşmiyor"
-    elif matched_quality is None:
-        bt_state = "warn"
-        bt_text = "Plan kontrolü bekliyor"
-    elif matched_quality.get("label") in allowed_quality_labels:
-        bt_state = "ok"
-        bt_text = f"Kalite: {matched_quality.get('label')}"
     else:
-        bt_state = "bad"
-        bt_text = f"Kalite: {matched_quality.get('label')}"
+        quality_info = quality_signal_status(
+            matched_quality=matched_quality,
+            allowed_quality_labels=allowed_quality_labels,
+            practical_signal_mode=practical_signal_mode,
+            signal_mode=signal_mode,
+        )
+        bt_state = quality_info["state"]
+        bt_text = quality_info["text"]
 
     risk_state = "ok" if setup is not None and bt_state == "ok" else ("bad" if bt_state == "bad" else "warn")
-    risk_text = "Seviyeler hazır" if risk_state == "ok" else "Risk planı kilitli"
+    risk_text = "Seviyeler hazır" if risk_state == "ok" else ("Düşük güvenli plan" if setup is not None and bt_state == "warn" else "Risk planı kilitli")
 
     return [
         {"label": "Veri", "state": "ok" if data_ok else "bad", "text": "Fiyat verisi alındı" if data_ok else "Veri bekleniyor"},
@@ -1980,10 +2347,15 @@ def build_entry_signal_tracker(
     allowed_quality_labels: set[str],
     strict_safety_mode: bool,
     price: Optional[float],
+    final_score: float = 0.0,
+    practical_signal_mode: bool = True,
+    signal_mode: str = "Dengeli Sinyal",
+    market_regime: Optional[dict] = None,
 ) -> dict:
     """Son kapanan giriş mumuna göre kullanıcıya net AL/SAT/BEKLE takibi verir."""
     dec = price_decimals(symbol)
     current_price_label = "-" if price is None else f"{price:.{dec}f}"
+    current_price_value = float(price) if price is not None else None
     last_closed_time = "-"
     last_closed_close_label = "-"
     last_closed_close: Optional[float] = None
@@ -1997,17 +2369,27 @@ def build_entry_signal_tracker(
         last_closed_time = _format_tracker_time(candle_df.index[closed_i])
         last_closed_close = float(closed_row["Close"])
         last_closed_close_label = f"{last_closed_close:.{dec}f}"
-        current_price_label = f"{float(candle_df['Close'].iloc[-1]):.{dec}f}"
+        current_price_value = float(candle_df["Close"].iloc[-1])
+        current_price_label = f"{current_price_value:.{dec}f}"
 
-    quality_state, quality_text = _quality_state_text(matched_quality, allowed_quality_labels)
-    quality_ok = quality_state == "ok"
+    quality_info = quality_signal_status(
+        matched_quality=matched_quality,
+        allowed_quality_labels=allowed_quality_labels,
+        practical_signal_mode=practical_signal_mode,
+        signal_mode=signal_mode,
+    )
+    quality_state = quality_info["state"]
+    quality_text = quality_info["text"]
+    quality_status = quality_info["status"]
+    quality_allows_signal = quality_status in {"approved", "low", "preview"}
     same_tf_ok = bt_tf == selected_tf
-    blocked_by_strict = strict_safety_mode and final_label not in {"Güçlü Alım Yönlü", "Güçlü Satış Yönlü"}
+    strong_required = strict_safety_mode or signal_mode_settings(signal_mode)["requires_strong_direction"]
+    blocked_by_strong = strong_required and final_label not in {"Güçlü Alım Yönlü", "Güçlü Satış Yönlü"}
     direction_ok = setup is not None and (
         (setup.side == "LONG" and final_label in {"Alım Yönlü", "Güçlü Alım Yönlü"})
         or (setup.side == "SHORT" and final_label in {"Satış Yönlü", "Güçlü Satış Yönlü"})
     )
-    if blocked_by_strict:
+    if blocked_by_strong:
         direction_ok = False
 
     side = setup.side if setup is not None else None
@@ -2027,39 +2409,82 @@ def build_entry_signal_tracker(
     else:
         candle_ok = last_closed_close < setup.entry
 
-    risk_ok = setup is not None and same_tf_ok and quality_ok and direction_ok
+    risk_ok = setup is not None and same_tf_ok and quality_allows_signal and direction_ok
     signal_now = bool(risk_ok and candle_ok)
+    confidence_score = calculate_signal_confidence(
+        final_score=final_score,
+        quality_status=quality_status,
+        candle_ok=candle_ok,
+        direction_ok=direction_ok,
+        same_tf_ok=same_tf_ok,
+        market_regime=market_regime,
+        signal_mode=signal_mode,
+    )
+    decision_class, active_status_class = signal_class_for_status(side, quality_status)
+
+    distance_to_trigger_pips = None
+    if setup is not None and current_price_value is not None:
+        pip = get_pip_size(symbol)
+        if side == "LONG":
+            distance_to_trigger_pips = max((setup.entry - current_price_value) / pip, 0.0)
+        else:
+            distance_to_trigger_pips = max((current_price_value - setup.entry) / pip, 0.0)
 
     if signal_now:
-        action = "SİSTEM AL SİNYALİ" if side == "LONG" else "SİSTEM SAT SİNYALİ"
-        status_class = "entry-signal-buy" if side == "LONG" else "entry-signal-sell"
-        summary = f"Son kapanan {selected_tf} mumu giriş şartını geçti. Sistem {side_word} sinyali üretiyor."
+        if quality_status == "approved":
+            action = f"ONAYLI {side_word} SİNYALİ"
+        elif quality_status == "low":
+            action = f"DÜŞÜK GÜVENLİ {side_word} SİNYALİ"
+        else:
+            action = f"ÖN {side_word} SİNYALİ"
+        status_class = active_status_class
+        summary = f"Son kapanan {selected_tf} mumu giriş şartını geçti. Güven: {confidence_label(confidence_score)}."
         final_step_text = f"{side_word} sinyali üretildi"
+        primary_blocker = "Sinyal aktif"
+        primary_blocker_text = "Giriş şartı tetiklendi; kalite ve risk notunu kontrol et."
     elif setup is None:
         action = "BEKLE"
         status_class = "entry-signal-wait"
         summary = "Henüz takip edilecek giriş seviyesi yok. Önce ana yön, backtest ve risk planı hazır olmalı."
         final_step_text = "Risk planı bekleniyor"
+        primary_blocker = "Risk planı yok"
+        primary_blocker_text = "Ana yön veya veri koşulları giriş seviyesi üretmedi."
     elif not same_tf_ok:
         action = "BEKLE"
         status_class = "entry-signal-pass"
         summary = "Backtest zamanı ile giriş zamanı aynı olmadığı için giriş sinyali kilitli."
         final_step_text = "Zaman dilimi eşleşmiyor"
-    elif not quality_ok:
-        action = "BEKLE"
-        status_class = "entry-signal-wait" if quality_state == "warn" else "entry-signal-pass"
-        summary = "Plan kontrolü uygun olmadan giriş sinyali verilmez."
-        final_step_text = "Plan kontrolü bekleniyor"
+        primary_blocker = "Zaman dilimi eşleşmiyor"
+        primary_blocker_text = "Backtest zamanı, giriş zamanı ile aynı olmalı."
+    elif not quality_allows_signal:
+        if quality_status == "blocked":
+            action = "PAS GEÇ"
+            status_class = "entry-signal-pass"
+            summary = f"Piyasa yönü güçlü olabilir ama {quality_text}. Bu yüzden sistem giriş sinyali vermez."
+            final_step_text = "Plan kalitesi yetersiz"
+            primary_blocker = "Kalite filtresi reddetti"
+            primary_blocker_text = quality_text
+        else:
+            action = "BEKLE"
+            status_class = "entry-signal-wait"
+            summary = "Plan kontrolü yapılmadan giriş sinyali verilmez."
+            final_step_text = "Plan kontrolü bekleniyor"
+            primary_blocker = "Plan kontrolü bekleniyor"
+            primary_blocker_text = "Planı Kontrol Et butonu ile kalite sonucu alınmalı."
     elif not direction_ok:
         action = "BEKLE"
         status_class = "entry-signal-wait"
         summary = "Ana yön koşulu giriş için yeterli değil."
         final_step_text = "Ana yön bekleniyor"
+        primary_blocker = "Ana yön bekleniyor"
+        primary_blocker_text = "4H + 1H ve seçilen sinyal modu aynı yönde yeterli güç üretmeli."
     else:
         action = "BEKLE"
         status_class = "entry-signal-wait"
         summary = f"Son kapanan {selected_tf} mumu henüz giriş seviyesini teyit etmedi."
         final_step_text = "Mum kapanışı bekleniyor"
+        primary_blocker = "Mum kapanışı bekleniyor"
+        primary_blocker_text = f"{selected_tf} mumu {trigger_level} {compare_word} kapanmalı."
 
     if setup is None:
         candle_text = "Giriş seviyesi yok"
@@ -2079,7 +2504,7 @@ def build_entry_signal_tracker(
         {"label": "2. Plan", "state": quality_state, "text": quality_text},
         {
             "label": "3. Ana Yön",
-            "state": "ok" if direction_ok else ("bad" if blocked_by_strict else "warn"),
+            "state": "ok" if direction_ok else ("bad" if blocked_by_strong else "warn"),
             "text": "Yön uygun" if direction_ok else "Yön bekleniyor",
         },
         {
@@ -2089,24 +2514,51 @@ def build_entry_signal_tracker(
         },
         {
             "label": "5. Sinyal",
-            "state": "ok" if signal_now else ("bad" if not same_tf_ok else "warn"),
+            "state": "ok" if signal_now else ("bad" if (not same_tf_ok or quality_status == "blocked") else "warn"),
             "text": final_step_text,
         },
     ]
+
+    if setup is None:
+        alarm_text = "Alarm kurulamadı; önce risk planı ve giriş seviyesi oluşmalı."
+    elif signal_now:
+        alarm_text = f"Alarm tetiklendi: {selected_tf} kapanışı {trigger_level} seviyesini geçti."
+    else:
+        dist_txt = "-" if distance_to_trigger_pips is None else f"{distance_to_trigger_pips:.1f} pip"
+        alarm_text = f"Alarm: {symbol} {selected_tf} mumu {trigger_level} {compare_word} kapanırsa {side_word} sinyali tetiklenir. Mesafe: {dist_txt}."
+
+    levels = {}
+    if setup is not None:
+        levels = {
+            "Giriş": f"{setup.entry:.{dec}f}",
+            "Stop": f"{setup.stop:.{dec}f}",
+            "Kâr Al": f"{setup.target:.{dec}f}",
+            "Lot": f"{setup.estimated_lot:.2f}",
+        }
 
     return {
         "action": action,
         "status_class": status_class,
         "signal_now": signal_now,
+        "quality_status": quality_status,
+        "confidence_score": confidence_score,
+        "confidence_label": confidence_label(confidence_score),
+        "decision_class": decision_class,
         "side": side,
         "side_word": side_word,
         "summary": summary,
         "selected_tf": selected_tf,
         "condition": trigger_condition,
         "trigger_level": trigger_level,
+        "alarm_text": alarm_text,
+        "distance_to_trigger_pips": distance_to_trigger_pips,
+        "primary_blocker": primary_blocker,
+        "primary_blocker_text": primary_blocker_text,
         "last_closed_time": last_closed_time,
         "last_closed_close": last_closed_close_label,
         "current_price": current_price_label,
+        "market_regime": market_regime or {},
+        "levels": levels,
         "steps": steps,
     }
 
@@ -2120,22 +2572,25 @@ def apply_entry_signal_to_decision(decision: dict, tracker: dict) -> dict:
     side_word = tracker.get("side_word", "AL" if side == "LONG" else "SAT")
     out.update({
         "action": tracker.get("action", f"SİSTEM {side_word} SİNYALİ"),
-        "class": "simple-buy" if side == "LONG" else "simple-sell",
+        "class": tracker.get("decision_class", "simple-buy" if side == "LONG" else "simple-sell"),
         "subtitle": f"{tracker.get('selected_tf', '')} mum kapanışı giriş şartını teyit etti.",
         "reason": (
             f"Son kapanan mum {tracker.get('trigger_level', '-')} seviyesini geçti. "
+            f"Güven: {tracker.get('confidence_label', '-')}; durum: {tracker.get('quality_status', '-')}. "
             "Plan, ana yön ve mum kapanışı adımları tamam."
         ),
     })
+    if tracker.get("levels"):
+        out["levels"] = tracker["levels"]
     if side == "LONG":
         out["steps"] = [
-            "Sistem AL sinyali üretti; broker fiyatını ve spreadi kontrol et.",
+            f"{tracker.get('action', 'Sistem AL sinyali')} üretildi; broker fiyatını ve spreadi kontrol et.",
             "İşleme girersen stop ve kâr al seviyelerini değiştirme.",
             "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
         ]
     else:
         out["steps"] = [
-            "Sistem SAT sinyali üretti; broker fiyatını ve spreadi kontrol et.",
+            f"{tracker.get('action', 'Sistem SAT sinyali')} üretildi; broker fiyatını ve spreadi kontrol et.",
             "İşleme girersen stop ve kâr al seviyelerini değiştirme.",
             "Stop seviyesine gelirse işlemden çık; stopu büyütme.",
         ]
@@ -2183,7 +2638,7 @@ def render_entry_signal_tracker(tracker: dict) -> None:
 
 def render_readiness_checklist(items: list[dict]) -> None:
     parts = []
-    state_symbol = {"ok": "Hazır", "warn": "Bekle", "bad": "Kilitli"}
+    state_symbol = {"ok": "Hazır", "warn": "Dikkat", "bad": "Kilitli"}
     for item in items:
         state = str(item.get("state", "warn"))
         parts.append(
@@ -2212,6 +2667,18 @@ def build_position_tracker_result(
 
     pips = calculate_manual_pips(symbol, side, entry, current_price)
     pnl = None if pips is None else pips * pip_value_per_lot * lot
+    pip = get_pip_size(symbol)
+    stop_distance_pips = abs(entry - stop) / pip if stop > 0 else None
+    target_distance_pips = abs(target - entry) / pip if target > 0 else None
+    r_multiple = None
+    if pips is not None and stop_distance_pips and stop_distance_pips > 0:
+        r_multiple = pips / stop_distance_pips
+    if side == "LONG":
+        to_stop_pips = (current_price - stop) / pip if stop > 0 else None
+        to_target_pips = (target - current_price) / pip if target > 0 else None
+    else:
+        to_stop_pips = (stop - current_price) / pip if stop > 0 else None
+        to_target_pips = (current_price - target) / pip if target > 0 else None
 
     opposite = False
     neutral = final_label == "İşlem Yok"
@@ -2229,6 +2696,8 @@ def build_position_tracker_result(
             action, css, reason = "ÇIK", "simple-sell", f"Fiyat stop seviyesine geldi/altına indi: {stop:.{dec}f}."
         elif target > 0 and current_price >= target:
             action, css, reason = "KÂR AL", "simple-buy", f"Fiyat hedef seviyeye geldi/üstüne çıktı: {target:.{dec}f}."
+        elif to_target_pips is not None and target_distance_pips and 0 <= to_target_pips <= max(target_distance_pips * 0.15, 2):
+            action, css, reason = "KÂR AL YAKLAŞTI", "simple-buy", "Fiyat hedefe yaklaştı; plan dışı acele etmeden hedef/stop takibi yap."
         elif opposite:
             action, css, reason = "ÇIKMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
         elif neutral and pips is not None and pips < 0:
@@ -2238,12 +2707,32 @@ def build_position_tracker_result(
             action, css, reason = "ÇIK", "simple-sell", f"Fiyat stop seviyesine geldi/üstüne çıktı: {stop:.{dec}f}."
         elif target > 0 and current_price <= target:
             action, css, reason = "KÂR AL", "simple-buy", f"Fiyat hedef seviyeye geldi/altına indi: {target:.{dec}f}."
+        elif to_target_pips is not None and target_distance_pips and 0 <= to_target_pips <= max(target_distance_pips * 0.15, 2):
+            action, css, reason = "KÂR AL YAKLAŞTI", "simple-buy", "Fiyat hedefe yaklaştı; plan dışı acele etmeden hedef/stop takibi yap."
         elif opposite:
             action, css, reason = "ÇIKMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
         elif neutral and pips is not None and pips < 0:
             action, css, reason = "DİKKAT", "simple-wait", "Ana yön kararsız ve pozisyon zararda. Stopa sadık kal."
 
-    return {"action": action, "class": css, "text": reason, "pips": pips, "pnl": pnl}
+    risk_note = "Stop ve hedef plana göre izleniyor."
+    if to_stop_pips is not None and to_stop_pips <= 0:
+        risk_note = "Stop seviyesi tetiklendi."
+    elif to_stop_pips is not None and stop_distance_pips and to_stop_pips <= max(stop_distance_pips * 0.25, 2):
+        risk_note = "Stopa yakın; stopu büyütme."
+    elif r_multiple is not None and r_multiple >= 1:
+        risk_note = "Pozisyon en az 1R kâr bölgesinde."
+
+    return {
+        "action": action,
+        "class": css,
+        "text": reason,
+        "pips": pips,
+        "pnl": pnl,
+        "r_multiple": r_multiple,
+        "to_stop_pips": to_stop_pips,
+        "to_target_pips": to_target_pips,
+        "risk_note": risk_note,
+    }
 
 
 def render_position_tracker_result(result: dict, current_price: Optional[float], symbol: str) -> None:
@@ -2251,19 +2740,27 @@ def render_position_tracker_result(result: dict, current_price: Optional[float],
     price_txt = "-" if current_price is None else f"{current_price:.{dec}f}"
     pips_txt = "-" if result.get("pips") is None else f"{result['pips']:+.1f} pip"
     pnl_txt = "-" if result.get("pnl") is None else f"{result['pnl']:+.2f}"
+    r_txt = "-" if result.get("r_multiple") is None else f"{result['r_multiple']:+.2f}R"
+    stop_txt = "-" if result.get("to_stop_pips") is None else f"{result['to_stop_pips']:.1f} pip"
+    target_txt = "-" if result.get("to_target_pips") is None else f"{result['to_target_pips']:.1f} pip"
 
     card_class = escape(str(result.get("class", "simple-wait")))
     action = escape(str(result.get("action", "TUT")))
     reason = escape(str(result.get("text", "")))
+    risk_note = escape(str(result.get("risk_note", "")))
     html = (
         f"<div class='simple-card {card_class}'>"
         f"<div class='simple-action'>{action}</div>"
         f"<div class='simple-subtitle'>Pozisyon takip sonucu</div>"
         f"<div><b>Sebep:</b> {reason}</div>"
+        f"<div style='margin-top:6px;'><b>Risk Notu:</b> {risk_note}</div>"
         f"<div class='simple-levels'>"
         f"<div class='simple-level'><b>Güncel Fiyat</b><span>{escape(price_txt)}</span></div>"
         f"<div class='simple-level'><b>Pip</b><span>{escape(pips_txt)}</span></div>"
         f"<div class='simple-level'><b>Tahmini PnL</b><span>{escape(pnl_txt)}</span></div>"
+        f"<div class='simple-level'><b>R</b><span>{escape(r_txt)}</span></div>"
+        f"<div class='simple-level'><b>Stop Mesafe</b><span>{escape(stop_txt)}</span></div>"
+        f"<div class='simple-level'><b>Hedef Mesafe</b><span>{escape(target_txt)}</span></div>"
         f"</div>"
         f"</div>"
     )
@@ -2429,6 +2926,8 @@ with st.sidebar:
 
     with st.expander("Ekran ve güvenlik", expanded=False):
         enable_simple_mode = st.checkbox("Basit İşlem Modu", value=True)
+        practical_signal_mode = st.checkbox("Pratik Sinyal Modu", value=True)
+        signal_mode = st.selectbox("Sinyal modu", SIGNAL_MODES, index=0)
         strict_safety_mode = st.checkbox("Sert Güvenli Mod", value=False)
         show_position_tracker = st.checkbox("Pozisyon Takip Modu", value=True)
         change_window_label = st.selectbox("Yüzde değişim periyodu", list(PRICE_CHANGE_WINDOWS.keys()), index=1)
@@ -2469,7 +2968,11 @@ st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir.
 if strict_safety_mode:
     st.info("Sert Güvenli Mod aktif: yalnızca güçlü yön + İyi backtest kalitesi olan işlemler için AL/SAT kartı gösterilir.")
 else:
-    st.info("Pratik Mod aktif: İyi veya Orta backtest kalitesi izlenebilir; yine de gerçek işlemden önce demo/onay önerilir.")
+    mode_note = signal_mode_settings(signal_mode)["description"]
+    if practical_signal_mode:
+        st.info(f"Pratik Sinyal Modu aktif ({signal_mode}): {mode_note} Gerçek işlem öncesi demo/broker doğrulaması önerilir.")
+    else:
+        st.info(f"Standart Mod aktif ({signal_mode}): {mode_note}")
 
 current_bt_key = make_backtest_key(
     symbol=symbol,
@@ -2537,6 +3040,7 @@ if run_scanner_requested:
             session_filter=session_filter,
             max_same_direction_trades=int(max_same_direction_trades),
             min_trades_required=int(min_trades_required),
+            signal_mode=signal_mode,
         )
         st.session_state["scanner_df"] = scanner_df
 
@@ -2577,8 +3081,15 @@ plan_bt_key = make_backtest_key(
     min_trades_required=int(min_trades_required),
 )
 matched_quality = get_matching_backtest_quality(plan_bt_key)
-allowed_quality_labels = {"İyi"} if strict_safety_mode else {"İyi", "Orta"}
+allowed_quality_labels = allowed_quality_for_mode(strict_safety_mode, signal_mode)
 preview_setup = build_trade_setup(symbol, selected_tf, final_label, account_size, risk_pct, rr, atr_mult, pip_value_per_lot)
+market_regime = classify_market_regime(symbol, selected_tf)
+current_quality_info = quality_signal_status(
+    matched_quality=matched_quality,
+    allowed_quality_labels=allowed_quality_labels,
+    practical_signal_mode=practical_signal_mode,
+    signal_mode=signal_mode,
+)
 
 simple_decision = build_simple_trade_decision(
     symbol=symbol,
@@ -2591,6 +3102,9 @@ simple_decision = build_simple_trade_decision(
     setup=preview_setup,
     matched_quality=matched_quality,
     strict_safety_mode=strict_safety_mode,
+    practical_signal_mode=practical_signal_mode,
+    signal_mode=signal_mode,
+    allowed_quality_labels=allowed_quality_labels,
 )
 entry_signal_tracker = build_entry_signal_tracker(
     symbol=symbol,
@@ -2602,11 +3116,27 @@ entry_signal_tracker = build_entry_signal_tracker(
     allowed_quality_labels=allowed_quality_labels,
     strict_safety_mode=strict_safety_mode,
     price=price,
+    final_score=final_score,
+    practical_signal_mode=practical_signal_mode,
+    signal_mode=signal_mode,
+    market_regime=market_regime,
 )
 simple_decision = apply_entry_signal_to_decision(simple_decision, entry_signal_tracker)
 
-st.header("Karar Özeti")
+st.header("İşlem Kararı")
 render_top_decision_panel(simple_decision)
+render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
+render_wait_reason_box(simple_decision, entry_signal_tracker)
+render_entry_alarm_box(entry_signal_tracker)
+render_direction_trade_explanation(
+    final_label=final_label,
+    final_score=final_score,
+    selected_tf=selected_tf,
+    simple_decision=simple_decision,
+    matched_quality=matched_quality,
+    allowed_quality_labels=allowed_quality_labels,
+    entry_signal_tracker=entry_signal_tracker,
+)
 render_readiness_checklist(
     build_readiness_items(
         summary=summary_df,
@@ -2615,6 +3145,8 @@ render_readiness_checklist(
         matched_quality=matched_quality,
         allowed_quality_labels=allowed_quality_labels,
         setup=preview_setup,
+        practical_signal_mode=practical_signal_mode,
+        signal_mode=signal_mode,
     )
 )
 render_entry_signal_tracker(entry_signal_tracker)
@@ -2629,7 +3161,7 @@ with action_col:
         key="main_run_bt",
     )
 with quality_col:
-    st.metric("Strateji Kalitesi", matched_quality.get("label", "Bekliyor") if matched_quality else "Bekliyor")
+    st.metric("Strateji Kalitesi", current_quality_info.get("label", "Bekliyor"))
 with risk_col:
     st.metric("İşlem Riski", f"{account_size * (risk_pct / 100):.2f}")
 
@@ -2691,15 +3223,21 @@ with left_col:
     st.plotly_chart(fig, use_container_width=True)
 
 with right_col:
-    st.subheader("Genel Bias")
+    st.subheader("Piyasa Yönü")
     st.plotly_chart(gauge_figure(final_label, final_score), use_container_width=True)
+    st.caption("Bu gösterge sadece yön gücüdür; AL/SAT kararı için İşlem Kararı ve Canlı Giriş Takibi geçmeli.")
+    regime_css = "ok-box" if market_regime.get("state") == "ok" else "warn-box"
+    st.markdown(
+        f"<div class='{regime_css}'><b>Piyasa Tipi: {market_regime.get('label', '-')}</b><br>{market_regime.get('text', '-')}</div>",
+        unsafe_allow_html=True,
+    )
 
     if final_label == "İşlem Yok":
-        st.markdown(f"<div class='warn-box'><b>{final_label}</b><br>{filter_note}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='warn-box'><b>Yön: {final_label}</b><br>{filter_note}</div>", unsafe_allow_html=True)
     elif "Alım" in final_label:
-        st.markdown(f"<div class='ok-box'><b>{final_label}</b><br>{filter_note}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='ok-box'><b>Yön: {final_label}</b><br>{filter_note}<br><br>Bu tek başına işlem açma onayı değildir.</div>", unsafe_allow_html=True)
     else:
-        st.markdown(f"<div class='bad-box'><b>{final_label}</b><br>{filter_note}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='bad-box'><b>Yön: {final_label}</b><br>{filter_note}<br><br>Bu tek başına işlem açma onayı değildir.</div>", unsafe_allow_html=True)
 
     st.subheader("Risk Planı")
 
@@ -2712,28 +3250,38 @@ with right_col:
             unsafe_allow_html=True,
         )
     elif matched_quality is None:
-        st.markdown(
-            "<div class='warn-box'><b>Risk Planı Kilitli</b><br>"
-            "Bu sembol ve giriş zaman dilimi için önce sidebar üzerinden 'Backtest Çalıştır / Planı Onayla' butonuna bas.</div>",
-            unsafe_allow_html=True,
-        )
-    elif matched_quality["label"] not in allowed_quality_labels:
-        strict_note = "Sert Güvenli Mod açık olduğu için yalnızca 'İyi' kalite kabul edilir." if strict_safety_mode else "İşlem için en az Orta kalite gerekir."
+        if current_quality_info["status"] == "preview":
+            st.markdown(
+                "<div class='warn-box'><b>Ön Risk Planı</b><br>"
+                "Backtest onayı yok; bu seviyeler yalnızca ön izleme/demo takibi içindir.</div>",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                "<div class='warn-box'><b>Risk Planı Kilitli</b><br>"
+                "Bu sembol ve giriş zaman dilimi için önce sidebar üzerinden 'Backtest Çalıştır / Planı Onayla' butonuna bas.</div>",
+                unsafe_allow_html=True,
+            )
+    elif current_quality_info["status"] == "blocked":
+        strict_note = "Güvenli mod açık olduğu için daha yüksek kalite gerekir." if (strict_safety_mode or signal_mode == "Güvenli Sinyal") else "İşlem için en az Orta kalite gerekir."
         st.markdown(
             f"<div class='{matched_quality['css']}'><b>PAS GEÇ — Strateji Kalitesi: {matched_quality['label']}</b><br>"
             f"{matched_quality['text']}<br>{strict_note}</div>",
             unsafe_allow_html=True,
         )
-    elif strict_safety_mode and final_label not in {"Güçlü Alım Yönlü", "Güçlü Satış Yönlü"}:
+    elif (strict_safety_mode or signal_mode == "Güvenli Sinyal") and final_label not in {"Güçlü Alım Yönlü", "Güçlü Satış Yönlü"}:
         st.markdown(
             f"<div class='warn-box'><b>Risk Planı Kilitli</b><br>"
-            f"Sert Güvenli Mod için yönün Güçlü Alım veya Güçlü Satış olması gerekir. Mevcut yön: {final_label}</div>",
+            f"{signal_mode} için yönün Güçlü Alım veya Güçlü Satış olması gerekir. Mevcut yön: {final_label}</div>",
             unsafe_allow_html=True,
         )
     else:
+        quality_css = "ok-box" if current_quality_info["status"] == "approved" else "warn-box"
+        quality_title = "Backtest Onayı" if current_quality_info["status"] == "approved" else "Düşük Güvenli Plan"
+        quality_text = matched_quality["text"] if matched_quality else current_quality_info["text"]
         st.markdown(
-            f"<div class='{matched_quality['css']}'><b>Backtest Onayı: {matched_quality['label']}</b><br>"
-            f"{matched_quality['text']}</div>",
+            f"<div class='{quality_css}'><b>{quality_title}: {current_quality_info['label']}</b><br>"
+            f"{quality_text}</div>",
             unsafe_allow_html=True,
         )
         setup = build_trade_setup(symbol, selected_tf, final_label, account_size, risk_pct, rr, atr_mult, pip_value_per_lot)
