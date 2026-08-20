@@ -1,8 +1,9 @@
-streamlit
-yfinance
-pandas
-numpy
-plotly
-pytz
-streamlit-autorefresh
-scikit-learn
+streamlit>=1.40,<2
+pandas>=2.2,<3
+numpy>=1.26,<3
+plotly>=5.24,<7
+pytz>=2024.1
+yfinance>=0.2.54,<0.3
+scikit-learn>=1.5,<2
+# Optional broker integration (install only on a machine with MetaTrader 5):
+# MetaTrader5>=5.0.45
