@@ -401,6 +401,26 @@ st.markdown(
             font-weight:800;
             opacity:.9;
         }
+        .daily-desk {
+            padding: 16px 18px;
+            border-radius: 14px;
+            border: 1px solid #dfe3e8;
+            background: linear-gradient(135deg, #f8f9fa 0%, #eef3f8 100%);
+            color: #212529 !important;
+            margin: 8px 0 14px 0;
+        }
+        .daily-desk, .daily-desk * { color:#212529 !important; }
+        .daily-desk-title { font-size:1.15rem; font-weight:900; margin-bottom:5px; }
+        .daily-desk-note { font-size:.92rem; color:#495057 !important; }
+        .daily-progress-track {
+            height: 12px;
+            border-radius: 999px;
+            background:#dee2e6;
+            overflow:hidden;
+            margin: 12px 0 8px 0;
+        }
+        .daily-progress-fill { height:100%; background:#198754; border-radius:999px; }
+        .section-kicker { color:#6c757d; font-size:.82rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
         @media (max-width: 1100px) {
             .alert-summary-row { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
         }
@@ -3083,9 +3103,14 @@ def render_pair_alert_screen(
     bb_extreme_volatility_block: bool = True,
     macd_confirmation_enabled: bool = True,
     macd_divergence_filter_enabled: bool = True,
+    daily_status: Optional[dict] = None,
 ) -> None:
     st.header("Parite Alarm Ekranı")
     st.caption("Major ve minör pariteleri tek bakışta LONG / SHORT / BEKLE olarak gösterir. Bu ekran hızlı takip içindir; gerçek işlem için İşlem Asistanı karar kartı ve demo doğrulama kullanılmalı.")
+    if daily_status:
+        render_daily_trading_desk(daily_status)
+        if daily_status.get("blocks_trade"):
+            st.info("Günlük plan yeni işlem bildirimlerini durdurdu. Pariteler yalnızca piyasa takibi için gösteriliyor.")
 
     selected_symbols: list[str] = []
     for group in alert_groups:
@@ -3119,7 +3144,8 @@ def render_pair_alert_screen(
         floor_rule = {"5 Dakika": "5min", "15 Dakika": "15min", "1 Saat": "1h"}.get(alert_entry_tf, "15min")
         candle_key = f"{alert_entry_tf}|{pd.Timestamp.now(tz='UTC').floor(floor_rule)}"
         payload = {"symbol": row.get("Sembol"), "side": row.get("Alarm"), "reason": row.get("Alarm Nedeni"), "score": row.get("Alarm Skoru")}
-        if record_alert_once(str(row.get("Sembol")), str(row.get("Alarm")), candle_key, payload) and webhook_url.strip():
+        notifications_allowed = not (daily_status and daily_status.get("blocks_trade"))
+        if notifications_allowed and record_alert_once(str(row.get("Sembol")), str(row.get("Alarm")), candle_key, payload) and webhook_url.strip():
             send_webhook_notification(webhook_url, payload)
 
     if alert_sort_mode == "Önce LONG/SHORT":
@@ -3285,6 +3311,81 @@ def calculate_manual_pips(symbol: str, side: str, entry: float, exit_price: floa
     if side == "SHORT":
         return (entry - exit_price) / pip
     return None
+
+
+def daily_trading_status(
+    journal: pd.DataFrame,
+    account_size: float,
+    risk_pct: float,
+    target_min_usd: float,
+    target_max_usd: float,
+    max_loss_usd: float,
+    max_closed_trades: int,
+    stop_after_target: bool = True,
+) -> dict:
+    """Günlük hedefi bir kazanç vaadi değil, yeni işlem durdurma disiplini olarak uygular."""
+    today = pd.Timestamp.now(tz=TR_TZ).date()
+    day_rows = pd.DataFrame()
+    if journal is not None and not journal.empty:
+        journal = journal.copy()
+        time_col = "Kayıt Zamanı" if "Kayıt Zamanı" in journal.columns else ("Tarih" if "Tarih" in journal.columns else None)
+        if time_col:
+            times = pd.to_datetime(journal[time_col], utc=True, errors="coerce")
+            local_days = times.dt.tz_convert(TR_TZ).dt.date
+            day_rows = journal[local_days == today].copy()
+
+    results = day_rows.get("Sonuç", pd.Series(dtype=str)).astype(str)
+    closed_mask = ~results.isin({"Açık", "İptal", "", "nan"})
+    closed = day_rows[closed_mask].copy() if not day_rows.empty else pd.DataFrame()
+
+    if closed.empty:
+        realized_usd = 0.0
+    else:
+        direct_pnl = pd.to_numeric(closed.get("PnL USD", pd.Series(np.nan, index=closed.index)), errors="coerce")
+        r_values = pd.to_numeric(closed.get("R", pd.Series(np.nan, index=closed.index)), errors="coerce")
+        risk_amounts = pd.to_numeric(closed.get("Risk Tutarı", pd.Series(np.nan, index=closed.index)), errors="coerce")
+        estimated_pnl = r_values * risk_amounts
+        realized_usd = float(direct_pnl.fillna(estimated_pnl).fillna(0.0).sum())
+
+    risk_amount = float(account_size) * float(risk_pct) / 100.0
+    target_min = max(float(target_min_usd), 0.0)
+    target_max = max(float(target_max_usd), target_min)
+    max_loss = max(float(max_loss_usd), 0.0)
+    trade_count = int(len(closed))
+    progress_pct = 0.0 if target_min <= 0 else float(np.clip(100 * realized_usd / target_min, 0, 100))
+
+    blockers = []
+    label = "İŞLEM ARANABİLİR"
+    state = "ok"
+    if max_loss > 0 and realized_usd <= -max_loss:
+        blockers.append(f"günlük zarar limiti -${max_loss:.0f} doldu")
+        label, state = "GÜNÜ KAPAT", "bad"
+    elif stop_after_target and target_min > 0 and realized_usd >= target_min:
+        blockers.append(f"günlük minimum hedef ${target_min:.0f} tamamlandı")
+        label, state = "HEDEF TAMAM — GÜNÜ KAPAT", "ok"
+    elif max_closed_trades > 0 and trade_count >= int(max_closed_trades):
+        blockers.append(f"günlük {int(max_closed_trades)} kapalı işlem limiti doldu")
+        label, state = "İŞLEM LİMİTİ DOLDU", "warn"
+    elif realized_usd < 0:
+        label, state = "SEÇİCİ OL", "warn"
+
+    target_r_low = target_min / risk_amount if risk_amount > 0 else np.nan
+    target_r_high = target_max / risk_amount if risk_amount > 0 else np.nan
+    return {
+        "blocks_trade": bool(blockers),
+        "state": state,
+        "label": label,
+        "text": "; ".join(blockers) if blockers else "Günlük limitler açık; yalnızca onaylı setup değerlendirilebilir.",
+        "realized_usd": realized_usd,
+        "closed_trades": trade_count,
+        "risk_amount": risk_amount,
+        "target_min_usd": target_min,
+        "target_max_usd": target_max,
+        "max_loss_usd": max_loss,
+        "progress_pct": progress_pct,
+        "target_r_low": target_r_low,
+        "target_r_high": target_r_high,
+    }
 
 
 def news_blackout_status(
@@ -5387,11 +5488,14 @@ def ml_should_block_trade(ml_prediction: dict, threshold_pct: float, filter_enab
 
 def is_new_position_decision(action: str) -> bool:
     a = str(action).upper()
-    if "PAS" in a:
+    if any(word in a for word in {"BEKLE", "İZLE", "PAS", "KAPAT", "TUT", "YÖN YOK", "YETERSİZ"}):
         return False
-    if "KAPAT" in a or "TUT" in a:
-        return False
-    return ("LONG" in a or "SHORT" in a)
+    return (
+        "LONG AÇ" in a
+        or "SHORT AÇ" in a
+        or "ONAYLI LONG" in a
+        or "ONAYLI SHORT" in a
+    )
 
 
 def apply_ml_filter_to_decision(decision: dict, ml_prediction: dict, filter_enabled: bool, threshold_pct: float) -> dict:
@@ -5430,6 +5534,7 @@ def apply_operational_safety_filters(
     portfolio_status: dict,
     market_regime: dict,
     block_sideways: bool,
+    daily_status: Optional[dict] = None,
 ) -> dict:
     """Veri, haber, rejim ve portföy limitleri yeni pozisyon üzerinde son sözü söyler."""
     if not is_new_position_decision(str(decision.get("action", ""))):
@@ -5441,6 +5546,8 @@ def apply_operational_safety_filters(
         blockers.append(f"Haber: {news_status.get('text', '-')}")
     if portfolio_status.get("blocks_trade"):
         blockers.append(f"Portföy: {portfolio_status.get('text', '-')}")
+    if daily_status and daily_status.get("blocks_trade"):
+        blockers.append(f"Günlük plan: {daily_status.get('text', '-')}")
     if block_sideways and market_regime.get("label") == "Yatay":
         blockers.append("Piyasa rejimi yatay; trend işlemi engellendi.")
     if not blockers:
@@ -5454,6 +5561,49 @@ def apply_operational_safety_filters(
         "steps": ["Yeni pozisyon açma.", "Engel kalktıktan sonra kapanmış mumla sinyali yeniden hesapla.", "Mevcut stopları genişletme."],
     })
     return out
+
+
+def render_daily_trading_desk(status: dict) -> None:
+    pnl = float(status.get("realized_usd", 0.0))
+    target_min = float(status.get("target_min_usd", 0.0))
+    target_max = float(status.get("target_max_usd", 0.0))
+    risk_amount = float(status.get("risk_amount", 0.0))
+    progress = float(status.get("progress_pct", 0.0))
+    state = str(status.get("state", "warn"))
+    css = "ok-box" if state == "ok" else ("bad-box" if state == "bad" else "warn-box")
+
+    st.markdown("<div class='section-kicker'>Günlük disiplin planı</div>", unsafe_allow_html=True)
+    cols = st.columns(4)
+    cols[0].metric("Bugünkü gerçekleşen", f"${pnl:+.2f}")
+    cols[1].metric("Günlük hedef bandı", f"${target_min:.0f}–${target_max:.0f}")
+    cols[2].metric("Bir işlemde risk", f"${risk_amount:.2f}")
+    cols[3].metric("Bugün kapanan işlem", int(status.get("closed_trades", 0)))
+
+    target_r_low = status.get("target_r_low", np.nan)
+    target_r_high = status.get("target_r_high", np.nan)
+    r_text = "-" if pd.isna(target_r_low) else f"yaklaşık {float(target_r_low):.1f}R–{float(target_r_high):.1f}R"
+    st.markdown(
+        "<div class='daily-desk'>"
+        f"<div class='daily-desk-title'>{escape(str(status.get('label', '-')))}</div>"
+        f"<div class='daily-desk-note'>{escape(str(status.get('text', '-')))} "
+        f"Hedef bandı mevcut işlem riskinle {escape(r_text)} gerektirir.</div>"
+        "<div class='daily-progress-track'>"
+        f"<div class='daily-progress-fill' style='width:{progress:.1f}%'></div>"
+        "</div>"
+        f"<div class='daily-desk-note'>Minimum hedef ilerlemesi: %{progress:.0f}</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    if status.get("blocks_trade"):
+        st.markdown(
+            f"<div class='{css}'><b>Yeni işlem kilidi:</b> {escape(str(status.get('text', '-')))}</div>",
+            unsafe_allow_html=True,
+        )
+    elif pd.notna(target_r_low) and float(target_r_low) >= 2.0:
+        st.caption(
+            "Not: Minimum günlük hedef mevcut riskle en az 2R gerektiriyor. "
+            "Bu her gün oluşmayabilir; hedefi tamamlamak için filtresiz veya plansız işlem açma."
+        )
 
 
 def render_ml_prediction_card(ml_prediction: dict, threshold_pct: float, filter_enabled: bool) -> None:
@@ -5528,13 +5678,30 @@ with st.sidebar:
     if risk_pct > 1.0:
         st.warning("%1 üzerindeki işlem riski kayıp serilerinde hesabı hızlı küçültebilir.")
 
+    with st.expander("Günlük işlem planım", expanded=True):
+        st.caption("Hedef sinyal üretmez; hedefe veya zarar limitine gelince yeni işlemi durdurur.")
+        daily_target_min_usd = st.number_input("Minimum günlük hedef ($)", min_value=0.0, value=100.0, step=25.0)
+        daily_target_max_usd = st.number_input("Üst günlük hedef ($)", min_value=0.0, value=200.0, step=25.0)
+        daily_max_loss_usd = st.number_input("Maksimum günlük zarar ($)", min_value=0.0, value=100.0, step=25.0)
+        daily_max_closed_trades = st.number_input("Günlük maksimum kapalı işlem", min_value=1, max_value=20, value=3, step=1)
+        stop_after_daily_target = st.checkbox("Minimum hedefe ulaşınca yeni işlemi durdur", value=True)
+        if daily_target_max_usd < daily_target_min_usd:
+            st.warning("Üst hedef minimum hedeften küçük; uygulama üst hedefi minimum hedefe eşitleyecek.")
+
     with st.expander("Gelişmiş risk", expanded=False):
         rr = st.number_input("Risk/Reward", min_value=0.5, max_value=5.0, value=1.5, step=0.1)
         atr_mult = st.number_input("ATR Stop Çarpanı", min_value=0.5, max_value=5.0, value=1.5, step=0.1)
         stop_mode = st.selectbox("Stop modeli", ["ATR", "Swing + ATR", "Hibrit (uzak olan)"], index=2)
         target_mode = st.selectbox("Hedef modeli", ["Sabit R", "Yapı / minimum 1R"], index=0)
         swing_lookback = st.number_input("Swing bakış mumu", min_value=3, max_value=100, value=10, step=1)
-        max_holding_bars = st.number_input("Maksimum işlem süresi (mum, 0=kapalı)", min_value=0, max_value=500, value=0, step=5)
+        max_holding_bars = st.number_input(
+            "Maksimum işlem süresi (mum, 0=kapalı)",
+            min_value=0,
+            max_value=500,
+            value=24,
+            step=4,
+            help="Yeni Başlayan Modu/15M için 24 mum yaklaşık 6 saattir; günlük işlemin geceye taşınmasını azaltır.",
+        )
         break_even_at_r = st.number_input("Başabaş taşıma eşiği (R, 0=kapalı)", min_value=0.0, max_value=5.0, value=1.0, step=0.25)
         pip_value_estimate = estimate_pip_value_per_lot_usd(symbol, fetch_last_price(symbol))
         pip_value_default = round(float(pip_value_estimate), 2) if pip_value_estimate and pip_value_estimate > 0 else 10.0
@@ -5679,7 +5846,12 @@ with st.sidebar:
             key=f"spread_pips_{symbol}",
             help="Canlı bid/ask verisi olmadığı için spread + komisyon + tahmini kaymayı tek değer olarak gir.",
         )
-        session_filter = st.selectbox("İşlem seansı", list(TRADING_SESSIONS.keys()), index=0)
+        session_filter = st.selectbox(
+            "İşlem seansı",
+            list(TRADING_SESSIONS.keys()),
+            index=list(TRADING_SESSIONS.keys()).index("Londra"),
+            help="Major paritelerde likiditenin daha düzenli olduğu Londra saatleri günlük işlem için varsayılandır.",
+        )
         if observed_spread is not None:
             st.caption(f"Broker son mumlarından medyan spread: {observed_spread:.1f} pip.")
         st.caption(session_description(session_filter))
@@ -5703,6 +5875,11 @@ with st.sidebar:
         "total_cost_pips": spread_pips, "session": session_filter,
         "max_total_risk_pct": max_total_risk_pct, "max_currency_risk_pct": max_currency_risk_pct,
         "daily_stop_r": daily_stop_r, "weekly_stop_r": weekly_stop_r,
+        "daily_target_min_usd": daily_target_min_usd,
+        "daily_target_max_usd": daily_target_max_usd,
+        "daily_max_loss_usd": daily_max_loss_usd,
+        "daily_max_closed_trades": int(daily_max_closed_trades),
+        "stop_after_daily_target": bool(stop_after_daily_target),
         "market_structure_enabled": market_structure_enabled, "entry_model": entry_model,
         "rsi_regime_enabled": rsi_regime_enabled,
         "rsi_divergence_filter_enabled": rsi_divergence_filter_enabled,
@@ -5754,6 +5931,18 @@ else:
         st.info(f"Standart Mod aktif ({signal_mode}): {mode_note}")
 
 
+current_journal = journal_dataframe()
+current_daily_status = daily_trading_status(
+    journal=current_journal,
+    account_size=float(account_size),
+    risk_pct=float(risk_pct),
+    target_min_usd=float(daily_target_min_usd),
+    target_max_usd=float(daily_target_max_usd),
+    max_loss_usd=float(daily_max_loss_usd),
+    max_closed_trades=int(daily_max_closed_trades),
+    stop_after_target=bool(stop_after_daily_target),
+)
+
 if screen_mode == "Parite Alarm Ekranı":
     render_pair_alert_screen(
         change_window_minutes=change_window_minutes,
@@ -5770,6 +5959,7 @@ if screen_mode == "Parite Alarm Ekranı":
         bb_extreme_volatility_block=bool(bb_extreme_volatility_block),
         macd_confirmation_enabled=bool(macd_confirmation_enabled),
         macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
+        daily_status=current_daily_status,
     )
     st.stop()
 
@@ -5953,24 +6143,6 @@ with m4:
     st.metric("Pip Size", get_pip_size(symbol))
 
 intraday_fig, intraday_info = plot_intraday_change(symbol, intraday_chart_minutes)
-with st.expander("1–24 Saatlik Fiyat Değişimi", expanded=True):
-    change_table = intraday_change_snapshot(symbol)
-    if not change_table.empty:
-        summary_cols = st.columns(len(change_table))
-        for col, (_, change_row) in zip(summary_cols, change_table.iterrows()):
-            pct_value = change_row["Değişim %"]
-            col.metric(
-                str(change_row["Pencere"]).replace("Son ", ""),
-                "-" if pd.isna(pct_value) else f"{float(pct_value):+.3f}%",
-            )
-    st.plotly_chart(intraday_fig, use_container_width=True)
-    if intraday_info is not None:
-        reference_local = _to_istanbul_timestamp(intraday_info["reference_time"]).strftime("%d.%m.%Y %H:%M")
-        st.caption(
-            f"Referans: {reference_local} / {intraday_info['reference_price']:.{price_decimals(symbol)}f} · "
-            f"Son: {intraday_info['latest_price']:.{price_decimals(symbol)}f} · "
-            "Grafik 1 dakikalık kapanış verisinden hesaplanır."
-        )
 
 if beginner_mode:
     st.caption(f"Grafik zamanı: {chart_tf} | İşlem karar zamanı: {selected_tf} (Yeni Başlayan Modu)")
@@ -6028,7 +6200,7 @@ current_news_status = (
     else {"blocks_trade": False, "state": "ok", "text": "Haber filtresi kapalı."}
 )
 current_portfolio_status = portfolio_risk_status(
-    journal_dataframe(),
+    current_journal,
     symbol=symbol,
     proposed_risk_pct=float(risk_pct),
     max_total_risk_pct=float(max_total_risk_pct),
@@ -6114,6 +6286,7 @@ simple_decision = apply_operational_safety_filters(
     portfolio_status=current_portfolio_status,
     market_regime=market_regime,
     block_sideways=block_sideways,
+    daily_status=current_daily_status,
 )
 ml_blocks_trade, ml_block_reason = ml_should_block_trade(ml_prediction, float(ml_threshold_pct), ml_filter_enabled)
 
@@ -6133,26 +6306,29 @@ if is_new_position_decision(str(simple_decision.get("action", ""))):
         if not ok:
             st.warning(f"Webhook gönderilemedi: {notification_text}")
 
-st.header("Tek Karar")
+st.header("İşlem Masası")
+render_daily_trading_desk(current_daily_status)
+st.markdown("<div class='section-kicker'>Şu an ne yapmalıyım?</div>", unsafe_allow_html=True)
 health_cols = st.columns(4)
-health_cols[0].metric("Veri Sağlığı", current_data_health.get("status", "-"))
-health_cols[1].metric("Piyasa Rejimi", market_regime.get("label", "-"))
-health_cols[2].metric("Açık Risk", f"%{current_portfolio_status.get('total_risk_pct', 0):.2f}")
-health_cols[3].metric("Haber Filtresi", "BLOK" if current_news_status.get("blocks_trade") else "AÇIK")
+health_cols[0].metric("Veri", current_data_health.get("status", "-"))
+health_cols[1].metric("Piyasa", market_regime.get("label", "-"))
+health_cols[2].metric("Açık risk", f"%{current_portfolio_status.get('total_risk_pct', 0):.2f}")
+health_cols[3].metric("Haber", "ENGEL" if current_news_status.get("blocks_trade") else "TEMİZ")
 for title, status in [("Veri", current_data_health), ("Haber", current_news_status), ("Portföy", current_portfolio_status)]:
     if status.get("blocks_trade"):
         st.warning(f"{title}: {status.get('text', '-')}")
 render_top_decision_panel(simple_decision)
-render_market_model_card(market_model_status)
-render_ml_prediction_card(ml_prediction, float(ml_threshold_pct), ml_filter_enabled)
 if beginner_mode:
-    render_simple_decision_card(simple_decision)
     render_beginner_path(summary_df, matched_quality, entry_signal_tracker, selected_tf)
     with st.expander("Neden böyle dedi?", expanded=False):
+        render_market_model_card(market_model_status)
+        render_ml_prediction_card(ml_prediction, float(ml_threshold_pct), ml_filter_enabled)
         render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
         render_entry_alarm_box(entry_signal_tracker)
         render_entry_signal_tracker(entry_signal_tracker)
 else:
+    render_market_model_card(market_model_status)
+    render_ml_prediction_card(ml_prediction, float(ml_threshold_pct), ml_filter_enabled)
     render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
     render_wait_reason_box(simple_decision, entry_signal_tracker)
     render_entry_alarm_box(entry_signal_tracker)
@@ -6196,6 +6372,25 @@ with risk_col:
 if main_run_bt_requested:
     run_and_store_backtest()
     st.rerun()
+
+with st.expander("Son 1–24 saat fiyat hareketi", expanded=False):
+    change_table = intraday_change_snapshot(symbol)
+    if not change_table.empty:
+        summary_cols = st.columns(len(change_table))
+        for col, (_, change_row) in zip(summary_cols, change_table.iterrows()):
+            pct_value = change_row["Değişim %"]
+            col.metric(
+                str(change_row["Pencere"]).replace("Son ", ""),
+                "-" if pd.isna(pct_value) else f"{float(pct_value):+.3f}%",
+            )
+    st.plotly_chart(intraday_fig, use_container_width=True)
+    if intraday_info is not None:
+        reference_local = _to_istanbul_timestamp(intraday_info["reference_time"]).strftime("%d.%m.%Y %H:%M")
+        st.caption(
+            f"Referans: {reference_local} / {intraday_info['reference_price']:.{price_decimals(symbol)}f} · "
+            f"Son: {intraday_info['latest_price']:.{price_decimals(symbol)}f} · "
+            "Grafik 1 dakikalık kapanış verisinden hesaplanır."
+        )
 
 if not beginner_mode:
     with st.expander("Kararın adımları", expanded=False):
@@ -6487,6 +6682,7 @@ with st.form("trade_journal_form"):
             "Risk Tutarı": float(account_size * risk_pct / 100),
             "Pips": None if manual_pips is None else round(float(manual_pips), 2),
             "R": None if realized_r is None else round(float(realized_r), 3),
+            "PnL USD": None if manual_pips is None else round(float(manual_pips) * float(pip_value_per_lot) * float(journal_lot), 2),
             "Not": journal_notes,
         })
         st.success("İşlem günlüğe eklendi.")
