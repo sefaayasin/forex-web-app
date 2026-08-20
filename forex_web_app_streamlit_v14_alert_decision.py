@@ -421,6 +421,21 @@ st.markdown(
         }
         .daily-progress-fill { height:100%; background:#198754; border-radius:999px; }
         .section-kicker { color:#6c757d; font-size:.82rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+        .opportunity-card {
+            padding:18px;
+            border-radius:14px;
+            border:1px solid #dfe3e8;
+            background:#f8f9fa;
+            color:#212529 !important;
+            min-height:310px;
+        }
+        .opportunity-card, .opportunity-card * { color:#212529 !important; }
+        .opportunity-long { background:#e8f5ee; border-color:#badbcc; }
+        .opportunity-short { background:#fbeaec; border-color:#f5c2c7; }
+        .opportunity-neutral { background:#fff8e1; border-color:#ffe69c; }
+        .opportunity-title { font-size:1.45rem; font-weight:950; margin:4px 0 8px 0; }
+        .opportunity-score { font-size:2rem; font-weight:950; line-height:1; margin:10px 0; }
+        .opportunity-line { margin-top:8px; font-size:.92rem; }
         @media (max-width: 1100px) {
             .alert-summary-row { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
         }
@@ -5015,6 +5030,172 @@ def render_position_tracker_result(result: dict, current_price: Optional[float],
     st.markdown(html, unsafe_allow_html=True)
 
 
+def build_intraday_opportunity(
+    symbol: str,
+    summary: pd.DataFrame,
+    current_price: Optional[float],
+    account_size: float,
+    risk_pct: float,
+    pip_value_per_lot: float,
+    total_cost_pips: float,
+    target_usd: float,
+) -> dict:
+    """Kesin işlemden önce birkaç saatlik yön ihtimalini ve hedefin pip kapasitesini ölçer."""
+    score_weights = {"4 Saat": 0.15, "1 Saat": 0.25, "15 Dakika": 0.35, "5 Dakika": 0.25}
+    signed_base = 0.0
+    used_weight = 0.0
+    for tf_name, weight in score_weights.items():
+        value = _summary_score(summary, tf_name)
+        if not pd.isna(value):
+            signed_base += float(value) * weight
+            used_weight += weight
+    signed_base = signed_base / used_weight if used_weight else 0.0
+
+    response = _summary_text(summary, "15 Dakika", "Tepki Teyidi", "NONE")
+    bb_signal = _summary_text(summary, "15 Dakika", "BB Trend Sinyali", "NONE")
+    rsi_break = _summary_text(summary, "15 Dakika", "RSI Momentum Kırılımı", "NONE")
+    macd_regime = _summary_text(summary, "15 Dakika", "MACD Rejimi", "TRANSITION")
+    macd_state = _summary_text(summary, "15 Dakika", "MACD Histogram Durumu", "MIXED")
+    phase = _summary_text(summary, "15 Dakika", "Hareket Fazı", "UYUMSUZ / YATAY")
+    h4_score = _summary_score(summary, "4 Saat")
+    h1_score = _summary_score(summary, "1 Saat")
+
+    long_points = max(signed_base, 0.0)
+    short_points = max(-signed_base, 0.0)
+    catalysts = []
+    if response == "LONG":
+        long_points += 22
+        catalysts.append("15M tepki LONG")
+    elif response == "SHORT":
+        short_points += 22
+        catalysts.append("15M tepki SHORT")
+    if bb_signal == "LONG":
+        long_points += 18
+        catalysts.append("Bollinger yukarı açılım")
+    elif bb_signal == "SHORT":
+        short_points += 18
+        catalysts.append("Bollinger aşağı açılım")
+    if rsi_break == "BULLISH":
+        long_points += 10
+        catalysts.append("RSI erken yukarı kırılım")
+    elif rsi_break == "BEARISH":
+        short_points += 10
+        catalysts.append("RSI erken aşağı kırılım")
+    if macd_regime == "BULLISH":
+        long_points += 8
+    elif macd_regime == "BEARISH":
+        short_points += 8
+    if str(macd_state).startswith("BULLISH"):
+        long_points += 7
+    elif str(macd_state).startswith("BEARISH"):
+        short_points += 7
+
+    # 4H ile 1H ters yöndeyse kısa vade fırsatı tamamen yok sayılmaz; güven düşürülür.
+    htf_conflict = (
+        not pd.isna(h4_score) and not pd.isna(h1_score)
+        and np.sign(float(h4_score)) != 0 and np.sign(float(h1_score)) != 0
+        and np.sign(float(h4_score)) != np.sign(float(h1_score))
+    )
+    if htf_conflict:
+        long_points *= 0.72
+        short_points *= 0.72
+        catalysts.append("4H/1H çelişkisi güveni düşürüyor")
+
+    side = "LONG" if long_points > short_points else ("SHORT" if short_points > long_points else "NONE")
+    confidence = float(np.clip(max(long_points, short_points), 0, 100))
+    if confidence >= 65:
+        label = f"{side} FIRSATI GÜÇLENİYOR"
+        state = "long" if side == "LONG" else "short"
+    elif confidence >= 42:
+        label = f"{side} ADAYI OLUŞUYOR"
+        state = "long" if side == "LONG" else "short"
+    else:
+        label = "ŞİMDİLİK NÖTR"
+        state = "neutral"
+
+    pip = get_pip_size(symbol)
+    lot = 0.0
+    required_pips = np.nan
+    recent_range_pips = np.nan
+    target_price = np.nan
+    df = fetch_ohlc(symbol, TIMEFRAMES["15 Dakika"]["interval"], TIMEFRAMES["15 Dakika"]["period"])
+    if df is not None and not df.empty and len(df) >= 40:
+        ind = add_indicators(df.iloc[:-1])
+        row = latest_valid_row(ind)
+        if row is not None:
+            atr = float(row["ATR14"])
+            stop_pips = max(atr * 1.5 / pip, np.finfo(float).eps)
+            risk_amount = float(account_size) * float(risk_pct) / 100.0
+            cost_adjusted_stop = stop_pips + max(float(total_cost_pips), 0.0)
+            if pip_value_per_lot > 0:
+                lot = risk_amount / (cost_adjusted_stop * float(pip_value_per_lot))
+                if lot > 0 and target_usd > 0:
+                    required_pips = float(target_usd) / (float(pip_value_per_lot) * lot)
+            rolling_range = ind["High"].rolling(16).max() - ind["Low"].rolling(16).min()
+            recent_range = rolling_range.dropna().tail(96)
+            if not recent_range.empty:
+                recent_range_pips = float(recent_range.median() / pip)
+    if current_price is not None and side in {"LONG", "SHORT"} and pd.notna(required_pips):
+        direction = 1 if side == "LONG" else -1
+        target_price = float(current_price) + direction * float(required_pips) * pip
+
+    capacity_ratio = (
+        float(required_pips / recent_range_pips)
+        if pd.notna(required_pips) and pd.notna(recent_range_pips) and recent_range_pips > 0
+        else np.nan
+    )
+    if pd.isna(capacity_ratio):
+        capacity_text = "Hareket kapasitesi hesaplanamadı."
+    elif capacity_ratio <= 0.65:
+        capacity_text = "Hedef, son dönem tipik 4 saatlik hareketinin içinde."
+    elif capacity_ratio <= 1.0:
+        capacity_text = "Hedef mümkün aralıkta ama güçlü hareket gerekiyor."
+    else:
+        capacity_text = "Hedef tipik 4 saatlik hareketten büyük; birkaç saate sığmayabilir."
+
+    reasons = catalysts[:3] or [f"15M fazı: {phase}", "Kısa vadeli momentum henüz net değil"]
+    return {
+        "label": label,
+        "state": state,
+        "side": side,
+        "confidence": confidence,
+        "reason": "; ".join(reasons),
+        "phase": phase,
+        "lot": lot,
+        "required_pips": required_pips,
+        "recent_range_pips": recent_range_pips,
+        "target_price": target_price,
+        "target_usd": float(target_usd),
+        "capacity_text": capacity_text,
+        "htf_conflict": bool(htf_conflict),
+    }
+
+
+def render_intraday_opportunity(opportunity: dict, symbol: str) -> None:
+    state = str(opportunity.get("state", "neutral"))
+    css = {"long": "opportunity-long", "short": "opportunity-short"}.get(state, "opportunity-neutral")
+    required = opportunity.get("required_pips", np.nan)
+    recent_range = opportunity.get("recent_range_pips", np.nan)
+    target_price = opportunity.get("target_price", np.nan)
+    required_text = "-" if pd.isna(required) else f"{float(required):.1f} pip"
+    range_text = "-" if pd.isna(recent_range) else f"{float(recent_range):.1f} pip"
+    target_text = "-" if pd.isna(target_price) else f"{float(target_price):.{price_decimals(symbol)}f}"
+    st.markdown(
+        f"<div class='opportunity-card {css}'>"
+        "<div class='section-kicker'>Önümüzdeki birkaç saat</div>"
+        f"<div class='opportunity-title'>{escape(str(opportunity.get('label', '-')))}</div>"
+        f"<div class='opportunity-score'>%{float(opportunity.get('confidence', 0)):.0f}</div>"
+        f"<div>{escape(str(opportunity.get('reason', '-')))}</div>"
+        f"<div class='opportunity-line'><b>${float(opportunity.get('target_usd', 0)):.0f} için gereken:</b> {escape(required_text)}</div>"
+        f"<div class='opportunity-line'><b>Tahmini hedef fiyat:</b> {escape(target_text)}</div>"
+        f"<div class='opportunity-line'><b>Tipik 4 saatlik hareket:</b> {escape(range_text)}</div>"
+        f"<div class='opportunity-line'>{escape(str(opportunity.get('capacity_text', '-')))}</div>"
+        "<div class='opportunity-line'><small>Bu erken fırsat radarıdır; kesin giriş için kapanmış mum ve risk onayı ayrıca gerekir.</small></div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
 
 # =============================================================================
 # PLOTS
@@ -5781,13 +5962,8 @@ with st.sidebar:
         show_position_tracker = st.checkbox("Pozisyon Takip Modu", value=True)
         change_window_label = st.selectbox("Yüzde değişim periyodu", list(PRICE_CHANGE_WINDOWS.keys()), index=1)
         change_window_minutes = PRICE_CHANGE_WINDOWS[change_window_label]
-        intraday_chart_label = st.selectbox(
-            "Fiyat değişim grafiği",
-            list(INTRADAY_CHART_WINDOWS.keys()),
-            index=1,
-            help="Son 1–24 saat arasında fiyatın başlangıç noktasına göre yüzde yolculuğunu gösterir.",
-        )
-        intraday_chart_minutes = INTRADAY_CHART_WINDOWS[intraday_chart_label]
+        intraday_chart_minutes = 1440
+        st.caption("Ana ekranda son 24 saatin fiyat ve yüzde değişim grafiği gösterilir.")
 
     with st.expander("Makine öğrenmesi", expanded=False):
         ml_filter_enabled = st.checkbox(
@@ -6142,7 +6318,7 @@ with m3:
 with m4:
     st.metric("Pip Size", get_pip_size(symbol))
 
-intraday_fig, intraday_info = plot_intraday_change(symbol, intraday_chart_minutes)
+intraday_fig, intraday_info = plot_intraday_change(symbol, 1440)
 
 if beginner_mode:
     st.caption(f"Grafik zamanı: {chart_tf} | İşlem karar zamanı: {selected_tf} (Yeni Başlayan Modu)")
@@ -6306,9 +6482,40 @@ if is_new_position_decision(str(simple_decision.get("action", ""))):
         if not ok:
             st.warning(f"Webhook gönderilemedi: {notification_text}")
 
-st.header("İşlem Masası")
-render_daily_trading_desk(current_daily_status)
-st.markdown("<div class='section-kicker'>Şu an ne yapmalıyım?</div>", unsafe_allow_html=True)
+intraday_opportunity = build_intraday_opportunity(
+    symbol=symbol,
+    summary=summary_df,
+    current_price=price,
+    account_size=float(account_size),
+    risk_pct=float(risk_pct),
+    pip_value_per_lot=float(pip_value_per_lot),
+    total_cost_pips=float(spread_pips),
+    target_usd=float(daily_target_min_usd),
+)
+
+st.header("24 Saatlik Fiyat ve Fırsat Radarı")
+change_table = intraday_change_snapshot(symbol)
+if not change_table.empty:
+    summary_cols = st.columns(len(change_table))
+    for col, (_, change_row) in zip(summary_cols, change_table.iterrows()):
+        pct_value = change_row["Değişim %"]
+        col.metric(
+            str(change_row["Pencere"]).replace("Son ", ""),
+            "-" if pd.isna(pct_value) else f"{float(pct_value):+.3f}%",
+        )
+radar_chart_col, radar_card_col = st.columns([2.1, 1.0])
+with radar_chart_col:
+    st.plotly_chart(intraday_fig, use_container_width=True)
+    if intraday_info is not None:
+        reference_local = _to_istanbul_timestamp(intraday_info["reference_time"]).strftime("%d.%m.%Y %H:%M")
+        st.caption(
+            f"24 saat referansı: {reference_local} / {intraday_info['reference_price']:.{price_decimals(symbol)}f} · "
+            f"Son: {intraday_info['latest_price']:.{price_decimals(symbol)}f} · 1 dakikalık kapanış verisi."
+        )
+with radar_card_col:
+    render_intraday_opportunity(intraday_opportunity, symbol)
+
+st.subheader("Kesin işlem kararı")
 health_cols = st.columns(4)
 health_cols[0].metric("Veri", current_data_health.get("status", "-"))
 health_cols[1].metric("Piyasa", market_regime.get("label", "-"))
@@ -6372,25 +6579,6 @@ with risk_col:
 if main_run_bt_requested:
     run_and_store_backtest()
     st.rerun()
-
-with st.expander("Son 1–24 saat fiyat hareketi", expanded=False):
-    change_table = intraday_change_snapshot(symbol)
-    if not change_table.empty:
-        summary_cols = st.columns(len(change_table))
-        for col, (_, change_row) in zip(summary_cols, change_table.iterrows()):
-            pct_value = change_row["Değişim %"]
-            col.metric(
-                str(change_row["Pencere"]).replace("Son ", ""),
-                "-" if pd.isna(pct_value) else f"{float(pct_value):+.3f}%",
-            )
-    st.plotly_chart(intraday_fig, use_container_width=True)
-    if intraday_info is not None:
-        reference_local = _to_istanbul_timestamp(intraday_info["reference_time"]).strftime("%d.%m.%Y %H:%M")
-        st.caption(
-            f"Referans: {reference_local} / {intraday_info['reference_price']:.{price_decimals(symbol)}f} · "
-            f"Son: {intraday_info['latest_price']:.{price_decimals(symbol)}f} · "
-            "Grafik 1 dakikalık kapanış verisinden hesaplanır."
-        )
 
 if not beginner_mode:
     with st.expander("Kararın adımları", expanded=False):
