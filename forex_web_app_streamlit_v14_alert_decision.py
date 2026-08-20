@@ -458,7 +458,9 @@ TIMEFRAMES = {
 
 BACKTEST_PERIODS = {
     "5 Dakika": "5d",
-    "15 Dakika": "30d",
+    # Yahoo 15M verisinde erişilebilen daha uzun pencereyi kullanarak
+    # katı MTF filtrelerinin ürettiği işlem örneğini artırır.
+    "15 Dakika": "60d",
     "1 Saat": "90d",
     "4 Saat": "120d",
 }
@@ -471,6 +473,15 @@ PRICE_CHANGE_WINDOWS = {
     "Son 1 saat": 60,
     "Son 4 saat": 240,
     "Son 1 gün": 1440,
+}
+
+INTRADAY_CHART_WINDOWS = {
+    "Son 1 saat": 60,
+    "Son 2 saat": 120,
+    "Son 4 saat": 240,
+    "Son 8 saat": 480,
+    "Son 12 saat": 720,
+    "Son 24 saat": 1440,
 }
 
 TRADING_SESSIONS = {
@@ -762,18 +773,25 @@ def fetch_ohlc(symbol: str, interval: str, period: str) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=30, show_spinner=False)
-def fetch_last_price(symbol: str) -> Optional[float]:
+def fetch_intraday_history(symbol: str, period: str = "2d") -> pd.DataFrame:
+    """Kısa vadeli fiyat, yüzde değişim ve grafik için ortak 1 dakikalık veri."""
     symbol = normalize_symbol(symbol)
     try:
-        df = yf.download(symbol, period="1d", interval="1m", progress=False, auto_adjust=False, threads=False)
+        df = yf.download(symbol, period=period, interval="1m", progress=False, auto_adjust=False, threads=False)
         if df is None or df.empty:
-            return None
+            return pd.DataFrame()
         df = _fix_cols(df)
-        if df.empty:
-            return None
-        return float(df["Close"].iloc[-1])
+        return _utc_index_df(df) if not df.empty else pd.DataFrame()
     except Exception:
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def fetch_last_price(symbol: str) -> Optional[float]:
+    df = fetch_intraday_history(symbol, "2d")
+    if df.empty:
         return None
+    return float(df["Close"].iloc[-1])
 
 
 @st.cache_data(ttl=30, show_spinner=False)
@@ -786,15 +804,9 @@ def fetch_price_change(symbol: str, lookback_minutes: int) -> Optional[dict]:
     try:
         # 1m veri Yahoo tarafında genelde son birkaç gün için erişilebilir.
         period = "5d" if lookback_minutes > 1440 else "2d"
-        df = yf.download(symbol, period=period, interval="1m", progress=False, auto_adjust=False, threads=False)
-        if df is None or df.empty:
-            return None
-
-        df = _fix_cols(df)
+        df = fetch_intraday_history(symbol, period)
         if df.empty or len(df) < 2:
             return None
-
-        df = _utc_index_df(df)
         close = df["Close"].astype(float).dropna()
         if close.empty:
             return None
@@ -830,6 +842,32 @@ def fetch_price_change(symbol: str, lookback_minutes: int) -> Optional[dict]:
         }
     except Exception:
         return None
+
+
+def intraday_change_snapshot(symbol: str, windows: Optional[dict[str, int]] = None) -> pd.DataFrame:
+    """Aynı son fiyata göre 1/2/4/8/12/24 saatlik değişimleri tek tabloda hesaplar."""
+    windows = windows or INTRADAY_CHART_WINDOWS
+    df = fetch_intraday_history(symbol, "2d")
+    columns = ["Pencere", "Referans Zamanı", "Referans", "Son Fiyat", "Değişim %"]
+    if df.empty:
+        return pd.DataFrame(columns=columns)
+
+    close = df["Close"].astype(float).dropna()
+    if close.empty:
+        return pd.DataFrame(columns=columns)
+    latest_time = close.index[-1]
+    latest_price = float(close.iloc[-1])
+    rows = []
+    for label, minutes in windows.items():
+        candidates = close[close.index <= latest_time - pd.Timedelta(minutes=int(minutes))]
+        if candidates.empty:
+            rows.append([label, None, np.nan, latest_price, np.nan])
+            continue
+        reference_time = candidates.index[-1]
+        reference = float(candidates.iloc[-1])
+        pct = 100 * (latest_price - reference) / reference if reference else np.nan
+        rows.append([label, reference_time, reference, latest_price, pct])
+    return pd.DataFrame(rows, columns=columns)
 
 
 def data_health_status(symbol: str, tf_name: str) -> dict:
@@ -1896,7 +1934,7 @@ def _filter_period_for_tf(tf_name: str, fallback_period: str) -> str:
     return {
         "4 Saat": "120d",
         "1 Saat": "90d",
-        "15 Dakika": "30d",
+        "15 Dakika": "60d",
     }.get(tf_name, fallback_period)
 
 
@@ -2516,6 +2554,34 @@ def assess_backtest_quality(bt: BacktestResult, min_trades_required: int = 20) -
         return "Orta", "warn-box", f"PF {pf:.2f}. Sistem pozitif ama marj dar; spread/kayma sonucu bozabilir. Küçük risk veya demo daha uygun."
 
     return "Zayıf", "bad-box", f"PF {'-' if pd.isna(pf) else f'{pf:.2f}'}, toplam PnL {total_pnl:.2f}, ortalama pip {avg_pips:.2f}. Bu ayarla gerçek işlem için pas geçmek daha güvenli."
+
+
+def assess_backtest_with_walk_forward(
+    bt: BacktestResult,
+    min_trades_required: int,
+    walk_forward_enabled: bool,
+    walk_forward_folds: int,
+) -> tuple[str, str, str, pd.DataFrame]:
+    """Kalite ile walk-forward sonucunu, yetersiz örneği kötü sonuç saymadan birleştirir."""
+    label, css, text = assess_backtest_quality(bt, min_trades_required=int(min_trades_required))
+    report = (
+        walk_forward_stability_report(bt.trades, int(walk_forward_folds))
+        if walk_forward_enabled else pd.DataFrame()
+    )
+    if not walk_forward_enabled:
+        return label, css, text, report
+
+    stable, wf_text = assess_walk_forward_stability(report)
+    if report.empty:
+        return (
+            "Yetersiz Örnek",
+            "warn-box",
+            f"{text} Walk-forward sonucu üretilemedi: {wf_text}",
+            report,
+        )
+    if not stable:
+        return "Zayıf", "bad-box", f"Walk-forward sağlamlık kontrolü başarısız: {wf_text}", report
+    return label, css, f"{text} Walk-forward: {wf_text}", report
 
 
 def make_backtest_key(
@@ -4568,7 +4634,7 @@ def build_beginner_single_decision(
 
     if side is None:
         return {
-            "action": "PAS GEÇ",
+            "action": "YÖN YOK",
             "class": "simple-pass",
             "subtitle": "Ana yön net değil.",
             "reason": "4H ve 1H aynı yönde güçlü sinyal üretmiyor. Alt zaman dilimleri ne derse desin işlem açma.",
@@ -4584,10 +4650,12 @@ def build_beginner_single_decision(
     side_text = "alım" if side == "LONG" else "satış"
     tracker_market_model = tracker.get("market_model", {})
     m15_ok = tracker.get("technical_signal") == side and bool(tracker_market_model.get("entry_allowed", True))
+    market_phase = str(tracker_market_model.get("phase", "UYUMSUZ / YATAY"))
+    response_side = str(tracker_market_model.get("response_side", "NONE"))
 
     if matched_quality is None:
         return {
-            "action": "BEKLE",
+            "action": "BACKTEST BEKLENİYOR",
             "class": "simple-wait",
             "subtitle": "Strateji kontrolü yapılıyor.",
             "reason": "Plan kontrolü henüz tamamlanmadı. Otomatik kontrol açık değilse Yeniden Hesapla butonuna bas.",
@@ -4597,6 +4665,20 @@ def build_beginner_single_decision(
                 "Kontrol bitince bu kart tek karar verecek.",
             ],
             "levels": {},
+        }
+
+    if quality_label in LOW_SAMPLE_QUALITIES:
+        return {
+            "action": "BACKTEST YETERSİZ",
+            "class": "simple-wait",
+            "subtitle": "Yön okunabiliyor fakat performans örneği karar vermek için az.",
+            "reason": f"Mevcut kalite etiketi {quality_label}. Bu, stratejinin kötü olduğu değil henüz yeterince sınanmadığı anlamına gelir.",
+            "steps": [
+                "Gerçek pozisyon açma; demo/izleme ile yeni örnek biriktir.",
+                "15M için 60 günlük testi veya daha yüksek zaman dilimini kullan.",
+                "Yeterli işlem oluşunca walk-forward sonucunu yeniden kontrol et.",
+            ],
+            "levels": levels_from_setup(),
         }
 
     if quality_label not in allowed_quality_labels:
@@ -4624,11 +4706,18 @@ def build_beginner_single_decision(
         }
 
     if not m15_ok:
+        response_started = response_side == side or market_phase == "TEPKİ TEYİTLİ"
+        phase_action = "TEPKİ BAŞLADI – İZLE" if response_started else "YÖN VAR – DÜZELTME/TEPKİ BEKLENİYOR"
+        phase_subtitle = (
+            f"{side_text.capitalize()} yönünde tepki başladı; kapanmış 15M skor teyidi bekleniyor."
+            if response_started
+            else f"4H + 1H {side_text} yönünde; uygun düzeltme ve tepki kapanışı henüz yok."
+        )
         return {
-            "action": f"{side_word} İÇİN BEKLE",
+            "action": phase_action,
             "class": "simple-wait",
-            "subtitle": f"4H + 1H {side_text} yönünde ama 15M henüz hazır değil.",
-            "reason": f"Ana yön var; giriş zamanı için kapanmış 15M skoru bekleniyor. {tracker.get('technical_reason', '')}",
+            "subtitle": phase_subtitle,
+            "reason": f"15M fazı: {market_phase}. {tracker.get('technical_reason', '')}",
             "steps": [
                 f"{tracker.get('condition', '15M giriş skoru eşiği geçmeden işlem açma.')}",
                 "4H ve 1H aynı yönde kalmalı.",
@@ -4639,7 +4728,7 @@ def build_beginner_single_decision(
 
     if tracker.get("signal_now"):
         return {
-            "action": side_word,
+            "action": f"GİRİŞ TEYİDİ – {side_word}",
             "class": "simple-buy" if side == "LONG" else "simple-sell",
             "subtitle": f"Giriş şartı tamamlandı: {side_word} sinyali aktif.",
             "reason": f"4H+1H yön uygun, 15M teyit var, kalite {quality_label}. Broker fiyatı/spread kontrolü yapmadan emir verme.",
@@ -4829,6 +4918,65 @@ def render_position_tracker_result(result: dict, current_price: Optional[float],
 # =============================================================================
 # PLOTS
 # =============================================================================
+
+def plot_intraday_change(symbol: str, lookback_minutes: int) -> tuple[go.Figure, Optional[dict]]:
+    """Seçilen 1–24 saat penceresinde fiyatın başlangıca göre yüzde değişimini çizer."""
+    df = fetch_intraday_history(symbol, "2d")
+    fig = go.Figure()
+    if df.empty:
+        fig.update_layout(height=320, title="Kısa vadeli fiyat verisi alınamadı")
+        return fig, None
+
+    close = df["Close"].astype(float).dropna()
+    if close.empty:
+        fig.update_layout(height=320, title="Kısa vadeli kapanış verisi yok")
+        return fig, None
+
+    latest_time = close.index[-1]
+    target_time = latest_time - pd.Timedelta(minutes=int(lookback_minutes))
+    candidates = close[close.index <= target_time]
+    if candidates.empty:
+        fig.update_layout(height=320, title="Seçilen pencere için yeterli geçmiş yok")
+        return fig, None
+
+    reference_time = candidates.index[-1]
+    reference_price = float(candidates.iloc[-1])
+    window = close[close.index >= reference_time]
+    pct = 100 * (window / reference_price - 1.0)
+    local_index = window.index.tz_convert(TR_TZ)
+    end_pct = float(pct.iloc[-1])
+    line_color = "#198754" if end_pct >= 0 else "#dc3545"
+
+    fig.add_trace(go.Scatter(
+        x=local_index,
+        y=pct,
+        mode="lines",
+        name="Değişim %",
+        line=dict(color=line_color, width=2),
+        customdata=window.to_numpy(),
+        hovertemplate="%{x|%d.%m %H:%M}<br>Değişim: %{y:+.3f}%<br>Fiyat: %{customdata:.5f}<extra></extra>",
+    ))
+    fig.add_hline(y=0, line_width=1, line_dash="dash", line_color="#6c757d")
+    fig.add_trace(go.Scatter(
+        x=[local_index[-1]], y=[end_pct], mode="markers+text", name="Son",
+        marker=dict(color=line_color, size=9), text=[f"{end_pct:+.3f}%"],
+        textposition="top center", hoverinfo="skip",
+    ))
+    fig.update_layout(
+        height=340,
+        margin=dict(l=25, r=20, t=45, b=25),
+        title=f"{symbol.replace('=X', '')} | Son {int(lookback_minutes / 60)} Saatlik Değişim",
+        xaxis_title="İstanbul saati",
+        yaxis_title="Başlangıca göre %",
+        showlegend=False,
+    )
+    return fig, {
+        "reference_time": reference_time,
+        "reference_price": reference_price,
+        "latest_time": latest_time,
+        "latest_price": float(window.iloc[-1]),
+        "pct": end_pct,
+    }
 
 def plot_main_figure(symbol: str, tf_name: str) -> tuple[go.Figure, pd.DataFrame]:
     prm = TIMEFRAMES[tf_name]
@@ -5466,6 +5614,13 @@ with st.sidebar:
         show_position_tracker = st.checkbox("Pozisyon Takip Modu", value=True)
         change_window_label = st.selectbox("Yüzde değişim periyodu", list(PRICE_CHANGE_WINDOWS.keys()), index=1)
         change_window_minutes = PRICE_CHANGE_WINDOWS[change_window_label]
+        intraday_chart_label = st.selectbox(
+            "Fiyat değişim grafiği",
+            list(INTRADAY_CHART_WINDOWS.keys()),
+            index=1,
+            help="Son 1–24 saat arasında fiyatın başlangıç noktasına göre yüzde yolculuğunu gösterir.",
+        )
+        intraday_chart_minutes = INTRADAY_CHART_WINDOWS[intraday_chart_label]
 
     with st.expander("Makine öğrenmesi", expanded=False):
         ml_filter_enabled = st.checkbox(
@@ -5533,6 +5688,11 @@ with st.sidebar:
         min_trades_required = st.number_input("Minimum backtest işlem sayısı", min_value=20, max_value=500, value=40, step=10)
         walk_forward_enabled = st.checkbox("Walk-forward sağlamlık kontrolü", value=True)
         walk_forward_folds = st.slider("Walk-forward fold", min_value=3, max_value=8, value=4, step=1)
+        run_threshold_compare_requested = st.button(
+            "45 / 50 / 60 Eşiklerini Karşılaştır",
+            use_container_width=True,
+            help="Eşiği körlemesine düşürmek yerine aynı ayarlarla üç ayrı backtest sonucu üretir.",
+        )
 
     run_bt_requested = st.button("Yeniden Hesapla", type="primary", use_container_width=True)
 
@@ -5568,6 +5728,7 @@ with st.sidebar:
     if st.button("Veriyi Yenile", use_container_width=True):
         _fetch_ohlc_yahoo.clear()
         _fetch_ohlc_mt5.clear()
+        fetch_intraday_history.clear()
         fetch_last_price.clear()
         fetch_price_change.clear()
         st.rerun()
@@ -5664,15 +5825,12 @@ def run_and_store_backtest() -> None:
             macd_confirmation_enabled=bool(macd_confirmation_enabled),
             macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
         )
-        q_label, q_css, q_text = assess_backtest_quality(bt_result, min_trades_required=int(min_trades_required))
-        wf_report = walk_forward_stability_report(bt_result.trades, int(walk_forward_folds)) if walk_forward_enabled else pd.DataFrame()
-        if walk_forward_enabled:
-            wf_ok, wf_text = assess_walk_forward_stability(wf_report)
-            if not wf_ok:
-                q_label, q_css = "Zayıf", "bad-box"
-                q_text = f"Walk-forward sağlamlık kontrolü başarısız: {wf_text}"
-            else:
-                q_text = f"{q_text} Walk-forward: {wf_text}"
+        q_label, q_css, q_text, wf_report = assess_backtest_with_walk_forward(
+            bt_result,
+            min_trades_required=int(min_trades_required),
+            walk_forward_enabled=bool(walk_forward_enabled),
+            walk_forward_folds=int(walk_forward_folds),
+        )
         st.session_state["last_bt_key"] = current_bt_key
         st.session_state["last_bt_result"] = bt_result
         st.session_state["last_wf_report"] = wf_report
@@ -5683,11 +5841,67 @@ def run_and_store_backtest() -> None:
         }
 
 
+def run_threshold_comparison() -> pd.DataFrame:
+    """Aynı stratejiyi 45/50/60 eşiklerinde karşılaştırır; aktif eşiği kendiliğinden değiştirmez."""
+    rows = []
+    for candidate in [45.0, 50.0, 60.0]:
+        candidate_bt = run_backtest(
+            symbol=symbol,
+            tf_name=bt_tf,
+            period=bt_period,
+            initial_balance=account_size,
+            risk_pct=risk_pct,
+            rr=rr,
+            atr_mult=atr_mult,
+            signal_threshold=candidate,
+            spread_pips=spread_pips,
+            pip_value_per_lot=pip_value_per_lot,
+            cooldown_bars=int(cooldown_bars),
+            session_filter=session_filter,
+            max_same_direction_trades=int(max_same_direction_trades),
+            min_trades_required=int(min_trades_required),
+            stop_mode=stop_mode,
+            target_mode=target_mode,
+            swing_lookback=int(swing_lookback),
+            max_holding_bars=int(max_holding_bars),
+            break_even_at_r=float(break_even_at_r),
+            market_structure_enabled=bool(market_structure_enabled),
+            entry_model=entry_model,
+            rsi_regime_enabled=bool(rsi_regime_enabled),
+            rsi_divergence_filter_enabled=bool(rsi_divergence_filter_enabled),
+            bb_extreme_volatility_block=bool(bb_extreme_volatility_block),
+            macd_confirmation_enabled=bool(macd_confirmation_enabled),
+            macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
+        )
+        label, _, text, _ = assess_backtest_with_walk_forward(
+            candidate_bt,
+            min_trades_required=int(min_trades_required),
+            walk_forward_enabled=bool(walk_forward_enabled),
+            walk_forward_folds=int(walk_forward_folds),
+        )
+        rows.append({
+            "Eşik": int(candidate),
+            "Kalite": label,
+            "İşlem": extract_metric(candidate_bt.metrics, "İşlem Sayısı") or "0",
+            "Profit Factor": extract_metric(candidate_bt.metrics, "Profit Factor") or "-",
+            "Ortalama R": extract_metric(candidate_bt.metrics, "Ortalama R") or "-",
+            "Son %30 PF": extract_metric(candidate_bt.metrics, "Son %30 Profit Factor") or "-",
+            "Toplam PnL": extract_metric(candidate_bt.metrics, "Toplam PnL") or "-",
+            "Not": text,
+        })
+    return pd.DataFrame(rows)
+
+
 if auto_plan_control and st.session_state.get("last_bt_key") != current_bt_key:
     run_and_store_backtest()
 
 if run_bt_requested:
     run_and_store_backtest()
+
+if run_threshold_compare_requested:
+    with st.spinner("45 / 50 / 60 sinyal eşikleri karşılaştırılıyor..."):
+        st.session_state["threshold_comparison_df"] = run_threshold_comparison()
+        st.session_state["threshold_comparison_key"] = current_bt_key
 
 if run_scanner_requested:
     scan_symbols = SYMBOL_LIST[:int(scanner_limit)]
@@ -5737,6 +5951,26 @@ with m3:
         st.metric(change_window_label, "-")
 with m4:
     st.metric("Pip Size", get_pip_size(symbol))
+
+intraday_fig, intraday_info = plot_intraday_change(symbol, intraday_chart_minutes)
+with st.expander("1–24 Saatlik Fiyat Değişimi", expanded=True):
+    change_table = intraday_change_snapshot(symbol)
+    if not change_table.empty:
+        summary_cols = st.columns(len(change_table))
+        for col, (_, change_row) in zip(summary_cols, change_table.iterrows()):
+            pct_value = change_row["Değişim %"]
+            col.metric(
+                str(change_row["Pencere"]).replace("Son ", ""),
+                "-" if pd.isna(pct_value) else f"{float(pct_value):+.3f}%",
+            )
+    st.plotly_chart(intraday_fig, use_container_width=True)
+    if intraday_info is not None:
+        reference_local = _to_istanbul_timestamp(intraday_info["reference_time"]).strftime("%d.%m.%Y %H:%M")
+        st.caption(
+            f"Referans: {reference_local} / {intraday_info['reference_price']:.{price_decimals(symbol)}f} · "
+            f"Son: {intraday_info['latest_price']:.{price_decimals(symbol)}f} · "
+            "Grafik 1 dakikalık kapanış verisinden hesaplanır."
+        )
 
 if beginner_mode:
     st.caption(f"Grafik zamanı: {chart_tf} | İşlem karar zamanı: {selected_tf} (Yeni Başlayan Modu)")
@@ -6125,6 +6359,16 @@ with st.expander("Teknik Detaylar", expanded=False):
 st.divider()
 st.header("Backtest")
 st.caption("Bu MTF backtest, canlı sistemle aynı ana mantığı kullanır: 4H + 1H yön filtresi, 5M için 15M teyidi, sinyal barı kapandıktan sonra sonraki bar açılışı. Aynı mumda hem TP hem SL görülürse muhafazakâr olarak SL kabul edilir.")
+
+threshold_comparison_df = st.session_state.get("threshold_comparison_df")
+if (
+    st.session_state.get("threshold_comparison_key") == current_bt_key
+    and isinstance(threshold_comparison_df, pd.DataFrame)
+    and not threshold_comparison_df.empty
+):
+    with st.expander("45 / 50 / 60 Sinyal Eşiği Karşılaştırması", expanded=True):
+        st.dataframe(threshold_comparison_df, use_container_width=True, hide_index=True)
+        st.caption("Bu tablo aktif eşiği otomatik değiştirmez. Daha çok işlem tek başına daha iyi strateji anlamına gelmez; son dönem ve walk-forward birlikte değerlendirilmelidir.")
 
 saved_bt = st.session_state.get("last_bt_result")
 saved_bt_key = st.session_state.get("last_bt_key")
