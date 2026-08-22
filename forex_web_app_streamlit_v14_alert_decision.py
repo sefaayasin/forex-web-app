@@ -38,7 +38,76 @@ import streamlit as st
 import yfinance as yf
 from plotly.subplots import make_subplots
 
-from forex_decision_core import classify_opportunity_readiness, decide_mtf_signal
+try:
+    from forex_decision_core import classify_opportunity_readiness, decide_mtf_signal
+except ImportError:
+    # Streamlit Cloud bazen ana dosyayi yeni commit'ten, yardimci modulu ise
+    # onceki build cache'inden yukleyebiliyor. Uygulamanin tamamen acilamaz
+    # hale gelmemesi icin iki saf karar kurali burada da guvenli yedeklenir.
+    def _decision_value_missing(value: float) -> bool:
+        try:
+            return np.isnan(float(value))
+        except (TypeError, ValueError):
+            return True
+
+    def classify_opportunity_readiness(
+        radar_score: float,
+        side: str,
+        catalyst_matches: bool,
+        structure_matches: bool,
+        htf_conflict: bool,
+        capacity_ratio: float,
+        in_session: bool,
+        candidate_threshold: float = 42.0,
+        ready_threshold: float = 65.0,
+    ) -> tuple[str, list[str]]:
+        normalized_side = str(side).upper()
+        score = float(radar_score) if not _decision_value_missing(radar_score) else 0.0
+        if normalized_side not in {"LONG", "SHORT"} or score < float(candidate_threshold):
+            return "NEUTRAL", ["Radar puani aday esiginin altinda"]
+
+        blockers: list[str] = []
+        if score < float(ready_threshold):
+            blockers.append(f"Radar puani {score:.0f}; hazir esigi {float(ready_threshold):.0f}")
+        if not catalyst_matches:
+            blockers.append("15M tepki veya Bollinger kirilim tetigi yok")
+        if not structure_matches:
+            blockers.append("15M MA ve swing yapisi yonu dogrulamiyor")
+        if htf_conflict:
+            blockers.append("4H ve 1H yonleri celisiyor")
+        if _decision_value_missing(capacity_ratio):
+            blockers.append("Hedef kapasitesi olculemedi")
+        elif float(capacity_ratio) > 0.80:
+            blockers.append("Hedef tipik 4 saatlik hareketin %80'inden buyuk")
+        if not in_session:
+            blockers.append("Secili likit islem seansi disinda")
+        return ("WATCH", blockers) if blockers else ("READY", [])
+
+    def decide_mtf_signal(
+        entry_score: float,
+        h4_score: float,
+        h1_score: float,
+        m15_score: float,
+        tf_name: str,
+        threshold: float,
+    ) -> tuple[str, str]:
+        if any(_decision_value_missing(value) for value in (entry_score, h4_score, h1_score)):
+            return "NONE", "Ana zaman dilimi skorlari yetersiz"
+
+        htf_long = float(h4_score) >= 25 and float(h1_score) >= 25
+        htf_short = float(h4_score) <= -25 and float(h1_score) <= -25
+        m15_long_ok = tf_name != "5 Dakika" or (
+            not _decision_value_missing(m15_score) and float(m15_score) >= 25
+        )
+        m15_short_ok = tf_name != "5 Dakika" or (
+            not _decision_value_missing(m15_score) and float(m15_score) <= -25
+        )
+
+        if htf_long and m15_long_ok and float(entry_score) >= float(threshold):
+            return "LONG", "4H+1H long uyumlu; giris skoru esigi gecti"
+        if htf_short and m15_short_ok and float(entry_score) <= -float(threshold):
+            return "SHORT", "4H+1H short uyumlu; giris skoru esigi gecti"
+        return "NONE", "MTF filtre veya giris skoru uygun degil"
 
 # Bazı Windows/sandbox kurulumlarında yfinance kullanıcı profilindeki SQLite
 # cache'ine yazamaz. İzinli geçici dizin veri indirme hatasını önler.
