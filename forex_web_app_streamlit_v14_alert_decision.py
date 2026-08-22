@@ -19,6 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from html import escape
+from io import BytesIO
 import json
 import logging
 import os
@@ -37,7 +38,7 @@ import streamlit as st
 import yfinance as yf
 from plotly.subplots import make_subplots
 
-from forex_decision_core import decide_mtf_signal
+from forex_decision_core import classify_opportunity_readiness, decide_mtf_signal
 
 # Bazı Windows/sandbox kurulumlarında yfinance kullanıcı profilindeki SQLite
 # cache'ine yazamaz. İzinli geçici dizin veri indirme hatasını önler.
@@ -635,6 +636,73 @@ def _fix_cols(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+INTERVAL_MINUTES = {"1m": 1, "5m": 5, "15m": 15, "60m": 60, "1h": 60, "4h": 240}
+
+
+@st.cache_data(show_spinner=False)
+def parse_broker_csv_bytes(content: bytes) -> pd.DataFrame:
+    """MT5/standart OHLC CSV dışa aktarımlarını UTC indeksli forma çevirir."""
+    if not content:
+        return pd.DataFrame()
+    try:
+        raw = pd.read_csv(BytesIO(content), sep=None, engine="python")
+    except Exception:
+        return pd.DataFrame()
+    if raw.empty:
+        return pd.DataFrame()
+    normalized = {str(col).strip().lower().replace("<", "").replace(">", ""): col for col in raw.columns}
+    date_col = normalized.get("date")
+    time_col = normalized.get("time") or normalized.get("datetime") or normalized.get("timestamp")
+    if date_col is not None and time_col is not None and date_col != time_col:
+        time_values = raw[date_col].astype(str) + " " + raw[time_col].astype(str)
+    elif time_col is not None:
+        time_values = raw[time_col]
+    else:
+        return pd.DataFrame()
+    index = pd.to_datetime(time_values, utc=True, errors="coerce")
+    aliases = {
+        "open": "Open", "high": "High", "low": "Low", "close": "Close",
+        "tickvol": "Volume", "tick_volume": "Volume", "volume": "Volume",
+        "spread": "Spreadpoints", "spreadpoints": "Spreadpoints",
+    }
+    out = pd.DataFrame(index=index)
+    for key, target in aliases.items():
+        original = normalized.get(key)
+        if original is not None and target not in out.columns:
+            out[target] = pd.to_numeric(raw[original], errors="coerce").to_numpy()
+    out = out[~out.index.isna()]
+    return _fix_cols(out).sort_index()
+
+
+def _resample_broker_csv(df: pd.DataFrame, base_interval: str, target_interval: str) -> pd.DataFrame:
+    base_minutes = INTERVAL_MINUTES.get(str(base_interval).lower())
+    target_minutes = INTERVAL_MINUTES.get(str(target_interval).lower())
+    if df.empty or base_minutes is None or target_minutes is None or target_minutes < base_minutes:
+        return pd.DataFrame()
+    if target_minutes == base_minutes:
+        return df.copy()
+    rule = f"{target_minutes}min"
+    aggregation = {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}
+    if "Spreadpoints" in df.columns:
+        aggregation["Spreadpoints"] = "median"
+    return df.resample(rule, label="right", closed="right").agg(aggregation).dropna(subset=["Open", "High", "Low", "Close"])
+
+
+def _fetch_ohlc_broker_csv(symbol: str, interval: str, period: str) -> pd.DataFrame:
+    csv_symbol = normalize_symbol(st.session_state.get("broker_csv_symbol", ""))
+    if csv_symbol != normalize_symbol(symbol):
+        return pd.DataFrame()
+    source = st.session_state.get("broker_csv_df")
+    if not isinstance(source, pd.DataFrame) or source.empty:
+        return pd.DataFrame()
+    base_interval = str(st.session_state.get("broker_csv_interval", "15m"))
+    out = _resample_broker_csv(_utc_index_df(source), base_interval, interval)
+    if out.empty:
+        return out
+    cutoff = out.index[-1] - pd.Timedelta(days=_period_to_days(period, 30))
+    return out[out.index >= cutoff].copy()
+
+
 def _to_istanbul_timestamp(ts) -> pd.Timestamp:
     t = pd.Timestamp(ts)
     if t.tzinfo is None:
@@ -704,10 +772,15 @@ def recommended_spread_pips(symbol: str) -> float:
 
 
 def observed_broker_spread_pips(symbol: str, tf_name: str) -> Optional[float]:
-    if st.session_state.get("data_provider") != "MetaTrader 5":
+    provider = st.session_state.get("data_provider")
+    if provider not in {"MetaTrader 5", "Broker CSV"}:
         return None
     prm = TIMEFRAMES[tf_name]
-    df = _fetch_ohlc_mt5(symbol, prm["interval"], prm["period"])
+    df = (
+        _fetch_ohlc_mt5(symbol, prm["interval"], prm["period"])
+        if provider == "MetaTrader 5"
+        else _fetch_ohlc_broker_csv(symbol, prm["interval"], prm["period"])
+    )
     if df.empty or "Spreadpoints" not in df.columns:
         return None
     points = pd.to_numeric(df["Spreadpoints"], errors="coerce").tail(100).median()
@@ -759,6 +832,7 @@ def _mt5_timeframe(interval: str):
     except Exception:
         return None, None
     mapping = {
+        "1m": mt5.TIMEFRAME_M1,
         "5m": mt5.TIMEFRAME_M5,
         "15m": mt5.TIMEFRAME_M15,
         "60m": mt5.TIMEFRAME_H1,
@@ -766,6 +840,21 @@ def _mt5_timeframe(interval: str):
         "4h": mt5.TIMEFRAME_H4,
     }
     return mt5, mapping.get(interval.lower())
+
+
+def _period_to_days(period: str, default: int = 30) -> int:
+    """30d/6mo/1y gibi periyotları broker tarih aralığına çevirir."""
+    text = str(period).strip().lower()
+    try:
+        if text.endswith("d"):
+            return max(int(float(text[:-1])), 1)
+        if text.endswith("mo"):
+            return max(int(float(text[:-2]) * 30), 1)
+        if text.endswith("y"):
+            return max(int(float(text[:-1]) * 365), 1)
+    except (TypeError, ValueError):
+        pass
+    return int(default)
 
 
 @st.cache_data(ttl=30, show_spinner=False)
@@ -778,9 +867,11 @@ def _fetch_ohlc_mt5(symbol: str, interval: str, period: str) -> pd.DataFrame:
     try:
         if not mt5.initialize():
             return pd.DataFrame()
-        period_days = {"5d": 5, "10d": 10, "30d": 30, "60d": 60, "90d": 90, "120d": 120}.get(str(period), 30)
-        start = datetime.now(tz=pytz.UTC) - timedelta(days=period_days)
-        rates = mt5.copy_rates_from(mt5_symbol, timeframe, datetime.now(tz=pytz.UTC), 50_000)
+        period_days = _period_to_days(period, 30)
+        end = datetime.now(tz=pytz.UTC)
+        start = end - timedelta(days=period_days)
+        mt5.symbol_select(mt5_symbol, True)
+        rates = mt5.copy_rates_range(mt5_symbol, timeframe, start, end)
         if rates is None or len(rates) == 0:
             return pd.DataFrame()
         out = pd.DataFrame(rates)
@@ -798,17 +889,50 @@ def _fetch_ohlc_mt5(symbol: str, interval: str, period: str) -> pd.DataFrame:
             pass
 
 
+@st.cache_data(ttl=5, show_spinner=False)
+def fetch_mt5_quote(symbol: str) -> Optional[dict]:
+    """Broker terminalinden yürütülebilir bid/ask ve anlık spreadi alır."""
+    mt5, _ = _mt5_timeframe("15m")
+    if mt5 is None:
+        return None
+    mt5_symbol = normalize_symbol(symbol).replace("=X", "")
+    try:
+        if not mt5.initialize():
+            return None
+        mt5.symbol_select(mt5_symbol, True)
+        tick = mt5.symbol_info_tick(mt5_symbol)
+        if tick is None or float(tick.bid) <= 0 or float(tick.ask) <= 0:
+            return None
+        pip = get_pip_size(symbol)
+        return {
+            "bid": float(tick.bid),
+            "ask": float(tick.ask),
+            "mid": (float(tick.bid) + float(tick.ask)) / 2.0,
+            "spread_pips": (float(tick.ask) - float(tick.bid)) / pip,
+            "time": pd.to_datetime(int(tick.time), unit="s", utc=True),
+        }
+    except Exception as exc:
+        LOGGER.exception("MT5 quote error for %s: %s", symbol, exc)
+        return None
+    finally:
+        try:
+            mt5.shutdown()
+        except Exception:
+            pass
+
+
 def fetch_ohlc(symbol: str, interval: str, period: str) -> pd.DataFrame:
     provider = st.session_state.get("data_provider", "Yahoo Finance")
+    if provider == "Broker CSV":
+        return _fetch_ohlc_broker_csv(symbol, interval, period)
     if provider == "MetaTrader 5":
         broker_df = _fetch_ohlc_mt5(symbol, interval, period)
-        if not broker_df.empty:
-            return broker_df
+        return broker_df
     return _fetch_ohlc_yahoo(symbol, interval, period)
 
 
 @st.cache_data(ttl=30, show_spinner=False)
-def fetch_intraday_history(symbol: str, period: str = "2d") -> pd.DataFrame:
+def _fetch_intraday_history_yahoo(symbol: str, period: str = "2d") -> pd.DataFrame:
     """Kısa vadeli fiyat, yüzde değişim ve grafik için ortak 1 dakikalık veri."""
     symbol = normalize_symbol(symbol)
     try:
@@ -819,6 +943,20 @@ def fetch_intraday_history(symbol: str, period: str = "2d") -> pd.DataFrame:
         return _utc_index_df(df) if not df.empty else pd.DataFrame()
     except Exception:
         return pd.DataFrame()
+
+
+def fetch_intraday_history(symbol: str, period: str = "2d") -> pd.DataFrame:
+    provider = st.session_state.get("data_provider", "Yahoo Finance")
+    if provider == "Broker CSV":
+        source = st.session_state.get("broker_csv_df")
+        if not isinstance(source, pd.DataFrame) or source.empty:
+            return pd.DataFrame()
+        out = _utc_index_df(source)
+        cutoff = out.index[-1] - pd.Timedelta(days=_period_to_days(period, 2))
+        return out[out.index >= cutoff].copy()
+    if provider == "MetaTrader 5":
+        return _fetch_ohlc_mt5(symbol, "1m", period)
+    return _fetch_intraday_history_yahoo(symbol, period)
 
 
 @st.cache_data(ttl=30, show_spinner=False)
@@ -1249,6 +1387,17 @@ def market_structure_frame(
     out["BBWidthPercentile"] = bb_width.rolling(bb_history, min_periods=min_bb_history).apply(
         lambda values: float(np.mean(values <= values[-1])), raw=True
     )
+    ema_gap_atr = (out["EMA20"] - out["EMA50"]).abs() / atr
+    ema50_slope_atr = (out["EMA50"] - out["EMA50"].shift(20)).abs() / atr
+    bb_width_atr = (bb_up - bb_low).abs() / atr
+    trend_regime = (ema50_slope_atr >= 0.80) & (ema_gap_atr >= 0.30)
+    range_regime = (ema50_slope_atr <= 0.60) & (ema_gap_atr <= 0.40) & (bb_width_atr <= 4.0)
+    out["StrategyRegime"] = np.select(
+        [trend_regime, range_regime], ["TREND", "RANGE"], default="TRANSITION"
+    )
+    out["RegimeEMAGapATR"] = ema_gap_atr
+    out["RegimeSlopeATR"] = ema50_slope_atr
+    out["RegimeBBWidthATR"] = bb_width_atr
     extreme_squeeze = bb_width <= bb_q10
     standard_contraction = (bb_width <= bb_q25) & (bb_width < bb_width.shift(1))
     extreme_expansion = bb_width >= bb_q95
@@ -1322,6 +1471,22 @@ def market_structure_frame(
     )
     out["BBMeanReversionSide"] = np.select(
         [long_mean_reversion, short_mean_reversion], ["LONG", "SHORT"], default="NONE"
+    )
+    # Ayrı RANGE motoru: bir önceki mum bandı ihlal/test eder, kapanmış
+    # mevcut mum yeniden bandın içine momentum dönüşüyle girer. Bu sinyal
+    # trend motoruna gönderilmez ve hedefi yalnız orta banttır.
+    prior_lower_test = (low.shift(1) <= bb_low.shift(1)) | (close.shift(1) < bb_low.shift(1))
+    prior_upper_test = (high.shift(1) >= bb_up.shift(1)) | (close.shift(1) > bb_up.shift(1))
+    range_long_reversal = (
+        range_regime & prior_lower_test & (close > bb_low) & (body >= atr * 0.10)
+        & (rsi > rsi.shift(1)) & (rsi <= 55) & (bb_mid > close)
+    )
+    range_short_reversal = (
+        range_regime & prior_upper_test & (close < bb_up) & (-body >= atr * 0.10)
+        & (rsi < rsi.shift(1)) & (rsi >= 45) & (bb_mid < close)
+    )
+    out["RangeReversalSignal"] = np.select(
+        [range_long_reversal, range_short_reversal], ["LONG", "SHORT"], default="NONE"
     )
     out["BBMidTarget"] = bb_mid
     out["BBExtremeVolatility"] = extreme_expansion
@@ -2085,7 +2250,8 @@ def run_backtest(
         "BBState", "BBTrendSignal", "BBBandWalk", "BBPattern", "BBMeanReversionSide",
         "BBMidTarget", "BBWidthPercentile", "BBExtremeVolatility",
         "MACDRegime", "MACDMomentumState", "MACDDivergence", "MACDWhipsaw",
-        "MACDATR", "MACDHistATR",
+        "MACDATR", "MACDHistATR", "StrategyRegime", "RegimeEMAGapATR",
+        "RegimeSlopeATR", "RegimeBBWidthATR",
     ]:
         df[col] = structure_frame[col]
     entry_score_series = score_series_for_backtest(df)
@@ -2186,6 +2352,8 @@ def run_backtest(
             "1H Score": trade["H1Score"],
             "15M Score": trade["M15Score"],
             "MTF Reason": trade["Reason"],
+            "Engine": trade.get("Engine", "TREND_PULLBACK"),
+            "Market Regime": trade.get("MarketRegime", "TREND"),
         })
 
     for i in range(1, len(df)):
@@ -2344,6 +2512,8 @@ def run_backtest(
                         "H1Score": h1_score,
                         "M15Score": m15_score,
                         "Reason": reason,
+                        "Engine": "TREND_PULLBACK",
+                        "MarketRegime": str(previous.get("StrategyRegime", "TRANSITION")),
                         "MA Structure": str(previous.get("CombinedDirection", "NONE")),
                         "Response Side": str(previous.get("ResponseSide", "NONE")),
                         "RSI Regime": str(previous.get("RSIRegime", "NEUTRAL")),
@@ -2452,6 +2622,209 @@ def run_backtest(
     ], columns=["Metrik", "Değer"])
     metrics["Değer"] = metrics["Değer"].astype(str)
 
+    return BacktestResult(metrics, trades_df, equity_df)
+
+
+def run_range_mean_reversion_backtest(
+    symbol: str,
+    tf_name: str,
+    period: str,
+    initial_balance: float,
+    risk_pct: float,
+    spread_pips: float,
+    pip_value_per_lot: float,
+    session_filter: str = "Londra",
+    cooldown_bars: int = 16,
+    max_holding_bars: int = 16,
+    min_reward_r: float = 1.0,
+    swing_lookback: int = 8,
+) -> BacktestResult:
+    """Yalnız RANGE rejiminde Bollinger orta banda dönüş işlemlerini test eder."""
+    prm = TIMEFRAMES[tf_name]
+    raw = fetch_ohlc(symbol, prm["interval"], period)
+    if raw.empty or len(raw) < 160:
+        metrics = pd.DataFrame({"Metrik": ["Durum"], "Değer": ["Yeterli veri yok"]})
+        return BacktestResult(metrics, pd.DataFrame(), pd.DataFrame())
+
+    df = _utc_index_df(raw)
+    model = market_structure_frame(add_indicators(df))
+    needed = [
+        "ATR14", "BBMidTarget", "BBMeanReversionSide", "StrategyRegime",
+        "RSIDivergence", "MACDDivergence", "BBExtremeVolatility",
+    ]
+    df = model.dropna(subset=["Open", "High", "Low", "Close", "ATR14", "BBMidTarget"]).copy()
+    if len(df) < 100 or not set(needed).issubset(df.columns):
+        metrics = pd.DataFrame({"Metrik": ["Durum"], "Değer": ["Rejim modeli için veri yetersiz"]})
+        return BacktestResult(metrics, pd.DataFrame(), pd.DataFrame())
+
+    pip = get_pip_size(symbol)
+    balance = float(initial_balance)
+    trades: list[dict] = []
+    equity_rows: list[dict] = []
+    open_trade: Optional[dict] = None
+    last_exit_i = -10**9
+
+    def resolve_exit(trade: dict, bar: pd.Series) -> tuple[Optional[str], Optional[float]]:
+        side = trade["Side"]
+        stop = float(trade["Stop"])
+        target = float(trade["Target"])
+        bar_open = float(bar["Open"])
+        if side == "LONG":
+            if bar_open <= stop:
+                return "SL-GAP", bar_open
+            hit_stop = float(bar["Low"]) <= stop
+            hit_target = float(bar["High"]) >= target
+        else:
+            if bar_open >= stop:
+                return "SL-GAP", bar_open
+            hit_stop = float(bar["High"]) >= stop
+            hit_target = float(bar["Low"]) <= target
+        if hit_stop and hit_target:
+            return "SL", stop
+        if hit_stop:
+            return "SL", stop
+        if hit_target:
+            return "TP-MID", target
+        return None, None
+
+    def close_position(trade: dict, exit_price: float, exit_time, reason: str) -> None:
+        nonlocal balance
+        gross_pips = (
+            (float(exit_price) - float(trade["Entry"])) / pip
+            if trade["Side"] == "LONG"
+            else (float(trade["Entry"]) - float(exit_price)) / pip
+        )
+        pnl_pips = gross_pips - max(float(spread_pips), 0.0)
+        pnl = pnl_pips * float(pip_value_per_lot) * float(trade["Lot"])
+        balance += pnl
+        trades.append({
+            "Entry Time": trade["EntryTime"], "Exit Time": exit_time,
+            "Side": trade["Side"], "Entry": trade["Entry"], "Exit": float(exit_price),
+            "SL": trade["Stop"], "TP": trade["Target"], "Pips": pnl_pips,
+            "PnL": pnl, "Balance": balance, "Result": reason, "Lot": trade["Lot"],
+            "Risk Amount": trade["RiskAmount"], "Entry Score": np.nan,
+            "4H Score": np.nan, "1H Score": np.nan, "15M Score": np.nan,
+            "MTF Reason": trade["Reason"], "Engine": "RANGE_MEAN_REVERSION",
+            "Market Regime": "RANGE",
+        })
+
+    for i in range(1, len(df)):
+        current = df.iloc[i]
+        previous = df.iloc[i - 1]
+        ts = df.index[i]
+        closed_this_bar = False
+
+        if open_trade is not None:
+            exit_reason, exit_price = resolve_exit(open_trade, current)
+            if exit_reason is None and int(max_holding_bars) > 0 and (i - open_trade["EntryIndex"]) >= int(max_holding_bars):
+                exit_reason, exit_price = "TIME", float(current["Open"])
+            if exit_reason is not None:
+                close_position(open_trade, float(exit_price), ts, exit_reason)
+                open_trade = None
+                last_exit_i = i
+                closed_this_bar = True
+
+        if open_trade is None and not closed_this_bar:
+            side = str(previous.get("RangeReversalSignal", previous.get("BBMeanReversionSide", "NONE")))
+            if str(previous.get("StrategyRegime", "TRANSITION")) != "RANGE":
+                side = "NONE"
+            if side != "NONE" and bool(previous.get("BBExtremeVolatility", False)):
+                side = "NONE"
+            if side == "LONG" and (
+                str(previous.get("RSIDivergence", "NONE")) == "BEARISH"
+                or str(previous.get("MACDDivergence", "NONE")) == "BEARISH"
+            ):
+                side = "NONE"
+            if side == "SHORT" and (
+                str(previous.get("RSIDivergence", "NONE")) == "BULLISH"
+                or str(previous.get("MACDDivergence", "NONE")) == "BULLISH"
+            ):
+                side = "NONE"
+            if side != "NONE" and not is_in_trading_session(ts, session_filter):
+                side = "NONE"
+            if side != "NONE" and (i - last_exit_i) <= int(cooldown_bars):
+                side = "NONE"
+
+            if side in {"LONG", "SHORT"}:
+                entry = float(current["Open"])
+                atr = float(previous["ATR14"])
+                recent = df.iloc[max(0, i - int(swing_lookback)):i]
+                if side == "LONG":
+                    structural_stop = float(recent["Low"].min()) - atr * 0.15
+                    stop = min(structural_stop, entry - atr * 0.75)
+                    target = float(previous["BBMidTarget"])
+                    reward_distance = target - entry
+                    stop_distance = entry - stop
+                else:
+                    structural_stop = float(recent["High"].max()) + atr * 0.15
+                    stop = max(structural_stop, entry + atr * 0.75)
+                    target = float(previous["BBMidTarget"])
+                    reward_distance = entry - target
+                    stop_distance = stop - entry
+
+                net_reward_pips = reward_distance / pip - max(float(spread_pips), 0.0)
+                risk_pips = stop_distance / pip + max(float(spread_pips), 0.0)
+                reward_r = net_reward_pips / risk_pips if risk_pips > 0 else -np.inf
+                risk_amount = balance * float(risk_pct) / 100.0
+                lot = risk_amount / (risk_pips * float(pip_value_per_lot)) if risk_pips > 0 and pip_value_per_lot > 0 else 0.0
+                if reward_distance > 0 and reward_r >= float(min_reward_r) and lot > 0 and np.isfinite(lot):
+                    candidate = {
+                        "EntryTime": ts, "EntryIndex": i, "Side": side,
+                        "Entry": entry, "Stop": stop, "Target": target, "Lot": lot,
+                        "RiskAmount": risk_amount,
+                        "Reason": f"RANGE rejimi; Bollinger dışından orta banda dönüş, beklenen {reward_r:.2f}R",
+                    }
+                    immediate_reason, immediate_price = resolve_exit(candidate, current)
+                    if immediate_reason is not None:
+                        close_position(candidate, float(immediate_price), ts, immediate_reason)
+                        last_exit_i = i
+                    else:
+                        open_trade = candidate
+
+        equity_rows.append({"Time": ts, "Balance": balance})
+
+    if open_trade is not None:
+        close_position(open_trade, float(df.iloc[-1]["Close"]), df.index[-1], "EOD")
+        if equity_rows:
+            equity_rows[-1]["Balance"] = balance
+
+    trades_df = pd.DataFrame(trades)
+    equity_df = pd.DataFrame(equity_rows)
+    if trades_df.empty:
+        metrics = pd.DataFrame({
+            "Metrik": ["Backtest Tipi", "İşlem Sayısı", "Not"],
+            "Değer": ["RANGE mean-reversion", "0", "RANGE + orta bant koşullarında işlem oluşmadı"],
+        })
+        return BacktestResult(metrics, trades_df, equity_df)
+
+    wins = trades_df[trades_df["PnL"] > 0]
+    losses = trades_df[trades_df["PnL"] <= 0]
+    loss_sum = abs(float(losses["PnL"].sum()))
+    pf = float(wins["PnL"].sum()) / loss_sum if loss_sum > 0 else np.nan
+    r_values = trades_df["PnL"] / trades_df["Risk Amount"].replace(0, np.nan)
+    split = max(1, int(len(trades_df) * 0.70))
+    oos_pf, oos_avg_r, oos_count = _trade_slice_stats(trades_df.iloc[split:])
+    eq = equity_df["Balance"] if not equity_df.empty else pd.Series([initial_balance])
+    peak = eq.cummax()
+    drawdown = eq - peak
+    dd_idx = drawdown.idxmin()
+    peak_value = float(peak.loc[dd_idx]) if len(peak) else float(initial_balance)
+    dd_pct = 100 * float(drawdown.min()) / peak_value if peak_value else 0.0
+    metrics = pd.DataFrame([
+        ["Backtest Tipi", "RANGE mean-reversion"],
+        ["İşlem Sayısı", len(trades_df)],
+        ["Win Rate", f"{100 * len(wins) / len(trades_df):.2f}%"],
+        ["Toplam PnL", f"{trades_df['PnL'].sum():.2f}"],
+        ["Son Bakiye", f"{balance:.2f}"],
+        ["Profit Factor", "-" if pd.isna(pf) else f"{pf:.2f}"],
+        ["Maks. Drawdown", f"{drawdown.min():.2f} ({dd_pct:.2f}%)"],
+        ["Ortalama Pips", f"{trades_df['Pips'].mean():.2f}"],
+        ["Ortalama R", f"{r_values.mean():.3f}R"],
+        ["Son %30 İşlem", oos_count],
+        ["Son %30 Profit Factor", "-" if pd.isna(oos_pf) else f"{oos_pf:.2f}"],
+        ["Son %30 Ortalama R", "-" if pd.isna(oos_avg_r) else f"{oos_avg_r:.3f}R"],
+    ], columns=["Metrik", "Değer"])
+    metrics["Değer"] = metrics["Değer"].astype(str)
     return BacktestResult(metrics, trades_df, equity_df)
 
 
@@ -2589,6 +2962,41 @@ def assess_backtest_quality(bt: BacktestResult, min_trades_required: int = 20) -
         return "Orta", "warn-box", f"PF {pf:.2f}. Sistem pozitif ama marj dar; spread/kayma sonucu bozabilir. Küçük risk veya demo daha uygun."
 
     return "Zayıf", "bad-box", f"PF {'-' if pd.isna(pf) else f'{pf:.2f}'}, toplam PnL {total_pnl:.2f}, ortalama pip {avg_pips:.2f}. Bu ayarla gerçek işlem için pas geçmek daha güvenli."
+
+
+def strategy_evidence_status(matched_quality: Optional[dict]) -> dict:
+    """Gösterge kombinasyonunun kanıt durumunu kullanıcıya doğrudan söyler."""
+    if not matched_quality:
+        return {
+            "label": "KANIT BEKLİYOR",
+            "css": "warn-box",
+            "text": "Bu gösterge modeli henüz test edilmedi. LONG/SHORT üretmesi güvenilir olduğu anlamına gelmez.",
+        }
+    label = str(matched_quality.get("label", "-"))
+    detail = str(matched_quality.get("text", ""))
+    if label == "İyi":
+        return {
+            "label": "DEMO İÇİN DOĞRULANDI",
+            "css": "ok-box",
+            "text": f"Geçmiş ve ayrı dönem kontrolleri olumlu. Yine de garanti değildir ve önce broker verisinde demo izlenmelidir. {detail}",
+        }
+    if label == "Orta":
+        return {
+            "label": "SINIRLI KANIT",
+            "css": "warn-box",
+            "text": f"Avantaj marjı dar. Bu model ancak demo/çok küçük risk için adaydır. {detail}",
+        }
+    if label in LOW_SAMPLE_QUALITIES:
+        return {
+            "label": "DOĞRULANMADI",
+            "css": "warn-box",
+            "text": f"Yeterli bağımsız işlem örneği yok. Uygulama bu indikatör birleşimine güvenilir LONG/SHORT motoru diyemez. {detail}",
+        }
+    return {
+        "label": "MODEL REDDEDİLDİ",
+        "css": "bad-box",
+        "text": f"Maliyet sonrası performans/kararlılık yeterli değil. Daha çok sinyal vermek için filtre gevşetilmemeli; başka giriş modeli test edilmeli. {detail}",
+    }
 
 
 def assess_backtest_with_walk_forward(
@@ -3642,7 +4050,7 @@ def classify_market_regime(symbol: str, selected_tf: str) -> dict:
     ema50_slope_atr = abs(float(ind["EMA50"].iloc[-1] - ind["EMA50"].iloc[-20])) / atr if len(ind) > 20 else 0.0
     bb_width_atr = abs(float(row["BBUp"] - row["BBLow"])) / atr if pd.notna(row.get("BBUp")) and pd.notna(row.get("BBLow")) else 0.0
 
-    if ema50_slope_atr >= 1.0 and ema_gap_atr >= 0.35:
+    if ema50_slope_atr >= 0.80 and ema_gap_atr >= 0.30:
         return {
             "label": "Trend",
             "state": "ok",
@@ -3650,7 +4058,7 @@ def classify_market_regime(symbol: str, selected_tf: str) -> dict:
             "score_adjust": 8,
         }
 
-    if ema50_slope_atr <= 0.35 and ema_gap_atr <= 0.25 and bb_width_atr <= 3.5:
+    if ema50_slope_atr <= 0.60 and ema_gap_atr <= 0.40 and bb_width_atr <= 4.0:
         return {
             "label": "Yatay",
             "state": "warn",
@@ -3878,6 +4286,92 @@ def build_simple_trade_decision(
         }
 
     return base
+
+
+def build_live_range_decision(
+    symbol: str,
+    selected_tf: str,
+    current_price: Optional[float],
+    account_size: float,
+    risk_pct: float,
+    pip_value_per_lot: float,
+    total_cost_pips: float,
+    engine_quality: Optional[dict],
+    market_regime: dict,
+    swing_lookback: int = 8,
+) -> Optional[dict]:
+    """Yatay rejimde teyitli bant dönüşünü ayrı bir canlı karar olarak üretir."""
+    if selected_tf != "15 Dakika" or market_regime.get("label") != "Yatay":
+        return None
+    quality_label = str((engine_quality or {}).get("label", "Test bekliyor"))
+    base = {
+        "action": "BEKLE",
+        "class": "simple-wait",
+        "subtitle": "Yatay piyasa motoru aktif; bant dönüş tetiği bekleniyor.",
+        "reason": "Trend göstergeleri bu rejimde karar vermiyor. Bollinger dışından orta banda teyitli dönüş gerekli.",
+        "steps": ["Trend devamı işlemi açma.", "Bant dönüş mumunun kapanmasını bekle.", "Orta banda en az 1R alan yoksa pas geç."],
+        "levels": {},
+    }
+    if quality_label not in {"İyi", "Orta"}:
+        base.update({
+            "action": "PAS GEÇ",
+            "class": "simple-pass",
+            "subtitle": "Yatay piyasa motoru doğrulanmadı.",
+            "reason": f"RANGE motoru kalite sonucu: {quality_label}.",
+        })
+        return base
+    prm = TIMEFRAMES[selected_tf]
+    raw = fetch_ohlc(symbol, prm["interval"], prm["period"])
+    if raw.empty or len(raw) < 100 or current_price is None:
+        base["reason"] = "Canlı range planı için fiyat veya mum verisi yetersiz."
+        return base
+    model = market_structure_frame(_utc_index_df(raw).iloc[:-1])
+    valid = model.dropna(subset=["ATR14", "BBMidTarget"])
+    if valid.empty:
+        return base
+    row = valid.iloc[-1]
+    side = str(row.get("RangeReversalSignal", row.get("BBMeanReversionSide", "NONE")))
+    if side not in {"LONG", "SHORT"}:
+        return base
+    entry = float(current_price)
+    atr = float(row["ATR14"])
+    recent = valid.tail(max(int(swing_lookback), 4))
+    target = float(row["BBMidTarget"])
+    pip = get_pip_size(symbol)
+    if side == "LONG":
+        stop = min(float(recent["Low"].min()) - atr * 0.15, entry - atr * 0.75)
+        reward_distance = target - entry
+        stop_distance = entry - stop
+    else:
+        stop = max(float(recent["High"].max()) + atr * 0.15, entry + atr * 0.75)
+        reward_distance = entry - target
+        stop_distance = stop - entry
+    risk_pips = stop_distance / pip + max(float(total_cost_pips), 0.0)
+    net_reward_pips = reward_distance / pip - max(float(total_cost_pips), 0.0)
+    reward_r = net_reward_pips / risk_pips if risk_pips > 0 else -np.inf
+    risk_amount = float(account_size) * float(risk_pct) / 100.0
+    lot = risk_amount / (risk_pips * float(pip_value_per_lot)) if risk_pips > 0 and pip_value_per_lot > 0 else 0.0
+    if reward_distance <= 0 or reward_r < 1.0 or not np.isfinite(lot) or lot <= 0:
+        base["reason"] = f"Bant dönüş adayı var fakat orta banda net alan {reward_r:.2f}R; minimum 1.00R."
+        return base
+    dec = price_decimals(symbol)
+    side_word = "LONG AÇ" if side == "LONG" else "SHORT AÇ"
+    return {
+        "action": side_word,
+        "class": "simple-buy" if side == "LONG" else "simple-sell",
+        "subtitle": "Yatay piyasa orta banda dönüş motoru tetiklendi.",
+        "reason": f"Teyitli bant dönüşü ve {reward_r:.2f}R net orta bant alanı; motor kalitesi {quality_label}.",
+        "steps": [
+            "Broker bid/ask fiyatını ve spreadi kontrol et.",
+            f"Hedef Bollinger orta bant: {target:.{dec}f}.",
+            "Fiyat yeniden bant dışına hızlanırsa stopu büyütme.",
+        ],
+        "levels": {
+            "Giriş": f"{entry:.{dec}f}", "Stop": f"{stop:.{dec}f}",
+            "Kâr Al": f"{target:.{dec}f}", "Lot": f"{lot:.2f}",
+        },
+        "engine": "RANGE",
+    }
 
 
 def render_simple_decision_card(decision: dict) -> None:
@@ -5039,8 +5533,9 @@ def build_intraday_opportunity(
     pip_value_per_lot: float,
     total_cost_pips: float,
     target_usd: float,
+    session_filter: str = "Londra",
 ) -> dict:
-    """Kesin işlemden önce birkaç saatlik yön ihtimalini ve hedefin pip kapasitesini ölçer."""
+    """Birkaç saatlik adayı ölçer; radar puanını kazanma olasılığı gibi sunmaz."""
     score_weights = {"4 Saat": 0.15, "1 Saat": 0.25, "15 Dakika": 0.35, "5 Dakika": 0.25}
     signed_base = 0.0
     used_weight = 0.0
@@ -5057,6 +5552,8 @@ def build_intraday_opportunity(
     macd_regime = _summary_text(summary, "15 Dakika", "MACD Rejimi", "TRANSITION")
     macd_state = _summary_text(summary, "15 Dakika", "MACD Histogram Durumu", "MIXED")
     phase = _summary_text(summary, "15 Dakika", "Hareket Fazı", "UYUMSUZ / YATAY")
+    ma_direction = _summary_text(summary, "15 Dakika", "MA Yönü", "NEUTRAL")
+    market_structure = _summary_text(summary, "15 Dakika", "Market Yapısı", "RANGE")
     h4_score = _summary_score(summary, "4 Saat")
     h1_score = _summary_score(summary, "1 Saat")
 
@@ -5102,24 +5599,17 @@ def build_intraday_opportunity(
         catalysts.append("4H/1H çelişkisi güveni düşürüyor")
 
     side = "LONG" if long_points > short_points else ("SHORT" if short_points > long_points else "NONE")
-    confidence = float(np.clip(max(long_points, short_points), 0, 100))
-    if confidence >= 65:
-        label = f"{side} FIRSATI GÜÇLENİYOR"
-        state = "long" if side == "LONG" else "short"
-    elif confidence >= 42:
-        label = f"{side} ADAYI OLUŞUYOR"
-        state = "long" if side == "LONG" else "short"
-    else:
-        label = "ŞİMDİLİK NÖTR"
-        state = "neutral"
+    radar_score = float(np.clip(max(long_points, short_points), 0, 100))
 
     pip = get_pip_size(symbol)
     lot = 0.0
     required_pips = np.nan
     recent_range_pips = np.nan
     target_price = np.nan
+    latest_candle_time = None
     df = fetch_ohlc(symbol, TIMEFRAMES["15 Dakika"]["interval"], TIMEFRAMES["15 Dakika"]["period"])
     if df is not None and not df.empty and len(df) >= 40:
+        latest_candle_time = df.index[-2] if len(df) > 1 else df.index[-1]
         ind = add_indicators(df.iloc[:-1])
         row = latest_valid_row(ind)
         if row is not None:
@@ -5153,12 +5643,47 @@ def build_intraday_opportunity(
     else:
         capacity_text = "Hedef tipik 4 saatlik hareketten büyük; birkaç saate sığmayabilir."
 
+    expected_structure = "BULLISH" if side == "LONG" else ("BEARISH" if side == "SHORT" else "NONE")
+    catalyst_matches = side in {response, bb_signal}
+    structure_matches = (
+        side in {"LONG", "SHORT"}
+        and ma_direction == expected_structure
+        and market_structure == expected_structure
+    )
+    in_session = bool(latest_candle_time is not None and is_in_trading_session(latest_candle_time, session_filter))
+    readiness, readiness_blockers = classify_opportunity_readiness(
+        radar_score=radar_score,
+        side=side,
+        catalyst_matches=catalyst_matches,
+        structure_matches=structure_matches,
+        htf_conflict=bool(htf_conflict),
+        capacity_ratio=capacity_ratio,
+        in_session=in_session,
+    )
+    if readiness == "READY":
+        label = f"{side} TETİĞİ HAZIR"
+        state = "long" if side == "LONG" else "short"
+    elif readiness == "WATCH":
+        label = f"{side} İÇİN İZLE"
+        state = "long" if side == "LONG" else "short"
+    else:
+        label = "ŞİMDİLİK NÖTR"
+        state = "neutral"
+
     reasons = catalysts[:3] or [f"15M fazı: {phase}", "Kısa vadeli momentum henüz net değil"]
     return {
         "label": label,
         "state": state,
         "side": side,
-        "confidence": confidence,
+        "confidence": radar_score,
+        "radar_score": radar_score,
+        "readiness": readiness,
+        "readiness_blockers": readiness_blockers,
+        "catalyst_matches": bool(catalyst_matches),
+        "structure_matches": bool(structure_matches),
+        "in_session": bool(in_session),
+        "session_filter": session_filter,
+        "latest_candle_time": latest_candle_time,
         "reason": "; ".join(reasons),
         "phase": phase,
         "lot": lot,
@@ -5171,6 +5696,39 @@ def build_intraday_opportunity(
     }
 
 
+def apply_opportunity_cooldown(
+    opportunity: dict,
+    symbol: str,
+    cooldown_bars: int = 16,
+) -> dict:
+    """Aynı yöndeki radar tetiğini 15M'de varsayılan dört saat boyunca yeniden kurmaz."""
+    out = dict(opportunity)
+    if out.get("readiness") != "READY" or int(cooldown_bars) <= 0:
+        return out
+    candle_time = out.get("latest_candle_time")
+    if candle_time is None:
+        return out
+    current = _to_utc_timestamp(candle_time)
+    state_key = "intraday_radar_last_ready"
+    saved = dict(st.session_state.get(state_key, {}))
+    symbol_key = normalize_symbol(symbol)
+    previous = saved.get(symbol_key)
+    if previous and previous.get("side") == out.get("side"):
+        previous_time = _to_utc_timestamp(previous.get("time"))
+        elapsed_bars = int(max((current - previous_time).total_seconds(), 0) // (15 * 60))
+        if current != previous_time and elapsed_bars < int(cooldown_bars):
+            remaining = int(cooldown_bars) - elapsed_bars
+            out["readiness"] = "WATCH"
+            out["label"] = f"{out.get('side', '')} COOLDOWN / İZLE"
+            out["readiness_blockers"] = list(out.get("readiness_blockers", [])) + [
+                f"Aynı yöndeki son tetikten sonra {remaining} adet 15M mum daha bekleniyor"
+            ]
+            return out
+    saved[symbol_key] = {"side": out.get("side"), "time": current.isoformat()}
+    st.session_state[state_key] = saved
+    return out
+
+
 def render_intraday_opportunity(opportunity: dict, symbol: str) -> None:
     state = str(opportunity.get("state", "neutral"))
     css = {"long": "opportunity-long", "short": "opportunity-short"}.get(state, "opportunity-neutral")
@@ -5180,17 +5738,23 @@ def render_intraday_opportunity(opportunity: dict, symbol: str) -> None:
     required_text = "-" if pd.isna(required) else f"{float(required):.1f} pip"
     range_text = "-" if pd.isna(recent_range) else f"{float(recent_range):.1f} pip"
     target_text = "-" if pd.isna(target_price) else f"{float(target_price):.{price_decimals(symbol)}f}"
+    readiness = str(opportunity.get("readiness", "NEUTRAL"))
+    readiness_text = {"READY": "Tetik hazır", "WATCH": "Yalnızca izle", "NEUTRAL": "Nötr"}.get(readiness, readiness)
+    blockers = opportunity.get("readiness_blockers", []) or []
+    blockers_text = " · ".join(str(item) for item in blockers[:3]) or "Yapı, tetik, seans ve hedef kapasitesi uygun."
     st.markdown(
         f"<div class='opportunity-card {css}'>"
         "<div class='section-kicker'>Önümüzdeki birkaç saat</div>"
         f"<div class='opportunity-title'>{escape(str(opportunity.get('label', '-')))}</div>"
-        f"<div class='opportunity-score'>%{float(opportunity.get('confidence', 0)):.0f}</div>"
+        f"<div class='opportunity-score'>{float(opportunity.get('radar_score', opportunity.get('confidence', 0))):.0f}/100</div>"
+        f"<div><b>Durum:</b> {escape(readiness_text)}</div>"
         f"<div>{escape(str(opportunity.get('reason', '-')))}</div>"
         f"<div class='opportunity-line'><b>${float(opportunity.get('target_usd', 0)):.0f} için gereken:</b> {escape(required_text)}</div>"
         f"<div class='opportunity-line'><b>Tahmini hedef fiyat:</b> {escape(target_text)}</div>"
         f"<div class='opportunity-line'><b>Tipik 4 saatlik hareket:</b> {escape(range_text)}</div>"
         f"<div class='opportunity-line'>{escape(str(opportunity.get('capacity_text', '-')))}</div>"
-        "<div class='opportunity-line'><small>Bu erken fırsat radarıdır; kesin giriş için kapanmış mum ve risk onayı ayrıca gerekir.</small></div>"
+        f"<div class='opportunity-line'><b>Eksik/engel:</b> {escape(blockers_text)}</div>"
+        "<div class='opportunity-line'><small>Radar puanı olasılık değildir. Tetik hazır olsa bile aşağıdaki doğrulanmış işlem kararı ayrıca LONG/SHORT demeden emir verilmez.</small></div>"
         "</div>",
         unsafe_allow_html=True,
     )
@@ -5744,6 +6308,44 @@ def apply_operational_safety_filters(
     return out
 
 
+def apply_engine_evidence_filter(
+    decision: dict,
+    active_engine: Optional[str],
+    engine_quality: Optional[dict],
+) -> dict:
+    """Çift motor laboratuvarı çalıştıysa yalnız kanıtlanan rejim motoruna izin verir."""
+    if not is_new_position_decision(str(decision.get("action", ""))):
+        return decision
+    if active_engine not in {"TREND", "RANGE"}:
+        out = dict(decision)
+        out.update({
+            "action": "BEKLE",
+            "class": "simple-wait",
+            "subtitle": "Piyasa rejimi geçişte; iki motor da devre dışı.",
+            "reason": "Trend veya yatay rejim netleşmeden yeni pozisyon açılmaz.",
+        })
+        return out
+    label = str((engine_quality or {}).get("label", "Test bekliyor"))
+    if label in {"İyi", "Orta"}:
+        return decision
+    out = dict(decision)
+    out.update({
+        "action": "PAS GEÇ",
+        "class": "simple-pass",
+        "subtitle": "Aktif piyasa motoru doğrulanmadı.",
+        "reason": (
+            f"{active_engine} motorunun kalite sonucu {label}. "
+            "Daha fazla işlem üretmek için başka rejimin motoru kullanılamaz."
+        ),
+        "steps": [
+            "Bu sinyalde yeni pozisyon açma.",
+            "Trend + Yatay Motoru Test Et sonucunu kontrol et.",
+            "Broker verisinde en az Orta/İyi kanıt oluşmadan gerçek işleme geçme.",
+        ],
+    })
+    return out
+
+
 def render_daily_trading_desk(status: dict) -> None:
     pnl = float(status.get("realized_usd", 0.0))
     target_min = float(status.get("target_min_usd", 0.0))
@@ -5844,10 +6446,33 @@ with st.sidebar:
     manual_symbol = st.text_input("Elle gir", value="", placeholder="EURUSD veya EURUSD=X")
     symbol = normalize_symbol(manual_symbol) if manual_symbol.strip() else selected_symbol
     st.session_state["symbol"] = symbol
-    data_provider = st.selectbox("Veri kaynağı", ["Yahoo Finance", "MetaTrader 5"], index=0)
+    data_provider = st.selectbox("Veri kaynağı", ["Yahoo Finance", "MetaTrader 5", "Broker CSV"], index=0)
     st.session_state["data_provider"] = data_provider
     if data_provider == "MetaTrader 5":
-        st.caption("MT5 terminali/kitaplığı hazır değilse Yahoo verisine otomatik dönülür.")
+        st.caption("MT5 terminali/kitaplığı hazır değilse işlem verisi boş kalır; Yahoo'ya sessiz geçiş yapılmaz.")
+    elif data_provider == "Broker CSV":
+        broker_csv_symbol = normalize_symbol(st.text_input("CSV sembolü", value=symbol.replace("=X", "")))
+        broker_csv_interval = st.selectbox("CSV mum zamanı", ["1m", "5m", "15m"], index=2)
+        broker_csv_file = st.file_uploader(
+            "MT5 OHLC CSV yükle",
+            type=["csv", "txt"],
+            help="Beklenen sütunlar: date+time veya time, open, high, low, close; opsiyonel tickvol/volume ve spread.",
+        )
+        st.session_state["broker_csv_symbol"] = broker_csv_symbol
+        st.session_state["broker_csv_interval"] = broker_csv_interval
+        if broker_csv_file is not None:
+            parsed_broker_csv = parse_broker_csv_bytes(broker_csv_file.getvalue())
+            if parsed_broker_csv.empty:
+                st.error("Broker CSV okunamadı. Zaman ve OHLC sütunlarını kontrol et.")
+                st.session_state.pop("broker_csv_df", None)
+            else:
+                st.session_state["broker_csv_df"] = parsed_broker_csv
+                history_days = (parsed_broker_csv.index[-1] - parsed_broker_csv.index[0]).total_seconds() / 86400
+                spread_note = "spread var" if "Spreadpoints" in parsed_broker_csv.columns else "spread yok"
+                st.success(f"{len(parsed_broker_csv):,} mum · {history_days:.0f} gün · {spread_note}")
+        elif isinstance(st.session_state.get("broker_csv_df"), pd.DataFrame):
+            saved_csv = st.session_state["broker_csv_df"]
+            st.caption(f"Oturumdaki broker verisi: {len(saved_csv):,} mum")
 
     chart_tf = st.radio("Grafik zamanı", tf_options, index=1)
     st.caption("Bu seçim grafiği değiştirir. Yeni Başlayan Modu açıksa işlem kararı yine 4H + 1H ana yön ve 15M giriş mantığıyla hesaplanır.")
@@ -6031,8 +6656,14 @@ with st.sidebar:
         if observed_spread is not None:
             st.caption(f"Broker son mumlarından medyan spread: {observed_spread:.1f} pip.")
         st.caption(session_description(session_filter))
-        cooldown_bars = st.number_input("Cooldown (mum)", min_value=0, max_value=200, value=5, step=1)
-        max_same_direction_trades = st.number_input("Aynı yönde maksimum tekrar", min_value=1, max_value=10, value=2, step=1)
+        cooldown_bars = st.number_input(
+            "Cooldown (mum)", min_value=0, max_value=200, value=16, step=1,
+            help="15M'de 16 mum yaklaşık 4 saattir; aynı hareketi tekrar tekrar yeni fırsat saymayı azaltır.",
+        )
+        max_same_direction_trades = st.number_input(
+            "Aynı yönde maksimum tekrar", min_value=1, max_value=10, value=1, step=1,
+            help="Yeni bir trend dalgası oluşmadan aynı yönde ikinci işlem açılmaz.",
+        )
         min_trades_required = st.number_input("Minimum backtest işlem sayısı", min_value=20, max_value=500, value=40, step=10)
         walk_forward_enabled = st.checkbox("Walk-forward sağlamlık kontrolü", value=True)
         walk_forward_folds = st.slider("Walk-forward fold", min_value=3, max_value=8, value=4, step=1)
@@ -6040,6 +6671,21 @@ with st.sidebar:
             "45 / 50 / 60 Eşiklerini Karşılaştır",
             use_container_width=True,
             help="Eşiği körlemesine düşürmek yerine aynı ayarlarla üç ayrı backtest sonucu üretir.",
+        )
+        run_model_compare_requested = st.button(
+            "4 Giriş Modelini Karşılaştır",
+            use_container_width=True,
+            help="Düzeltme, trend yapısı, Bollinger kırılımı ve hibrit modeli aynı maliyet/risk ayarlarında karşılaştırır.",
+        )
+        strategy_lab_period = st.text_input(
+            "Çift motor araştırma periyodu",
+            value="365d" if data_provider == "MetaTrader 5" else "60d",
+            help="MT5 için 180d–365d önerilir. Yahoo 15M geçmişi pratikte yaklaşık 60 günle sınırlıdır.",
+        )
+        run_dual_engine_lab_requested = st.button(
+            "Trend + Yatay Motoru Test Et",
+            use_container_width=True,
+            help="Trend devamı ve yatay piyasa ortalamaya dönüş motorunu ayrı ayrı test eder.",
         )
 
     run_bt_requested = st.button("Yeniden Hesapla", type="primary", use_container_width=True)
@@ -6081,7 +6727,8 @@ with st.sidebar:
     if st.button("Veriyi Yenile", use_container_width=True):
         _fetch_ohlc_yahoo.clear()
         _fetch_ohlc_mt5.clear()
-        fetch_intraday_history.clear()
+        _fetch_intraday_history_yahoo.clear()
+        fetch_mt5_quote.clear()
         fetch_last_price.clear()
         fetch_price_change.clear()
         st.rerun()
@@ -6258,6 +6905,134 @@ def run_threshold_comparison() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def run_entry_model_comparison() -> pd.DataFrame:
+    """Gösterge ailesinin dört giriş yorumunu aynı koşullarda karşılaştırır."""
+    rows = []
+    models = [
+        "Düzeltme + Tepki",
+        "Trend + Yapı",
+        "Bollinger Trend Devamı",
+        "Hibrit (Tepki / Bollinger)",
+    ]
+    for candidate_model in models:
+        candidate_bt = run_backtest(
+            symbol=symbol,
+            tf_name=bt_tf,
+            period=bt_period,
+            initial_balance=account_size,
+            risk_pct=risk_pct,
+            rr=rr,
+            atr_mult=atr_mult,
+            signal_threshold=float(signal_threshold),
+            spread_pips=spread_pips,
+            pip_value_per_lot=pip_value_per_lot,
+            cooldown_bars=max(int(cooldown_bars), 16),
+            session_filter=session_filter,
+            max_same_direction_trades=1,
+            min_trades_required=int(min_trades_required),
+            stop_mode=stop_mode,
+            target_mode=target_mode,
+            swing_lookback=int(swing_lookback),
+            max_holding_bars=int(max_holding_bars),
+            break_even_at_r=float(break_even_at_r),
+            market_structure_enabled=bool(market_structure_enabled),
+            entry_model=candidate_model,
+            rsi_regime_enabled=bool(rsi_regime_enabled),
+            rsi_divergence_filter_enabled=bool(rsi_divergence_filter_enabled),
+            bb_extreme_volatility_block=bool(bb_extreme_volatility_block),
+            macd_confirmation_enabled=bool(macd_confirmation_enabled),
+            macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
+        )
+        label, _, text, _ = assess_backtest_with_walk_forward(
+            candidate_bt,
+            min_trades_required=int(min_trades_required),
+            walk_forward_enabled=bool(walk_forward_enabled),
+            walk_forward_folds=int(walk_forward_folds),
+        )
+        rows.append({
+            "Giriş Modeli": candidate_model,
+            "Kanıt": label,
+            "İşlem": extract_metric(candidate_bt.metrics, "İşlem Sayısı") or "0",
+            "Profit Factor": extract_metric(candidate_bt.metrics, "Profit Factor") or "-",
+            "Ortalama R": extract_metric(candidate_bt.metrics, "Ortalama R") or "-",
+            "Son %30 PF": extract_metric(candidate_bt.metrics, "Son %30 Profit Factor") or "-",
+            "Toplam PnL": extract_metric(candidate_bt.metrics, "Toplam PnL") or "-",
+            "Karar": text,
+        })
+    return pd.DataFrame(rows)
+
+
+def run_dual_engine_lab() -> tuple[pd.DataFrame, dict[str, BacktestResult], dict[str, dict]]:
+    """Trend ve range motorlarını karışık toplam yerine ayrı kanıtla raporlar."""
+    trend_bt = run_backtest(
+        symbol=symbol,
+        tf_name="15 Dakika",
+        period=strategy_lab_period,
+        initial_balance=account_size,
+        risk_pct=risk_pct,
+        rr=rr,
+        atr_mult=atr_mult,
+        signal_threshold=float(signal_threshold),
+        spread_pips=spread_pips,
+        pip_value_per_lot=pip_value_per_lot,
+        cooldown_bars=max(int(cooldown_bars), 16),
+        session_filter=session_filter,
+        max_same_direction_trades=1,
+        min_trades_required=int(min_trades_required),
+        stop_mode=stop_mode,
+        target_mode=target_mode,
+        swing_lookback=int(swing_lookback),
+        max_holding_bars=int(max_holding_bars),
+        break_even_at_r=float(break_even_at_r),
+        market_structure_enabled=True,
+        entry_model="Düzeltme + Tepki",
+        rsi_regime_enabled=True,
+        rsi_divergence_filter_enabled=True,
+        bb_extreme_volatility_block=True,
+        macd_confirmation_enabled=True,
+        macd_divergence_filter_enabled=True,
+    )
+    range_bt = run_range_mean_reversion_backtest(
+        symbol=symbol,
+        tf_name="15 Dakika",
+        period=strategy_lab_period,
+        initial_balance=account_size,
+        risk_pct=risk_pct,
+        spread_pips=spread_pips,
+        pip_value_per_lot=pip_value_per_lot,
+        session_filter=session_filter,
+        cooldown_bars=max(int(cooldown_bars), 16),
+        max_holding_bars=min(max(int(max_holding_bars), 8), 24),
+        min_reward_r=1.0,
+        swing_lookback=int(swing_lookback),
+    )
+    results = {"TREND": trend_bt, "RANGE": range_bt}
+    qualities: dict[str, dict] = {}
+    rows = []
+    for engine, result, label_text in [
+        ("TREND", trend_bt, "Trend: düzeltme + tepki"),
+        ("RANGE", range_bt, "Yatay: Bollinger orta banda dönüş"),
+    ]:
+        quality, css, note, wf = assess_backtest_with_walk_forward(
+            result,
+            min_trades_required=int(min_trades_required),
+            walk_forward_enabled=bool(walk_forward_enabled),
+            walk_forward_folds=int(walk_forward_folds),
+        )
+        qualities[engine] = {"label": quality, "css": css, "text": note, "walk_forward": wf}
+        rows.append({
+            "Motor": label_text,
+            "Kanıt": quality,
+            "İşlem": extract_metric(result.metrics, "İşlem Sayısı") or "0",
+            "Profit Factor": extract_metric(result.metrics, "Profit Factor") or "-",
+            "Ortalama R": extract_metric(result.metrics, "Ortalama R") or "-",
+            "Son %30 PF": extract_metric(result.metrics, "Son %30 Profit Factor") or "-",
+            "Toplam PnL": extract_metric(result.metrics, "Toplam PnL") or "-",
+            "Karar": note,
+        })
+    return pd.DataFrame(rows), results, qualities
+
+
 if auto_plan_control and st.session_state.get("last_bt_key") != current_bt_key:
     run_and_store_backtest()
 
@@ -6268,6 +7043,20 @@ if run_threshold_compare_requested:
     with st.spinner("45 / 50 / 60 sinyal eşikleri karşılaştırılıyor..."):
         st.session_state["threshold_comparison_df"] = run_threshold_comparison()
         st.session_state["threshold_comparison_key"] = current_bt_key
+
+if run_model_compare_requested:
+    with st.spinner("Dört giriş modeli aynı risk ve maliyet koşullarında karşılaştırılıyor..."):
+        st.session_state["entry_model_comparison_df"] = run_entry_model_comparison()
+        st.session_state["entry_model_comparison_key"] = current_bt_key
+
+if run_dual_engine_lab_requested:
+    with st.spinner("Trend ve yatay piyasa motorları ayrı ayrı test ediliyor..."):
+        lab_table, lab_results, lab_qualities = run_dual_engine_lab()
+        lab_key = (normalize_symbol(symbol), str(strategy_lab_period), data_provider, session_filter, float(spread_pips))
+        st.session_state["dual_engine_lab_key"] = lab_key
+        st.session_state["dual_engine_lab_table"] = lab_table
+        st.session_state["dual_engine_lab_results"] = lab_results
+        st.session_state["dual_engine_lab_qualities"] = lab_qualities
 
 if run_scanner_requested:
     scan_symbols = SYMBOL_LIST[:int(scanner_limit)]
@@ -6303,6 +7092,9 @@ if run_scanner_requested:
 # Top metrics
 price_info = fetch_price_change(symbol, change_window_minutes)
 price = price_info["latest"] if price_info and price_info.get("latest") is not None else fetch_last_price(symbol)
+broker_quote = fetch_mt5_quote(symbol) if data_provider == "MetaTrader 5" else None
+if broker_quote:
+    price = float(broker_quote["mid"])
 
 m1, m2, m3, m4 = st.columns(4)
 with m1:
@@ -6316,7 +7108,10 @@ with m3:
     else:
         st.metric(change_window_label, "-")
 with m4:
-    st.metric("Pip Size", get_pip_size(symbol))
+    if broker_quote:
+        st.metric("Broker Spread", f"{float(broker_quote['spread_pips']):.1f} pip")
+    else:
+        st.metric("Pip Size", get_pip_size(symbol))
 
 intraday_fig, intraday_info = plot_intraday_change(symbol, 1440)
 
@@ -6369,6 +7164,15 @@ preview_setup = build_trade_setup(
     target_mode=target_mode, swing_lookback=int(swing_lookback),
 )
 market_regime = classify_market_regime(symbol, selected_tf)
+current_strategy_engine = "TREND" if market_regime.get("label") == "Trend" else (
+    "RANGE" if market_regime.get("label") == "Yatay" else None
+)
+live_lab_key = (
+    normalize_symbol(symbol), str(strategy_lab_period), data_provider,
+    session_filter, float(spread_pips),
+)
+live_lab_matches = st.session_state.get("dual_engine_lab_key") == live_lab_key
+live_engine_qualities = st.session_state.get("dual_engine_lab_qualities", {}) if live_lab_matches else {}
 current_data_health = data_health_status(symbol, selected_tf)
 current_news_status = (
     news_blackout_status(symbol, news_events, int(news_before_minutes), int(news_after_minutes))
@@ -6440,6 +7244,22 @@ if beginner_mode:
         price=price,
     )
 
+if current_strategy_engine == "RANGE":
+    range_decision = build_live_range_decision(
+        symbol=symbol,
+        selected_tf=selected_tf,
+        current_price=price,
+        account_size=float(account_size),
+        risk_pct=float(risk_pct),
+        pip_value_per_lot=float(pip_value_per_lot),
+        total_cost_pips=float(spread_pips),
+        engine_quality=live_engine_qualities.get("RANGE", {}) if live_lab_matches else {},
+        market_regime=market_regime,
+        swing_lookback=int(swing_lookback),
+    )
+    if range_decision is not None:
+        simple_decision = range_decision
+
 bt_result_for_ml = st.session_state.get("last_bt_result") if st.session_state.get("last_bt_key") == plan_bt_key else None
 ml_prediction = build_live_ml_prediction(
     bt_result=bt_result_for_ml,
@@ -6452,7 +7272,7 @@ ml_prediction = build_live_ml_prediction(
 simple_decision = apply_ml_filter_to_decision(
     decision=simple_decision,
     ml_prediction=ml_prediction,
-    filter_enabled=ml_filter_enabled,
+    filter_enabled=bool(ml_filter_enabled and current_strategy_engine != "RANGE"),
     threshold_pct=float(ml_threshold_pct),
 )
 simple_decision = apply_operational_safety_filters(
@@ -6464,6 +7284,20 @@ simple_decision = apply_operational_safety_filters(
     block_sideways=block_sideways,
     daily_status=current_daily_status,
 )
+decision_lab_key = (
+    normalize_symbol(symbol), str(strategy_lab_period), data_provider,
+    session_filter, float(spread_pips),
+)
+if st.session_state.get("dual_engine_lab_key") == decision_lab_key:
+    decision_active_engine = "TREND" if market_regime.get("label") == "Trend" else (
+        "RANGE" if market_regime.get("label") == "Yatay" else None
+    )
+    decision_engine_qualities = st.session_state.get("dual_engine_lab_qualities", {})
+    simple_decision = apply_engine_evidence_filter(
+        simple_decision,
+        active_engine=decision_active_engine,
+        engine_quality=decision_engine_qualities.get(decision_active_engine, {}) if decision_active_engine else {},
+    )
 ml_blocks_trade, ml_block_reason = ml_should_block_trade(ml_prediction, float(ml_threshold_pct), ml_filter_enabled)
 
 if is_new_position_decision(str(simple_decision.get("action", ""))):
@@ -6491,6 +7325,12 @@ intraday_opportunity = build_intraday_opportunity(
     pip_value_per_lot=float(pip_value_per_lot),
     total_cost_pips=float(spread_pips),
     target_usd=float(daily_target_min_usd),
+    session_filter=session_filter,
+)
+intraday_opportunity = apply_opportunity_cooldown(
+    intraday_opportunity,
+    symbol=symbol,
+    cooldown_bars=16,
 )
 
 st.header("24 Saatlik Fiyat ve Fırsat Radarı")
@@ -6515,7 +7355,44 @@ with radar_chart_col:
 with radar_card_col:
     render_intraday_opportunity(intraday_opportunity, symbol)
 
-st.subheader("Kesin işlem kararı")
+st.subheader("Rejim Uyumlu Çift Motor")
+active_engine = current_strategy_engine
+active_engine_name = {
+    "TREND": "Trend motoru — düzeltme + tepki",
+    "RANGE": "Yatay motor — Bollinger orta banda dönüş",
+}.get(active_engine, "Motor kapalı — piyasa rejimi geçişte")
+current_lab_key = (
+    normalize_symbol(symbol), str(strategy_lab_period), data_provider,
+    session_filter, float(spread_pips),
+)
+lab_matches = st.session_state.get("dual_engine_lab_key") == current_lab_key
+lab_qualities = st.session_state.get("dual_engine_lab_qualities", {}) if lab_matches else {}
+active_lab_quality = lab_qualities.get(active_engine, {}) if active_engine else {}
+engine_css = "ok-box" if active_lab_quality.get("label") == "İyi" else (
+    "bad-box" if active_lab_quality.get("label") == "Zayıf" else "warn-box"
+)
+engine_evidence = active_lab_quality.get("label", "Test bekliyor")
+engine_note = active_lab_quality.get(
+    "text",
+    "Bu sembol/veri kaynağı/periyot için çift motor testi çalıştırılmadı.",
+)
+st.markdown(
+    f"<div class='{engine_css}'><b>Aktif motor: {escape(active_engine_name)}</b><br>"
+    f"Kanıt: {escape(str(engine_evidence))}<br>{escape(str(engine_note))}</div>",
+    unsafe_allow_html=True,
+)
+if data_provider != "MetaTrader 5":
+    st.caption(
+        "Yahoo 15M veri geçmişi yaklaşık 60 günle sınırlıdır. 6–12 aylık ciddi doğrulama için "
+        "yerel MT5 terminalini seçip araştırma periyodunu 180d–365d yap."
+    )
+lab_table = st.session_state.get("dual_engine_lab_table") if lab_matches else None
+if isinstance(lab_table, pd.DataFrame) and not lab_table.empty:
+    st.dataframe(lab_table, use_container_width=True, hide_index=True)
+    if not bool(lab_table["Kanıt"].isin({"İyi", "Orta"}).any()):
+        st.error("İki motor da doğrulanmadı. Bu sembolde canlı LONG/SHORT için stratejik avantaj kanıtı yok.")
+
+st.subheader("Doğrulanmış işlem kararı")
 health_cols = st.columns(4)
 health_cols[0].metric("Veri", current_data_health.get("status", "-"))
 health_cols[1].metric("Piyasa", market_regime.get("label", "-"))
@@ -6524,9 +7401,19 @@ health_cols[3].metric("Haber", "ENGEL" if current_news_status.get("blocks_trade"
 for title, status in [("Veri", current_data_health), ("Haber", current_news_status), ("Portföy", current_portfolio_status)]:
     if status.get("blocks_trade"):
         st.warning(f"{title}: {status.get('text', '-')}")
+evidence_status = strategy_evidence_status(matched_quality)
+st.markdown(
+    f"<div class='{evidence_status['css']}'><b>Strateji Kanıtı: {escape(evidence_status['label'])}</b><br>"
+    f"{escape(evidence_status['text'])}</div>",
+    unsafe_allow_html=True,
+)
 render_top_decision_panel(simple_decision)
 if beginner_mode:
-    render_beginner_path(summary_df, matched_quality, entry_signal_tracker, selected_tf)
+    if current_strategy_engine == "RANGE":
+        render_simple_decision_card(simple_decision)
+        st.caption("Yatay rejimde 4H/1H trend hunisi kullanılmaz; yalnız ayrı orta banda dönüş motoru değerlendirilir.")
+    else:
+        render_beginner_path(summary_df, matched_quality, entry_signal_tracker, selected_tf)
     with st.expander("Neden böyle dedi?", expanded=False):
         render_market_model_card(market_model_status)
         render_ml_prediction_card(ml_prediction, float(ml_threshold_pct), ml_filter_enabled)
@@ -6752,6 +7639,24 @@ if (
     with st.expander("45 / 50 / 60 Sinyal Eşiği Karşılaştırması", expanded=True):
         st.dataframe(threshold_comparison_df, use_container_width=True, hide_index=True)
         st.caption("Bu tablo aktif eşiği otomatik değiştirmez. Daha çok işlem tek başına daha iyi strateji anlamına gelmez; son dönem ve walk-forward birlikte değerlendirilmelidir.")
+
+entry_model_comparison_df = st.session_state.get("entry_model_comparison_df")
+if (
+    st.session_state.get("entry_model_comparison_key") == current_bt_key
+    and isinstance(entry_model_comparison_df, pd.DataFrame)
+    and not entry_model_comparison_df.empty
+):
+    with st.expander("Gösterge / Giriş Modeli Karşılaştırması", expanded=True):
+        st.dataframe(entry_model_comparison_df, use_container_width=True, hide_index=True)
+        accepted = entry_model_comparison_df["Kanıt"].isin({"İyi", "Orta"})
+        if not bool(accepted.any()):
+            st.error(
+                "Bu dört EMA/RSI/MACD/Bollinger giriş yorumundan hiçbiri doğrulanmadı. "
+                "Uygulama filtreleri gevşetip zorla işlem üretmemeli; yeni model veya daha iyi broker verisi test edilmeli."
+            )
+        else:
+            names = ", ".join(entry_model_comparison_df.loc[accepted, "Giriş Modeli"].astype(str))
+            st.success(f"Testte en az sınırlı kanıt üreten model(ler): {names}. Otomatik seçim yapılmadı.")
 
 saved_bt = st.session_state.get("last_bt_result")
 saved_bt_key = st.session_state.get("last_bt_key")
