@@ -24,7 +24,16 @@ Community Cloud ortamında MetaTrader 5 terminali çalışmaz. Uygulama veri kay
 - `TREND`: 4H/1H yönü içinde 15M düzeltme + tepki devam modeli.
 - `RANGE`: yalnız yatay rejimde bant ihlali sonrası Bollinger orta banda dönüş modeli.
 - Motorların backtest kalitesi ayrı hesaplanır. Doğrulanmayan motor diğer rejimden sinyal ödünç alamaz.
-- `Trend + Yatay Motoru Test Et` düğmesi iki motoru aynı maliyet ve risk koşullarında karşılaştırır.
+- `Trend + Yatay Motoru ve Edge'i Test Et` düğmesi iki motoru aynı maliyet ve risk koşullarında karşılaştırır.
+
+## Edge doğrulama
+
+- Yüksek indikatör skoru kazanma olasılığı olarak yorumlanmaz.
+- Stationary bootstrap, işlem başına ortalama `R` sonucunun sıfırın gerçekten üzerinde olup olmadığını sınar ve %95 güven aralığını raporlar.
+- Circular-shift testi, gerçek giriş zamanlarını aynı LONG/SHORT dizisinin rastgele kaydırılmış zamanlarıyla karşılaştırır.
+- İki testin p-değeri, denenen strateji/model/eşik sayısı için Bonferroni yöntemiyle düzeltilir.
+- En az 60 işlem, pozitif ortalama R, sıfırın üzerinde %95 alt güven sınırı ve iki düzeltilmiş testte `p ≤ 0.05` birlikte sağlanmadan `DOĞRULANDI` sonucu verilmez.
+- Canlı işlem izni için aktif motorun backtest kalitesi `Orta/İyi` ve edge sonucu `DOĞRULANDI` olmalıdır.
 
 ## 6–12 aylık broker testi
 

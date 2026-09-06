@@ -1,7 +1,15 @@
 import math
 import unittest
 
-from forex_decision_core import classify_opportunity_readiness, decide_mtf_signal
+from forex_decision_core import (
+    bonferroni_adjust,
+    circular_shift_timing_test,
+    classify_edge_evidence,
+    classify_opportunity_readiness,
+    decide_mtf_signal,
+    position_level_event,
+    stationary_bootstrap_mean_test,
+)
 
 
 class MtfDecisionTests(unittest.TestCase):
@@ -71,6 +79,70 @@ class OpportunityReadinessTests(unittest.TestCase):
             classify_opportunity_readiness(35, "LONG", True, True, False, 0.5, True)[0],
             "NEUTRAL",
         )
+
+
+class PositionLevelTests(unittest.TestCase):
+    def test_long_levels_do_not_use_short_inequalities(self):
+        self.assertEqual(position_level_event("LONG", 1.1020, 1.0990, 1.1020), "TARGET")
+        self.assertEqual(position_level_event("LONG", 1.0990, 1.0990, 1.1020), "STOP")
+        self.assertEqual(position_level_event("LONG", 1.1005, 1.0990, 1.1020), "NONE")
+
+    def test_short_levels(self):
+        self.assertEqual(position_level_event("SHORT", 1.0980, 1.1030, 1.0980), "TARGET")
+        self.assertEqual(position_level_event("SHORT", 1.1030, 1.1030, 1.0980), "STOP")
+
+
+class EdgeValidationTests(unittest.TestCase):
+    def test_stationary_bootstrap_detects_consistent_positive_edge(self):
+        result = stationary_bootstrap_mean_test([1.0] * 80, simulations=500, seed=7)
+        self.assertEqual(result["status"], "ready")
+        self.assertAlmostEqual(result["observed_mean"], 1.0)
+        self.assertGreater(result["ci_low"], 0)
+        self.assertLess(result["p_value"], 0.01)
+
+    def test_stationary_bootstrap_requires_samples(self):
+        result = stationary_bootstrap_mean_test([1.0, -1.0], simulations=100)
+        self.assertEqual(result["status"], "insufficient")
+
+    def test_stationary_bootstrap_does_not_confirm_zero_edge(self):
+        result = stationary_bootstrap_mean_test([-1.0, 1.0] * 50, simulations=1000, seed=9)
+        self.assertAlmostEqual(result["observed_mean"], 0.0)
+        self.assertLessEqual(result["ci_low"], 0.0)
+        self.assertGreater(result["p_value"], 0.05)
+
+    def test_circular_shift_detects_timing_better_than_other_phases(self):
+        block = 40
+        increments = []
+        for _ in range(30):
+            increments.extend([2.0] + [-2.0 / (block - 1)] * (block - 1))
+        prices = [100.0]
+        for increment in increments:
+            prices.append(prices[-1] + increment)
+        entries = prices[:-1]
+        exits = prices[:-1]
+        entry_indices = list(range(0, len(entries) - 1, block))
+        result = circular_shift_timing_test(
+            entries,
+            exits,
+            entry_indices,
+            [1] * len(entry_indices),
+            horizon_bars=1,
+            pip_size=1.0,
+            simulations=2000,
+            seed=11,
+        )
+        self.assertEqual(result["status"], "ready")
+        self.assertGreater(result["observed_mean_pips"], result["null_p95_pips"])
+        self.assertLess(result["p_value"], 0.05)
+
+    def test_multiple_testing_adjustment_and_evidence_gate(self):
+        self.assertAlmostEqual(bonferroni_adjust(0.01, 6), 0.06)
+        label, blockers = classify_edge_evidence(80, 0.2, 0.05, 0.02, 0.03, min_trades=60)
+        self.assertEqual(label, "DOĞRULANDI")
+        self.assertEqual(blockers, [])
+        label, blockers = classify_edge_evidence(30, 0.2, 0.05, 0.02, 0.03, min_trades=60)
+        self.assertEqual(label, "YETERSİZ ÖRNEK")
+        self.assertTrue(blockers)
 
 
 if __name__ == "__main__":

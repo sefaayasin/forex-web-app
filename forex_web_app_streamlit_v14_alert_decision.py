@@ -39,7 +39,7 @@ import yfinance as yf
 from plotly.subplots import make_subplots
 
 try:
-    from forex_decision_core import classify_opportunity_readiness, decide_mtf_signal
+    from forex_decision_core import classify_opportunity_readiness, decide_mtf_signal, position_level_event
 except ImportError:
     # Streamlit Cloud bazen ana dosyayi yeni commit'ten, yardimci modulu ise
     # onceki build cache'inden yukleyebiliyor. Uygulamanin tamamen acilamaz
@@ -108,6 +108,37 @@ except ImportError:
         if htf_short and m15_short_ok and float(entry_score) <= -float(threshold):
             return "SHORT", "4H+1H short uyumlu; giris skoru esigi gecti"
         return "NONE", "MTF filtre veya giris skoru uygun degil"
+
+    def position_level_event(side: str, current_price: float, stop: float, target: float) -> str:
+        normalized_side = str(side).upper()
+        if normalized_side == "LONG":
+            if float(stop) > 0 and float(current_price) <= float(stop):
+                return "STOP"
+            if float(target) > 0 and float(current_price) >= float(target):
+                return "TARGET"
+        elif normalized_side == "SHORT":
+            if float(stop) > 0 and float(current_price) >= float(stop):
+                return "STOP"
+            if float(target) > 0 and float(current_price) <= float(target):
+                return "TARGET"
+        return "NONE"
+
+try:
+    from forex_decision_core import (
+        bonferroni_adjust,
+        circular_shift_timing_test,
+        classify_edge_evidence,
+        stationary_bootstrap_mean_test,
+    )
+    EDGE_STATS_AVAILABLE = True
+except ImportError:
+    # Eski Cloud build cache'i yeni çekirdek fonksiyonlarını görmezse uygulama
+    # yine açılır; yalnız edge laboratuvarı yeni deploy tamamlanana kadar pasif kalır.
+    bonferroni_adjust = None
+    circular_shift_timing_test = None
+    classify_edge_evidence = None
+    stationary_bootstrap_mean_test = None
+    EDGE_STATS_AVAILABLE = False
 
 # Bazı Windows/sandbox kurulumlarında yfinance kullanıcı profilindeki SQLite
 # cache'ine yazamaz. İzinli geçici dizin veri indirme hatasını önler.
@@ -2985,6 +3016,162 @@ def monte_carlo_risk_report(trades: pd.DataFrame, simulations: int = 500, ruin_l
     ], columns=["Metrik", "Değer"])
 
 
+def build_edge_validation_report(
+    symbol: str,
+    tf_name: str,
+    period: str,
+    bt: BacktestResult,
+    cost_pips: float,
+    horizon_bars: int = 16,
+    simulations: int = 1000,
+    mean_block_length: float = 5.0,
+    trial_count: int = 24,
+    min_trades: int = 60,
+) -> dict:
+    """Gerçekleşen işlem avantajını iki ayrı sıfır-edge hipotezine karşı sınar.
+
+    Skor seviyesini test etmez. Önce işlem R sonuçlarının ortalamasını bağımlılığı
+    koruyan stationary bootstrap ile, sonra gerçek giriş zamanlarını aynı sinyal
+    dizisinin rastgele dairesel kaydırmalarıyla karşılaştırır.
+    """
+    unavailable = {
+        "label": "HESAPLANAMADI",
+        "trade_count": 0,
+        "average_r": np.nan,
+        "r_ci_low": np.nan,
+        "r_ci_high": np.nan,
+        "bootstrap_p": np.nan,
+        "bootstrap_p_adjusted": np.nan,
+        "timing_p": np.nan,
+        "timing_p_adjusted": np.nan,
+        "timing_mean_pips": np.nan,
+        "timing_null_p95_pips": np.nan,
+        "timing_percentile": np.nan,
+        "blockers": ["Edge istatistik modülü kullanılamıyor"],
+        "text": "Edge istatistik modülü kullanılamıyor.",
+    }
+    if not EDGE_STATS_AVAILABLE:
+        return unavailable
+    if bt is None or bt.trades is None or bt.trades.empty:
+        out = dict(unavailable)
+        out.update({
+            "label": "YETERSİZ ÖRNEK",
+            "blockers": ["Backtest işlemi oluşmadı"],
+            "text": "Backtest işlemi oluşmadığı için edge sınanamadı.",
+        })
+        return out
+
+    trades = bt.trades.copy()
+    r_values = (
+        pd.to_numeric(trades.get("PnL"), errors="coerce")
+        / pd.to_numeric(trades.get("Risk Amount"), errors="coerce").replace(0, np.nan)
+    ).replace([np.inf, -np.inf], np.nan).dropna()
+    bootstrap = stationary_bootstrap_mean_test(
+        r_values.to_numpy(dtype=float),
+        simulations=int(simulations),
+        mean_block_length=float(mean_block_length),
+        seed=42,
+    )
+
+    prm = TIMEFRAMES[tf_name]
+    raw = fetch_ohlc(symbol, prm["interval"], period)
+    raw = _utc_index_df(raw).dropna(subset=["Open", "Close"]) if raw is not None and not raw.empty else pd.DataFrame()
+    entry_indices: list[int] = []
+    side_signs: list[float] = []
+    if not raw.empty and "Entry Time" in trades.columns and "Side" in trades.columns:
+        entry_times = pd.to_datetime(trades["Entry Time"], utc=True, errors="coerce")
+        for timestamp, side in zip(entry_times, trades["Side"].astype(str)):
+            if pd.isna(timestamp):
+                continue
+            index = int(raw.index.searchsorted(timestamp, side="left"))
+            if index < len(raw):
+                entry_indices.append(index)
+                side_signs.append(1.0 if side.upper() == "LONG" else -1.0)
+
+    timing = circular_shift_timing_test(
+        raw["Open"].to_numpy(dtype=float) if not raw.empty else [],
+        raw["Close"].to_numpy(dtype=float) if not raw.empty else [],
+        entry_indices,
+        side_signs,
+        horizon_bars=int(horizon_bars),
+        pip_size=get_pip_size(symbol),
+        cost_pips=float(cost_pips),
+        simulations=int(simulations),
+        seed=43,
+    )
+
+    raw_bootstrap_p = float(bootstrap.get("p_value", np.nan))
+    raw_timing_p = float(timing.get("p_value", np.nan))
+    adjusted_bootstrap_p = bonferroni_adjust(raw_bootstrap_p, int(trial_count))
+    adjusted_timing_p = bonferroni_adjust(raw_timing_p, int(trial_count))
+    average_r = float(bootstrap.get("observed_mean", np.nan))
+    ci_low = float(bootstrap.get("ci_low", np.nan))
+    ci_high = float(bootstrap.get("ci_high", np.nan))
+    label, blockers = classify_edge_evidence(
+        trade_count=len(r_values),
+        average_r=average_r,
+        r_ci_low=ci_low,
+        bootstrap_p_adjusted=adjusted_bootstrap_p,
+        timing_p_adjusted=adjusted_timing_p,
+        min_trades=int(min_trades),
+        alpha=0.05,
+    )
+    text = (
+        f"{len(r_values)} işlem; ortalama {average_r:.3f}R, %95 GA [{ci_low:.3f}, {ci_high:.3f}]. "
+        f"Düzeltilmiş bootstrap p={adjusted_bootstrap_p:.3f}, zamanlama p={adjusted_timing_p:.3f}."
+    )
+    if blockers:
+        text += " Engeller: " + "; ".join(blockers) + "."
+    return {
+        "label": label,
+        "trade_count": len(r_values),
+        "average_r": average_r,
+        "r_ci_low": ci_low,
+        "r_ci_high": ci_high,
+        "bootstrap_p": raw_bootstrap_p,
+        "bootstrap_p_adjusted": adjusted_bootstrap_p,
+        "timing_p": raw_timing_p,
+        "timing_p_adjusted": adjusted_timing_p,
+        "timing_mean_pips": float(timing.get("observed_mean_pips", np.nan)),
+        "timing_null_p95_pips": float(timing.get("null_p95_pips", np.nan)),
+        "timing_percentile": float(timing.get("percentile", np.nan)),
+        "horizon_bars": int(horizon_bars),
+        "trial_count": int(trial_count),
+        "blockers": blockers,
+        "text": text,
+    }
+
+
+def edge_validation_table(reports: dict[str, dict]) -> pd.DataFrame:
+    def fmt(value: object, digits: int = 3) -> str:
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return "-"
+        return "-" if not np.isfinite(number) else f"{number:.{digits}f}"
+
+    names = {
+        "TREND": "Trend: düzeltme + tepki",
+        "RANGE": "Yatay: Bollinger orta banda dönüş",
+    }
+    rows = []
+    for engine in ["TREND", "RANGE"]:
+        report = reports.get(engine, {})
+        rows.append({
+            "Motor": names[engine],
+            "Edge Kanıtı": report.get("label", "HESAPLANAMADI"),
+            "İşlem": int(report.get("trade_count", 0) or 0),
+            "Ortalama R": fmt(report.get("average_r")),
+            "%95 R Aralığı": f"{fmt(report.get('r_ci_low'))} – {fmt(report.get('r_ci_high'))}",
+            "Bootstrap p (düz.)": fmt(report.get("bootstrap_p_adjusted")),
+            "Zamanlama p (düz.)": fmt(report.get("timing_p_adjusted")),
+            "Gerçek ufuk pips": fmt(report.get("timing_mean_pips"), 2),
+            "Null %95 pips": fmt(report.get("timing_null_p95_pips"), 2),
+            "Sonuç": report.get("text", "-"),
+        })
+    return pd.DataFrame(rows)
+
+
 def assess_backtest_quality(bt: BacktestResult, min_trades_required: int = 20) -> tuple[str, str, str]:
     """Backtest sonucunu canlı karar ekranında kullanılabilir kalite etiketine çevirir."""
     if bt.trades is None or bt.trades.empty:
@@ -5494,12 +5681,24 @@ def build_position_tracker_result(
     action = "POZİSYONU TUT"
     css = "simple-buy" if pips is not None and pips >= 0 else "simple-wait"
     reason = "Plan bozulmadı. Stop ve kâr al seviyelerini takip et."
+    level_event = position_level_event(side, float(current_price), float(stop), float(target))
 
     if side == "LONG":
-        if stop > 0 and current_price <= stop:
+        if level_event == "STOP":
             action, css, reason = "POZİSYONU KAPAT", "simple-sell", f"Fiyat stop seviyesine geldi/altına indi: {stop:.{dec}f}."
-        elif target > 0 and current_price >= target:
+        elif level_event == "TARGET":
             action, css, reason = "KÂR AL / POZİSYONU KAPAT", "simple-buy", f"Fiyat hedef seviyeye geldi/üstüne çıktı: {target:.{dec}f}."
+        elif to_target_pips is not None and target_distance_pips and 0 <= to_target_pips <= max(target_distance_pips * 0.15, 2):
+            action, css, reason = "KÂR AL SEVİYESİNE YAKLAŞTI", "simple-buy", "Fiyat hedefe yaklaştı; plan dışı acele etmeden kâr al/stop takibi yap."
+        elif opposite:
+            action, css, reason = "KAPATMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
+        elif neutral and pips is not None and pips < 0:
+            action, css, reason = "DİKKAT", "simple-wait", "Ana yön kararsız ve pozisyon zararda. Stopa sadık kal."
+    else:
+        if level_event == "STOP":
+            action, css, reason = "POZİSYONU KAPAT", "simple-sell", f"Fiyat stop seviyesine geldi/üstüne çıktı: {stop:.{dec}f}."
+        elif level_event == "TARGET":
+            action, css, reason = "KÂR AL / POZİSYONU KAPAT", "simple-buy", f"Fiyat hedef seviyeye geldi/altına indi: {target:.{dec}f}."
         elif to_target_pips is not None and target_distance_pips and 0 <= to_target_pips <= max(target_distance_pips * 0.15, 2):
             action, css, reason = "KÂR AL SEVİYESİNE YAKLAŞTI", "simple-buy", "Fiyat hedefe yaklaştı; plan dışı acele etmeden kâr al/stop takibi yap."
         elif opposite:
@@ -5526,17 +5725,6 @@ def build_position_tracker_result(
         elif weakening_with_divergence:
             action, css = "MOMENTUM ZAYIFLIYOR", "simple-wait"
             reason = "Histogram yavaşlaması ile ters MACD uyumsuzluğu birlikte görüldü; stopu büyütme ve yeni ekleme yapma."
-    else:
-        if stop > 0 and current_price >= stop:
-            action, css, reason = "POZİSYONU KAPAT", "simple-sell", f"Fiyat stop seviyesine geldi/üstüne çıktı: {stop:.{dec}f}."
-        elif target > 0 and current_price <= target:
-            action, css, reason = "KÂR AL / POZİSYONU KAPAT", "simple-buy", f"Fiyat hedef seviyeye geldi/altına indi: {target:.{dec}f}."
-        elif to_target_pips is not None and target_distance_pips and 0 <= to_target_pips <= max(target_distance_pips * 0.15, 2):
-            action, css, reason = "KÂR AL SEVİYESİNE YAKLAŞTI", "simple-buy", "Fiyat hedefe yaklaştı; plan dışı acele etmeden kâr al/stop takibi yap."
-        elif opposite:
-            action, css, reason = "KAPATMAYI DÜŞÜN", "simple-sell", "Ana yön senin pozisyonunun tersine döndü."
-        elif neutral and pips is not None and pips < 0:
-            action, css, reason = "DİKKAT", "simple-wait", "Ana yön kararsız ve pozisyon zararda. Stopa sadık kal."
 
     risk_note = "Stop ve hedef plana göre izleniyor."
     if to_stop_pips is not None and to_stop_pips <= 0:
@@ -6395,7 +6583,9 @@ def apply_engine_evidence_filter(
         })
         return out
     label = str((engine_quality or {}).get("label", "Test bekliyor"))
-    if label in {"İyi", "Orta"}:
+    edge_report = (engine_quality or {}).get("edge", {}) or {}
+    edge_label = str(edge_report.get("label", "HESAPLANAMADI"))
+    if label in {"İyi", "Orta"} and edge_label == "DOĞRULANDI":
         return decision
     out = dict(decision)
     out.update({
@@ -6403,13 +6593,13 @@ def apply_engine_evidence_filter(
         "class": "simple-pass",
         "subtitle": "Aktif piyasa motoru doğrulanmadı.",
         "reason": (
-            f"{active_engine} motorunun kalite sonucu {label}. "
-            "Daha fazla işlem üretmek için başka rejimin motoru kullanılamaz."
+            f"{active_engine} motorunun backtest kalitesi {label}, edge kanıtı {edge_label}. "
+            f"{edge_report.get('text', '')} Daha fazla işlem üretmek için başka rejimin motoru kullanılamaz."
         ),
         "steps": [
             "Bu sinyalde yeni pozisyon açma.",
-            "Trend + Yatay Motoru Test Et sonucunu kontrol et.",
-            "Broker verisinde en az Orta/İyi kanıt oluşmadan gerçek işleme geçme.",
+            "Trend + Yatay Motoru ve Edge'i Test Et sonucunu kontrol et.",
+            "Broker verisinde Orta/İyi kalite ve DOĞRULANDI edge birlikte oluşmadan gerçek işleme geçme.",
         ],
     })
     return out
@@ -6751,10 +6941,42 @@ with st.sidebar:
             value="365d" if data_provider == "MetaTrader 5" else "60d",
             help="MT5 için 180d–365d önerilir. Yahoo 15M geçmişi pratikte yaklaşık 60 günle sınırlıdır.",
         )
+        edge_simulations = st.number_input(
+            "Edge testi simülasyonu",
+            min_value=500,
+            max_value=5000,
+            value=1000,
+            step=500,
+            help="İşlem R bootstrap ve giriş-zamanı kaydırma testlerinin tekrar sayısı.",
+        )
+        edge_horizon_bars = st.number_input(
+            "Zamanlama testi ufku (15M mum)",
+            min_value=4,
+            max_value=96,
+            value=16,
+            step=4,
+            help="16 mum, sinyalden sonraki yaklaşık 4 saatlik yön avantajını sınar.",
+        )
+        edge_trial_count = st.number_input(
+            "Denenen toplam strateji sayısı",
+            min_value=1,
+            max_value=200,
+            value=24,
+            step=1,
+            help="Bakılan motor/model/eşik kombinasyonlarının yaklaşık toplamı. Bonferroni düzeltmesinde kullanılır.",
+        )
+        edge_min_trades = st.number_input(
+            "Edge için minimum işlem",
+            min_value=20,
+            max_value=500,
+            value=60,
+            step=10,
+            help="Bunun altında sonuç olumlu görünse bile edge doğrulanmış sayılmaz.",
+        )
         run_dual_engine_lab_requested = st.button(
-            "Trend + Yatay Motoru Test Et",
+            "Trend + Yatay Motoru ve Edge'i Test Et",
             use_container_width=True,
-            help="Trend devamı ve yatay piyasa ortalamaya dönüş motorunu ayrı ayrı test eder.",
+            help="İki motoru ayrı test eder; işlem R avantajını ve giriş zamanlamasını rastgele null modellere karşı sınar.",
         )
 
     run_bt_requested = st.button("Yeniden Hesapla", type="primary", use_container_width=True)
@@ -6771,6 +6993,11 @@ with st.sidebar:
         "daily_max_loss_usd": daily_max_loss_usd,
         "daily_max_closed_trades": int(daily_max_closed_trades),
         "stop_after_daily_target": bool(stop_after_daily_target),
+        "strategy_lab_period": strategy_lab_period,
+        "edge_simulations": int(edge_simulations),
+        "edge_horizon_bars": int(edge_horizon_bars),
+        "edge_trial_count": int(edge_trial_count),
+        "edge_min_trades": int(edge_min_trades),
         "market_structure_enabled": market_structure_enabled, "entry_model": entry_model,
         "rsi_regime_enabled": rsi_regime_enabled,
         "rsi_divergence_filter_enabled": rsi_divergence_filter_enabled,
@@ -7031,7 +7258,22 @@ def run_entry_model_comparison() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def run_dual_engine_lab() -> tuple[pd.DataFrame, dict[str, BacktestResult], dict[str, dict]]:
+def make_dual_engine_lab_key() -> tuple:
+    """Laboratuvar sonucunu etkileyen tüm ayarları tek anahtarda toplar."""
+    return (
+        normalize_symbol(symbol),
+        str(strategy_lab_period),
+        data_provider,
+        session_filter,
+        round(float(spread_pips), 4),
+        int(edge_simulations),
+        int(edge_horizon_bars),
+        int(edge_trial_count),
+        int(edge_min_trades),
+    )
+
+
+def run_dual_engine_lab() -> tuple[pd.DataFrame, dict[str, BacktestResult], dict[str, dict], pd.DataFrame]:
     """Trend ve range motorlarını karışık toplam yerine ayrı kanıtla raporlar."""
     trend_bt = run_backtest(
         symbol=symbol,
@@ -7077,6 +7319,7 @@ def run_dual_engine_lab() -> tuple[pd.DataFrame, dict[str, BacktestResult], dict
     )
     results = {"TREND": trend_bt, "RANGE": range_bt}
     qualities: dict[str, dict] = {}
+    edge_reports: dict[str, dict] = {}
     rows = []
     for engine, result, label_text in [
         ("TREND", trend_bt, "Trend: düzeltme + tepki"),
@@ -7088,10 +7331,30 @@ def run_dual_engine_lab() -> tuple[pd.DataFrame, dict[str, BacktestResult], dict
             walk_forward_enabled=bool(walk_forward_enabled),
             walk_forward_folds=int(walk_forward_folds),
         )
-        qualities[engine] = {"label": quality, "css": css, "text": note, "walk_forward": wf}
+        edge_report = build_edge_validation_report(
+            symbol=symbol,
+            tf_name="15 Dakika",
+            period=strategy_lab_period,
+            bt=result,
+            cost_pips=float(spread_pips),
+            horizon_bars=int(edge_horizon_bars),
+            simulations=int(edge_simulations),
+            mean_block_length=5.0,
+            trial_count=int(edge_trial_count),
+            min_trades=int(edge_min_trades),
+        )
+        edge_reports[engine] = edge_report
+        qualities[engine] = {
+            "label": quality,
+            "css": css,
+            "text": note,
+            "walk_forward": wf,
+            "edge": edge_report,
+        }
         rows.append({
             "Motor": label_text,
-            "Kanıt": quality,
+            "Backtest Kalitesi": quality,
+            "Edge Kanıtı": edge_report.get("label", "HESAPLANAMADI"),
             "İşlem": extract_metric(result.metrics, "İşlem Sayısı") or "0",
             "Profit Factor": extract_metric(result.metrics, "Profit Factor") or "-",
             "Ortalama R": extract_metric(result.metrics, "Ortalama R") or "-",
@@ -7099,7 +7362,7 @@ def run_dual_engine_lab() -> tuple[pd.DataFrame, dict[str, BacktestResult], dict
             "Toplam PnL": extract_metric(result.metrics, "Toplam PnL") or "-",
             "Karar": note,
         })
-    return pd.DataFrame(rows), results, qualities
+    return pd.DataFrame(rows), results, qualities, edge_validation_table(edge_reports)
 
 
 if auto_plan_control and st.session_state.get("last_bt_key") != current_bt_key:
@@ -7119,13 +7382,14 @@ if run_model_compare_requested:
         st.session_state["entry_model_comparison_key"] = current_bt_key
 
 if run_dual_engine_lab_requested:
-    with st.spinner("Trend ve yatay piyasa motorları ayrı ayrı test ediliyor..."):
-        lab_table, lab_results, lab_qualities = run_dual_engine_lab()
-        lab_key = (normalize_symbol(symbol), str(strategy_lab_period), data_provider, session_filter, float(spread_pips))
+    with st.spinner("Trend/yatay motorları ve istatistiksel edge testleri çalışıyor..."):
+        lab_table, lab_results, lab_qualities, edge_table = run_dual_engine_lab()
+        lab_key = make_dual_engine_lab_key()
         st.session_state["dual_engine_lab_key"] = lab_key
         st.session_state["dual_engine_lab_table"] = lab_table
         st.session_state["dual_engine_lab_results"] = lab_results
         st.session_state["dual_engine_lab_qualities"] = lab_qualities
+        st.session_state["dual_engine_edge_table"] = edge_table
 
 if run_scanner_requested:
     scan_symbols = SYMBOL_LIST[:int(scanner_limit)]
@@ -7236,10 +7500,7 @@ market_regime = classify_market_regime(symbol, selected_tf)
 current_strategy_engine = "TREND" if market_regime.get("label") == "Trend" else (
     "RANGE" if market_regime.get("label") == "Yatay" else None
 )
-live_lab_key = (
-    normalize_symbol(symbol), str(strategy_lab_period), data_provider,
-    session_filter, float(spread_pips),
-)
+live_lab_key = make_dual_engine_lab_key()
 live_lab_matches = st.session_state.get("dual_engine_lab_key") == live_lab_key
 live_engine_qualities = st.session_state.get("dual_engine_lab_qualities", {}) if live_lab_matches else {}
 current_data_health = data_health_status(symbol, selected_tf)
@@ -7353,20 +7614,17 @@ simple_decision = apply_operational_safety_filters(
     block_sideways=block_sideways,
     daily_status=current_daily_status,
 )
-decision_lab_key = (
-    normalize_symbol(symbol), str(strategy_lab_period), data_provider,
-    session_filter, float(spread_pips),
+decision_lab_key = make_dual_engine_lab_key()
+decision_active_engine = "TREND" if market_regime.get("label") == "Trend" else (
+    "RANGE" if market_regime.get("label") == "Yatay" else None
 )
-if st.session_state.get("dual_engine_lab_key") == decision_lab_key:
-    decision_active_engine = "TREND" if market_regime.get("label") == "Trend" else (
-        "RANGE" if market_regime.get("label") == "Yatay" else None
-    )
-    decision_engine_qualities = st.session_state.get("dual_engine_lab_qualities", {})
-    simple_decision = apply_engine_evidence_filter(
-        simple_decision,
-        active_engine=decision_active_engine,
-        engine_quality=decision_engine_qualities.get(decision_active_engine, {}) if decision_active_engine else {},
-    )
+decision_lab_matches = st.session_state.get("dual_engine_lab_key") == decision_lab_key
+decision_engine_qualities = st.session_state.get("dual_engine_lab_qualities", {}) if decision_lab_matches else {}
+simple_decision = apply_engine_evidence_filter(
+    simple_decision,
+    active_engine=decision_active_engine,
+    engine_quality=decision_engine_qualities.get(decision_active_engine, {}) if decision_active_engine else {},
+)
 ml_blocks_trade, ml_block_reason = ml_should_block_trade(ml_prediction, float(ml_threshold_pct), ml_filter_enabled)
 
 if is_new_position_decision(str(simple_decision.get("action", ""))):
@@ -7430,14 +7688,15 @@ active_engine_name = {
     "TREND": "Trend motoru — düzeltme + tepki",
     "RANGE": "Yatay motor — Bollinger orta banda dönüş",
 }.get(active_engine, "Motor kapalı — piyasa rejimi geçişte")
-current_lab_key = (
-    normalize_symbol(symbol), str(strategy_lab_period), data_provider,
-    session_filter, float(spread_pips),
-)
+current_lab_key = make_dual_engine_lab_key()
 lab_matches = st.session_state.get("dual_engine_lab_key") == current_lab_key
 lab_qualities = st.session_state.get("dual_engine_lab_qualities", {}) if lab_matches else {}
 active_lab_quality = lab_qualities.get(active_engine, {}) if active_engine else {}
-engine_css = "ok-box" if active_lab_quality.get("label") == "İyi" else (
+active_edge_report = active_lab_quality.get("edge", {}) or {}
+active_edge_label = active_edge_report.get("label", "Test bekliyor")
+engine_css = "ok-box" if (
+    active_lab_quality.get("label") in {"İyi", "Orta"} and active_edge_label == "DOĞRULANDI"
+) else (
     "bad-box" if active_lab_quality.get("label") == "Zayıf" else "warn-box"
 )
 engine_evidence = active_lab_quality.get("label", "Test bekliyor")
@@ -7447,7 +7706,8 @@ engine_note = active_lab_quality.get(
 )
 st.markdown(
     f"<div class='{engine_css}'><b>Aktif motor: {escape(active_engine_name)}</b><br>"
-    f"Kanıt: {escape(str(engine_evidence))}<br>{escape(str(engine_note))}</div>",
+    f"Backtest kalitesi: {escape(str(engine_evidence))} · Edge: {escape(str(active_edge_label))}<br>"
+    f"{escape(str(engine_note))}<br>{escape(str(active_edge_report.get('text', 'Edge testi bekliyor.')))}</div>",
     unsafe_allow_html=True,
 )
 if data_provider != "MetaTrader 5":
@@ -7458,8 +7718,24 @@ if data_provider != "MetaTrader 5":
 lab_table = st.session_state.get("dual_engine_lab_table") if lab_matches else None
 if isinstance(lab_table, pd.DataFrame) and not lab_table.empty:
     st.dataframe(lab_table, use_container_width=True, hide_index=True)
-    if not bool(lab_table["Kanıt"].isin({"İyi", "Orta"}).any()):
-        st.error("İki motor da doğrulanmadı. Bu sembolde canlı LONG/SHORT için stratejik avantaj kanıtı yok.")
+    edge_table = st.session_state.get("dual_engine_edge_table")
+    if isinstance(edge_table, pd.DataFrame) and not edge_table.empty:
+        st.markdown("**Edge Doğrulama Laboratuvarı**")
+        st.dataframe(edge_table, use_container_width=True, hide_index=True)
+        st.caption(
+            "Bootstrap p: ortalama işlem R'sinin sıfırdan büyük olup olmadığını; zamanlama p: gerçek girişlerin "
+            "aynı sinyal dizisinin rastgele kaydırmalarından üstün olup olmadığını sınar. p değerleri denenen strateji "
+            "sayısıyla Bonferroni düzeltilmiştir. Radar skoru bir olasılık değildir."
+        )
+    verified = (
+        lab_table["Backtest Kalitesi"].isin({"İyi", "Orta"})
+        & lab_table["Edge Kanıtı"].eq("DOĞRULANDI")
+    )
+    if not bool(verified.any()):
+        st.error(
+            "İki motorun hiçbirinde hem backtest kalitesi hem istatistiksel edge doğrulanmadı. "
+            "Bu sembolde canlı LONG/SHORT için güvenilir stratejik avantaj kanıtı yok."
+        )
 
 st.subheader("Doğrulanmış işlem kararı")
 health_cols = st.columns(4)
