@@ -11,6 +11,22 @@ pip install -r requirements.txt
 streamlit run forex_web_app_streamlit_v14_alert_decision.py
 ```
 
+## Modüler yapı
+
+- `forex_web_app_streamlit_v14_alert_decision.py`: Streamlit giriş noktası ve ekran akışı.
+- `forex_config.py`: pariteler, zaman dilimleri, seanslar ve pip kuralları.
+- `forex_indicators.py`: RSI, MACD, Bollinger, ATR, Ichimoku ve EMA hesapları.
+- `forex_analysis.py`: piyasa yapısı, corrective/response fazı ve yön skoru.
+- `forex_decision_core.py`: dış bağımlılığı olmayan sinyal, pozisyon seviyesi ve istatistik kuralları.
+- `forex_edge.py`: bootstrap/circular-shift edge doğrulama orkestrasyonu ve raporu.
+- `forex_storage.py`: SQLite işlem günlüğü, alarm tekilleştirme ve webhook gönderimi.
+
+Modül testleri:
+
+```bash
+python -m unittest -v test_forex_decision_core.py test_forex_modules.py
+```
+
 ## Streamlit Community Cloud
 
 - Repository: `sefaayasin/forex-web-app`
