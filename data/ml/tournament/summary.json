@@ -1,0 +1,48 @@
+[
+  {
+    "task": "direction",
+    "pairs": 28,
+    "accuracy": 0.5278802021144963,
+    "balanced_accuracy": 0.5239898637351681,
+    "persistence_accuracy": 0.4943131023545286,
+    "majority_accuracy": 0.4966054821299479,
+    "auc": 0.5389005695896458,
+    "n_nonoverlap": 73362,
+    "positive_lift_ci_pairs": 15,
+    "confident_accuracy": 0.5278802021144963,
+    "confident_balanced_accuracy": 0.5239898637351681,
+    "confident_majority_accuracy": 0.4966054821299479,
+    "confident_baseline_accuracy": 0.4943131023545286,
+    "confident_coverage": 1.0,
+    "selected": {
+      "horizon": 4,
+      "bundle": "fomc",
+      "model": "extra_trees",
+      "development_balanced_accuracy": 0.5207446561335918,
+      "confidence_threshold": 0.5
+    }
+  },
+  {
+    "task": "high_volatility",
+    "pairs": 28,
+    "accuracy": 0.6770288057363196,
+    "balanced_accuracy": 0.6249058598685965,
+    "persistence_accuracy": 0.6201528625149593,
+    "majority_accuracy": 0.6418211599898465,
+    "auc": 0.7161941440490461,
+    "n_nonoverlap": 7681,
+    "positive_lift_ci_pairs": 10,
+    "confident_accuracy": 0.792328306992858,
+    "confident_balanced_accuracy": 0.689004945330459,
+    "confident_majority_accuracy": 0.7105554746987778,
+    "confident_baseline_accuracy": 0.7173684857478664,
+    "confident_coverage": 0.45707237824996866,
+    "selected": {
+      "horizon": 72,
+      "bundle": "fomc",
+      "model": "logistic",
+      "development_balanced_accuracy": 0.6278744931303362,
+      "confidence_threshold": 0.65
+    }
+  }
+]

@@ -1,0 +1,4760 @@
+[
+  {
+    "file": "historical\\AUDCAD.csv",
+    "bytes": 527235,
+    "rows": 4871,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\AUDCHF.csv",
+    "bytes": 527425,
+    "rows": 4869,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\AUDJPY.csv",
+    "bytes": 500205,
+    "rows": 4869,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\AUDNZD.csv",
+    "bytes": 524825,
+    "rows": 4870,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\AUDUSD.csv",
+    "bytes": 527058,
+    "rows": 4866,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\CADCHF.csv",
+    "bytes": 527006,
+    "rows": 4867,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\CADJPY.csv",
+    "bytes": 503194,
+    "rows": 4868,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\CHFJPY.csv",
+    "bytes": 513359,
+    "rows": 4868,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\EURAUD.csv",
+    "bytes": 524553,
+    "rows": 4868,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\EURCAD.csv",
+    "bytes": 522824,
+    "rows": 4852,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\EURCHF.csv",
+    "bytes": 523207,
+    "rows": 4850,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\EURGBP.csv",
+    "bytes": 527501,
+    "rows": 4869,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\EURJPY.csv",
+    "bytes": 516101,
+    "rows": 4852,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\EURNZD.csv",
+    "bytes": 523896,
+    "rows": 4868,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\EURUSD.csv",
+    "bytes": 522754,
+    "rows": 4850,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\EURZAR.csv",
+    "bytes": 519507,
+    "rows": 4851,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\GBPAUD.csv",
+    "bytes": 523488,
+    "rows": 4868,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\GBPCAD.csv",
+    "bytes": 523993,
+    "rows": 4868,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\GBPCHF.csv",
+    "bytes": 524138,
+    "rows": 4866,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\GBPJPY.csv",
+    "bytes": 516656,
+    "rows": 4866,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\GBPNZD.csv",
+    "bytes": 521188,
+    "rows": 4868,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\GBPUSD.csv",
+    "bytes": 523716,
+    "rows": 4863,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\NZDCAD.csv",
+    "bytes": 527384,
+    "rows": 4867,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\NZDCHF.csv",
+    "bytes": 527604,
+    "rows": 4864,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\NZDJPY.csv",
+    "bytes": 498933,
+    "rows": 4866,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\NZDUSD.csv",
+    "bytes": 527533,
+    "rows": 4867,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\USDCAD.csv",
+    "bytes": 524420,
+    "rows": 4866,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\USDCHF.csv",
+    "bytes": 526484,
+    "rows": 4864,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical\\USDJPY.csv",
+    "bytes": 512740,
+    "rows": 4850,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "Date",
+      "Adj Close",
+      "Close",
+      "High",
+      "Low",
+      "Open",
+      "Volume"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "historical_15m\\AUDCAD.csv",
+    "bytes": 24785649,
+    "rows": 466129,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\AUDCHF.csv",
+    "bytes": 24661529,
+    "rows": 466274,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\AUDJPY.csv",
+    "bytes": 22791720,
+    "rows": 464593,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\AUDNZD.csv",
+    "bytes": 24501683,
+    "rows": 465715,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 22:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\AUDUSD.csv",
+    "bytes": 24375476,
+    "rows": 461037,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-02 01:15:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\CADCHF.csv",
+    "bytes": 24611214,
+    "rows": 466448,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\CADJPY.csv",
+    "bytes": 23200773,
+    "rows": 466322,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\CHFJPY.csv",
+    "bytes": 23752456,
+    "rows": 460333,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\EURAUD.csv",
+    "bytes": 24589589,
+    "rows": 466513,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\EURCAD.csv",
+    "bytes": 24567076,
+    "rows": 466496,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\EURCHF.csv",
+    "bytes": 24442415,
+    "rows": 466541,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\EURGBP.csv",
+    "bytes": 24440965,
+    "rows": 464704,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\EURJPY.csv",
+    "bytes": 24514736,
+    "rows": 464590,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\EURNZD.csv",
+    "bytes": 24439478,
+    "rows": 465980,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\EURUSD.csv",
+    "bytes": 24660930,
+    "rows": 465464,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\EURZAR.csv",
+    "bytes": 198993,
+    "rows": 3546,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-11 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\GBPAUD.csv",
+    "bytes": 24656137,
+    "rows": 466255,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\GBPCAD.csv",
+    "bytes": 24772875,
+    "rows": 466291,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\GBPCHF.csv",
+    "bytes": 24428091,
+    "rows": 464312,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\GBPJPY.csv",
+    "bytes": 24543144,
+    "rows": 465077,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\GBPNZD.csv",
+    "bytes": 24530251,
+    "rows": 465421,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\GBPUSD.csv",
+    "bytes": 24544394,
+    "rows": 466604,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\NZDCAD.csv",
+    "bytes": 24449034,
+    "rows": 466372,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\NZDCHF.csv",
+    "bytes": 24454407,
+    "rows": 466337,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\NZDJPY.csv",
+    "bytes": 22665858,
+    "rows": 466439,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\NZDUSD.csv",
+    "bytes": 24269466,
+    "rows": 463721,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\USDCAD.csv",
+    "bytes": 24451614,
+    "rows": 466011,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\USDCHF.csv",
+    "bytes": 24464190,
+    "rows": 466130,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_15m\\USDJPY.csv",
+    "bytes": 24077819,
+    "rows": 466630,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:45:00+00:00"
+  },
+  {
+    "file": "historical_1d\\AUDCAD.csv",
+    "bytes": 288366,
+    "rows": 5224,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\AUDCHF.csv",
+    "bytes": 270043,
+    "rows": 4913,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\AUDJPY.csv",
+    "bytes": 267346,
+    "rows": 5222,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2009-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\AUDNZD.csv",
+    "bytes": 215960,
+    "rows": 3966,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\AUDUSD.csv",
+    "bytes": 320939,
+    "rows": 5847,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-02 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\CADCHF.csv",
+    "bytes": 253444,
+    "rows": 4599,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\CADJPY.csv",
+    "bytes": 158259,
+    "rows": 3031,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2011-01-02 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\CHFJPY.csv",
+    "bytes": 196547,
+    "rows": 3655,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\EURAUD.csv",
+    "bytes": 320067,
+    "rows": 5850,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\EURCAD.csv",
+    "bytes": 269033,
+    "rows": 4908,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\EURCHF.csv",
+    "bytes": 199052,
+    "rows": 3658,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\EURGBP.csv",
+    "bytes": 268944,
+    "rows": 4912,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\EURJPY.csv",
+    "bytes": 269121,
+    "rows": 4912,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\EURNZD.csv",
+    "bytes": 252159,
+    "rows": 4592,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2011-01-02 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\EURUSD.csv",
+    "bytes": 322575,
+    "rows": 5850,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\EURZAR.csv",
+    "bytes": 18478,
+    "rows": 313,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2025-01-01 00:00:00+00:00",
+    "end": "2025-12-31 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\GBPAUD.csv",
+    "bytes": 303226,
+    "rows": 5533,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\GBPCAD.csv",
+    "bytes": 288874,
+    "rows": 5223,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\GBPCHF.csv",
+    "bytes": 218120,
+    "rows": 3971,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2010-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\GBPJPY.csv",
+    "bytes": 269451,
+    "rows": 4909,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\GBPNZD.csv",
+    "bytes": 319617,
+    "rows": 5846,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\GBPUSD.csv",
+    "bytes": 303953,
+    "rows": 5536,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\NZDCAD.csv",
+    "bytes": 249391,
+    "rows": 4595,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\NZDCHF.csv",
+    "bytes": 317739,
+    "rows": 5849,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\NZDJPY.csv",
+    "bytes": 201168,
+    "rows": 3971,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2009-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\NZDUSD.csv",
+    "bytes": 300384,
+    "rows": 5534,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\USDCAD.csv",
+    "bytes": 285349,
+    "rows": 5224,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\USDCHF.csv",
+    "bytes": 285234,
+    "rows": 5226,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1d\\USDJPY.csv",
+    "bytes": 279979,
+    "rows": 5224,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\AUDCAD.csv",
+    "bytes": 5957330,
+    "rows": 110884,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\AUDCHF.csv",
+    "bytes": 5577482,
+    "rows": 104133,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\AUDJPY.csv",
+    "bytes": 5221446,
+    "rows": 105273,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-03-02 22:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\AUDNZD.csv",
+    "bytes": 5328832,
+    "rows": 100292,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 22:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\AUDUSD.csv",
+    "bytes": 6021029,
+    "rows": 112635,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-02 01:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\CADCHF.csv",
+    "bytes": 4961092,
+    "rows": 92858,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\CADJPY.csv",
+    "bytes": 4122804,
+    "rows": 81334,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\CHFJPY.csv",
+    "bytes": 4981514,
+    "rows": 95001,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\EURAUD.csv",
+    "bytes": 4685727,
+    "rows": 87638,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\EURCAD.csv",
+    "bytes": 5997762,
+    "rows": 112539,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\EURCHF.csv",
+    "bytes": 5061627,
+    "rows": 95347,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\EURGBP.csv",
+    "bytes": 5769705,
+    "rows": 108343,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\EURJPY.csv",
+    "bytes": 6175200,
+    "rows": 115685,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\EURNZD.csv",
+    "bytes": 4016239,
+    "rows": 75459,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\EURUSD.csv",
+    "bytes": 6149325,
+    "rows": 114653,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\EURZAR.csv",
+    "bytes": 120698,
+    "rows": 2120,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2025-12-01 00:00:00+00:00",
+    "end": "2026-08-31 23:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\GBPAUD.csv",
+    "bytes": 5707678,
+    "rows": 106878,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\GBPCAD.csv",
+    "bytes": 6012683,
+    "rows": 112001,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\GBPCHF.csv",
+    "bytes": 3695411,
+    "rows": 69506,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\GBPJPY.csv",
+    "bytes": 5616836,
+    "rows": 105253,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\GBPNZD.csv",
+    "bytes": 6209521,
+    "rows": 116535,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\GBPUSD.csv",
+    "bytes": 6181317,
+    "rows": 116114,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\NZDCAD.csv",
+    "bytes": 5180786,
+    "rows": 97253,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-06-01 21:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\NZDCHF.csv",
+    "bytes": 5829125,
+    "rows": 109893,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": true,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\NZDJPY.csv",
+    "bytes": 4877034,
+    "rows": 99052,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-03-02 22:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\NZDUSD.csv",
+    "bytes": 5745444,
+    "rows": 108370,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\USDCAD.csv",
+    "bytes": 5971994,
+    "rows": 112484,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\USDCHF.csv",
+    "bytes": 6196691,
+    "rows": 116659,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1h\\USDJPY.csv",
+    "bytes": 5895610,
+    "rows": 113026,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\AUDCAD.csv",
+    "bytes": 61237,
+    "rows": 873,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\AUDCHF.csv",
+    "bytes": 57860,
+    "rows": 822,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\AUDJPY.csv",
+    "bytes": 57701,
+    "rows": 873,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-12-26 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\AUDNZD.csv",
+    "bytes": 46253,
+    "rows": 667,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\AUDUSD.csv",
+    "bytes": 68430,
+    "rows": 977,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\CADCHF.csv",
+    "bytes": 54192,
+    "rows": 771,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\CADJPY.csv",
+    "bytes": 34174,
+    "rows": 510,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2010-12-31 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\CHFJPY.csv",
+    "bytes": 42350,
+    "rows": 616,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\EURAUD.csv",
+    "bytes": 68012,
+    "rows": 977,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\EURCAD.csv",
+    "bytes": 57374,
+    "rows": 823,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\EURCHF.csv",
+    "bytes": 42805,
+    "rows": 613,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\EURGBP.csv",
+    "bytes": 57409,
+    "rows": 824,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\EURJPY.csv",
+    "bytes": 57529,
+    "rows": 822,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\EURNZD.csv",
+    "bytes": 53751,
+    "rows": 769,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2010-12-31 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\EURUSD.csv",
+    "bytes": 68937,
+    "rows": 977,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\EURZAR.csv",
+    "bytes": 3963,
+    "rows": 53,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2024-12-27 00:00:00+00:00",
+    "end": "2025-12-26 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\GBPAUD.csv",
+    "bytes": 64594,
+    "rows": 926,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\GBPCAD.csv",
+    "bytes": 61537,
+    "rows": 875,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\GBPCHF.csv",
+    "bytes": 46434,
+    "rows": 667,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2010-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\GBPJPY.csv",
+    "bytes": 57710,
+    "rows": 823,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\GBPNZD.csv",
+    "bytes": 68065,
+    "rows": 977,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\GBPUSD.csv",
+    "bytes": 64755,
+    "rows": 926,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\NZDCAD.csv",
+    "bytes": 53520,
+    "rows": 770,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\NZDCHF.csv",
+    "bytes": 67827,
+    "rows": 977,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\NZDJPY.csv",
+    "bytes": 43759,
+    "rows": 668,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-12-26 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\NZDUSD.csv",
+    "bytes": 64182,
+    "rows": 925,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\USDCAD.csv",
+    "bytes": 60945,
+    "rows": 874,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\USDCHF.csv",
+    "bytes": 60879,
+    "rows": 874,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_1w\\USDJPY.csv",
+    "bytes": 60080,
+    "rows": 874,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2007-12-28 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "historical_30m\\AUDCAD.csv",
+    "bytes": 12468252,
+    "rows": 233091,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\AUDCHF.csv",
+    "bytes": 12411619,
+    "rows": 233167,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\AUDJPY.csv",
+    "bytes": 11457408,
+    "rows": 232313,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\AUDNZD.csv",
+    "bytes": 12331258,
+    "rows": 232893,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 22:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\AUDUSD.csv",
+    "bytes": 12274084,
+    "rows": 230569,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-02 01:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\CADCHF.csv",
+    "bytes": 12389774,
+    "rows": 233253,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\CADJPY.csv",
+    "bytes": 11678749,
+    "rows": 233173,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\CHFJPY.csv",
+    "bytes": 11946972,
+    "rows": 230229,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\EURAUD.csv",
+    "bytes": 12349154,
+    "rows": 233291,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\EURCAD.csv",
+    "bytes": 12358913,
+    "rows": 233269,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\EURCHF.csv",
+    "bytes": 12302965,
+    "rows": 233294,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\EURGBP.csv",
+    "bytes": 12296302,
+    "rows": 232361,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\EURJPY.csv",
+    "bytes": 12311734,
+    "rows": 232310,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\EURNZD.csv",
+    "bytes": 12288905,
+    "rows": 233085,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\EURUSD.csv",
+    "bytes": 12405427,
+    "rows": 232746,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\EURZAR.csv",
+    "bytes": 100614,
+    "rows": 1781,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-11 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\GBPAUD.csv",
+    "bytes": 12386394,
+    "rows": 233204,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\GBPCAD.csv",
+    "bytes": 12457636,
+    "rows": 233217,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\GBPCHF.csv",
+    "bytes": 12282295,
+    "rows": 232191,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\GBPJPY.csv",
+    "bytes": 12326083,
+    "rows": 232559,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\GBPNZD.csv",
+    "bytes": 12350024,
+    "rows": 232848,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\GBPUSD.csv",
+    "bytes": 12348088,
+    "rows": 233313,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\NZDCAD.csv",
+    "bytes": 12319791,
+    "rows": 233225,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\NZDCHF.csv",
+    "bytes": 12314862,
+    "rows": 233204,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\NZDJPY.csv",
+    "bytes": 11410562,
+    "rows": 233248,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\NZDUSD.csv",
+    "bytes": 12229989,
+    "rows": 231884,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\USDCAD.csv",
+    "bytes": 12306939,
+    "rows": 233019,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\USDCHF.csv",
+    "bytes": 12312424,
+    "rows": 233086,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_30m\\USDJPY.csv",
+    "bytes": 12116690,
+    "rows": 233325,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:30:00+00:00"
+  },
+  {
+    "file": "historical_4h\\AUDCAD.csv",
+    "bytes": 1561410,
+    "rows": 28662,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\AUDCHF.csv",
+    "bytes": 1459445,
+    "rows": 26916,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\AUDJPY.csv",
+    "bytes": 1368605,
+    "rows": 27208,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-03-02 20:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\AUDNZD.csv",
+    "bytes": 1396986,
+    "rows": 25929,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 20:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\AUDUSD.csv",
+    "bytes": 1578249,
+    "rows": 29115,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-02 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\CADCHF.csv",
+    "bytes": 1300542,
+    "rows": 24004,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\CADJPY.csv",
+    "bytes": 1082293,
+    "rows": 21022,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\CHFJPY.csv",
+    "bytes": 1304884,
+    "rows": 24558,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\EURAUD.csv",
+    "bytes": 1225833,
+    "rows": 22654,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\EURCAD.csv",
+    "bytes": 1570140,
+    "rows": 29088,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\EURCHF.csv",
+    "bytes": 1325035,
+    "rows": 24644,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\EURGBP.csv",
+    "bytes": 1510507,
+    "rows": 28005,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\EURJPY.csv",
+    "bytes": 1613923,
+    "rows": 29899,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\EURNZD.csv",
+    "bytes": 1052528,
+    "rows": 19506,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\EURUSD.csv",
+    "bytes": 1609142,
+    "rows": 29627,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\EURZAR.csv",
+    "bytes": 31581,
+    "rows": 548,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2025-12-01 00:00:00+00:00",
+    "end": "2026-08-31 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\GBPAUD.csv",
+    "bytes": 1493657,
+    "rows": 27625,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\GBPCAD.csv",
+    "bytes": 1575856,
+    "rows": 28951,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\GBPCHF.csv",
+    "bytes": 967145,
+    "rows": 17962,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\GBPJPY.csv",
+    "bytes": 1469789,
+    "rows": 27205,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\GBPNZD.csv",
+    "bytes": 1627286,
+    "rows": 30142,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\GBPUSD.csv",
+    "bytes": 1619475,
+    "rows": 30011,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\NZDCAD.csv",
+    "bytes": 1356990,
+    "rows": 25141,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-06-01 20:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\NZDCHF.csv",
+    "bytes": 1526911,
+    "rows": 28409,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\NZDJPY.csv",
+    "bytes": 1280030,
+    "rows": 25603,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-03-02 20:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\NZDUSD.csv",
+    "bytes": 1504878,
+    "rows": 28002,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\USDCAD.csv",
+    "bytes": 1564537,
+    "rows": 29074,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\USDCHF.csv",
+    "bytes": 1623224,
+    "rows": 30153,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_4h\\USDJPY.csv",
+    "bytes": 1545136,
+    "rows": 29215,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:00:00+00:00"
+  },
+  {
+    "file": "historical_5m\\AUDCAD.csv",
+    "bytes": 73455672,
+    "rows": 1397784,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\AUDCHF.csv",
+    "bytes": 73159619,
+    "rows": 1397970,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\AUDJPY.csv",
+    "bytes": 67491808,
+    "rows": 1393411,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\AUDNZD.csv",
+    "bytes": 72588223,
+    "rows": 1396059,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 22:05:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\AUDUSD.csv",
+    "bytes": 72324370,
+    "rows": 1382487,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-02 01:20:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\CADCHF.csv",
+    "bytes": 72952288,
+    "rows": 1398659,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\CADJPY.csv",
+    "bytes": 68724130,
+    "rows": 1398683,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\CHFJPY.csv",
+    "bytes": 70369467,
+    "rows": 1379558,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\EURAUD.csv",
+    "bytes": 72847061,
+    "rows": 1398860,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\EURCAD.csv",
+    "bytes": 72835779,
+    "rows": 1398737,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:10:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\EURCHF.csv",
+    "bytes": 72457840,
+    "rows": 1398766,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\EURGBP.csv",
+    "bytes": 72503326,
+    "rows": 1393732,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\EURJPY.csv",
+    "bytes": 72713076,
+    "rows": 1393139,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\EURNZD.csv",
+    "bytes": 72347408,
+    "rows": 1396326,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\EURUSD.csv",
+    "bytes": 72102304,
+    "rows": 1375201,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\EURZAR.csv",
+    "bytes": 585044,
+    "rows": 10547,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-02-11 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\GBPAUD.csv",
+    "bytes": 73013083,
+    "rows": 1397561,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\GBPCAD.csv",
+    "bytes": 73308294,
+    "rows": 1397354,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\GBPCHF.csv",
+    "bytes": 72399894,
+    "rows": 1391671,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\GBPJPY.csv",
+    "bytes": 72680225,
+    "rows": 1393596,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\GBPNZD.csv",
+    "bytes": 72491678,
+    "rows": 1393840,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\GBPUSD.csv",
+    "bytes": 67591449,
+    "rows": 1298448,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\NZDCAD.csv",
+    "bytes": 72440208,
+    "rows": 1398368,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\NZDCHF.csv",
+    "bytes": 72473545,
+    "rows": 1398247,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\NZDJPY.csv",
+    "bytes": 67108299,
+    "rows": 1398881,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\NZDUSD.csv",
+    "bytes": 59772022,
+    "rows": 1149669,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-03 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\USDCAD.csv",
+    "bytes": 62873851,
+    "rows": 1208397,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\USDCHF.csv",
+    "bytes": 68497445,
+    "rows": 1319201,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "historical_5m\\USDJPY.csv",
+    "bytes": 69306817,
+    "rows": 1356725,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "invalid_dates": 0,
+    "unordered": false,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 20:55:00+00:00"
+  },
+  {
+    "file": "news\\connections.csv",
+    "bytes": 7667,
+    "rows": 91,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date_a",
+      "event_a",
+      "currency_a",
+      "date_b",
+      "event_b",
+      "currency_b",
+      "days_apart"
+    ],
+    "start": "None",
+    "end": "None"
+  },
+  {
+    "file": "news\\cot\\cot_currency_positioning.csv",
+    "bytes": 347307,
+    "rows": 7320,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "currency",
+      "open_interest",
+      "noncommercial_long",
+      "noncommercial_short",
+      "noncommercial_net",
+      "commercial_net"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-08 00:00:00+00:00",
+    "end": "2026-09-08 00:00:00+00:00"
+  },
+  {
+    "file": "news\\events.csv",
+    "bytes": 283121,
+    "rows": 3253,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "currency",
+      "event",
+      "series_id",
+      "event_type",
+      "actual",
+      "previous",
+      "change"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-08-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\events_with_impact.csv",
+    "bytes": 3380719,
+    "rows": 22435,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "currency",
+      "event",
+      "series_id",
+      "event_type",
+      "actual",
+      "previous",
+      "change",
+      "pair",
+      "ret_1d_pct",
+      "ret_3d_pct",
+      "ret_5d_pct"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-02-01 00:00:00+00:00",
+    "end": "2026-08-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fomc_statements.csv",
+    "bytes": 16325,
+    "rows": 157,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "url",
+      "hawkish_count",
+      "dovish_count",
+      "sentiment_score",
+      "word_count"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-30 00:00:00+00:00",
+    "end": "2026-07-29 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\CPIAUCSL.csv",
+    "bytes": 4448,
+    "rows": 223,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-08-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\CPILFESL.csv",
+    "bytes": 4442,
+    "rows": 223,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-08-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\DCOILWTICO.csv",
+    "bytes": 84548,
+    "rows": 4690,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-02 00:00:00+00:00",
+    "end": "2026-09-09 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\DFEDTARU.csv",
+    "bytes": 108183,
+    "rows": 6480,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-12-16 00:00:00+00:00",
+    "end": "2026-09-12 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\ECBDFR.csv",
+    "bytes": 113927,
+    "rows": 6829,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\GDP.csv",
+    "bytes": 1631,
+    "rows": 74,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-04-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\INDPRO.csv",
+    "bytes": 4558,
+    "rows": 223,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-07-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\IRSTCI01AUM156N.csv",
+    "bytes": 3918,
+    "rows": 222,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-06-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\IRSTCI01CAM156N.csv",
+    "bytes": 5888,
+    "rows": 222,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-06-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\IRSTCI01CHM156N.csv",
+    "bytes": 3376,
+    "rows": 195,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2024-03-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\IRSTCI01EZM156N.csv",
+    "bytes": 4847,
+    "rows": 217,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-01-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\IRSTCI01GBM156N.csv",
+    "bytes": 4178,
+    "rows": 222,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-06-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\IRSTCI01JPM156N.csv",
+    "bytes": 4053,
+    "rows": 222,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-06-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\IRSTCI01NZM156N.csv",
+    "bytes": 3456,
+    "rows": 204,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2024-12-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\PAYEMS.csv",
+    "bytes": 4716,
+    "rows": 224,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-08-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\PCEPI.csv",
+    "bytes": 4331,
+    "rows": 223,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-07-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\RSAFS.csv",
+    "bytes": 4695,
+    "rows": 223,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-07-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\UMCSENT.csv",
+    "bytes": 3808,
+    "rows": 223,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-07-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\UNRATE.csv",
+    "bytes": 3585,
+    "rows": 223,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-08-01 00:00:00+00:00"
+  },
+  {
+    "file": "news\\fred\\VIXCLS.csv",
+    "bytes": 84715,
+    "rows": 4735,
+    "missing_cells": 0,
+    "duplicate_timestamps": 0,
+    "columns": [
+      "date",
+      "value"
+    ],
+    "invalid_dates": 0,
+    "start": "2008-01-02 00:00:00+00:00",
+    "end": "2026-09-10 00:00:00+00:00"
+  }
+]

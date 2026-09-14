@@ -1,0 +1,16 @@
+{
+  "direction": {
+    "horizon": 4,
+    "bundle": "fomc",
+    "model": "extra_trees",
+    "development_balanced_accuracy": 0.5207446561335918,
+    "confidence_threshold": 0.5
+  },
+  "high_volatility": {
+    "horizon": 72,
+    "bundle": "fomc",
+    "model": "logistic",
+    "development_balanced_accuracy": 0.6278744931303362,
+    "confidence_threshold": 0.65
+  }
+}

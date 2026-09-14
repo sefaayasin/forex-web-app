@@ -38,6 +38,7 @@ from plotly.subplots import make_subplots
 from forex_config import (
     ALERT_PAIR_GROUPS,
     BACKTEST_PERIODS,
+    EDGE_DUAL_ENGINE_TRIALS,
     INTRADAY_CHART_WINDOWS,
     MAJOR_PAIRS,
     MINOR_PAIRS,
@@ -5629,7 +5630,20 @@ def render_ml_prediction_card(ml_prediction: dict, threshold_pct: float, filter_
 with st.sidebar:
     st.header("Kontrol Paneli")
 
-    screen_mode = st.radio("Ekran", ["İşlem Asistanı", "Parite Alarm Ekranı"], index=0)
+    screen_options = ["İşlem Asistanı", "Parite Alarm Ekranı", "ML Laboratuvarı"]
+    screen_mode = st.radio("Ekran", screen_options, index=2 if st.query_params.get("view") == "ml" else 0)
+
+    if screen_mode == "ML Laboratuvarı":
+        st.caption("Model karşılaştırmaları, doğruluk ölçümleri ve heatmap'ler.")
+
+if screen_mode == "ML Laboratuvarı":
+    from forex_ml_panel import render_ml_panel
+
+    st.title("ML Laboratuvarı")
+    render_ml_panel()
+    st.stop()
+
+with st.sidebar:
 
     tf_options = list(TIMEFRAMES.keys())
     default_symbol = st.session_state.get("symbol", "EURUSD=X")
@@ -5893,13 +5907,9 @@ with st.sidebar:
             step=4,
             help="16 mum, sinyalden sonraki yaklaşık 4 saatlik yön avantajını sınar.",
         )
-        edge_trial_count = st.number_input(
-            "Denenen toplam strateji sayısı",
-            min_value=1,
-            max_value=200,
-            value=24,
-            step=1,
-            help="Bakılan motor/model/eşik kombinasyonlarının yaklaşık toplamı. Bonferroni düzeltmesinde kullanılır.",
+        st.caption(
+            f"Çoklu deneme düzeltmesi otomatik: seçili paritede TREND + RANGE = {EDGE_DUAL_ENGINE_TRIALS} hipotez. "
+            "Sonuç alındıktan sonra sembol/model seçmek doğrulama sayılmaz; ayrı OOS test gerekir."
         )
         edge_min_trades = st.number_input(
             "Edge için minimum işlem",
@@ -5932,7 +5942,7 @@ with st.sidebar:
         "strategy_lab_period": strategy_lab_period,
         "edge_simulations": int(edge_simulations),
         "edge_horizon_bars": int(edge_horizon_bars),
-        "edge_trial_count": int(edge_trial_count),
+        "edge_trial_count": EDGE_DUAL_ENGINE_TRIALS,
         "edge_min_trades": int(edge_min_trades),
         "market_structure_enabled": market_structure_enabled, "entry_model": entry_model,
         "rsi_regime_enabled": rsi_regime_enabled,
@@ -6204,7 +6214,7 @@ def make_dual_engine_lab_key() -> tuple:
         round(float(spread_pips), 4),
         int(edge_simulations),
         int(edge_horizon_bars),
-        int(edge_trial_count),
+        EDGE_DUAL_ENGINE_TRIALS,
         int(edge_min_trades),
     )
 
@@ -6277,7 +6287,7 @@ def run_dual_engine_lab() -> tuple[pd.DataFrame, dict[str, BacktestResult], dict
             horizon_bars=int(edge_horizon_bars),
             simulations=int(edge_simulations),
             mean_block_length=5.0,
-            trial_count=int(edge_trial_count),
+            trial_count=EDGE_DUAL_ENGINE_TRIALS,
             min_trades=int(edge_min_trades),
         )
         edge_reports[engine] = edge_report
@@ -6660,9 +6670,9 @@ if isinstance(lab_table, pd.DataFrame) and not lab_table.empty:
         st.markdown("**Edge Doğrulama Laboratuvarı**")
         st.dataframe(edge_table, use_container_width=True, hide_index=True)
         st.caption(
-            "Bootstrap p: ortalama işlem R'sinin sıfırdan büyük olup olmadığını; zamanlama p: gerçek girişlerin "
-            "aynı sinyal dizisinin rastgele kaydırmalarından üstün olup olmadığını sınar. p değerleri denenen strateji "
-            "sayısıyla Bonferroni düzeltilmiştir. Radar skoru bir olasılık değildir."
+            "Ana edge kapısı; pozitif ortalama R, %95 güven aralığı, son %30 OOS ve Bonferroni-düzeltilmiş "
+            "bootstrap testini birlikte kullanır. Circular-shift ayrı bir zamanlama teyididir; işlemi tek başına "
+            "reddeden ikinci kapı değildir. ADAY / DEMO gerçek işlem izni vermez. Radar skoru bir olasılık değildir."
         )
     verified = (
         lab_table["Backtest Kalitesi"].isin({"İyi", "Orta"})
@@ -7076,6 +7086,10 @@ else:
     if st.button("İşlem Günlüğünü Temizle"):
         clear_trade_journal()
         st.rerun()
+
+from forex_ml_panel import render_ml_panel
+
+render_ml_panel()
 
 with st.expander("Alarm Geçmişi", expanded=False):
     alert_history = alert_history_dataframe()

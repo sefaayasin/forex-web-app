@@ -59,6 +59,10 @@ TRADING_SESSIONS = {
     "Londra + New York Kesişimi": "OVERLAP",
 }
 
+# A single dual-engine laboratory run evaluates exactly two predeclared
+# hypotheses for the selected symbol: TREND and RANGE.
+EDGE_DUAL_ENGINE_TRIALS = 2
+
 
 def normalize_symbol(symbol: str) -> str:
     normalized = str(symbol).strip().upper().replace("/", "")

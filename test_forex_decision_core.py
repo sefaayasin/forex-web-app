@@ -137,12 +137,52 @@ class EdgeValidationTests(unittest.TestCase):
 
     def test_multiple_testing_adjustment_and_evidence_gate(self):
         self.assertAlmostEqual(bonferroni_adjust(0.01, 6), 0.06)
-        label, blockers = classify_edge_evidence(80, 0.2, 0.05, 0.02, 0.03, min_trades=60)
+        label, blockers = classify_edge_evidence(
+            trade_count=80,
+            average_r=0.2,
+            r_ci_low=0.05,
+            bootstrap_p_adjusted=0.02,
+            oos_trade_count=24,
+            oos_average_r=0.12,
+            min_trades=60,
+        )
         self.assertEqual(label, "DOĞRULANDI")
         self.assertEqual(blockers, [])
-        label, blockers = classify_edge_evidence(30, 0.2, 0.05, 0.02, 0.03, min_trades=60)
+        label, blockers = classify_edge_evidence(
+            trade_count=30,
+            average_r=0.2,
+            r_ci_low=0.05,
+            bootstrap_p_adjusted=0.02,
+            oos_trade_count=9,
+            oos_average_r=0.12,
+            min_trades=60,
+        )
         self.assertEqual(label, "YETERSİZ ÖRNEK")
         self.assertTrue(blockers)
+
+    def test_edge_candidate_and_oos_gate(self):
+        candidate, candidate_blockers = classify_edge_evidence(
+            trade_count=45,
+            average_r=0.15,
+            r_ci_low=-0.01,
+            bootstrap_p_adjusted=0.08,
+            oos_trade_count=14,
+            oos_average_r=0.10,
+            min_trades=60,
+        )
+        self.assertEqual(candidate, "ADAY / DEMO")
+        self.assertTrue(candidate_blockers)
+        rejected, blockers = classify_edge_evidence(
+            trade_count=80,
+            average_r=0.20,
+            r_ci_low=0.05,
+            bootstrap_p_adjusted=0.02,
+            oos_trade_count=24,
+            oos_average_r=-0.05,
+            min_trades=60,
+        )
+        self.assertEqual(rejected, "DOĞRULANMADI")
+        self.assertTrue(any("OOS" in blocker for blocker in blockers))
 
 
 if __name__ == "__main__":

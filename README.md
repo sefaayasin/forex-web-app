@@ -1,5 +1,13 @@
 # Forex Analyzer Pro
 
+Geniş model karşılaştırması, heatmap'ler ve otomatik tester:
+[ML_TOURNAMENT.md](ML_TOURNAMENT.md). Çalıştırma: `python forex_ml_tournament.py`.
+
+Yerel veri envanteri ve zaman sıralı makine öğrenmesi araştırması için
+[ML_RESEARCH.md](ML_RESEARCH.md) dosyasına bakın. Eğitim:
+`python forex_ml.py --symbols EURUSD GBPUSD USDJPY`.
+Sonuçlar uygulamadaki “Makine öğrenmesi — araştırma sonuçları” bölümünde görünür.
+
 Streamlit tabanlı çoklu zaman dilimi forex karar destek, risk planlama ve backtest uygulaması.
 
 > Bu proje yatırım tavsiyesi değildir. Gerçek işlemlerden önce demo hesapta ve broker verisiyle doğrulanmalıdır.
@@ -33,6 +41,11 @@ python -m unittest -v test_forex_decision_core.py test_forex_modules.py
 - Branch: `main`
 - Main file path: `forex_web_app_streamlit_v14_alert_decision.py`
 
+ML sonuçları için sol menüden `ML Laboratuvarı` seçin veya uygulama adresine
+`?view=ml` ekleyin. Hazır raporlar ve heatmap'ler depoya dahildir; sunucuda
+yeniden eğitim yapılmaz. Ham fiyat/haber arşivi ve büyük model/tahmin dosyaları
+yerelde tutulur. Eski `forex_web_app_streamlit.py` giriş yolu da güncel uygulamayı açar.
+
 Community Cloud ortamında MetaTrader 5 terminali çalışmaz. Uygulama veri kaynağını sessizce değiştirmez; Yahoo, yerel MT5 veya Broker CSV açıkça seçilir. SQLite günlükleri bulut yeniden başlatmalarında kalıcı olmayabilir.
 
 ## Rejim uyumlu çift motor
@@ -47,8 +60,10 @@ Community Cloud ortamında MetaTrader 5 terminali çalışmaz. Uygulama veri kay
 - Yüksek indikatör skoru kazanma olasılığı olarak yorumlanmaz.
 - Stationary bootstrap, işlem başına ortalama `R` sonucunun sıfırın gerçekten üzerinde olup olmadığını sınar ve %95 güven aralığını raporlar.
 - Circular-shift testi, gerçek giriş zamanlarını aynı LONG/SHORT dizisinin rastgele kaydırılmış zamanlarıyla karşılaştırır.
-- İki testin p-değeri, denenen strateji/model/eşik sayısı için Bonferroni yöntemiyle düzeltilir.
-- En az 60 işlem, pozitif ortalama R, sıfırın üzerinde %95 alt güven sınırı ve iki düzeltilmiş testte `p ≤ 0.05` birlikte sağlanmadan `DOĞRULANDI` sonucu verilmez.
+- Ana edge kapısı; en az 60 işlem, pozitif ortalama R, sıfırın üzerinde %95 alt güven sınırı, pozitif son-%30 OOS ortalama R ve düzeltilmiş bootstrap `p ≤ 0.05` şartlarını birlikte arar.
+- Circular-shift sonucu ayrı bir `Zamanlama Teyidi` olarak raporlanır; aynı örnekten üretilen ikinci bir zorunlu p-kapısı değildir.
+- Bonferroni çarpanı çift motor laboratuvarında kullanıcı tarafından değiştirilemez: seçili parite için önceden tanımlı `TREND + RANGE = 2` hipotezdir.
+- Kısmi fakat pozitif kanıt `ADAY / DEMO` olarak gösterilir; bu seviye gerçek işlem izni vermez.
 - Canlı işlem izni için aktif motorun backtest kalitesi `Orta/İyi` ve edge sonucu `DOĞRULANDI` olmalıdır.
 
 ## 6–12 aylık broker testi

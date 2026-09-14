@@ -126,17 +126,24 @@ def market_structure_frame(
     )
 
     body = close - open_
+    # Tepki mumu zaten bandın ucuna veya RSI aşırı bölgesine dayanmışsa hareket
+    # tükenmiş sayılır; bu durumda giriş, tepkinin peşinden geç kalmış olur.
+    band_pos_now = (close - out["BBLow"]) / (out["BBUp"] - out["BBLow"]).replace(0, np.nan)
+    long_not_exhausted = (band_pos_now <= 0.85) & (out["RSI14"] <= 72)
+    short_not_exhausted = (band_pos_now >= 0.15) & (out["RSI14"] >= 28)
     long_response = (
         long_correction
         & (close > high.shift(1))
         & (body >= atr * float(response_body_atr))
         & (close > out["EMA50"])
+        & long_not_exhausted
     )
     short_response = (
         short_correction
         & (close < low.shift(1))
         & (-body >= atr * float(response_body_atr))
         & (close < out["EMA50"])
+        & short_not_exhausted
     )
     out["ResponseSide"] = np.select([long_response, short_response], ["LONG", "SHORT"], default="NONE")
     out["CorrectionActive"] = long_correction | short_correction

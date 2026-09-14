@@ -37,7 +37,7 @@ def build_edge_validation_report(
     horizon_bars: int = 16,
     simulations: int = 1000,
     mean_block_length: float = 5.0,
-    trial_count: int = 24,
+    trial_count: int = 2,
     min_trades: int = 60,
 ) -> dict:
     """Test trade R and entry timing against dependency-preserving nulls."""
@@ -54,6 +54,9 @@ def build_edge_validation_report(
         "timing_mean_pips": np.nan,
         "timing_null_p95_pips": np.nan,
         "timing_percentile": np.nan,
+        "timing_evidence": "HESAPLANAMADI",
+        "oos_trade_count": 0,
+        "oos_average_r": np.nan,
         "blockers": ["Edge istatistik modülü kullanılamıyor"],
         "text": "Edge istatistik modülü kullanılamıyor.",
     }
@@ -111,18 +114,42 @@ def build_edge_validation_report(
     average_r = float(bootstrap.get("observed_mean", np.nan))
     ci_low = float(bootstrap.get("ci_low", np.nan))
     ci_high = float(bootstrap.get("ci_high", np.nan))
+    oos_start = max(1, int(len(r_values) * 0.70))
+    oos_values = r_values.iloc[oos_start:]
+    oos_average_r = float(oos_values.mean()) if not oos_values.empty else np.nan
+    timing_mean_pips = float(timing.get("observed_mean_pips", np.nan))
+    if (
+        np.isfinite(adjusted_timing_p)
+        and adjusted_timing_p <= 0.05
+        and np.isfinite(timing_mean_pips)
+        and timing_mean_pips > 0
+    ):
+        timing_evidence = "TEYİTLİ"
+    elif (
+        np.isfinite(adjusted_timing_p)
+        and adjusted_timing_p <= 0.10
+        and np.isfinite(timing_mean_pips)
+        and timing_mean_pips > 0
+    ):
+        timing_evidence = "ZAYIF TEYİT"
+    else:
+        timing_evidence = "TEYİT YOK"
     label, blockers = classify_edge_evidence(
         trade_count=len(r_values),
         average_r=average_r,
         r_ci_low=ci_low,
         bootstrap_p_adjusted=adjusted_bootstrap_p,
-        timing_p_adjusted=adjusted_timing_p,
+        oos_trade_count=len(oos_values),
+        oos_average_r=oos_average_r,
         min_trades=int(min_trades),
+        min_oos_trades=max(12, int(np.ceil(float(min_trades) * 0.20))),
         alpha=0.05,
     )
     text = (
         f"{len(r_values)} işlem; ortalama {average_r:.3f}R, %95 GA [{ci_low:.3f}, {ci_high:.3f}]. "
-        f"Düzeltilmiş bootstrap p={adjusted_bootstrap_p:.3f}, zamanlama p={adjusted_timing_p:.3f}."
+        f"Son %30 OOS: {len(oos_values)} işlem / {oos_average_r:.3f}R. "
+        f"Düzeltilmiş bootstrap p={adjusted_bootstrap_p:.3f}. "
+        f"Zamanlama: {timing_evidence} (düzeltilmiş p={adjusted_timing_p:.3f}); bu alan destekleyicidir."
     )
     if blockers:
         text += " Engeller: " + "; ".join(blockers) + "."
@@ -136,9 +163,12 @@ def build_edge_validation_report(
         "bootstrap_p_adjusted": adjusted_bootstrap_p,
         "timing_p": raw_timing_p,
         "timing_p_adjusted": adjusted_timing_p,
-        "timing_mean_pips": float(timing.get("observed_mean_pips", np.nan)),
+        "timing_mean_pips": timing_mean_pips,
         "timing_null_p95_pips": float(timing.get("null_p95_pips", np.nan)),
         "timing_percentile": float(timing.get("percentile", np.nan)),
+        "timing_evidence": timing_evidence,
+        "oos_trade_count": len(oos_values),
+        "oos_average_r": oos_average_r,
         "horizon_bars": int(horizon_bars),
         "trial_count": int(trial_count),
         "blockers": blockers,
@@ -167,7 +197,9 @@ def edge_validation_table(reports: dict[str, dict]) -> pd.DataFrame:
             "İşlem": int(report.get("trade_count", 0) or 0),
             "Ortalama R": fmt(report.get("average_r")),
             "%95 R Aralığı": f"{fmt(report.get('r_ci_low'))} – {fmt(report.get('r_ci_high'))}",
+            "Son %30 OOS": f"{int(report.get('oos_trade_count', 0) or 0)} / {fmt(report.get('oos_average_r'))}R",
             "Bootstrap p (düz.)": fmt(report.get("bootstrap_p_adjusted")),
+            "Zamanlama Teyidi": report.get("timing_evidence", "HESAPLANAMADI"),
             "Zamanlama p (düz.)": fmt(report.get("timing_p_adjusted")),
             "Gerçek ufuk pips": fmt(report.get("timing_mean_pips"), 2),
             "Null %95 pips": fmt(report.get("timing_null_p95_pips"), 2),

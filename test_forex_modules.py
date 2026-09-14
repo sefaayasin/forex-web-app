@@ -105,6 +105,36 @@ class EdgeModuleTests(unittest.TestCase):
         table = edge_validation_table({"TREND": report, "RANGE": report})
         self.assertEqual(list(table["Edge Kanıtı"]), ["YETERSİZ ÖRNEK", "YETERSİZ ÖRNEK"])
 
+    def test_timing_is_supportive_not_a_second_hard_gate(self):
+        index = pd.date_range("2025-01-01", periods=2000, freq="15min", tz="UTC")
+        raw = pd.DataFrame(
+            {"Open": np.ones(len(index)), "Close": np.ones(len(index))},
+            index=index,
+        )
+        entry_positions = list(range(20, 1620, 20))
+        trades = pd.DataFrame(
+            {
+                "PnL": [100.0] * len(entry_positions),
+                "Risk Amount": [100.0] * len(entry_positions),
+                "Entry Time": [index[position] for position in entry_positions],
+                "Side": ["LONG"] * len(entry_positions),
+            }
+        )
+        report = build_edge_validation_report(
+            symbol="EURUSD=X",
+            tf_name="15 Dakika",
+            period="60d",
+            bt=_BacktestStub(trades),
+            cost_pips=1.0,
+            fetch_ohlc_fn=lambda *_: raw,
+            simulations=500,
+            trial_count=2,
+            min_trades=60,
+        )
+        self.assertEqual(report["label"], "DOĞRULANDI")
+        self.assertEqual(report["timing_evidence"], "TEYİT YOK")
+        self.assertGreater(report["timing_p_adjusted"], 0.05)
+
 
 if __name__ == "__main__":
     unittest.main()

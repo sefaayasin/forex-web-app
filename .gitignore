@@ -9,3 +9,11 @@ venv/
 *.log
 cloudflared.exe
 
+# Local market archives and downloader caches; publish only research reports.
+data/historical*/
+data/news/
+data/ml/*_oos.csv
+data/ml/tournament/*.joblib
+data/ml/tournament/final_predictions.csv.gz
+tick_downloader/node_modules/
+tick_downloader/cache/

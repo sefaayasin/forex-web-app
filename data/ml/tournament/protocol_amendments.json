@@ -1,0 +1,6 @@
+{
+  "stage": "development_only_before_final_selection",
+  "data_quality": "Substantial OHLC bound errors are quarantined: exclude all labels crossing each bad bar and the next 1000 feature warmup bars. Original CSVs remain unchanged. First 720 completed development fits contained none of these substantial errors and remain reusable.",
+  "confidence_threshold": "After global model selection, refit on the same development folds only. Compare 0.50 through 0.90 in increments of 0.05 on non-overlapping observations. Require >=20% coverage and >=30 examples with both classes in each of the 14 currency/fold cells. Maximize mean balanced accuracy minus 0.5 standard deviation. Freeze one threshold per target before final evaluation.",
+  "interpretation": "Selective accuracy always reported alongside coverage, baseline accuracy on the same subset, and the full-sample metrics. This does not permit tuning on final results."
+}

@@ -1,0 +1,5 @@
+# Optional offline tournament; the main app can read its reports without these.
+-r requirements.txt
+catboost>=1.2,<2
+xgboost>=3,<4
+matplotlib>=3.9,<4

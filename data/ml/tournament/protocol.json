@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "seed": 2718,
+  "selection_symbols": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "USDCHF",
+    "NZDUSD"
+  ],
+  "models": [
+    "logistic",
+    "hist_boost",
+    "extra_trees",
+    "catboost",
+    "xgboost"
+  ],
+  "horizons": [
+    4,
+    24,
+    72
+  ],
+  "tasks": [
+    "direction",
+    "high_volatility"
+  ],
+  "bundles": [
+    "price",
+    "context",
+    "fomc",
+    "cot_exploratory"
+  ],
+  "development_folds": [
+    [
+      "2016-01-01",
+      "2019-01-01"
+    ],
+    [
+      "2019-01-01",
+      "2023-01-01"
+    ]
+  ],
+  "final_start": "2023-01-01 00:00:00+00:00",
+  "sampling": "every 4th UTC hour; label-end purged at every boundary",
+  "selection": "mean balanced accuracy minus 0.5 fold/currency standard deviation; one global configuration per target",
+  "cot_policy": "14-day assumed delay sensitivity only; cannot win deployable selection",
+  "final_policy": "No tuning on final results; prior EURUSD/GBPUSD/USDJPY final periods were previously inspected",
+  "source_hashes": {
+    "data\\historical_1h\\AUDCAD.csv": "c0c4f9a5b524c7a83cc0c5fbd15f36fbb398151fc261b75bfd533678c7a3ebb9",
+    "data\\historical_1h\\AUDCHF.csv": "603d087d6498bd04388a6692bf1ecf949c8b203f772bc451b81ee86da21e1b6d",
+    "data\\historical_1h\\AUDJPY.csv": "8409ecda49c5f3c8116172ec35ff6191f041fe3a4627ca983884609568029d9d",
+    "data\\historical_1h\\AUDNZD.csv": "934e858186a535f716d137a3bf119f996ece30d6a3724797c28799f7b599acf6",
+    "data\\historical_1h\\AUDUSD.csv": "2a18d22490167119e6c8251c0287d97620cb6667f9edef49c13d01fb02202b71",
+    "data\\historical_1h\\CADCHF.csv": "c5d833ddfa7c1b90ab9e23dfed5349a05fb35e79d149cc95b84d7fd6b61f488b",
+    "data\\historical_1h\\CADJPY.csv": "acbdb8ca4b598ccacb0dbcba36ef084221576f6c1d276d4af309e7618c605f04",
+    "data\\historical_1h\\CHFJPY.csv": "7e0f7dd4a32fbd251dce0545af3c4577322aa56da8879e9fddce0e403039581f",
+    "data\\historical_1h\\EURAUD.csv": "b47e7e9c565fc794f1480c32d6e0483feecb073997f7d32ed97bca9053ed25ba",
+    "data\\historical_1h\\EURCAD.csv": "296837ee8e36256ddf35f0751296857de9e740d0a05804ed5828366616735fe1",
+    "data\\historical_1h\\EURCHF.csv": "82ca59ca34c13dc4aeb1b4248e01b1c8fda7d9ca574802376789adc8a55177e1",
+    "data\\historical_1h\\EURGBP.csv": "1c883ab28dbc6d1e7c0f5a2ffd817022cd6cf5997ba2de9c69f2f64a8e0bdca0",
+    "data\\historical_1h\\EURJPY.csv": "d4f5fd6c7d7dacc9317af2b7445dbee09fbffc0f3e81d2e3de1f9d07ea8976dd",
+    "data\\historical_1h\\EURNZD.csv": "cbb3701b81f147499d5906c5eacc3c1679f39770d43fee497958fe0765ea48d2",
+    "data\\historical_1h\\EURUSD.csv": "a2c8f74ed25bf569933b5c5c6e9c6665a609112b0660d9e7d514046283237deb",
+    "data\\historical_1h\\EURZAR.csv": "509730c8225e749e42622934dc97c9563b07a99f2447f9d9188a7dcb8356c67d",
+    "data\\historical_1h\\GBPAUD.csv": "09cc94d59e1c43e17807f63d020113645321ffa19cc0aa2d0b1ac4e911920652",
+    "data\\historical_1h\\GBPCAD.csv": "9bc3841371c94556d9cfee445a8f3ed2c02b6bb5d4133f7da096f2784cca9b31",
+    "data\\historical_1h\\GBPCHF.csv": "92a31b6f1c53f01f8135a5faf949e934776a7ddde5f022261fe2d0d48a51dca1",
+    "data\\historical_1h\\GBPJPY.csv": "95774b0edd9128c7a149668850498a37e0bf911fabefc09a13e335f80bc1b6fd",
+    "data\\historical_1h\\GBPNZD.csv": "eb864df98a3e227f1628d52b217805f45f91516c4447bf4a1d48665c648027b4",
+    "data\\historical_1h\\GBPUSD.csv": "a629bdb27376ebde02cfd807d95b891ee273779a201932300d31e82692a40052",
+    "data\\historical_1h\\NZDCAD.csv": "c5859800f82850671e14d54baada522e9984cc560fbbffc4bb270877de921ee9",
+    "data\\historical_1h\\NZDCHF.csv": "b992cfd30a30e937398e17648380545ef036e598dfc62fd794e35766c787eaac",
+    "data\\historical_1h\\NZDJPY.csv": "838051ac4ee397be69db4a92a0a8431de5c5470320a56f11871cca547c016d95",
+    "data\\historical_1h\\NZDUSD.csv": "2471b03803fda19eda0320a5d4fdf99562ddccbd37402e0c4e7fc8f8c6ad34d1",
+    "data\\historical_1h\\USDCAD.csv": "21b1f4fd1320aab38443ca54c1f7190d2db6969bc81632640dc1bc236e8acf1a",
+    "data\\historical_1h\\USDCHF.csv": "13662c601a90b64e8a18ae22773307e15f5c2cc0787e90f712e7ed067bdb4df5",
+    "data\\historical_1h\\USDJPY.csv": "ddf03b4e09d17f03ef95709ac7c4bc0aadf1466491bf98bfab820292b7acc438"
+  },
+  "news_hashes": {
+    "data\\news\\fomc_statements.csv": "e5aa6087c407c0ee2487f823766d3e8b72a573a62d999e18a04b912a5877f6bc",
+    "data\\news\\cot\\cot_currency_positioning.csv": "f1b88531d1f429f3c01dc868c3a1ba055bb910c5793994a2ea41257b3881d643"
+  },
+  "versions": {
+    "numpy": "1.26.4",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.5.2",
+    "catboost": "1.2.8",
+    "xgboost": "3.0.2"
+  }
+}

@@ -270,11 +270,18 @@ def classify_edge_evidence(
     average_r: float,
     r_ci_low: float,
     bootstrap_p_adjusted: float,
-    timing_p_adjusted: float,
+    oos_trade_count: int,
+    oos_average_r: float,
     min_trades: int = 60,
+    min_oos_trades: int = 12,
     alpha: float = 0.05,
 ) -> tuple[str, list[str]]:
-    """Require sample size, positive R interval and two adjusted null tests."""
+    """Classify expectancy evidence without making timing a duplicate hard gate.
+
+    The primary claim is that the complete strategy has positive expectancy.
+    Entry timing is reported separately because it tests a different hypothesis
+    and is computed from the same market sample.
+    """
     blockers: list[str] = []
     if int(trade_count) < int(min_trades):
         blockers.append(f"İşlem sayısı {int(trade_count)}; minimum {int(min_trades)}")
@@ -284,8 +291,28 @@ def classify_edge_evidence(
         blockers.append("Ortalama R için %95 alt güven sınırı sıfırın üstünde değil")
     if _missing(bootstrap_p_adjusted) or float(bootstrap_p_adjusted) > float(alpha):
         blockers.append("Bootstrap edge testi çoklu-deneme düzeltmesinden geçmedi")
-    if _missing(timing_p_adjusted) or float(timing_p_adjusted) > float(alpha):
-        blockers.append("Giriş zamanlaması rastgele kaydırmadan üstün değil")
-    if int(trade_count) < int(min_trades):
+    if int(oos_trade_count) < int(min_oos_trades):
+        blockers.append(f"Son %30 OOS işlem sayısı {int(oos_trade_count)}; minimum {int(min_oos_trades)}")
+    if _missing(oos_average_r) or float(oos_average_r) <= 0:
+        blockers.append("Son %30 OOS ortalama R pozitif değil")
+
+    if not blockers:
+        return "DOĞRULANDI", []
+
+    candidate_min_trades = max(30, int(math.ceil(float(min_trades) * 2 / 3)))
+    candidate_min_oos = max(8, int(math.ceil(float(min_oos_trades) * 2 / 3)))
+    candidate = (
+        int(trade_count) >= candidate_min_trades
+        and not _missing(average_r)
+        and float(average_r) > 0
+        and not _missing(bootstrap_p_adjusted)
+        and float(bootstrap_p_adjusted) <= 0.10
+        and int(oos_trade_count) >= candidate_min_oos
+        and not _missing(oos_average_r)
+        and float(oos_average_r) > 0
+    )
+    if candidate:
+        return "ADAY / DEMO", blockers
+    if int(trade_count) < candidate_min_trades:
         return "YETERSİZ ÖRNEK", blockers
-    return ("DOĞRULANDI", []) if not blockers else ("DOĞRULANMADI", blockers)
+    return "DOĞRULANMADI", blockers

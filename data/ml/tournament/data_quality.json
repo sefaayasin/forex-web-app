@@ -1,0 +1,292 @@
+[
+  {
+    "symbol": "AUDCAD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 10,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 10
+  },
+  {
+    "symbol": "AUDCHF",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 22
+  },
+  {
+    "symbol": "AUDJPY",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 18
+  },
+  {
+    "symbol": "AUDNZD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 29
+  },
+  {
+    "symbol": "AUDUSD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 31,
+    "quarantined_rows": 4,
+    "bad_positions": [
+      7382,
+      7417,
+      7450,
+      7460
+    ],
+    "gaps_over_4_days": 7
+  },
+  {
+    "symbol": "CADCHF",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 32
+  },
+  {
+    "symbol": "CADJPY",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 42
+  },
+  {
+    "symbol": "CHFJPY",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 31
+  },
+  {
+    "symbol": "EURAUD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 32
+  },
+  {
+    "symbol": "EURCAD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 22,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 6
+  },
+  {
+    "symbol": "EURCHF",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 18,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 31
+  },
+  {
+    "symbol": "EURGBP",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 43,
+    "quarantined_rows": 17,
+    "bad_positions": [
+      96401,
+      96431,
+      96451,
+      96476,
+      96491,
+      96512,
+      96515,
+      96539,
+      96564,
+      96618,
+      96695,
+      96702,
+      96718,
+      96719,
+      96732,
+      96743,
+      96748
+    ],
+    "gaps_over_4_days": 13
+  },
+  {
+    "symbol": "EURJPY",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 2
+  },
+  {
+    "symbol": "EURNZD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 33
+  },
+  {
+    "symbol": "EURUSD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 13,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 4
+  },
+  {
+    "symbol": "EURZAR",
+    "status": "excluded",
+    "reason": "insufficient pre-2023 or final history"
+  },
+  {
+    "symbol": "GBPAUD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 16
+  },
+  {
+    "symbol": "GBPCAD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 4,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 8
+  },
+  {
+    "symbol": "GBPCHF",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 50
+  },
+  {
+    "symbol": "GBPJPY",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 17
+  },
+  {
+    "symbol": "GBPNZD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 0
+  },
+  {
+    "symbol": "GBPUSD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 1
+  },
+  {
+    "symbol": "NZDCAD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 20
+  },
+  {
+    "symbol": "NZDCHF",
+    "status": "included",
+    "reordered": true,
+    "repaired_bounds": 16,
+    "quarantined_rows": 9,
+    "bad_positions": [
+      97955,
+      97959,
+      97991,
+      98068,
+      98149,
+      98189,
+      98194,
+      98206,
+      98264
+    ],
+    "gaps_over_4_days": 13
+  },
+  {
+    "symbol": "NZDJPY",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 20
+  },
+  {
+    "symbol": "NZDUSD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 3,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 14
+  },
+  {
+    "symbol": "USDCAD",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 6
+  },
+  {
+    "symbol": "USDCHF",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 14,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 0
+  },
+  {
+    "symbol": "USDJPY",
+    "status": "included",
+    "reordered": false,
+    "repaired_bounds": 0,
+    "quarantined_rows": 0,
+    "bad_positions": [],
+    "gaps_over_4_days": 7
+  }
+]
