@@ -9,11 +9,15 @@ venv/
 *.log
 cloudflared.exe
 
-# Local market archives and downloader caches; publish only research reports.
+# Local market archives and downloader caches; publish only research reports
+# and the small reference files the live app needs to score new bars.
 data/historical*/
-data/news/
+data/news/*
+!data/news/fomc_statements.csv
 data/ml/*_oos.csv
 data/ml/tournament/*.joblib
+!data/ml/tournament/EURUSD_direction_research.joblib
+!data/ml/tournament/EURUSD_high_volatility_research.joblib
 data/ml/tournament/final_predictions.csv.gz
 tick_downloader/node_modules/
 tick_downloader/cache/

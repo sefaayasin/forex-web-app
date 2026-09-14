@@ -109,7 +109,13 @@ def build_features(bars, symbol, data_dir=ROOT / "data"):
     # No left-labeled daily/weekly candle can expose its future close.
     context = [c for c in x if not c.startswith("fomc_")]
     fomc = list(x.columns)
-    cot = pd.read_csv(Path(data_dir) / "news/cot/cot_currency_positioning.csv")
+    try:
+        cot = pd.read_csv(Path(data_dir) / "news/cot/cot_currency_positioning.csv")
+    except FileNotFoundError:
+        # COT history is a local research archive, not shipped with the live app.
+        # Only the "cot_exploratory" bundle needs it; "price"/"context"/"fomc" do not.
+        return x.replace([np.inf, -np.inf], np.nan), {
+            "price": price, "context": context, "fomc": fomc, "cot_exploratory": fomc}
     for side, ccy in (("base", symbol[:3]), ("quote", symbol[3:])):
         subset = cot.loc[cot.currency == ccy].copy().sort_values("date").drop_duplicates("date")
         if subset.empty:
