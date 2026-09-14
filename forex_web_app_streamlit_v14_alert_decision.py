@@ -199,25 +199,128 @@ st.set_page_config(page_title="Forex Analyzer Pro", layout="wide")
 st.markdown(
     """
     <style>
-        .small-muted { color:#6c757d; font-size:0.9rem; }
-        .simple-card {
-            padding: 20px;
-            border-radius: 18px;
-            border: 1px solid rgba(255,255,255,0.16);
-            margin: 14px 0 18px 0;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+        :root {
+            --fa-bg: #F4F6FC;
+            --fa-surface: #FFFFFF;
+            --fa-surface-alt: #F1F3FA;
+            --fa-border: #E4E7F2;
+            --fa-text: #1B1E2B;
+            --fa-text-muted: #676E85;
+            --fa-accent: #4F5BD5;
+            --fa-accent-strong: #3C46B0;
+            --fa-accent-soft: #EDEFFD;
+            --fa-success-bg: #E9F8EF;
+            --fa-success-border: #BCE8CE;
+            --fa-success-text: #147A47;
+            --fa-danger-bg: #FDECEC;
+            --fa-danger-border: #F5C2C2;
+            --fa-danger-text: #C0392B;
+            --fa-warn-bg: #FFF6E0;
+            --fa-warn-border: #FBE1A0;
+            --fa-warn-text: #92660A;
+            --fa-neutral-bg: #F1F2F8;
+            --fa-neutral-border: #E1E3EE;
+            --fa-neutral-text: #363B4A;
+            --fa-radius-lg: 18px;
+            --fa-radius-md: 14px;
+            --fa-radius-sm: 10px;
+            --fa-shadow-sm: 0 2px 10px rgba(27,30,43,0.05);
+            --fa-shadow-md: 0 10px 28px rgba(27,30,43,0.09);
         }
-        .simple-buy { background: #d1e7dd; color: #0f5132 !important; }
-        .simple-sell { background: #f8d7da; color: #842029 !important; }
-        .simple-wait { background: #fff3cd; color: #664d03 !important; }
-        .simple-pass { background: #e9ecef; color: #212529 !important; }
-        .simple-card.simple-buy, .simple-card.simple-buy * { color: #0f5132 !important; }
-        .simple-card.simple-sell, .simple-card.simple-sell * { color: #842029 !important; }
-        .simple-card.simple-wait, .simple-card.simple-wait * { color: #664d03 !important; }
-        .simple-card.simple-pass, .simple-card.simple-pass * { color: #212529 !important; }
+
+        /* ---------- App chrome ---------- */
+        .stApp { background: var(--fa-bg); }
+        h1, h2, h3 { color: var(--fa-text) !important; font-weight: 800 !important; letter-spacing: -0.01em; }
+        h1 { font-size: 2.0rem !important; }
+        [data-testid="stSidebar"] {
+            background: var(--fa-surface);
+            border-right: 1px solid var(--fa-border);
+        }
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+            font-size: 1.05rem !important;
+        }
+        .stButton>button, .stDownloadButton>button, .stFormSubmitButton>button {
+            border-radius: var(--fa-radius-sm) !important;
+            border: 1px solid var(--fa-border) !important;
+            font-weight: 700 !important;
+            box-shadow: none !important;
+        }
+        .stButton>button[kind="primary"], .stFormSubmitButton>button[kind="primary"] {
+            background: var(--fa-accent) !important;
+            border-color: var(--fa-accent) !important;
+        }
+        [data-testid="stExpander"] {
+            border: 1px solid var(--fa-border) !important;
+            border-radius: var(--fa-radius-md) !important;
+            background: var(--fa-surface);
+            box-shadow: var(--fa-shadow-sm);
+        }
+        [data-testid="stMetric"] {
+            background: var(--fa-surface);
+            border: 1px solid var(--fa-border);
+            border-radius: var(--fa-radius-md);
+            padding: 10px 14px;
+            box-shadow: var(--fa-shadow-sm);
+        }
+        [data-testid="stMetricValue"] { color: var(--fa-text) !important; font-weight: 800 !important; }
+        [data-testid="stMetricLabel"] { color: var(--fa-text-muted) !important; }
+        [data-testid="stDataFrame"], [data-testid="stTable"] {
+            border-radius: var(--fa-radius-md);
+            overflow: hidden;
+            border: 1px solid var(--fa-border);
+        }
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 4px;
+            border-bottom: 1px solid var(--fa-border);
+        }
+        .stTabs [data-baseweb="tab"] {
+            border-radius: var(--fa-radius-sm) var(--fa-radius-sm) 0 0 !important;
+            padding: 10px 18px !important;
+            font-weight: 700 !important;
+            color: var(--fa-text-muted) !important;
+        }
+        .stTabs [aria-selected="true"] {
+            background: var(--fa-accent-soft) !important;
+            color: var(--fa-accent-strong) !important;
+        }
+        .small-muted { color: var(--fa-text-muted); font-size:0.9rem; }
+        .section-kicker { color: var(--fa-text-muted); font-size:.82rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+
+        /* ---------- Shared status boxes ---------- */
+        .warn-box, .ok-box, .bad-box, .risk-box, .position-box {
+            padding: 14px 16px;
+            border-radius: var(--fa-radius-md);
+            font-weight: 550;
+            border: 1px solid var(--fa-border);
+            box-shadow: var(--fa-shadow-sm);
+        }
+        .warn-box { background: var(--fa-warn-bg); border-color: var(--fa-warn-border); color: var(--fa-warn-text) !important; }
+        .ok-box { background: var(--fa-success-bg); border-color: var(--fa-success-border); color: var(--fa-success-text) !important; }
+        .bad-box { background: var(--fa-danger-bg); border-color: var(--fa-danger-border); color: var(--fa-danger-text) !important; }
+        .risk-box, .position-box { background: var(--fa-surface-alt); color: var(--fa-text) !important; }
+        .warn-box b, .ok-box b, .bad-box b, .risk-box b, .position-box b { color: inherit !important; }
+        .warn-box *, .ok-box *, .bad-box * { color: inherit !important; }
+        .position-box, .position-box * { color: var(--fa-text) !important; }
+
+        /* ---------- Decision card ---------- */
+        .simple-card {
+            padding: 24px 26px;
+            border-radius: var(--fa-radius-lg);
+            border: 1px solid var(--fa-border);
+            margin: 14px 0 18px 0;
+            box-shadow: var(--fa-shadow-md);
+        }
+        .simple-buy { background: var(--fa-success-bg); color: var(--fa-success-text) !important; }
+        .simple-sell { background: var(--fa-danger-bg); color: var(--fa-danger-text) !important; }
+        .simple-wait { background: var(--fa-warn-bg); color: var(--fa-warn-text) !important; }
+        .simple-pass { background: var(--fa-neutral-bg); color: var(--fa-neutral-text) !important; }
+        .simple-card.simple-buy, .simple-card.simple-buy * { color: var(--fa-success-text) !important; }
+        .simple-card.simple-sell, .simple-card.simple-sell * { color: var(--fa-danger-text) !important; }
+        .simple-card.simple-wait, .simple-card.simple-wait * { color: var(--fa-warn-text) !important; }
+        .simple-card.simple-pass, .simple-card.simple-pass * { color: var(--fa-neutral-text) !important; }
         .simple-card ol { margin: 6px 0 0 22px; padding: 0; }
         .simple-card li { margin-bottom: 4px; }
-        .simple-action { font-size: 2.2rem; font-weight: 900; margin-bottom: 6px; }
+        .simple-action { font-size: 2.3rem; font-weight: 900; margin-bottom: 6px; letter-spacing: -0.01em; }
         .simple-subtitle { font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; }
         .simple-levels {
             display: grid;
@@ -226,220 +329,110 @@ st.markdown(
             margin-top: 12px;
         }
         .simple-level {
-            background: rgba(255,255,255,0.55);
-            padding: 10px;
-            border-radius: 12px;
-            border: 1px solid rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.6);
+            padding: 10px 12px;
+            border-radius: var(--fa-radius-sm);
+            border: 1px solid rgba(0,0,0,0.06);
         }
         .simple-level b { display:block; font-size:0.84rem; opacity:0.75; margin-bottom:3px; }
         .simple-level span { font-size:1.18rem; font-weight:800; }
-        .position-box {
-            padding: 14px;
-            border-radius: 14px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: #f8f9fa;
-            color: #212529 !important;
-            font-weight: 500;
-        }
-        .position-box, .position-box * { color: #212529 !important; }
-        .risk-box {
-            padding: 14px;
-            border-radius: 12px;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            color: #212529 !important;
-            font-weight: 500;
-        }
-        .risk-box, .risk-box * {
-            color: #212529 !important;
-        }
-        .warn-box {
-            padding: 12px;
-            border-radius: 12px;
-            background: #fff3cd;
-            border: 1px solid #ffe69c;
-            color: #664d03 !important;
-            font-weight: 500;
-        }
-        .ok-box {
-            padding: 12px;
-            border-radius: 12px;
-            background: #d1e7dd;
-            border: 1px solid #badbcc;
-            color: #0f5132 !important;
-            font-weight: 500;
-        }
-        .bad-box {
-            padding: 12px;
-            border-radius: 12px;
-            background: #f8d7da;
-            border: 1px solid #f5c2c7;
-            color: #842029 !important;
-            font-weight: 500;
-        }
-        .warn-box b, .ok-box b, .bad-box b, .risk-box b {
-            color: inherit !important;
-        }
+
         .decision-shell {
-            padding: 18px 20px;
-            border-radius: 10px;
-            border: 1px solid rgba(0,0,0,0.08);
-            background: #f8f9fa;
+            padding: 20px 22px;
+            border-radius: var(--fa-radius-lg);
+            border: 1px solid var(--fa-border);
+            background: var(--fa-surface-alt);
             margin: 10px 0 14px 0;
+            box-shadow: var(--fa-shadow-sm);
         }
-        .decision-shell h2 {
-            margin: 0 0 4px 0;
-            font-size: 2.0rem;
-            line-height: 1.08;
-        }
+        .decision-shell h2 { margin: 0 0 4px 0; font-size: 2.0rem; line-height: 1.08; }
         .decision-shell p { margin: 0; font-size: 1rem; }
-        .decision-buy { background:#d1e7dd; }
-        .decision-sell { background:#f8d7da; }
-        .decision-wait { background:#fff3cd; }
-        .decision-pass { background:#e9ecef; }
-        .decision-buy, .decision-buy * { color:#0f5132 !important; }
-        .decision-sell, .decision-sell * { color:#842029 !important; }
-        .decision-wait, .decision-wait * { color:#664d03 !important; }
-        .decision-pass, .decision-pass * { color:#212529 !important; }
-        .check-grid {
+        .decision-buy { background: var(--fa-success-bg); }
+        .decision-sell { background: var(--fa-danger-bg); }
+        .decision-wait { background: var(--fa-warn-bg); }
+        .decision-pass { background: var(--fa-neutral-bg); }
+        .decision-buy, .decision-buy * { color: var(--fa-success-text) !important; }
+        .decision-sell, .decision-sell * { color: var(--fa-danger-text) !important; }
+        .decision-wait, .decision-wait * { color: var(--fa-warn-text) !important; }
+        .decision-pass, .decision-pass * { color: var(--fa-neutral-text) !important; }
+
+        /* ---------- Checklists / step grids ---------- */
+        .check-grid, .entry-step-grid {
             display:grid;
             grid-template-columns: repeat(5, minmax(120px, 1fr));
             gap: 10px;
             margin: 8px 0 18px 0;
         }
-        .check-item {
+        .check-item, .entry-step {
             padding: 11px 12px;
-            border-radius: 8px;
-            background:#ffffff;
-            border: 1px solid #e9ecef;
-            color:#212529 !important;
+            border-radius: var(--fa-radius-sm);
+            background: var(--fa-surface);
+            border: 1px solid var(--fa-border);
+            color: var(--fa-text) !important;
             min-height: 70px;
+            box-shadow: var(--fa-shadow-sm);
         }
-        .check-item b { display:block; font-size:0.86rem; margin-bottom:4px; }
-        .check-item span { display:block; font-size:0.9rem; color:#495057 !important; }
-        .check-item, .check-item * { color:#212529 !important; }
-        .check-item span { color:#495057 !important; }
-        .check-ok { border-color:#badbcc; background:#f0f8f4; }
-        .check-warn { border-color:#ffe69c; background:#fff9e6; }
-        .check-bad { border-color:#f5c2c7; background:#fff1f2; }
+        .check-item b, .entry-step b { display:block; font-size:0.86rem; margin-bottom:4px; color: var(--fa-text) !important; }
+        .check-item span, .entry-step span { display:block; font-size:0.9rem; color: var(--fa-text-muted) !important; }
+        .check-item *, .entry-step * { color: inherit; }
+        .check-ok, .entry-step-ok { border-color: var(--fa-success-border); background: var(--fa-success-bg); }
+        .check-warn, .entry-step-warn { border-color: var(--fa-warn-border); background: var(--fa-warn-bg); }
+        .check-bad, .entry-step-bad { border-color: var(--fa-danger-border); background: var(--fa-danger-bg); }
+
+        /* ---------- Entry signal tracker ---------- */
         .entry-signal-shell {
             padding: 16px 18px;
-            border-radius: 10px;
-            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: var(--fa-radius-md);
+            border: 1px solid var(--fa-border);
             margin: 4px 0 12px 0;
+            box-shadow: var(--fa-shadow-sm);
         }
-        .entry-signal-title {
-            font-size: 0.86rem;
-            font-weight: 800;
-            opacity: 0.78;
-            margin-bottom: 4px;
-        }
-        .entry-signal-action {
-            font-size: 1.75rem;
-            font-weight: 900;
-            line-height: 1.1;
-            margin-bottom: 6px;
-        }
-        .entry-signal-summary {
-            font-size: 0.98rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
+        .entry-signal-title { font-size: 0.86rem; font-weight: 800; opacity: 0.78; margin-bottom: 4px; }
+        .entry-signal-action { font-size: 1.75rem; font-weight: 900; line-height: 1.1; margin-bottom: 6px; }
+        .entry-signal-summary { font-size: 0.98rem; font-weight: 600; margin-bottom: 10px; }
         .entry-signal-meta {
             display:grid;
             grid-template-columns: repeat(4, minmax(130px, 1fr));
             gap: 8px;
         }
         .entry-signal-meta div {
-            background: rgba(255,255,255,0.62);
-            border: 1px solid rgba(0,0,0,0.08);
-            border-radius: 8px;
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: var(--fa-radius-sm);
             padding: 9px 10px;
         }
-        .entry-signal-meta b {
-            display:block;
-            font-size: 0.78rem;
-            opacity: 0.72;
-            margin-bottom: 3px;
-        }
-        .entry-signal-meta span {
-            display:block;
-            font-size: 0.95rem;
-            font-weight: 800;
-        }
-        .entry-step-grid {
-            display:grid;
-            grid-template-columns: repeat(5, minmax(130px, 1fr));
-            gap: 10px;
-            margin: 8px 0 18px 0;
-        }
-        .entry-step {
-            padding: 11px 12px;
-            border-radius: 8px;
-            background:#ffffff;
-            border: 1px solid #e9ecef;
-            color:#212529 !important;
-            min-height: 74px;
-        }
-        .entry-step b { display:block; font-size:0.86rem; margin-bottom:4px; color:#212529 !important; }
-        .entry-step span { display:block; font-size:0.9rem; color:#495057 !important; }
-        .entry-step-ok { border-color:#badbcc; background:#f0f8f4; }
-        .entry-step-warn { border-color:#ffe69c; background:#fff9e6; }
-        .entry-step-bad { border-color:#f5c2c7; background:#fff1f2; }
-        .entry-signal-buy { background:#d1e7dd; color:#0f5132 !important; }
-        .entry-signal-sell { background:#f8d7da; color:#842029 !important; }
-        .entry-signal-wait { background:#fff3cd; color:#664d03 !important; }
-        .entry-signal-pass { background:#e9ecef; color:#212529 !important; }
-        .entry-signal-shell.entry-signal-buy, .entry-signal-shell.entry-signal-buy * { color:#0f5132 !important; }
-        .entry-signal-shell.entry-signal-sell, .entry-signal-shell.entry-signal-sell * { color:#842029 !important; }
-        .entry-signal-shell.entry-signal-wait, .entry-signal-shell.entry-signal-wait * { color:#664d03 !important; }
-        .entry-signal-shell.entry-signal-pass, .entry-signal-shell.entry-signal-pass * { color:#212529 !important; }
-        .entry-signal-shell .entry-signal-meta div {
-            background: rgba(255,255,255,0.72);
-            color:#212529 !important;
-        }
-        .entry-signal-shell .entry-signal-meta b {
-            color:#495057 !important;
-        }
-        .entry-signal-shell .entry-signal-meta span {
-            color:#212529 !important;
-        }
+        .entry-signal-meta b { display:block; font-size: 0.78rem; opacity: 0.72; margin-bottom: 3px; }
+        .entry-signal-meta span { display:block; font-size: 0.95rem; font-weight: 800; }
+        .entry-signal-buy { background: var(--fa-success-bg); color: var(--fa-success-text) !important; }
+        .entry-signal-sell { background: var(--fa-danger-bg); color: var(--fa-danger-text) !important; }
+        .entry-signal-wait { background: var(--fa-warn-bg); color: var(--fa-warn-text) !important; }
+        .entry-signal-pass { background: var(--fa-neutral-bg); color: var(--fa-neutral-text) !important; }
+        .entry-signal-shell.entry-signal-buy, .entry-signal-shell.entry-signal-buy * { color: var(--fa-success-text) !important; }
+        .entry-signal-shell.entry-signal-sell, .entry-signal-shell.entry-signal-sell * { color: var(--fa-danger-text) !important; }
+        .entry-signal-shell.entry-signal-wait, .entry-signal-shell.entry-signal-wait * { color: var(--fa-warn-text) !important; }
+        .entry-signal-shell.entry-signal-pass, .entry-signal-shell.entry-signal-pass * { color: var(--fa-neutral-text) !important; }
+        .entry-signal-shell .entry-signal-meta div { background: rgba(255,255,255,0.78); color: var(--fa-text) !important; }
+        .entry-signal-shell .entry-signal-meta b { color: var(--fa-text-muted) !important; }
+        .entry-signal-shell .entry-signal-meta span { color: var(--fa-text) !important; }
+
+        /* ---------- Logic notes ---------- */
         .logic-note {
             padding: 12px 14px;
-            border-radius: 10px;
-            border: 1px solid #ffe69c;
-            background: #fff9e6;
-            color: #664d03 !important;
+            border-radius: var(--fa-radius-sm);
+            border: 1px solid var(--fa-warn-border);
+            background: var(--fa-warn-bg);
+            color: var(--fa-warn-text) !important;
             font-weight: 500;
             margin: 0 0 14px 0;
         }
-        .logic-note, .logic-note * { color:#664d03 !important; }
+        .logic-note, .logic-note * { color: inherit !important; }
         .logic-note b { font-weight: 900; }
-        .logic-note-ok {
-            border-color:#badbcc;
-            background:#f0f8f4;
-            color:#0f5132 !important;
-        }
-        .logic-note-ok, .logic-note-ok * { color:#0f5132 !important; }
-        .logic-note-pass {
-            border-color:#f5c2c7;
-            background:#fff1f2;
-            color:#842029 !important;
-        }
-        .logic-note-pass, .logic-note-pass * { color:#842029 !important; }
-        .action-row {
-            display:flex;
-            gap:10px;
-            align-items:stretch;
-            flex-wrap:wrap;
-            margin: 4px 0 14px 0;
-        }
+        .logic-note-ok { border-color: var(--fa-success-border); background: var(--fa-success-bg); color: var(--fa-success-text) !important; }
+        .logic-note-pass { border-color: var(--fa-danger-border); background: var(--fa-danger-bg); color: var(--fa-danger-text) !important; }
+        .action-row { display:flex; gap:10px; align-items:stretch; flex-wrap:wrap; margin: 4px 0 14px 0; }
 
-        .alert-section-title {
-            font-size:1.35rem;
-            font-weight:900;
-            margin: 20px 0 10px 0;
-        }
+        /* ---------- Alert screen ---------- */
+        .alert-section-title { font-size:1.35rem; font-weight:900; margin: 20px 0 10px 0; color: var(--fa-text); }
         .alert-summary-row {
             display:grid;
             grid-template-columns: repeat(4, minmax(160px, 1fr));
@@ -448,49 +441,41 @@ st.markdown(
         }
         .alert-summary-box {
             padding: 14px 16px;
-            border-radius: 14px;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            color:#212529 !important;
+            border-radius: var(--fa-radius-md);
+            background: var(--fa-surface);
+            border: 1px solid var(--fa-border);
+            color: var(--fa-text) !important;
+            box-shadow: var(--fa-shadow-sm);
         }
-        .alert-summary-box, .alert-summary-box * { color:#212529 !important; }
+        .alert-summary-box, .alert-summary-box * { color: var(--fa-text) !important; }
         .alert-summary-box b { display:block; font-size:0.85rem; opacity:.72; }
         .alert-summary-box span { display:block; font-size:1.35rem; font-weight:950; margin-top:2px; }
         .alert-card {
             min-height: 190px;
-            padding: 14px;
-            border-radius: 16px;
-            border: 1px solid rgba(0,0,0,.10);
+            padding: 16px;
+            border-radius: var(--fa-radius-lg);
+            border: 1px solid var(--fa-border);
             margin-bottom: 12px;
-            box-shadow: 0 8px 22px rgba(0,0,0,.12);
+            box-shadow: var(--fa-shadow-md);
+            transition: transform .15s ease, box-shadow .15s ease;
         }
-        .alert-card, .alert-card * { color: #212529 !important; }
-        .alert-buy { background: #d1e7dd; border-color:#badbcc; }
-        .alert-sell { background: #f8d7da; border-color:#f5c2c7; }
-        .alert-wait { background: #fff3cd; border-color:#ffe69c; }
-        .alert-card-header {
-            display:flex;
-            justify-content:space-between;
-            align-items:flex-start;
-            gap:10px;
-            margin-bottom: 10px;
-        }
+        .alert-card:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(27,30,43,0.14); }
+        .alert-card, .alert-card * { color: var(--fa-text) !important; }
+        .alert-buy { background: var(--fa-success-bg); border-color: var(--fa-success-border); }
+        .alert-sell { background: var(--fa-danger-bg); border-color: var(--fa-danger-border); }
+        .alert-wait { background: var(--fa-warn-bg); border-color: var(--fa-warn-border); }
+        .alert-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom: 10px; }
         .alert-symbol { font-size:1.35rem; font-weight:950; }
         .alert-status { font-size:1.15rem; font-weight:950; }
-        .alert-status-buy { color:#0f5132 !important; }
-        .alert-status-sell { color:#842029 !important; }
-        .alert-status-wait { color:#664d03 !important; }
-        .alert-mini-grid {
-            display:grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap:6px;
-            margin: 8px 0 10px 0;
-        }
+        .alert-status-buy { color: var(--fa-success-text) !important; }
+        .alert-status-sell { color: var(--fa-danger-text) !important; }
+        .alert-status-wait { color: var(--fa-warn-text) !important; }
+        .alert-mini-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin: 8px 0 10px 0; }
         .alert-mini {
             padding:7px 5px;
-            border-radius:10px;
-            background: rgba(255,255,255,.62);
-            border: 1px solid rgba(0,0,0,.08);
+            border-radius: var(--fa-radius-sm);
+            background: rgba(255,255,255,.7);
+            border: 1px solid rgba(0,0,0,.06);
             text-align:center;
             font-size:.78rem;
             font-weight:800;
@@ -499,67 +484,50 @@ st.markdown(
         .alert-decision {
             margin-top:8px;
             padding:8px 10px;
-            border-radius:12px;
-            background: rgba(255,255,255,.70);
-            border: 1px solid rgba(0,0,0,.08);
+            border-radius: var(--fa-radius-sm);
+            background: rgba(255,255,255,.78);
+            border: 1px solid rgba(0,0,0,.06);
             font-size:.88rem;
             font-weight:900;
         }
-        .alert-decision small {
-            display:block;
-            font-size:.76rem;
-            font-weight:700;
-            opacity:.80;
-            margin-top:2px;
-        }
-        .alert-meta {
-            display:flex;
-            justify-content:space-between;
-            gap:8px;
-            margin-top:10px;
-            font-size:.82rem;
-            font-weight:800;
-            opacity:.9;
-        }
+        .alert-decision small { display:block; font-size:.76rem; font-weight:700; opacity:.80; margin-top:2px; }
+        .alert-meta { display:flex; justify-content:space-between; gap:8px; margin-top:10px; font-size:.82rem; font-weight:800; opacity:.9; }
+
+        /* ---------- Daily desk / opportunity card ---------- */
         .daily-desk {
-            padding: 16px 18px;
-            border-radius: 14px;
-            border: 1px solid #dfe3e8;
-            background: linear-gradient(135deg, #f8f9fa 0%, #eef3f8 100%);
-            color: #212529 !important;
+            padding: 18px 20px;
+            border-radius: var(--fa-radius-lg);
+            border: 1px solid var(--fa-border);
+            background: linear-gradient(135deg, var(--fa-surface) 0%, var(--fa-accent-soft) 100%);
+            color: var(--fa-text) !important;
             margin: 8px 0 14px 0;
+            box-shadow: var(--fa-shadow-sm);
         }
-        .daily-desk, .daily-desk * { color:#212529 !important; }
+        .daily-desk, .daily-desk * { color: var(--fa-text) !important; }
         .daily-desk-title { font-size:1.15rem; font-weight:900; margin-bottom:5px; }
-        .daily-desk-note { font-size:.92rem; color:#495057 !important; }
-        .daily-progress-track {
-            height: 12px;
-            border-radius: 999px;
-            background:#dee2e6;
-            overflow:hidden;
-            margin: 12px 0 8px 0;
-        }
-        .daily-progress-fill { height:100%; background:#198754; border-radius:999px; }
-        .section-kicker { color:#6c757d; font-size:.82rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+        .daily-desk-note { font-size:.92rem; color: var(--fa-text-muted) !important; }
+        .daily-progress-track { height: 12px; border-radius: 999px; background: var(--fa-border); overflow:hidden; margin: 12px 0 8px 0; }
+        .daily-progress-fill { height:100%; background: var(--fa-accent); border-radius:999px; }
         .opportunity-card {
             padding:18px;
-            border-radius:14px;
-            border:1px solid #dfe3e8;
-            background:#f8f9fa;
-            color:#212529 !important;
+            border-radius: var(--fa-radius-lg);
+            border: 1px solid var(--fa-border);
+            background: var(--fa-surface);
+            color: var(--fa-text) !important;
             min-height:310px;
+            box-shadow: var(--fa-shadow-sm);
         }
-        .opportunity-card, .opportunity-card * { color:#212529 !important; }
-        .opportunity-long { background:#e8f5ee; border-color:#badbcc; }
-        .opportunity-short { background:#fbeaec; border-color:#f5c2c7; }
-        .opportunity-neutral { background:#fff8e1; border-color:#ffe69c; }
+        .opportunity-card, .opportunity-card * { color: var(--fa-text) !important; }
+        .opportunity-long { background: var(--fa-success-bg); border-color: var(--fa-success-border); }
+        .opportunity-short { background: var(--fa-danger-bg); border-color: var(--fa-danger-border); }
+        .opportunity-neutral { background: var(--fa-warn-bg); border-color: var(--fa-warn-border); }
         .opportunity-title { font-size:1.45rem; font-weight:950; margin:4px 0 8px 0; }
         .opportunity-score { font-size:2rem; font-weight:950; line-height:1; margin:10px 0; }
         .opportunity-line { margin-top:8px; font-size:.92rem; }
+
         @media (max-width: 1100px) {
             .alert-summary-row { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
         }
-
         @media (max-width: 900px) {
             .simple-levels, .check-grid, .entry-signal-meta, .entry-step-grid {
                 grid-template-columns: repeat(2, minmax(120px, 1fr));
@@ -569,9 +537,7 @@ st.markdown(
             .simple-levels, .check-grid, .entry-signal-meta, .entry-step-grid {
                 grid-template-columns: 1fr;
             }
-            .simple-action, .decision-shell h2 {
-                font-size: 1.55rem;
-            }
+            .simple-action, .decision-shell h2 { font-size: 1.55rem; }
         }
     </style>
     """,
@@ -5305,12 +5271,6 @@ def render_ml_prediction_card(research_prediction: dict, side: Optional[str], sh
 with st.sidebar:
     st.header("Kontrol Paneli")
 
-    simple_view = st.checkbox(
-        "Basit görünüm",
-        value=True,
-        help="Açıkken sadece sinyal, sebebi ve giriş planını gösterir. Kapatırsan radar, çift motor, backtest ve işlem günlüğü de görünür.",
-    )
-
     screen_options = ["İşlem Asistanı", "Parite Alarm Ekranı", "ML Laboratuvarı"]
     screen_mode = st.radio("Ekran", screen_options, index=2 if st.query_params.get("view") == "ml" else 0)
 
@@ -6274,8 +6234,12 @@ intraday_opportunity = apply_opportunity_cooldown(
     cooldown_bars=16,
 )
 
-if not simple_view:
-    with st.expander("Gelişmiş: Piyasa Radarı ve Çift Motor", expanded=True):
+tab_signal, tab_chart, tab_position, tab_advanced = st.tabs(
+    ["📊 Sinyal", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
+)
+
+with tab_advanced:
+    with st.expander("Piyasa Radarı ve Çift Motor", expanded=True):
         st.header("24 Saatlik Fiyat ve Fırsat Radarı")
         change_table = intraday_change_snapshot(symbol)
         if not change_table.empty:
@@ -6353,153 +6317,157 @@ if not simple_view:
                     "Bu sembolde canlı LONG/SHORT için güvenilir stratejik avantaj kanıtı yok."
                 )
 
-st.subheader("Doğrulanmış işlem kararı")
-health_cols = st.columns(4)
-health_cols[0].metric("Veri", current_data_health.get("status", "-"))
-health_cols[1].metric("Piyasa", market_regime.get("label", "-"))
-health_cols[2].metric("Açık risk", f"%{current_portfolio_status.get('total_risk_pct', 0):.2f}")
-health_cols[3].metric("Haber", "ENGEL" if current_news_status.get("blocks_trade") else "TEMİZ")
-for title, status in [("Veri", current_data_health), ("Haber", current_news_status), ("Portföy", current_portfolio_status)]:
-    if status.get("blocks_trade"):
-        st.warning(f"{title}: {status.get('text', '-')}")
-evidence_status = strategy_evidence_status(matched_quality)
-st.markdown(
-    f"<div class='{evidence_status['css']}'><b>Strateji Kanıtı: {escape(evidence_status['label'])}</b><br>"
-    f"{escape(evidence_status['text'])}</div>",
-    unsafe_allow_html=True,
-)
-render_top_decision_panel(simple_decision)
-if beginner_mode:
-    if current_strategy_engine == "RANGE":
-        render_simple_decision_card(simple_decision)
-        st.caption("Yatay rejimde 4H/1H trend hunisi kullanılmaz; yalnız ayrı orta banda dönüş motoru değerlendirilir.")
+with tab_signal:
+    st.subheader("Doğrulanmış işlem kararı")
+    health_cols = st.columns(4)
+    health_cols[0].metric("Veri", current_data_health.get("status", "-"))
+    health_cols[1].metric("Piyasa", market_regime.get("label", "-"))
+    health_cols[2].metric("Açık risk", f"%{current_portfolio_status.get('total_risk_pct', 0):.2f}")
+    health_cols[3].metric("Haber", "ENGEL" if current_news_status.get("blocks_trade") else "TEMİZ")
+    for title, status in [("Veri", current_data_health), ("Haber", current_news_status), ("Portföy", current_portfolio_status)]:
+        if status.get("blocks_trade"):
+            st.warning(f"{title}: {status.get('text', '-')}")
+    evidence_status = strategy_evidence_status(matched_quality)
+    st.markdown(
+        f"<div class='{evidence_status['css']}'><b>Strateji Kanıtı: {escape(evidence_status['label'])}</b><br>"
+        f"{escape(evidence_status['text'])}</div>",
+        unsafe_allow_html=True,
+    )
+    render_top_decision_panel(simple_decision)
+    if beginner_mode:
+        if current_strategy_engine == "RANGE":
+            render_simple_decision_card(simple_decision)
+            st.caption("Yatay rejimde 4H/1H trend hunisi kullanılmaz; yalnız ayrı orta banda dönüş motoru değerlendirilir.")
+        else:
+            render_beginner_path(summary_df, matched_quality, entry_signal_tracker, selected_tf)
+        with st.expander("Neden böyle dedi?", expanded=False):
+            render_market_model_card(market_model_status)
+            render_ml_prediction_card(research_prediction, entry_signal_tracker.get("side"), ml_show_research_signal)
+            render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
+            render_entry_alarm_box(entry_signal_tracker)
+            render_entry_signal_tracker(entry_signal_tracker)
     else:
-        render_beginner_path(summary_df, matched_quality, entry_signal_tracker, selected_tf)
-    with st.expander("Neden böyle dedi?", expanded=False):
         render_market_model_card(market_model_status)
         render_ml_prediction_card(research_prediction, entry_signal_tracker.get("side"), ml_show_research_signal)
         render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
+        render_wait_reason_box(simple_decision, entry_signal_tracker)
         render_entry_alarm_box(entry_signal_tracker)
-        render_entry_signal_tracker(entry_signal_tracker)
-else:
-    render_market_model_card(market_model_status)
-    render_ml_prediction_card(research_prediction, entry_signal_tracker.get("side"), ml_show_research_signal)
-    render_signal_summary_card(simple_decision, entry_signal_tracker, market_regime, signal_mode)
-    render_wait_reason_box(simple_decision, entry_signal_tracker)
-    render_entry_alarm_box(entry_signal_tracker)
-    render_direction_trade_explanation(
-        final_label=final_label,
-        final_score=final_score,
-        selected_tf=selected_tf,
-        simple_decision=simple_decision,
-        matched_quality=matched_quality,
-        allowed_quality_labels=allowed_quality_labels,
-        entry_signal_tracker=entry_signal_tracker,
-    )
-    render_readiness_checklist(
-        build_readiness_items(
-            summary=summary_df,
+        render_direction_trade_explanation(
+            final_label=final_label,
+            final_score=final_score,
             selected_tf=selected_tf,
-            bt_tf=bt_tf,
+            simple_decision=simple_decision,
             matched_quality=matched_quality,
             allowed_quality_labels=allowed_quality_labels,
-            setup=preview_setup,
-            practical_signal_mode=practical_signal_mode,
-            signal_mode=signal_mode,
+            entry_signal_tracker=entry_signal_tracker,
         )
-    )
-    render_entry_signal_tracker(entry_signal_tracker)
-
-action_col, quality_col, risk_col = st.columns([1.2, 1.0, 1.0])
-with action_col:
-    main_run_bt_requested = st.button(
-        "Yeniden Hesapla",
-        type="primary",
-        use_container_width=True,
-        disabled=bt_tf != selected_tf,
-        key="main_run_bt",
-    )
-with quality_col:
-    st.metric("Strateji Kalitesi", current_quality_info.get("label", "Bekliyor"))
-with risk_col:
-    st.metric("İşlem Riski", f"{account_size * (risk_pct / 100):.2f}")
-
-if main_run_bt_requested:
-    run_and_store_backtest()
-    st.rerun()
-
-if not beginner_mode:
-    with st.expander("Kararın adımları", expanded=False):
-        render_simple_decision_card(simple_decision)
-
-if "scanner_df" in st.session_state and isinstance(st.session_state["scanner_df"], pd.DataFrame):
-    with st.expander("Parite Tarayıcı Sonuçları", expanded=False):
-        scanner_view = st.session_state["scanner_df"].copy()
-        st.dataframe(scanner_view, use_container_width=True, height=360)
-        st.download_button(
-            "Tarayıcı Sonucunu CSV İndir",
-            data=scanner_view.to_csv(index=False).encode("utf-8-sig"),
-            file_name="forex_pair_scanner.csv",
-            mime="text/csv",
+        render_readiness_checklist(
+            build_readiness_items(
+                summary=summary_df,
+                selected_tf=selected_tf,
+                bt_tf=bt_tf,
+                matched_quality=matched_quality,
+                allowed_quality_labels=allowed_quality_labels,
+                setup=preview_setup,
+                practical_signal_mode=practical_signal_mode,
+                signal_mode=signal_mode,
+            )
         )
-        st.caption("5 Dakika verisi Yahoo tarafında kısa geçmiş sunduğu için bazı paritelerde örnek sayısı yetersiz kalabilir.")
+        render_entry_signal_tracker(entry_signal_tracker)
 
-if show_position_tracker:
-    st.header("Pozisyon Takip Modu")
-    with st.expander("Açık pozisyonumu takip et", expanded=False):
-        default_side_tracker = preview_setup.side if preview_setup is not None else ("LONG" if "Alım" in final_label else "SHORT")
-        default_entry_tracker = float(preview_setup.entry) if preview_setup is not None else (float(price) if price is not None else 0.0)
-        default_stop_tracker = float(preview_setup.stop) if preview_setup is not None else 0.0
-        default_target_tracker = float(preview_setup.target) if preview_setup is not None else 0.0
-        dec_tracker = price_decimals(symbol)
-        pc1, pc2, pc3, pc4, pc5 = st.columns(5)
-        with pc1:
-            pos_side = st.selectbox("Pozisyon Yönü", ["LONG", "SHORT"], index=0 if default_side_tracker == "LONG" else 1, key="pos_side")
-        with pc2:
-            pos_entry = st.number_input("Giriş fiyatım", min_value=0.0, value=float(default_entry_tracker), step=get_pip_size(symbol), format=f"%.{dec_tracker}f", key="pos_entry")
-        with pc3:
-            pos_lot = st.number_input("Lot", min_value=0.0, value=float(preview_setup.estimated_lot) if preview_setup else 0.0, step=0.01, key="pos_lot")
-        with pc4:
-            pos_stop = st.number_input("Stop", min_value=0.0, value=float(default_stop_tracker), step=get_pip_size(symbol), format=f"%.{dec_tracker}f", key="pos_stop")
-        with pc5:
-            pos_target = st.number_input("Kâr Al", min_value=0.0, value=float(default_target_tracker), step=get_pip_size(symbol), format=f"%.{dec_tracker}f", key="pos_target")
-        tracker_result = build_position_tracker_result(
-            symbol=symbol,
-            side=pos_side,
-            entry=float(pos_entry),
-            current_price=price,
-            stop=float(pos_stop),
-            target=float(pos_target),
-            lot=float(pos_lot),
-            pip_value_per_lot=float(pip_value_per_lot),
-            final_label=final_label,
-            momentum_model=market_model_status,
+    action_col, quality_col, risk_col = st.columns([1.2, 1.0, 1.0])
+    with action_col:
+        main_run_bt_requested = st.button(
+            "Yeniden Hesapla",
+            type="primary",
+            use_container_width=True,
+            disabled=bt_tf != selected_tf,
+            key="main_run_bt",
         )
-        render_position_tracker_result(tracker_result, price, symbol)
+    with quality_col:
+        st.metric("Strateji Kalitesi", current_quality_info.get("label", "Bekliyor"))
+    with risk_col:
+        st.metric("İşlem Riski", f"{account_size * (risk_pct / 100):.2f}")
 
-left_col, right_col = st.columns([2.2, 1.0])
+    if main_run_bt_requested:
+        run_and_store_backtest()
+        st.rerun()
 
-with left_col:
-    fig, chart_df = plot_main_figure(symbol, chart_tf)
-    st.plotly_chart(fig, use_container_width=True)
+    if not beginner_mode:
+        with st.expander("Kararın adımları", expanded=False):
+            render_simple_decision_card(simple_decision)
 
-with right_col:
-    st.subheader("Piyasa Yönü")
-    st.plotly_chart(gauge_figure(final_label, final_score), use_container_width=True)
-    st.caption("Bu gösterge sadece yön gücüdür; LONG/SHORT kararı için İşlem Kararı ve Canlı Giriş Takibi geçmeli.")
-    regime_css = "ok-box" if market_regime.get("state") == "ok" else "warn-box"
-    st.markdown(
-        f"<div class='{regime_css}'><b>Piyasa Tipi: {market_regime.get('label', '-')}</b><br>{market_regime.get('text', '-')}</div>",
-        unsafe_allow_html=True,
-    )
+    if "scanner_df" in st.session_state and isinstance(st.session_state["scanner_df"], pd.DataFrame):
+        with st.expander("Parite Tarayıcı Sonuçları", expanded=False):
+            scanner_view = st.session_state["scanner_df"].copy()
+            st.dataframe(scanner_view, use_container_width=True, height=360)
+            st.download_button(
+                "Tarayıcı Sonucunu CSV İndir",
+                data=scanner_view.to_csv(index=False).encode("utf-8-sig"),
+                file_name="forex_pair_scanner.csv",
+                mime="text/csv",
+            )
+            st.caption("5 Dakika verisi Yahoo tarafında kısa geçmiş sunduğu için bazı paritelerde örnek sayısı yetersiz kalabilir.")
 
-    if final_label == "İşlem Yok":
-        st.markdown(f"<div class='warn-box'><b>Yön: {final_label}</b><br>{filter_note}</div>", unsafe_allow_html=True)
-    elif "Alım" in final_label:
-        st.markdown(f"<div class='ok-box'><b>Yön: {final_label}</b><br>{filter_note}<br><br>Bu tek başına işlem açma onayı değildir.</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div class='bad-box'><b>Yön: {final_label}</b><br>{filter_note}<br><br>Bu tek başına işlem açma onayı değildir.</div>", unsafe_allow_html=True)
+with tab_position:
+    if show_position_tracker:
+        st.header("Pozisyon Takip Modu")
+        with st.expander("Açık pozisyonumu takip et", expanded=False):
+            default_side_tracker = preview_setup.side if preview_setup is not None else ("LONG" if "Alım" in final_label else "SHORT")
+            default_entry_tracker = float(preview_setup.entry) if preview_setup is not None else (float(price) if price is not None else 0.0)
+            default_stop_tracker = float(preview_setup.stop) if preview_setup is not None else 0.0
+            default_target_tracker = float(preview_setup.target) if preview_setup is not None else 0.0
+            dec_tracker = price_decimals(symbol)
+            pc1, pc2, pc3, pc4, pc5 = st.columns(5)
+            with pc1:
+                pos_side = st.selectbox("Pozisyon Yönü", ["LONG", "SHORT"], index=0 if default_side_tracker == "LONG" else 1, key="pos_side")
+            with pc2:
+                pos_entry = st.number_input("Giriş fiyatım", min_value=0.0, value=float(default_entry_tracker), step=get_pip_size(symbol), format=f"%.{dec_tracker}f", key="pos_entry")
+            with pc3:
+                pos_lot = st.number_input("Lot", min_value=0.0, value=float(preview_setup.estimated_lot) if preview_setup else 0.0, step=0.01, key="pos_lot")
+            with pc4:
+                pos_stop = st.number_input("Stop", min_value=0.0, value=float(default_stop_tracker), step=get_pip_size(symbol), format=f"%.{dec_tracker}f", key="pos_stop")
+            with pc5:
+                pos_target = st.number_input("Kâr Al", min_value=0.0, value=float(default_target_tracker), step=get_pip_size(symbol), format=f"%.{dec_tracker}f", key="pos_target")
+            tracker_result = build_position_tracker_result(
+                symbol=symbol,
+                side=pos_side,
+                entry=float(pos_entry),
+                current_price=price,
+                stop=float(pos_stop),
+                target=float(pos_target),
+                lot=float(pos_lot),
+                pip_value_per_lot=float(pip_value_per_lot),
+                final_label=final_label,
+                momentum_model=market_model_status,
+            )
+            render_position_tracker_result(tracker_result, price, symbol)
 
+with tab_chart:
+    left_col, right_col = st.columns([2.2, 1.0])
+
+    with left_col:
+        fig, chart_df = plot_main_figure(symbol, chart_tf)
+        st.plotly_chart(fig, use_container_width=True)
+
+    with right_col:
+        st.subheader("Piyasa Yönü")
+        st.plotly_chart(gauge_figure(final_label, final_score), use_container_width=True)
+        st.caption("Bu gösterge sadece yön gücüdür; LONG/SHORT kararı için İşlem Kararı ve Canlı Giriş Takibi geçmeli.")
+        regime_css = "ok-box" if market_regime.get("state") == "ok" else "warn-box"
+        st.markdown(
+            f"<div class='{regime_css}'><b>Piyasa Tipi: {market_regime.get('label', '-')}</b><br>{market_regime.get('text', '-')}</div>",
+            unsafe_allow_html=True,
+        )
+
+        if final_label == "İşlem Yok":
+            st.markdown(f"<div class='warn-box'><b>Yön: {final_label}</b><br>{filter_note}</div>", unsafe_allow_html=True)
+        elif "Alım" in final_label:
+            st.markdown(f"<div class='ok-box'><b>Yön: {final_label}</b><br>{filter_note}<br><br>Bu tek başına işlem açma onayı değildir.</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div class='bad-box'><b>Yön: {final_label}</b><br>{filter_note}<br><br>Bu tek başına işlem açma onayı değildir.</div>", unsafe_allow_html=True)
+
+with tab_signal:
     st.subheader("Risk Planı")
 
     # Risk Planı, yukarıda hesaplanan aynı sembol + aynı giriş zaman dilimi backtest kalitesine bağlıdır.
@@ -6574,15 +6542,15 @@ with right_col:
             )
             st.caption(setup.note)
 
-with st.expander("Teknik Detaylar", expanded=False):
-    st.subheader("Çoklu Zaman Dilimi Karar Tablosu")
-    st.dataframe(summary_df, use_container_width=True, height=190)
-    st.subheader("Skor Detayı")
-    st.dataframe(detail_df, use_container_width=True)
-    st.subheader("Giriş Tetikleyici Paneli")
-    st.plotly_chart(plot_live_trigger(symbol, chart_tf, final_label), use_container_width=True)
+with tab_advanced:
+    with st.expander("Teknik Detaylar", expanded=False):
+        st.subheader("Çoklu Zaman Dilimi Karar Tablosu")
+        st.dataframe(summary_df, use_container_width=True, height=190)
+        st.subheader("Skor Detayı")
+        st.dataframe(detail_df, use_container_width=True)
+        st.subheader("Giriş Tetikleyici Paneli")
+        st.plotly_chart(plot_live_trigger(symbol, chart_tf, final_label), use_container_width=True)
 
-if not simple_view:
     st.divider()
     st.header("Backtest")
     st.caption("Bu MTF backtest, canlı sistemle aynı ana mantığı kullanır: 4H + 1H yön filtresi, 5M için 15M teyidi, sinyal barı kapandıktan sonra sonraki bar açılışı. Aynı mumda hem TP hem SL görülürse muhafazakâr olarak SL kabul edilir.")
