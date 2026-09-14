@@ -90,7 +90,10 @@ def build_research_prediction(symbol: str, task: str = "direction", bars: Option
         return {"status": "insufficient_data", "text": "Son mumda eksik özellik değeri var."}
 
     model = bundle["model"]
-    probability_up = float(model.predict_proba(row)[:, 1][0])
+    try:
+        probability_up = float(model.predict_proba(row)[:, 1][0])
+    except Exception as exc:  # noqa: BLE001 - e.g. a scikit-learn version mismatch on the host
+        return {"status": "error", "text": f"Model çalıştırılamadı (sürüm uyuşmazlığı olabilir): {exc}"}
 
     return {
         "status": "ready",
