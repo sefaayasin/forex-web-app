@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from html import escape
 from io import BytesIO
@@ -70,6 +70,7 @@ from forex_indicators import (
     compute_rsi,
 )
 from forex_edge import build_edge_validation_report, edge_validation_table
+from forex_diagnostics import engine_evidence_summary, funnel_rows
 from forex_ml_live import build_research_prediction, research_signal_alignment
 from forex_storage import (
     APP_DB_PATH,
@@ -1288,6 +1289,7 @@ class BacktestResult:
     metrics: pd.DataFrame
     trades: pd.DataFrame
     equity: pd.DataFrame
+    diagnostics: dict = field(default_factory=dict)
 
 
 def _utc_index_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -1531,6 +1533,9 @@ def run_backtest(
         else:
             aligned_structures[tf] = structure.reindex(df.index, method="ffill")
 
+    counts = dict.fromkeys(['Giriş için incelenen mum', 'Yön ve skor', 'Yapı ve giriş modeli', 'RSI yönü', 'RSI uyumsuzluğu', 'Oynaklık', 'MACD yönü', 'MACD uyumsuzluğu', 'İşlem saatleri', 'İşlemler arası bekleme', 'Aynı yönde tekrar', 'Açılan işlem'], 0)
+    diagnostics = {"counts": counts, "raw_bars": len(raw), "usable_bars": len(df), "start": str(df.index[0]), "end": str(df.index[-1]), "period": period, "session": session_filter}
+
     pip = get_pip_size(symbol)
     balance = initial_balance
     equity_rows = []
@@ -1636,6 +1641,7 @@ def run_backtest(
                     open_trade["BreakEvenMoved"] = True
 
         if open_trade is None and not closed_this_bar:
+            counts["Giriş için incelenen mum"] += 1
             entry_score = float(previous["Score"])
 
             h4_score = entry_score if tf_name == "4 Saat" else _aligned_value(aligned_scores.get("4 Saat"), prev_ts)
@@ -1644,6 +1650,7 @@ def run_backtest(
 
             sig, reason = mtf_signal_decision(entry_score, h4_score, h1_score, m15_score, tf_name, signal_threshold)
 
+            counts['Yön ve skor'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and market_structure_enabled:
                 requested_side = sig
                 entry_structure = str(previous.get("CombinedDirection", "NONE"))
@@ -1666,6 +1673,7 @@ def run_backtest(
                     sig = "NONE"
                     reason = f"{tf_name} corrective response veya Bollinger trend açılımı bekleniyor"
 
+            counts['Yapı ve giriş modeli'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and rsi_regime_enabled:
                 required_regime = "BULLISH" if sig == "LONG" else "BEARISH"
                 actual_regime = str(previous.get("RSIRegime", "NEUTRAL"))
@@ -1673,6 +1681,7 @@ def run_backtest(
                     sig = "NONE"
                     reason = f"RSI 50 rejimi giriş yönünü doğrulamıyor: {actual_regime}"
 
+            counts['RSI yönü'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and rsi_divergence_filter_enabled:
                 requested_side = sig
                 opposing_divergence = "BEARISH" if sig == "LONG" else "BULLISH"
@@ -1681,10 +1690,12 @@ def run_backtest(
                     sig = "NONE"
                     reason = f"Ters RSI uyumsuzluğu yeni {requested_side} girişini engelledi"
 
+            counts['RSI uyumsuzluğu'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and bb_extreme_volatility_block and bool(previous.get("BBExtremeVolatility", False)):
                 sig = "NONE"
                 reason = "Bollinger genişliği tarihsel %95 bölgesinde; aşırı volatilite filtresi"
 
+            counts['Oynaklık'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and macd_confirmation_enabled:
                 required_macd = "BULLISH" if sig == "LONG" else "BEARISH"
                 actual_macd = str(previous.get("MACDRegime", "TRANSITION"))
@@ -1695,6 +1706,7 @@ def run_backtest(
                     sig = "NONE"
                     reason = f"MACD sıfır rejimi uygun değil: {actual_macd}, gerekli {required_macd}"
 
+            counts['MACD yönü'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and macd_divergence_filter_enabled:
                 requested_side = sig
                 opposing_macd_divergence = "BEARISH" if sig == "LONG" else "BULLISH"
@@ -1703,14 +1715,17 @@ def run_backtest(
                     sig = "NONE"
                     reason = f"Ters MACD/histogram uyumsuzluğu yeni {requested_side} girişini engelledi"
 
+            counts['MACD uyumsuzluğu'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and not is_in_trading_session(ts, session_filter):
                 sig = "NONE"
                 reason = f"Seans filtresi dışında: {session_filter}"
 
+            counts['İşlem saatleri'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and cooldown_bars > 0 and (i - last_exit_i) <= cooldown_bars:
                 sig = "NONE"
                 reason = f"Cooldown filtresi: son işlemden sonra {cooldown_bars} mum bekleniyor"
 
+            counts['İşlemler arası bekleme'] += int(sig in {"LONG", "SHORT"})
             # Aynı yön filtresi: uzun süre sonra gelen yeni setup yeni trend dalgası kabul edilir.
             if sig != "NONE" and last_entry_side == sig and (i - last_entry_i) > max(cooldown_bars * 3, 20):
                 same_direction_entries = 0
@@ -1719,6 +1734,7 @@ def run_backtest(
                 sig = "NONE"
                 reason = f"Tekrar sinyal filtresi: aynı yönde maksimum {max_same_direction_trades} işlem sınırı"
 
+            counts['Aynı yönde tekrar'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE":
                 atr = float(previous["ATR14"])
                 entry = float(current["Open"])
@@ -1747,6 +1763,7 @@ def run_backtest(
                         stop = entry + stop_distance
                         target = entry - target_distance
 
+                    counts["Açılan işlem"] += 1
                     candidate_trade = {
                         "EntryTime": ts,
                         "EntryIndex": i,
@@ -1815,7 +1832,7 @@ def run_backtest(
 
     if trades_df.empty:
         metrics = pd.DataFrame({"Metrik": ["İşlem Sayısı", "Not"], "Değer": ["0", "MTF filtrelerle bu periyotta işlem oluşmadı"]})
-        return BacktestResult(metrics, trades_df, equity_df)
+        return BacktestResult(metrics, trades_df, equity_df, diagnostics)
 
     wins = trades_df[trades_df["PnL"] > 0]
     losses = trades_df[trades_df["PnL"] <= 0]
@@ -1873,7 +1890,7 @@ def run_backtest(
     ], columns=["Metrik", "Değer"])
     metrics["Değer"] = metrics["Değer"].astype(str)
 
-    return BacktestResult(metrics, trades_df, equity_df)
+    return BacktestResult(metrics, trades_df, equity_df, diagnostics)
 
 
 def run_range_mean_reversion_backtest(
@@ -1907,6 +1924,9 @@ def run_range_mean_reversion_backtest(
     if len(df) < 100 or not set(needed).issubset(df.columns):
         metrics = pd.DataFrame({"Metrik": ["Durum"], "Değer": ["Rejim modeli için veri yetersiz"]})
         return BacktestResult(metrics, pd.DataFrame(), pd.DataFrame())
+
+    counts = dict.fromkeys(['Giriş için incelenen mum', 'Bant dönüş tetiği', 'Yatay piyasa', 'Oynaklık', 'RSI / MACD uyumsuzluğu', 'İşlem saatleri', 'İşlemler arası bekleme', 'Hedef / risk ve maliyet', 'Açılan işlem'], 0)
+    diagnostics = {"counts": counts, "raw_bars": len(raw), "usable_bars": len(df), "start": str(df.index[0]), "end": str(df.index[-1]), "period": period, "session": session_filter}
 
     pip = get_pip_size(symbol)
     balance = float(initial_balance)
@@ -1976,11 +1996,15 @@ def run_range_mean_reversion_backtest(
                 closed_this_bar = True
 
         if open_trade is None and not closed_this_bar:
+            counts["Giriş için incelenen mum"] += 1
             side = str(previous.get("RangeReversalSignal", previous.get("BBMeanReversionSide", "NONE")))
+            counts['Bant dönüş tetiği'] += int(side in {"LONG", "SHORT"})
             if str(previous.get("StrategyRegime", "TRANSITION")) != "RANGE":
                 side = "NONE"
+            counts['Yatay piyasa'] += int(side in {"LONG", "SHORT"})
             if side != "NONE" and bool(previous.get("BBExtremeVolatility", False)):
                 side = "NONE"
+            counts['Oynaklık'] += int(side in {"LONG", "SHORT"})
             if side == "LONG" and (
                 str(previous.get("RSIDivergence", "NONE")) == "BEARISH"
                 or str(previous.get("MACDDivergence", "NONE")) == "BEARISH"
@@ -1991,11 +2015,14 @@ def run_range_mean_reversion_backtest(
                 or str(previous.get("MACDDivergence", "NONE")) == "BULLISH"
             ):
                 side = "NONE"
+            counts['RSI / MACD uyumsuzluğu'] += int(side in {"LONG", "SHORT"})
             if side != "NONE" and not is_in_trading_session(ts, session_filter):
                 side = "NONE"
+            counts['İşlem saatleri'] += int(side in {"LONG", "SHORT"})
             if side != "NONE" and (i - last_exit_i) <= int(cooldown_bars):
                 side = "NONE"
 
+            counts['İşlemler arası bekleme'] += int(side in {"LONG", "SHORT"})
             if side in {"LONG", "SHORT"}:
                 entry = float(current["Open"])
                 atr = float(previous["ATR14"])
@@ -2018,7 +2045,9 @@ def run_range_mean_reversion_backtest(
                 reward_r = net_reward_pips / risk_pips if risk_pips > 0 else -np.inf
                 risk_amount = balance * float(risk_pct) / 100.0
                 lot = risk_amount / (risk_pips * float(pip_value_per_lot)) if risk_pips > 0 and pip_value_per_lot > 0 else 0.0
+                counts["Hedef / risk ve maliyet"] += int(reward_distance > 0 and reward_r >= float(min_reward_r))
                 if reward_distance > 0 and reward_r >= float(min_reward_r) and lot > 0 and np.isfinite(lot):
+                    counts["Açılan işlem"] += 1
                     candidate = {
                         "EntryTime": ts, "EntryIndex": i, "Side": side,
                         "Entry": entry, "Stop": stop, "Target": target, "Lot": lot,
@@ -2046,7 +2075,7 @@ def run_range_mean_reversion_backtest(
             "Metrik": ["Backtest Tipi", "İşlem Sayısı", "Not"],
             "Değer": ["RANGE mean-reversion", "0", "RANGE + orta bant koşullarında işlem oluşmadı"],
         })
-        return BacktestResult(metrics, trades_df, equity_df)
+        return BacktestResult(metrics, trades_df, equity_df, diagnostics)
 
     wins = trades_df[trades_df["PnL"] > 0]
     losses = trades_df[trades_df["PnL"] <= 0]
@@ -2076,7 +2105,7 @@ def run_range_mean_reversion_backtest(
         ["Son %30 Ortalama R", "-" if pd.isna(oos_avg_r) else f"{oos_avg_r:.3f}R"],
     ], columns=["Metrik", "Değer"])
     metrics["Değer"] = metrics["Değer"].astype(str)
-    return BacktestResult(metrics, trades_df, equity_df)
+    return BacktestResult(metrics, trades_df, equity_df, diagnostics)
 
 
 def wilson_win_rate_interval(wins: int, total: int, z: float = 1.96) -> tuple[float, float]:
@@ -6037,6 +6066,9 @@ def run_dual_engine_lab() -> tuple[pd.DataFrame, dict[str, BacktestResult], dict
             "text": note,
             "walk_forward": wf,
             "edge": edge_report,
+            "trade_count": len(result.trades),
+            "required_trades": max(int(edge_min_trades), int(min_trades_required)),
+            "diagnostics": result.diagnostics,
         }
         rows.append({
             "Motor": label_text,
@@ -6068,6 +6100,10 @@ if run_model_compare_requested:
         st.session_state["entry_model_comparison_df"] = run_entry_model_comparison()
         st.session_state["entry_model_comparison_key"] = current_bt_key
 
+cached_lab = st.session_state.get("engine_test_cache", {}).get(make_dual_engine_lab_key())
+if cached_lab:
+    st.session_state.update(cached_lab)
+
 if run_dual_engine_lab_requested or run_bt_requested:
     with st.spinner("Trend/yatay motorları ve istatistiksel edge testleri çalışıyor..."):
         lab_table, lab_results, lab_qualities, edge_table = run_dual_engine_lab()
@@ -6077,6 +6113,14 @@ if run_dual_engine_lab_requested or run_bt_requested:
         st.session_state["dual_engine_lab_results"] = lab_results
         st.session_state["dual_engine_lab_qualities"] = lab_qualities
         st.session_state["dual_engine_edge_table"] = edge_table
+        cache = dict(st.session_state.get("engine_test_cache", {}))
+        cache[lab_key] = {key: st.session_state[key] for key in (
+            "dual_engine_lab_key", "dual_engine_lab_table", "dual_engine_lab_results",
+            "dual_engine_lab_qualities", "dual_engine_edge_table",
+        )}
+        while len(cache) > 8:
+            del cache[next(iter(cache))]
+        st.session_state["engine_test_cache"] = cache
 
 if run_scanner_requested:
     scan_symbols = SYMBOL_LIST[:int(scanner_limit)]
@@ -6276,6 +6320,15 @@ if current_strategy_engine == "RANGE":
     )
     if range_decision is not None:
         simple_decision = range_decision
+elif current_strategy_engine is None:
+    simple_decision = {
+        "action": "BEKLE — PİYASA KARARSIZ",
+        "class": "simple-wait",
+        "subtitle": "Aktif strateji seçilemiyor.",
+        "reason": "Piyasa trend veya yatay olarak netleşmedi. Test sonuçlarından bağımsız olarak giriş stratejisi bekleniyor.",
+        "steps": ["Piyasa tipinin netleşmesini bekle."],
+        "levels": {},
+    }
 
 research_symbol = symbol.replace("=X", "").upper()
 research_bars = fetch_ohlc(symbol, "60m", "730d") if research_symbol == "EURUSD" else pd.DataFrame()
@@ -6420,6 +6473,7 @@ with tab_advanced:
 with tab_signal:
     st.subheader("İşlem durumu")
     active_quality = decision_engine_qualities.get(decision_active_engine, {})
+    evidence_status = engine_evidence_summary(decision_active_engine, decision_engine_qualities)
     evidence_ok = active_quality.get("label") in {"İyi", "Orta"} and (active_quality.get("edge") or {}).get("label") == "DOĞRULANDI"
     status_cols = st.columns(3)
     direction = _beginner_side_from_scores(summary_df)
@@ -6427,9 +6481,8 @@ with tab_signal:
     technical_ready = entry_signal_tracker.get("technical_signal") in {"LONG", "SHORT"} and bool(market_model_status.get("entry_allowed"))
     status_cols[0].metric("Yön", direction_text if current_strategy_engine == "TREND" else "Yatay piyasa" if current_strategy_engine == "RANGE" else "Net değil")
     status_cols[1].metric("Teknik giriş", ("Şartlar oluştu" if technical_ready else "Teyit bekleniyor") if current_strategy_engine == "TREND" else "Yatay motor" if current_strategy_engine == "RANGE" else "Rejim bekleniyor")
-    status_cols[2].metric("Strateji kontrolü", "Onaylandı" if evidence_ok else "Tamamlanmadı" if not active_quality else "Onaylanmadı")
-    if not active_quality:
-        st.info("Strateji testi eksik. Sol menüdeki Planı Kontrol Et gerekli iki testi birlikte çalıştırır. Bu durum piyasada yön olmadığı anlamına gelmez.")
+    status_cols[2].metric("Strateji kontrolü", evidence_status["label"])
+    st.info(evidence_status["text"])
     if current_strategy_engine == "TREND" and technical_ready and not is_new_position_decision(str(simple_decision.get("action", ""))):
         st.info(f"{entry_signal_tracker.get('technical_signal')} teknik adayı — yalnız demo/izleme. {simple_decision.get('reason', '')}")
     with st.expander("Sinyali ne engelliyor?", expanded=False):
@@ -6447,9 +6500,21 @@ with tab_signal:
                 enabled = market_model_status.get(enabled_key, False)
                 checks.append({"Kontrol": label, "Durum": "Kapalı" if not enabled else "Geçti" if market_model_status.get(result_key) else "Engelliyor", "Açıklama": ""})
         else:
-            checks.append({"Kontrol": "Aktif motor", "Durum": current_strategy_engine or "Geçiş", "Açıklama": simple_decision.get("reason", "")})
-        checks.append({"Kontrol": "Strateji kanıtı", "Durum": "Geçti" if evidence_ok else "Test eksik" if not active_quality else "Onaylanmadı", "Açıklama": str((active_quality.get("edge") or {}).get("text", "Planı Kontrol Et ile hesaplanır."))})
+            checks.append({"Kontrol": "Piyasa tipi", "Durum": "Yatay" if current_strategy_engine == "RANGE" else "Kararsız", "Açıklama": "Yatay piyasa stratejisi değerlendiriliyor." if current_strategy_engine == "RANGE" else "Trend veya yatay strateji seçilemiyor."})
+        checks.append({"Kontrol": "Strateji kontrolü", "Durum": evidence_status["label"], "Açıklama": evidence_status["text"]})
         st.dataframe(pd.DataFrame(checks), hide_index=True, use_container_width=True)
+    with st.expander("Geçmiş testte neden az işlem var?", expanded=False):
+        st.caption("Sıralı eleme sayılarıdır: her aşama önceki aşamayı geçen mumları inceler. Bir filtreyi kaldırmanın performansa etkisini ölçmez. Açık işlem bulunan mumlarda yeni giriş aranmaz.")
+        for engine_name, quality in decision_engine_qualities.items():
+            st.markdown("**" + ("Trend testi" if engine_name == "TREND" else "Yatay piyasa testi") + "**")
+            diagnostics = quality.get("diagnostics", {})
+            if diagnostics:
+                st.caption(f"{diagnostics['start']} — {diagnostics['end']} · {diagnostics['raw_bars']} ham / {diagnostics['usable_bars']} kullanılabilir mum · Seans: {diagnostics['session']}")
+                st.dataframe(pd.DataFrame(funnel_rows(diagnostics["counts"])), hide_index=True, use_container_width=True)
+            else:
+                st.write("Sayım verisi yok; veri yetersiz olabilir veya eski test sonucu gösteriliyor. Planı Kontrol Et ile yeniden hesapla.")
+        if not decision_engine_qualities:
+            st.write("Bu parite ve ayarlar için Planı Kontrol Et ile testleri çalıştır.")
     health_cols = st.columns(4)
     health_cols[0].metric("Veri", current_data_health.get("status", "-"))
     health_cols[1].metric("Piyasa", market_regime.get("label", "-"))
@@ -6458,18 +6523,13 @@ with tab_signal:
     for title, status in [("Veri", current_data_health), ("Haber", current_news_status), ("Portföy", current_portfolio_status)]:
         if status.get("blocks_trade"):
             st.warning(f"{title}: {status.get('text', '-')}")
-    evidence_status = strategy_evidence_status(matched_quality)
-    st.markdown(
-        f"<div class='{evidence_status['css']}'><b>Strateji Kanıtı: {escape(evidence_status['label'])}</b><br>"
-        f"{escape(evidence_status['text'])}</div>",
-        unsafe_allow_html=True,
-    )
     render_top_decision_panel(simple_decision)
     if beginner_mode:
         if current_strategy_engine == "RANGE":
             render_simple_decision_card(simple_decision)
             st.caption("Yatay rejimde 4H/1H trend hunisi kullanılmaz; yalnız ayrı orta banda dönüş motoru değerlendirilir.")
-        else:
+        elif current_strategy_engine == "TREND":
+            st.caption("Aşağıdaki adımlar normal trend planına aittir; motor kanıtı yukarıda ayrıca gösterilir.")
             render_beginner_path(summary_df, matched_quality, entry_signal_tracker, selected_tf)
         with st.expander("Neden böyle dedi?", expanded=False):
             render_market_model_card(market_model_status)
