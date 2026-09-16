@@ -2969,18 +2969,33 @@ FOREX_FACTORY_CALENDAR_PATH = Path(__file__).resolve().parent / "data" / "news" 
 
 @st.cache_data(ttl=1800)
 def load_default_forexfactory_calendar() -> pd.DataFrame:
-    """Auto-load the rolling calendar written by download_forexfactory_calendar.py.
+    """Fetch the live ForexFactory calendar for this session, no scheduled task needed.
 
-    That script only covers the current week, so this is stale outside of a
-    fresh run -- callers should re-run it periodically (a cron/task scheduler
-    entry, e.g. daily). Returns an empty frame if it hasn't been run yet.
+    Cached for 30 minutes per Streamlit process so opening the app (or a
+    page rerun) doesn't refetch on every interaction, while each fresh visit
+    after that window gets an up-to-date calendar automatically. On a fetch
+    failure (e.g. no outbound network from the host), fall back to the last
+    successfully saved copy on disk instead of silently showing "no news" --
+    that would look like a clear calendar to the trading safety filter.
     """
-    if not FOREX_FACTORY_CALENDAR_PATH.exists():
-        return pd.DataFrame()
+    from download_forexfactory_calendar import fetch_calendar
+
     try:
-        return pd.read_csv(FOREX_FACTORY_CALENDAR_PATH)
+        df = fetch_calendar()
     except Exception:
+        if FOREX_FACTORY_CALENDAR_PATH.exists():
+            try:
+                return pd.read_csv(FOREX_FACTORY_CALENDAR_PATH)
+            except Exception:
+                return pd.DataFrame()
         return pd.DataFrame()
+
+    try:
+        FOREX_FACTORY_CALENDAR_PATH.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(FOREX_FACTORY_CALENDAR_PATH, index=False)
+    except Exception:
+        pass
+    return df
 
 
 def news_blackout_status(
@@ -5508,7 +5523,8 @@ with st.sidebar:
             st.warning("ML için scikit-learn kurulu değil. requirements.txt içine scikit-learn ekle.")
         st.caption(
             "Sadece EURUSD için mevcut. 2023 sonrası testte yön isabeti ~%52 (yazı-tura %50) — "
-            "bu yüzden LONG/SHORT kararını değiştirmez veya engellemez, yalnızca ek bir görüş olarak gösterilir."
+            "bu yüzden LONG/SHORT kararını tek başına vermez ya da engellemez; teknik sinyalle "
+            "uyumluysa/çelişiyorsa radar puanına küçük (±8) bir ayar olarak yansır."
         )
 
 
@@ -5525,11 +5541,11 @@ with st.sidebar:
         news_after_minutes = st.number_input("Haber sonrası blok (dk)", min_value=0, max_value=240, value=20, step=5)
         news_events = load_default_forexfactory_calendar()
         if not news_events.empty:
-            st.caption(f"ForexFactory takviminden {len(news_events)} olay otomatik yüklendi.")
+            st.caption(f"ForexFactory takviminden {len(news_events)} olay otomatik çekildi (her girişte tazelenir).")
         else:
             st.caption(
-                "Otomatik takvim bulunamadı. `python download_forexfactory_calendar.py` çalıştırıp "
-                "veya aşağıdan CSV yükleyerek doldurabilirsin."
+                "ForexFactory takvimi bu oturumda çekilemedi (ağ sorunu olabilir). "
+                "Aşağıdan elle CSV yükleyerek doldurabilirsin."
             )
         news_file = st.file_uploader(
             "Haber CSV yükle (opsiyonel, otomatik takvimin yerine geçer)",

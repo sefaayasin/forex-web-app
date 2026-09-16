@@ -41,20 +41,24 @@ def fetch_feed(url: str) -> list[dict]:
     return resp.json()
 
 
-def main() -> None:
-    rows = []
+def fetch_calendar() -> pd.DataFrame:
+    """Fetch the current-week calendar and return it in news_blackout_status()'s schema.
+
+    Raises on total failure (all feed URLs unreachable) rather than returning
+    an empty frame, so a caller can decide whether to fall back to a stale
+    on-disk copy instead of silently showing "no news" (which would be a
+    dangerous default -- a fetch failure should never look like a clear
+    calendar to the trading safety filter).
+    """
+    rows: list[dict] = []
+    errors: list[str] = []
     for url in FEED_URLS:
         try:
-            events = fetch_feed(url)
+            rows.extend(fetch_feed(url))
         except Exception as exc:  # noqa: BLE001
-            print(f"[FAIL] {url}: {exc}")
-            continue
-        print(f"[OK] {url}: {len(events)} olay")
-        rows.extend(events)
-
+            errors.append(f"{url}: {exc}")
     if not rows:
-        print("HATA: hiçbir kaynaktan veri alınamadı.")
-        return
+        raise RuntimeError("ForexFactory takvimi indirilemedi: " + "; ".join(errors))
 
     df = pd.DataFrame(rows)
     df = df.rename(columns={"country": "currency"})
@@ -64,7 +68,15 @@ def main() -> None:
     df["time"] = pd.to_datetime(df["date"], utc=True, errors="coerce")
     df = df.dropna(subset=["time"])
     df = df[["time", "currency", "title", "impact", "forecast", "previous", "actual"]]
-    df = df.drop_duplicates(subset=["time", "currency", "title"]).sort_values("time")
+    return df.drop_duplicates(subset=["time", "currency", "title"]).sort_values("time").reset_index(drop=True)
+
+
+def main() -> None:
+    try:
+        df = fetch_calendar()
+    except RuntimeError as exc:
+        print(f"HATA: {exc}")
+        return
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUT_PATH, index=False)
