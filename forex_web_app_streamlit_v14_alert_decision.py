@@ -3171,19 +3171,29 @@ def render_news_direction_panel(symbol: str, news_events: pd.DataFrame, hours_ah
     if window.empty:
         return
 
-    rows = []
+    # Aynı geçmiş kategoriye eşlenen birden fazla takvim başlığı (ör. "Federal Funds
+    # Rate" ve "FOMC Statement") tek satırda birleştirilir; aynı istatistik iki kez
+    # tekrar edilmez.
+    matched_by_category: dict[str, dict] = {}
     for _, ev in window.sort_values("time").iterrows():
         category = match_calendar_event_to_category(ev["title"], ev["currency"])
         if category is None:
             continue
+        local_time = ev["time"].tz_convert(TR_TZ).strftime("%d.%m %H:%M")
+        label = f"{ev['currency']} {ev['title']}"
+        entry = matched_by_category.setdefault(category, {"time": local_time, "labels": []})
+        if label not in entry["labels"]:
+            entry["labels"].append(label)
+
+    rows = []
+    for category, entry in matched_by_category.items():
         matches = tendency[(tendency["event"] == category) & (tendency["pair"] == pair_clean)]
         if matches.empty:
             continue
-        local_time = ev["time"].tz_convert(TR_TZ).strftime("%d.%m %H:%M")
         for _, row in matches.iterrows():
             rows.append({
-                "Zaman": local_time,
-                "Olay": f"{ev['currency']} {ev['title']}",
+                "Zaman": entry["time"],
+                "Olay": " / ".join(entry["labels"]),
                 "Önceki okumaya göre": row["direction"],
                 "Örnek (n)": int(row["n"]),
                 f"Ort. 1g getiri ({pair_clean})": f"{float(row['mean_ret_1d_pct']):+.2f}%",
