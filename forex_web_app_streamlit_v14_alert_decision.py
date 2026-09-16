@@ -5211,8 +5211,8 @@ def gauge_figure(label: str, score: float) -> go.Figure:
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=score,
-        number={"suffix": " skor"},
-        title={"text": label},
+        number={"suffix": " Skor", "font": {"size": 30}},
+        title={"text": label, "font": {"size": 18}},
         gauge={
             "axis": {"range": [-100, 100]},
             "bar": {"thickness": 0.28},
@@ -5225,7 +5225,7 @@ def gauge_figure(label: str, score: float) -> go.Figure:
             ],
         },
     ))
-    fig.update_layout(height=240, margin=dict(l=20, r=20, t=60, b=20))
+    fig.update_layout(height=280, margin=dict(l=30, r=30, t=70, b=10))
     return fig
 
 
