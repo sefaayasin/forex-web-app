@@ -2964,6 +2964,25 @@ def daily_trading_status(
     }
 
 
+FOREX_FACTORY_CALENDAR_PATH = Path(__file__).resolve().parent / "data" / "news" / "forexfactory_calendar.csv"
+
+
+@st.cache_data(ttl=1800)
+def load_default_forexfactory_calendar() -> pd.DataFrame:
+    """Auto-load the rolling calendar written by download_forexfactory_calendar.py.
+
+    That script only covers the current week, so this is stale outside of a
+    fresh run -- callers should re-run it periodically (a cron/task scheduler
+    entry, e.g. daily). Returns an empty frame if it hasn't been run yet.
+    """
+    if not FOREX_FACTORY_CALENDAR_PATH.exists():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(FOREX_FACTORY_CALENDAR_PATH)
+    except Exception:
+        return pd.DataFrame()
+
+
 def news_blackout_status(
     symbol: str,
     events: pd.DataFrame,
@@ -4688,8 +4707,16 @@ def build_intraday_opportunity(
     total_cost_pips: float,
     target_usd: float,
     session_filter: str = "Londra",
+    research_prediction: Optional[dict] = None,
 ) -> dict:
-    """Birkaç saatlik adayı ölçer; radar puanını kazanma olasılığı gibi sunmaz."""
+    """Birkaç saatlik adayı ölçer; radar puanını kazanma olasılığı gibi sunmaz.
+
+    `research_prediction` is the frozen ML research model's latest output
+    (see forex_ml_live.py). Its measured edge is weak (~52% direction
+    accuracy), so it only nudges the radar score up/down by a small, capped
+    amount when it agrees/disagrees with the technical side — it never
+    decides the side itself and never gates READY/WATCH/NEUTRAL alone.
+    """
     score_weights = {"4 Saat": 0.15, "1 Saat": 0.25, "15 Dakika": 0.35, "5 Dakika": 0.25}
     signed_base = 0.0
     used_weight = 0.0
@@ -4753,6 +4780,25 @@ def build_intraday_opportunity(
         catalysts.append("4H/1H çelişkisi güveni düşürüyor")
 
     side = "LONG" if long_points > short_points else ("SHORT" if short_points > long_points else "NONE")
+
+    research_alignment = (
+        research_signal_alignment(research_prediction, side)
+        if research_prediction is not None and side in {"LONG", "SHORT"}
+        else None
+    )
+    if research_alignment is not None:
+        aligned_pct = float(research_alignment["aligned_probability_pct"])
+        # Small, capped nudge: the model's edge is close to a coin flip, so it
+        # must never swing more points than the technical catalysts above.
+        ml_delta = float(np.clip((aligned_pct - 50.0) * 0.5, -8.0, 8.0))
+        if side == "LONG":
+            long_points += ml_delta
+        else:
+            short_points += ml_delta
+        catalysts.append(
+            f"ML araştırma modeli {'destekliyor' if research_alignment['aligned'] else 'çelişiyor'} (%{aligned_pct:.0f})"
+        )
+
     radar_score = float(np.clip(max(long_points, short_points), 0, 100))
 
     pip = get_pip_size(symbol)
@@ -4847,6 +4893,7 @@ def build_intraday_opportunity(
         "target_usd": float(target_usd),
         "capacity_text": capacity_text,
         "htf_conflict": bool(htf_conflict),
+        "ml_alignment": research_alignment,
     }
 
 
@@ -4896,6 +4943,16 @@ def render_intraday_opportunity(opportunity: dict, symbol: str) -> None:
     readiness_text = {"READY": "Tetik hazır", "WATCH": "Yalnızca izle", "NEUTRAL": "Nötr"}.get(readiness, readiness)
     blockers = opportunity.get("readiness_blockers", []) or []
     blockers_text = " · ".join(str(item) for item in blockers[:3]) or "Yapı, tetik, seans ve hedef kapasitesi uygun."
+    ml_alignment = opportunity.get("ml_alignment")
+    ml_line = ""
+    if ml_alignment:
+        ml_pct = float(ml_alignment.get("aligned_probability_pct", 50.0))
+        ml_word = "destekliyor" if ml_alignment.get("aligned") else "çelişiyor"
+        ml_line = (
+            "<div class='opportunity-line'>"
+            f"<b>ML araştırma modeli:</b> {ml_word} (%{ml_pct:.0f}) — sadece küçük bir ayarlama, tek başına tetik değil."
+            "</div>"
+        )
     st.markdown(
         f"<div class='opportunity-card {css}'>"
         "<div class='section-kicker'>Önümüzdeki birkaç saat</div>"
@@ -4907,6 +4964,7 @@ def render_intraday_opportunity(opportunity: dict, symbol: str) -> None:
         f"<div class='opportunity-line'><b>Tahmini hedef fiyat:</b> {escape(target_text)}</div>"
         f"<div class='opportunity-line'><b>Tipik 4 saatlik hareket:</b> {escape(range_text)}</div>"
         f"<div class='opportunity-line'>{escape(str(opportunity.get('capacity_text', '-')))}</div>"
+        f"{ml_line}"
         f"<div class='opportunity-line'><b>Eksik/engel:</b> {escape(blockers_text)}</div>"
         "<div class='opportunity-line'><small>Radar puanı olasılık değildir. Tetik hazır olsa bile aşağıdaki doğrulanmış işlem kararı ayrıca LONG/SHORT demeden emir verilmez.</small></div>"
         "</div>",
@@ -5465,12 +5523,23 @@ with st.sidebar:
         news_filter_enabled = st.checkbox("Yüksek etkili haber filtresi", value=True)
         news_before_minutes = st.number_input("Haber öncesi blok (dk)", min_value=0, max_value=240, value=30, step=5)
         news_after_minutes = st.number_input("Haber sonrası blok (dk)", min_value=0, max_value=240, value=20, step=5)
-        news_file = st.file_uploader("Haber CSV yükle", type=["csv"], help="Sütunlar: time,currency,title,impact. time ISO/UTC olabilir.")
-        news_events = pd.DataFrame()
+        news_events = load_default_forexfactory_calendar()
+        if not news_events.empty:
+            st.caption(f"ForexFactory takviminden {len(news_events)} olay otomatik yüklendi.")
+        else:
+            st.caption(
+                "Otomatik takvim bulunamadı. `python download_forexfactory_calendar.py` çalıştırıp "
+                "veya aşağıdan CSV yükleyerek doldurabilirsin."
+            )
+        news_file = st.file_uploader(
+            "Haber CSV yükle (opsiyonel, otomatik takvimin yerine geçer)",
+            type=["csv"],
+            help="Sütunlar: time,currency,title,impact. time ISO/UTC olabilir.",
+        )
         if news_file is not None:
             try:
                 news_events = pd.read_csv(news_file)
-                st.caption(f"{len(news_events)} haber kaydı yüklendi.")
+                st.caption(f"{len(news_events)} haber kaydı yüklendi (manuel CSV).")
             except Exception as exc:
                 st.warning(f"Haber CSV okunamadı: {exc}")
 
@@ -6227,6 +6296,7 @@ intraday_opportunity = build_intraday_opportunity(
     total_cost_pips=float(spread_pips),
     target_usd=float(daily_target_min_usd),
     session_filter=session_filter,
+    research_prediction=research_prediction,
 )
 intraday_opportunity = apply_opportunity_cooldown(
     intraday_opportunity,
