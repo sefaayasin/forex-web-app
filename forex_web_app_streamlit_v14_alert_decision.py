@@ -5220,7 +5220,7 @@ def apply_engine_evidence_filter(
     active_engine: Optional[str],
     engine_quality: Optional[dict],
 ) -> dict:
-    """Çift motor laboratuvarı çalıştıysa yalnız kanıtlanan rejim motoruna izin verir."""
+    """Yeni pozisyon için aktif motor kanıtını zorunlu tutar; eksik testi ayrı gösterir."""
     if not is_new_position_decision(str(decision.get("action", ""))):
         return decision
     if active_engine not in {"TREND", "RANGE"}:
@@ -5239,16 +5239,16 @@ def apply_engine_evidence_filter(
         return decision
     out = dict(decision)
     out.update({
-        "action": "PAS GEÇ",
-        "class": "simple-pass",
-        "subtitle": "Aktif piyasa motoru doğrulanmadı.",
+        "action": "STRATEJİ KONTROLÜ EKSİK" if not engine_quality else "STRATEJİ ONAYLANMADI",
+        "class": "simple-wait" if not engine_quality else "simple-pass",
+        "subtitle": "Teknik sinyal var; strateji kanıtı henüz yeterli değil.",
         "reason": (
             f"{active_engine} motorunun backtest kalitesi {label}, edge kanıtı {edge_label}. "
             f"{edge_report.get('text', '')} Daha fazla işlem üretmek için başka rejimin motoru kullanılamaz."
         ),
         "steps": [
             "Bu sinyalde yeni pozisyon açma.",
-            "Trend + Yatay Motoru ve Edge'i Test Et sonucunu kontrol et.",
+            "Sol menüdeki Planı Kontrol Et ile tüm kontrolleri çalıştır.",
             "Broker verisinde Orta/İyi kalite ve DOĞRULANDI edge birlikte oluşmadan gerçek işleme geçme.",
         ],
     })
@@ -5342,10 +5342,12 @@ def render_ml_prediction_card(research_prediction: dict, side: Optional[str], sh
 # =============================================================================
 
 with st.sidebar:
-    st.header("Kontrol Paneli")
+    st.header("Forex Asistanı")
 
     screen_options = ["İşlem Asistanı", "Parite Alarm Ekranı", "ML Laboratuvarı"]
-    screen_mode = st.radio("Ekran", screen_options, index=2 if st.query_params.get("view") == "ml" else 0)
+    screen_mode = st.radio("Sayfa", screen_options, index=2 if st.query_params.get("view") == "ml" else 0,
+                           format_func=lambda value: {"İşlem Asistanı": "İşlem", "Parite Alarm Ekranı": "Pariteler", "ML Laboratuvarı": "Araştırma"}[value])
+    advanced_view = st.toggle("Gelişmiş görünüm", value=False)
 
     if screen_mode == "ML Laboratuvarı":
         st.caption("Model karşılaştırmaları, doğruluk ölçümleri ve heatmap'ler.")
@@ -5357,6 +5359,9 @@ if screen_mode == "ML Laboratuvarı":
     render_ml_panel()
     st.stop()
 
+st.title("Forex Asistanı")
+advanced_settings = st.expander("Ayarlar ve araştırma araçları", expanded=False)
+
 with st.sidebar:
 
     tf_options = list(TIMEFRAMES.keys())
@@ -5366,39 +5371,40 @@ with st.sidebar:
         options=SYMBOL_LIST,
         index=SYMBOL_LIST.index(default_symbol) if default_symbol in SYMBOL_LIST else 0,
     )
-    manual_symbol = st.text_input("Elle gir", value="", placeholder="EURUSD veya EURUSD=X")
-    symbol = normalize_symbol(manual_symbol) if manual_symbol.strip() else selected_symbol
-    st.session_state["symbol"] = symbol
-    data_provider = st.selectbox("Veri kaynağı", ["Yahoo Finance", "MetaTrader 5", "Broker CSV"], index=0)
-    st.session_state["data_provider"] = data_provider
-    if data_provider == "MetaTrader 5":
-        st.caption("MT5 terminali/kitaplığı hazır değilse işlem verisi boş kalır; Yahoo'ya sessiz geçiş yapılmaz.")
-    elif data_provider == "Broker CSV":
-        broker_csv_symbol = normalize_symbol(st.text_input("CSV sembolü", value=symbol.replace("=X", "")))
-        broker_csv_interval = st.selectbox("CSV mum zamanı", ["1m", "5m", "15m"], index=2)
-        broker_csv_file = st.file_uploader(
-            "MT5 OHLC CSV yükle",
-            type=["csv", "txt"],
-            help="Beklenen sütunlar: date+time veya time, open, high, low, close; opsiyonel tickvol/volume ve spread.",
-        )
-        st.session_state["broker_csv_symbol"] = broker_csv_symbol
-        st.session_state["broker_csv_interval"] = broker_csv_interval
-        if broker_csv_file is not None:
-            parsed_broker_csv = parse_broker_csv_bytes(broker_csv_file.getvalue())
-            if parsed_broker_csv.empty:
-                st.error("Broker CSV okunamadı. Zaman ve OHLC sütunlarını kontrol et.")
-                st.session_state.pop("broker_csv_df", None)
-            else:
-                st.session_state["broker_csv_df"] = parsed_broker_csv
-                history_days = (parsed_broker_csv.index[-1] - parsed_broker_csv.index[0]).total_seconds() / 86400
-                spread_note = "spread var" if "Spreadpoints" in parsed_broker_csv.columns else "spread yok"
-                st.success(f"{len(parsed_broker_csv):,} mum · {history_days:.0f} gün · {spread_note}")
-        elif isinstance(st.session_state.get("broker_csv_df"), pd.DataFrame):
-            saved_csv = st.session_state["broker_csv_df"]
-            st.caption(f"Oturumdaki broker verisi: {len(saved_csv):,} mum")
+    with st.expander("Bağlantı ve grafik", expanded=False):
+        manual_symbol = st.text_input("Elle gir", value="", placeholder="EURUSD veya EURUSD=X")
+        symbol = normalize_symbol(manual_symbol) if manual_symbol.strip() else selected_symbol
+        st.session_state["symbol"] = symbol
+        data_provider = st.selectbox("Veri kaynağı", ["Yahoo Finance", "MetaTrader 5", "Broker CSV"], index=0)
+        st.session_state["data_provider"] = data_provider
+        if data_provider == "MetaTrader 5":
+            st.caption("MT5 terminali/kitaplığı hazır değilse işlem verisi boş kalır; Yahoo'ya sessiz geçiş yapılmaz.")
+        elif data_provider == "Broker CSV":
+            broker_csv_symbol = normalize_symbol(st.text_input("CSV sembolü", value=symbol.replace("=X", "")))
+            broker_csv_interval = st.selectbox("CSV mum zamanı", ["1m", "5m", "15m"], index=2)
+            broker_csv_file = st.file_uploader(
+                "MT5 OHLC CSV yükle",
+                type=["csv", "txt"],
+                help="Beklenen sütunlar: date+time veya time, open, high, low, close; opsiyonel tickvol/volume ve spread.",
+            )
+            st.session_state["broker_csv_symbol"] = broker_csv_symbol
+            st.session_state["broker_csv_interval"] = broker_csv_interval
+            if broker_csv_file is not None:
+                parsed_broker_csv = parse_broker_csv_bytes(broker_csv_file.getvalue())
+                if parsed_broker_csv.empty:
+                    st.error("Broker CSV okunamadı. Zaman ve OHLC sütunlarını kontrol et.")
+                    st.session_state.pop("broker_csv_df", None)
+                else:
+                    st.session_state["broker_csv_df"] = parsed_broker_csv
+                    history_days = (parsed_broker_csv.index[-1] - parsed_broker_csv.index[0]).total_seconds() / 86400
+                    spread_note = "spread var" if "Spreadpoints" in parsed_broker_csv.columns else "spread yok"
+                    st.success(f"{len(parsed_broker_csv):,} mum · {history_days:.0f} gün · {spread_note}")
+            elif isinstance(st.session_state.get("broker_csv_df"), pd.DataFrame):
+                saved_csv = st.session_state["broker_csv_df"]
+                st.caption(f"Oturumdaki broker verisi: {len(saved_csv):,} mum")
 
-    chart_tf = st.radio("Grafik zamanı", tf_options, index=1)
-    st.caption("Bu seçim grafiği değiştirir. Yeni Başlayan Modu açıksa işlem kararı yine 4H + 1H ana yön ve 15M giriş mantığıyla hesaplanır.")
+        chart_tf = st.radio("Grafik zamanı", tf_options, index=1)
+        st.caption("Bu seçim grafiği değiştirir. Yeni Başlayan Modu açıksa işlem kararı yine 4H + 1H ana yön ve 15M giriş mantığıyla hesaplanır.")
 
     st.divider()
     st.subheader("Temel Risk")
@@ -5407,7 +5413,8 @@ with st.sidebar:
     if risk_pct > 1.0:
         st.warning("%1 üzerindeki işlem riski kayıp serilerinde hesabı hızlı küçültebilir.")
 
-    with st.expander("Günlük işlem planım", expanded=True):
+    with advanced_settings.container(border=True):
+        st.subheader("Günlük işlem planım")
         st.caption("Hedef sinyal üretmez; hedefe veya zarar limitine gelince yeni işlemi durdurur.")
         daily_target_min_usd = st.number_input("Minimum günlük hedef ($)", min_value=0.0, value=100.0, step=25.0)
         daily_target_max_usd = st.number_input("Üst günlük hedef ($)", min_value=0.0, value=200.0, step=25.0)
@@ -5417,7 +5424,8 @@ with st.sidebar:
         if daily_target_max_usd < daily_target_min_usd:
             st.warning("Üst hedef minimum hedeften küçük; uygulama üst hedefi minimum hedefe eşitleyecek.")
 
-    with st.expander("Gelişmiş risk", expanded=False):
+    with advanced_settings.container(border=True):
+        st.subheader("Gelişmiş risk")
         rr = st.number_input("Risk/Reward", min_value=0.5, max_value=5.0, value=1.5, step=0.1)
         atr_mult = st.number_input("ATR Stop Çarpanı", min_value=0.5, max_value=5.0, value=1.5, step=0.1)
         stop_mode = st.selectbox("Stop modeli", ["ATR", "Swing + ATR", "Hibrit (uzak olan)"], index=2)
@@ -5451,19 +5459,16 @@ with st.sidebar:
         daily_stop_r = st.number_input("Günlük kill-switch (R)", min_value=0.5, max_value=10.0, value=2.0, step=0.5)
         weekly_stop_r = st.number_input("Haftalık kill-switch (R)", min_value=1.0, max_value=20.0, value=5.0, step=0.5)
 
-    with st.expander("Ekran ve güvenlik", expanded=False):
-        beginner_mode = st.checkbox(
-            "Yeni Başlayan Modu (tek karar)",
-            value=True,
-            help="4H/1H/15M/5M ayrımını sana yorumlatmaz. 4H+1H ana yön, 15M giriş, 5M ise sadece arka planda kalır.",
-        )
+    with advanced_settings.container(border=True):
+        st.subheader("Ekran ve güvenlik")
+        beginner_mode = not advanced_view
         auto_plan_control = st.checkbox(
             "Otomatik plan kontrolü",
             value=True,
             help="Parite, grafik zamanı veya risk ayarı değişince backtest/kalite kontrolünü otomatik yeniler.",
         )
-        enable_simple_mode = st.checkbox("Basit İşlem Modu", value=True)
-        practical_signal_mode = st.checkbox("Pratik Sinyal Modu", value=True)
+        enable_simple_mode = True
+        practical_signal_mode = True
         signal_mode = st.selectbox("Sinyal modu", SIGNAL_MODES, index=0)
         strict_safety_mode = st.checkbox("Sert Güvenli Mod", value=False)
         block_sideways = st.checkbox("Yatay piyasada trend işlemini engelle", value=True)
@@ -5513,7 +5518,8 @@ with st.sidebar:
         intraday_chart_minutes = 1440
         st.caption("Ana ekranda son 24 saatin fiyat ve yüzde değişim grafiği gösterilir.")
 
-    with st.expander("Makine öğrenmesi", expanded=False):
+    with advanced_settings.container(border=True):
+        st.subheader("Makine öğrenmesi")
         ml_show_research_signal = st.checkbox(
             "Araştırma modeli notunu göster",
             value=True,
@@ -5528,14 +5534,16 @@ with st.sidebar:
         )
 
 
-    with st.expander("Alarm ekranı ayarları", expanded=screen_mode == "Parite Alarm Ekranı"):
+    with advanced_settings.container(border=True):
+        st.subheader("Alarm ekranı ayarları")
         alert_groups = st.multiselect("Gösterilecek gruplar", list(ALERT_PAIR_GROUPS.keys()), default=list(ALERT_PAIR_GROUPS.keys()))
         alert_entry_tf = st.selectbox("Alarm giriş teyidi", ["15 Dakika", "5 Dakika", "1 Saat"], index=0)
         alert_sort_mode = st.selectbox("Sıralama", ["Önce LONG/SHORT", "Sadece LONG-SHORT üstte", "En yüksek skor"], index=0)
         webhook_url = st.text_input("Webhook URL (opsiyonel)", value=os.getenv("FOREX_WEBHOOK_URL", ""), type="password")
         st.caption("Alarm ekranı hızlı takip içindir. Yeni başlayan kullanımda 15 Dakika önerilir.")
 
-    with st.expander("Ekonomik haber filtresi", expanded=False):
+    with advanced_settings.container(border=True):
+        st.subheader("Ekonomik haber filtresi")
         news_filter_enabled = st.checkbox("Yüksek etkili haber filtresi", value=True)
         news_before_minutes = st.number_input("Haber öncesi blok (dk)", min_value=0, max_value=240, value=30, step=5)
         news_after_minutes = st.number_input("Haber sonrası blok (dk)", min_value=0, max_value=240, value=20, step=5)
@@ -5563,7 +5571,8 @@ with st.sidebar:
     if beginner_mode:
         st.caption("Yeni Başlayan Modu aktif: karar 4H+1H ana yön + 15M giriş mantığıyla tek sonuca indirilir. 5M yorumu sana gösterilmez.")
 
-    with st.expander("Backtest ayarları", expanded=False):
+    with advanced_settings.container(border=True):
+        st.subheader("Backtest ayarları")
         if enable_simple_mode:
             bt_tf = decision_tf
             st.caption(f"Backtest zamanı karar zamanı ile aynı: {bt_tf}")
@@ -5651,7 +5660,7 @@ with st.sidebar:
             help="İki motoru ayrı test eder; işlem R avantajını ve giriş zamanlamasını rastgele null modellere karşı sınar.",
         )
 
-    run_bt_requested = st.button("Yeniden Hesapla", type="primary", use_container_width=True)
+    run_bt_requested = st.button("Planı Kontrol Et", type="primary", use_container_width=True, help="Geçmiş performansı ve strateji kanıtını birlikte kontrol eder.")
 
     settings_export = {
         "symbol": symbol, "chart_tf": chart_tf, "risk_pct": risk_pct, "rr": rr,
@@ -5677,7 +5686,7 @@ with st.sidebar:
         "macd_confirmation_enabled": macd_confirmation_enabled,
         "macd_divergence_filter_enabled": macd_divergence_filter_enabled,
     }
-    st.download_button(
+    advanced_settings.download_button(
         "Ayarları JSON İndir",
         data=json.dumps(settings_export, ensure_ascii=False, indent=2).encode("utf-8"),
         file_name="forex_settings.json",
@@ -5685,7 +5694,8 @@ with st.sidebar:
         use_container_width=True,
     )
 
-    with st.expander("Parite tarayıcı", expanded=False):
+    with advanced_settings.container(border=True):
+        st.subheader("Parite tarayıcı")
         scanner_tf = st.selectbox("Tarayıcı backtest zamanı", tf_options, index=tf_options.index(chart_tf))
         scanner_period = st.text_input("Tarayıcı period", value=BACKTEST_PERIODS.get(scanner_tf, "30d"), key=f"scanner_period_{scanner_tf}")
         scanner_include_backtest = st.checkbox("Backtest kalitesi hesapla", value=False)
@@ -5706,15 +5716,14 @@ with st.sidebar:
 # Grafik zamanı ise chart_tf değişkeniyle bağımsız çalışır.
 selected_tf = decision_tf
 
-st.title("Forex Analyzer Pro")
+
 st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
 
-st.info("Terim notu: LONG AÇ = yükseliş beklentisiyle yeni pozisyon açmak. SHORT AÇ = düşüş beklentisiyle yeni pozisyon açmak. POZİSYONU KAPAT = açık işlemi sonlandırmak. ML filtresi açıksa teknik sinyal ayrıca geçmiş benzer sinyallerle karşılaştırılır.")
-if beginner_mode:
-    st.info("Yeni Başlayan Modu aktif: 4H ana yön, 1H işlem izni, 15M giriş şartı olarak kullanılır. Sen sadece LONG / SHORT / BEKLE / PAS GEÇ kararını takip et.")
-elif strict_safety_mode:
+st.caption("LONG: yükseliş yönü · SHORT: düşüş yönü. Teknik aday, onaylı işlem anlamına gelmez.")
+
+if advanced_view and strict_safety_mode:
     st.info("Sert Güvenli Mod aktif: yalnızca güçlü yön + İyi backtest kalitesi olan işlemler için LONG/SHORT kartı gösterilir.")
-else:
+elif advanced_view:
     mode_note = signal_mode_settings(signal_mode)["description"]
     if practical_signal_mode:
         st.info(f"Pratik Sinyal Modu aktif ({signal_mode}): {mode_note} Gerçek işlem öncesi demo/broker doğrulaması önerilir.")
@@ -5942,6 +5951,11 @@ def make_dual_engine_lab_key() -> tuple:
         int(edge_horizon_bars),
         EDGE_DUAL_ENGINE_TRIALS,
         int(edge_min_trades),
+        float(account_size), float(risk_pct), float(rr), float(atr_mult),
+        float(signal_threshold), float(pip_value_per_lot), int(cooldown_bars),
+        int(min_trades_required), stop_mode, target_mode, int(swing_lookback),
+        int(max_holding_bars), float(break_even_at_r),
+        bool(walk_forward_enabled), int(walk_forward_folds),
     )
 
 
@@ -6054,7 +6068,7 @@ if run_model_compare_requested:
         st.session_state["entry_model_comparison_df"] = run_entry_model_comparison()
         st.session_state["entry_model_comparison_key"] = current_bt_key
 
-if run_dual_engine_lab_requested:
+if run_dual_engine_lab_requested or run_bt_requested:
     with st.spinner("Trend/yatay motorları ve istatistiksel edge testleri çalışıyor..."):
         lab_table, lab_results, lab_qualities, edge_table = run_dual_engine_lab()
         lab_key = make_dual_engine_lab_key()
@@ -6404,7 +6418,38 @@ with tab_advanced:
                 )
 
 with tab_signal:
-    st.subheader("Doğrulanmış işlem kararı")
+    st.subheader("İşlem durumu")
+    active_quality = decision_engine_qualities.get(decision_active_engine, {})
+    evidence_ok = active_quality.get("label") in {"İyi", "Orta"} and (active_quality.get("edge") or {}).get("label") == "DOĞRULANDI"
+    status_cols = st.columns(3)
+    direction = _beginner_side_from_scores(summary_df)
+    direction_text = {"LONG": "Alım (LONG)", "SHORT": "Satış (SHORT)"}.get(direction, "Net değil")
+    technical_ready = entry_signal_tracker.get("technical_signal") in {"LONG", "SHORT"} and bool(market_model_status.get("entry_allowed"))
+    status_cols[0].metric("Yön", direction_text if current_strategy_engine == "TREND" else "Yatay piyasa" if current_strategy_engine == "RANGE" else "Net değil")
+    status_cols[1].metric("Teknik giriş", ("Şartlar oluştu" if technical_ready else "Teyit bekleniyor") if current_strategy_engine == "TREND" else "Yatay motor" if current_strategy_engine == "RANGE" else "Rejim bekleniyor")
+    status_cols[2].metric("Strateji kontrolü", "Onaylandı" if evidence_ok else "Tamamlanmadı" if not active_quality else "Onaylanmadı")
+    if not active_quality:
+        st.info("Strateji testi eksik. Sol menüdeki Planı Kontrol Et gerekli iki testi birlikte çalıştırır. Bu durum piyasada yön olmadığı anlamına gelmez.")
+    if current_strategy_engine == "TREND" and technical_ready and not is_new_position_decision(str(simple_decision.get("action", ""))):
+        st.info(f"{entry_signal_tracker.get('technical_signal')} teknik adayı — yalnız demo/izleme. {simple_decision.get('reason', '')}")
+    with st.expander("Sinyali ne engelliyor?", expanded=False):
+        st.caption("Son hesaplamanın sonuçlarıdır; geçmişte elenen işlem sayısı veya başarı oranı değildir.")
+        checks = []
+        if current_strategy_engine == "TREND":
+            checks = [{"Kontrol": step["label"], "Durum": "Geçti" if step["state"] == "ok" else "Bekliyor / engel", "Açıklama": step["text"]} for step in entry_signal_tracker.get("steps", [])]
+            for label, enabled_key, result_key in [
+                ("RSI yönü", "rsi_regime_enabled", "rsi_regime_ok"),
+                ("RSI uyumsuzluğu", "rsi_divergence_filter_enabled", "divergence_ok"),
+                ("Bollinger oynaklığı", "bb_extreme_volatility_block", "bb_volatility_ok"),
+                ("MACD yönü", "macd_confirmation_enabled", "macd_regime_ok"),
+                ("MACD uyumsuzluğu", "macd_divergence_filter_enabled", "macd_divergence_ok"),
+            ]:
+                enabled = market_model_status.get(enabled_key, False)
+                checks.append({"Kontrol": label, "Durum": "Kapalı" if not enabled else "Geçti" if market_model_status.get(result_key) else "Engelliyor", "Açıklama": ""})
+        else:
+            checks.append({"Kontrol": "Aktif motor", "Durum": current_strategy_engine or "Geçiş", "Açıklama": simple_decision.get("reason", "")})
+        checks.append({"Kontrol": "Strateji kanıtı", "Durum": "Geçti" if evidence_ok else "Test eksik" if not active_quality else "Onaylanmadı", "Açıklama": str((active_quality.get("edge") or {}).get("text", "Planı Kontrol Et ile hesaplanır."))})
+        st.dataframe(pd.DataFrame(checks), hide_index=True, use_container_width=True)
     health_cols = st.columns(4)
     health_cols[0].metric("Veri", current_data_health.get("status", "-"))
     health_cols[1].metric("Piyasa", market_regime.get("label", "-"))

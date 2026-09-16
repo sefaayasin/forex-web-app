@@ -1,5 +1,17 @@
 # Forex Analyzer Pro
 
+Günlük kullanımda sol menüden parite ve işlem riskini seçin. `Planı Kontrol Et`
+normal backtest ile trend/yatay motor kanıtı testini birlikte çalıştırır; bu işlem
+tek backtestten uzun sürebilir. Otomatik plan kontrolü yalnız normal backtesti
+yeniler. Motor testi eksikse ana ekranda ayrıca belirtilir.
+
+Ana ekran yönü, teknik giriş durumunu ve strateji kontrolünü ayrı gösterir.
+`Sinyali ne engelliyor?` son hesaplamadaki filtre sonuçlarını açıklar; tarihsel
+filtre katkısı ölçümü değildir. Teknik adaylar işlem alarmı sayılmaz.
+Detaylı seçenekler `Ayarlar ve araştırma araçları` altında, veri kaynağı ise
+sol menüdeki `Bağlantı ve grafik` bölümündedir. `Gelişmiş görünüm` teknik
+görünümü açar. Sinyal eşikleri ve varsayılan teknik filtreler korunmuştur.
+
 Geniş model karşılaştırması, heatmap'ler ve otomatik tester:
 [ML_TOURNAMENT.md](ML_TOURNAMENT.md). Çalıştırma: `python forex_ml_tournament.py`.
 
