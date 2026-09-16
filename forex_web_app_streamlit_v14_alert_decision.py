@@ -3091,6 +3091,120 @@ def news_blackout_status(
     return {"blocks_trade": True, "state": "bad", "text": f"{event['currency']} haberi {local_time}: {title}"}
 
 
+EVENT_DIRECTION_TENDENCY_PATH = Path(__file__).resolve().parent / "data" / "news" / "event_direction_tendency.csv"
+
+# (para birimi, geçmiş veri setindeki olay kategorisi, canlı takvim başlığında aranan alt dizeler).
+# Sadece sayısal "önceki okumaya göre arttı/azaldı" sürprizi olan planlı veri açıklamaları eşleşir;
+# FOMC basın toplantısı gibi konuşma/söylem temelli olaylar kasıtlı olarak eşleşmez.
+_EVENT_CATEGORY_RULES: list[tuple[str, str, tuple[str, ...]]] = [
+    ("USD", "US Nonfarm Payrolls", ("nonfarm payrolls", "non-farm employment change", "nfp")),
+    ("USD", "US Core CPI", ("core cpi",)),
+    ("USD", "US CPI (headline)", ("cpi",)),
+    ("USD", "US PCE Price Index", ("pce price index", "core pce")),
+    ("USD", "US Retail Sales", ("retail sales",)),
+    ("USD", "US Industrial Production", ("industrial production",)),
+    ("USD", "US Unemployment Rate", ("unemployment rate",)),
+    ("USD", "US Michigan Consumer Sentiment", ("michigan consumer sentiment", "uom consumer sentiment")),
+    ("USD", "US GDP", ("gdp",)),
+    ("USD", "Fed Funds Target Rate (Upper)", ("fed interest rate decision", "fomc statement", "federal funds rate", "fed funds")),
+    ("EUR", "ECB Deposit Facility Rate", ("ecb deposit facility rate",)),
+    ("EUR", "Euro Area Interbank Rate", ("ecb interest rate decision", "main refinancing rate", "ecb monetary policy")),
+    ("GBP", "UK Interbank Rate", ("boe interest rate decision", "official bank rate")),
+    ("CAD", "Canada Interbank Rate", ("boc interest rate decision", "overnight rate")),
+    ("JPY", "Japan Interbank Rate", ("boj interest rate decision", "boj policy rate")),
+    ("CHF", "Switzerland Interbank Rate", ("snb interest rate decision", "snb policy rate")),
+    ("AUD", "Australia Interbank Rate", ("rba interest rate decision", "cash rate")),
+    ("NZD", "New Zealand Interbank Rate", ("rbnz interest rate decision", "official cash rate")),
+]
+
+
+@st.cache_data(ttl=3600)
+def load_event_direction_tendency() -> pd.DataFrame:
+    if not EVENT_DIRECTION_TENDENCY_PATH.exists():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(EVENT_DIRECTION_TENDENCY_PATH)
+    except Exception:
+        return pd.DataFrame()
+
+
+def match_calendar_event_to_category(title: str, currency: str) -> Optional[str]:
+    """Canlı takvim başlığını, geçmiş sürpriz-yön istatistiği olan bir kategoriye eşler.
+
+    Eşleşme yoksa None döner — bu, o olay için güvenilir bir geçmiş yön istatistiği
+    olmadığı anlamına gelir (ör. konuşma/basın toplantısı), tahmin uydurulmaz.
+    """
+    t = str(title).lower()
+    cur = str(currency).upper()
+    for rule_currency, category, keywords in _EVENT_CATEGORY_RULES:
+        if rule_currency != cur:
+            continue
+        if any(keyword in t for keyword in keywords):
+            return category
+    return None
+
+
+def render_news_direction_panel(symbol: str, news_events: pd.DataFrame, hours_ahead: int = 48, hours_back: int = 6) -> None:
+    """Yaklaşan/son planlı veri açıklamaları için salt-okunur geçmiş yön istatistiği.
+
+    Bu panel hiçbir eşiği veya radar puanını etkilemez; sadece bilgi amaçlıdır.
+    """
+    tendency = load_event_direction_tendency()
+    if tendency.empty or news_events is None or news_events.empty:
+        return
+    required = {"time", "currency", "title"}
+    if not required.issubset({str(c).lower() for c in news_events.columns}):
+        return
+    base, quote = symbol_pair(symbol)
+    pair_clean = f"{base}{quote}"
+
+    events = news_events.copy()
+    events.columns = [str(c).lower() for c in events.columns]
+    events["time"] = pd.to_datetime(events["time"], utc=True, errors="coerce")
+    events = events.dropna(subset=["time"])
+    events = events[events["currency"].astype(str).str.upper().isin({base, quote})]
+    now = pd.Timestamp.now(tz="UTC")
+    window = events[
+        (events["time"] >= now - pd.Timedelta(hours=hours_back))
+        & (events["time"] <= now + pd.Timedelta(hours=hours_ahead))
+    ]
+    if window.empty:
+        return
+
+    rows = []
+    for _, ev in window.sort_values("time").iterrows():
+        category = match_calendar_event_to_category(ev["title"], ev["currency"])
+        if category is None:
+            continue
+        matches = tendency[(tendency["event"] == category) & (tendency["pair"] == pair_clean)]
+        if matches.empty:
+            continue
+        local_time = ev["time"].tz_convert(TR_TZ).strftime("%d.%m %H:%M")
+        for _, row in matches.iterrows():
+            rows.append({
+                "Zaman": local_time,
+                "Olay": f"{ev['currency']} {ev['title']}",
+                "Önceki okumaya göre": row["direction"],
+                "Örnek (n)": int(row["n"]),
+                f"Ort. 1g getiri ({pair_clean})": f"{float(row['mean_ret_1d_pct']):+.2f}%",
+                "%95 GA": f"[{float(row['ci_low_1d_pct']):+.2f}%, {float(row['ci_high_1d_pct']):+.2f}%]",
+                "p-değeri": f"{float(row['p_value']):.2f}",
+            })
+    if not rows:
+        return
+
+    with st.expander("📰 Haber Yön Eğilimi (Geçmiş İstatistik — tahmin değil)", expanded=False):
+        st.caption(
+            "Yaklaşan/son planlı veri açıklamaları için, o veri **önceki okumaya göre arttığında/azaldığında** "
+            f"{pair_clean}'nin 2008'den bu yana ortalama 1 günlük getirisi. Gerçekleşen değer açıklanmadan hangi "
+            "yönün geçerli olacağı bilinmez; bu yalnızca geçmiş eğilimdir, hiçbir işlem kararını tek başına "
+            "vermez veya engellemez, radar puanını etkilemez. p-değeri 0.05'in üstündeyse eğilim istatistiksel "
+            "olarak anlamlı sayılmaz — gürültü olabilir. FOMC basın toplantısı gibi sayısal sürprizi olmayan "
+            "olaylar için geçmiş istatistik hesaplanamaz, bu yüzden listede görünmez."
+        )
+        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+
+
 def portfolio_risk_status(
     journal: pd.DataFrame,
     symbol: str,
@@ -6633,6 +6747,7 @@ with tab_signal:
     for title, status in [("Veri", current_data_health), ("Haber", current_news_status), ("Portföy", current_portfolio_status)]:
         if status.get("blocks_trade"):
             st.warning(f"{title}: {status.get('text', '-')}")
+    render_news_direction_panel(symbol, news_events)
     render_top_decision_panel(simple_decision)
     if beginner_mode:
         if current_strategy_engine == "RANGE":
