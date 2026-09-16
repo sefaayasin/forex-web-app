@@ -1533,7 +1533,7 @@ def run_backtest(
         else:
             aligned_structures[tf] = structure.reindex(df.index, method="ffill")
 
-    counts = dict.fromkeys(['Giriş için incelenen mum', 'Yön ve skor', 'Yapı ve giriş modeli', 'RSI yönü', 'RSI uyumsuzluğu', 'Oynaklık', 'MACD yönü', 'MACD uyumsuzluğu', 'İşlem saatleri', 'İşlemler arası bekleme', 'Aynı yönde tekrar', 'Açılan işlem'], 0)
+    counts = dict.fromkeys(['Giriş için incelenen mum', 'Yön ve skor', 'Üst zaman dilimi yapısı', 'Giriş modeli', 'RSI yönü', 'RSI uyumsuzluğu', 'Oynaklık', 'MACD yönü', 'MACD uyumsuzluğu', 'İşlem saatleri', 'İşlemler arası bekleme', 'Aynı yönde tekrar', 'Açılan işlem'], 0)
     diagnostics = {"counts": counts, "raw_bars": len(raw), "usable_bars": len(df), "start": str(df.index[0]), "end": str(df.index[-1]), "period": period, "session": session_filter}
 
     pip = get_pip_size(symbol)
@@ -1651,12 +1651,15 @@ def run_backtest(
             sig, reason = mtf_signal_decision(entry_score, h4_score, h1_score, m15_score, tf_name, signal_threshold)
 
             counts['Yön ve skor'] += int(sig in {"LONG", "SHORT"})
+            if not market_structure_enabled:
+                counts["Üst zaman dilimi yapısı"] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and market_structure_enabled:
                 requested_side = sig
                 entry_structure = str(previous.get("CombinedDirection", "NONE"))
                 response_side = str(previous.get("ResponseSide", "NONE"))
                 h4_structure = entry_structure if tf_name == "4 Saat" else _aligned_text(aligned_structures.get("4 Saat"), prev_ts)
                 h1_structure = entry_structure if tf_name == "1 Saat" else _aligned_text(aligned_structures.get("1 Saat"), prev_ts)
+                counts["Üst zaman dilimi yapısı"] += int(h4_structure == sig and h1_structure == sig)
                 if h4_structure != sig or h1_structure != sig:
                     sig = "NONE"
                     reason = f"MA + market yapısı uyuşmuyor: 4H={h4_structure}, 1H={h1_structure}"
@@ -1673,7 +1676,7 @@ def run_backtest(
                     sig = "NONE"
                     reason = f"{tf_name} corrective response veya Bollinger trend açılımı bekleniyor"
 
-            counts['Yapı ve giriş modeli'] += int(sig in {"LONG", "SHORT"})
+            counts['Giriş modeli'] += int(sig in {"LONG", "SHORT"})
             if sig != "NONE" and rsi_regime_enabled:
                 required_regime = "BULLISH" if sig == "LONG" else "BEARISH"
                 actual_regime = str(previous.get("RSIRegime", "NEUTRAL"))

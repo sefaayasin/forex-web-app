@@ -1,0 +1,48 @@
+{
+  "name": "Hourly EMA50/EMA200 crossover baseline",
+  "frozen_on": "2026-09-16",
+  "symbols": ["EURUSD", "EURCHF", "AUDCAD"],
+  "source": "Local data/historical_1h CSV archives; no network data",
+  "rules": {
+    "timeframe": "1h",
+    "fast_ema": 50,
+    "slow_ema": 200,
+    "ema_min_periods": 200,
+    "entry": "Next bar open after closed-bar EMA crossover; LONG upward, SHORT downward",
+    "max_signal_gap_hours": 2,
+    "atr_period": 14,
+    "stop_atr": 1.5,
+    "target_r_before_cost": 1.5,
+    "max_holding_bars": 48,
+    "session": "All available hours",
+    "one_position_per_symbol": true,
+    "same_bar_reentry": false,
+    "break_even_or_trailing": false,
+    "initial_balance_usd": 10000,
+    "risk_pct_including_cost": 0.5,
+    "round_trip_cost_pips": 1.5,
+    "stress_cost_pips": 3.0,
+    "financing": "Not modeled",
+    "ambiguous_stop_and_target": "Stop first",
+    "stop_gap": "Adverse open fill; losses can exceed planned risk",
+    "target_gap": "Fill at target, without favorable gap improvement",
+    "segment_boundary": "Close at final bar close; do not carry positions between periods"
+  },
+  "periods": {
+    "development": ["2010-01-01", "2019-01-01"],
+    "validation": ["2019-01-01", "2023-01-01"],
+    "final_test": ["2023-01-01", "2026-01-01"]
+  },
+  "period_end_exclusive": true,
+  "warmup": "Earlier bars may initialize causal indicators, but cannot open a position in the evaluation period",
+  "parameter_search": "None; do not tune after observing any period",
+  "statistical_check": {
+    "stationary_bootstrap_simulations": 1000,
+    "mean_block_length": 5,
+    "seed": 42,
+    "minimum_trades_per_evaluation_period": 60,
+    "criteria": "Both validation and final test must have positive average net R, a positive 95% bootstrap lower bound, and p*3 <= 0.05; final test must remain positive at stress cost",
+    "multiple_symbol_adjustment": 3,
+    "scope": "Research screen only, never permission for live orders; final period has appeared in other project research and is not a sealed external holdout"
+  }
+}

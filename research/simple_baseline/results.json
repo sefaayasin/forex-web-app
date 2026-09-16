@@ -1,0 +1,490 @@
+{
+  "protocol_sha256": "4d8dbef2d01c5fbb99e5f959faf844b64f57865f4c14493b6ac802dafcb16a38",
+  "data_amendment_sha256": "69e71f944e8cd8ea2dc554cdc518af1d455bf5994b278a7fd92adf6948edb150",
+  "data_audit": [
+    {
+      "symbol": "EURUSD",
+      "sha256": "a2c8f74ed25bf569933b5c5c6e9c6665a609112b0660d9e7d514046283237deb",
+      "bars": 114653,
+      "start": "2008-01-01 00:00:00+00:00",
+      "end": "2026-09-11 20:00:00+00:00",
+      "envelope_repairs": 13,
+      "bars_by_year": {
+        "2008": 5765,
+        "2009": 6250,
+        "2010": 6273,
+        "2011": 6240,
+        "2012": 6260,
+        "2013": 6228,
+        "2014": 6229,
+        "2015": 5723,
+        "2016": 6240,
+        "2017": 6225,
+        "2018": 5746,
+        "2019": 6226,
+        "2020": 6249,
+        "2021": 6240,
+        "2022": 5714,
+        "2023": 6225,
+        "2024": 6250,
+        "2025": 6226,
+        "2026": 4344
+      },
+      "gaps_over_2h": 979
+    },
+    {
+      "symbol": "EURCHF",
+      "sha256": "82ca59ca34c13dc4aeb1b4248e01b1c8fda7d9ca574802376789adc8a55177e1",
+      "bars": 95347,
+      "start": "2008-01-01 00:00:00+00:00",
+      "end": "2026-09-11 20:00:00+00:00",
+      "envelope_repairs": 18,
+      "bars_by_year": {
+        "2008": 4220,
+        "2009": 5215,
+        "2010": 4199,
+        "2011": 2637,
+        "2012": 4697,
+        "2013": 4613,
+        "2014": 4074,
+        "2015": 3155,
+        "2016": 4176,
+        "2017": 4143,
+        "2018": 6226,
+        "2019": 6225,
+        "2020": 6250,
+        "2021": 6240,
+        "2022": 6240,
+        "2023": 6219,
+        "2024": 6248,
+        "2025": 6226,
+        "2026": 4344
+      },
+      "gaps_over_2h": 835
+    },
+    {
+      "symbol": "AUDCAD",
+      "sha256": "c0c4f9a5b524c7a83cc0c5fbd15f36fbb398151fc261b75bfd533678c7a3ebb9",
+      "bars": 110884,
+      "start": "2008-02-01 00:00:00+00:00",
+      "end": "2026-09-11 20:00:00+00:00",
+      "envelope_repairs": 10,
+      "bars_by_year": {
+        "2008": 5207,
+        "2009": 5694,
+        "2010": 5734,
+        "2011": 6240,
+        "2012": 6259,
+        "2013": 5714,
+        "2014": 6227,
+        "2015": 6225,
+        "2016": 6240,
+        "2017": 5700,
+        "2018": 6225,
+        "2019": 5696,
+        "2020": 6250,
+        "2021": 6240,
+        "2022": 5158,
+        "2023": 5743,
+        "2024": 5762,
+        "2025": 6226,
+        "2026": 4344
+      },
+      "gaps_over_2h": 954
+    }
+  ],
+  "results": [
+    {
+      "symbol": "EURUSD",
+      "period": "development",
+      "cost_pips": 1.5,
+      "trades": 310,
+      "net_pnl_usd": 2123.968754419166,
+      "return_pct": 21.239687544191632,
+      "max_drawdown_pct": 7.032875444256474,
+      "avg_net_r": 0.1277271866803541,
+      "profit_factor": 1.2345518411654652,
+      "win_pct": 47.74193548387097,
+      "ci_low": 0.0218949252126256,
+      "ci_high": 0.22975258338600393,
+      "adjusted_p": 0.02997002997002997,
+      "counts": {
+        "bars": 55164,
+        "crossovers": 314,
+        "gap_skips": 4,
+        "entries": 310
+      }
+    },
+    {
+      "symbol": "EURUSD",
+      "period": "development",
+      "cost_pips": 3.0,
+      "trades": 310,
+      "net_pnl_usd": 1101.4215713246426,
+      "return_pct": 11.01421571324639,
+      "max_drawdown_pct": 8.087730525991638,
+      "avg_net_r": 0.07052008218940077,
+      "profit_factor": 1.1268203870408118,
+      "win_pct": 47.74193548387097,
+      "ci_low": -0.029125652752073815,
+      "ci_high": 0.1692865292873767,
+      "adjusted_p": 0.2577422577422578,
+      "counts": {
+        "bars": 55164,
+        "crossovers": 314,
+        "gap_skips": 4,
+        "entries": 310
+      }
+    },
+    {
+      "symbol": "EURUSD",
+      "period": "validation",
+      "cost_pips": 1.5,
+      "trades": 150,
+      "net_pnl_usd": -1350.6793391161114,
+      "return_pct": -13.506793391161043,
+      "max_drawdown_pct": 14.630693030131829,
+      "avg_net_r": -0.19034414260586793,
+      "profit_factor": 0.7046289968662057,
+      "win_pct": 34.66666666666667,
+      "ci_low": -0.3450239959829397,
+      "ci_high": -0.037364237115044434,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 24429,
+        "crossovers": 151,
+        "gap_skips": 1,
+        "entries": 150
+      }
+    },
+    {
+      "symbol": "EURUSD",
+      "period": "validation",
+      "cost_pips": 3.0,
+      "trades": 150,
+      "net_pnl_usd": -1690.5600418087158,
+      "return_pct": -16.905600418087086,
+      "max_drawdown_pct": 17.677563358563255,
+      "avg_net_r": -0.24411793835362255,
+      "profit_factor": 0.6220908573402725,
+      "win_pct": 34.66666666666667,
+      "ci_low": -0.3874576552820855,
+      "ci_high": -0.10429950623003537,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 24429,
+        "crossovers": 151,
+        "gap_skips": 1,
+        "entries": 150
+      }
+    },
+    {
+      "symbol": "EURUSD",
+      "period": "final_test",
+      "cost_pips": 1.5,
+      "trades": 100,
+      "net_pnl_usd": -461.6120690029263,
+      "return_pct": -4.6161206900292795,
+      "max_drawdown_pct": 6.6946482417369735,
+      "avg_net_r": -0.09130290407121854,
+      "profit_factor": 0.8446092946108207,
+      "win_pct": 39.0,
+      "ci_low": -0.303240505011607,
+      "ci_high": 0.12201147277536081,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 18701,
+        "crossovers": 101,
+        "gap_skips": 1,
+        "entries": 100
+      }
+    },
+    {
+      "symbol": "EURUSD",
+      "period": "final_test",
+      "cost_pips": 3.0,
+      "trades": 100,
+      "net_pnl_usd": -740.2323031744726,
+      "return_pct": -7.402323031744739,
+      "max_drawdown_pct": 8.825250467485999,
+      "avg_net_r": -0.15095920953539774,
+      "profit_factor": 0.7473193671606083,
+      "win_pct": 39.0,
+      "ci_low": -0.3490613014917298,
+      "ci_high": 0.051650050230193034,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 18701,
+        "crossovers": 101,
+        "gap_skips": 1,
+        "entries": 100
+      }
+    },
+    {
+      "symbol": "EURCHF",
+      "period": "development",
+      "cost_pips": 1.5,
+      "trades": 226,
+      "net_pnl_usd": -1819.6019800595498,
+      "return_pct": -18.19601980059562,
+      "max_drawdown_pct": 20.13195647464108,
+      "avg_net_r": -0.17481890837877848,
+      "profit_factor": 0.7099176955117273,
+      "win_pct": 36.72566371681416,
+      "ci_low": -0.3004161252217849,
+      "ci_high": -0.05518322993282982,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 37920,
+        "crossovers": 227,
+        "gap_skips": 1,
+        "entries": 226
+      }
+    },
+    {
+      "symbol": "EURCHF",
+      "period": "development",
+      "cost_pips": 3.0,
+      "trades": 226,
+      "net_pnl_usd": -2478.3234538459487,
+      "return_pct": -24.783234538459574,
+      "max_drawdown_pct": 25.90109875195098,
+      "avg_net_r": -0.24948727927481337,
+      "profit_factor": 0.5901733358980712,
+      "win_pct": 36.72566371681416,
+      "ci_low": -0.36589373688646615,
+      "ci_high": -0.13506516801928786,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 37920,
+        "crossovers": 227,
+        "gap_skips": 1,
+        "entries": 226
+      }
+    },
+    {
+      "symbol": "EURCHF",
+      "period": "validation",
+      "cost_pips": 1.5,
+      "trades": 146,
+      "net_pnl_usd": -876.6583763881151,
+      "return_pct": -8.766583763881153,
+      "max_drawdown_pct": 13.660112398526996,
+      "avg_net_r": -0.12256984341020408,
+      "profit_factor": 0.790458732220919,
+      "win_pct": 39.04109589041096,
+      "ci_low": -0.32926351295176126,
+      "ci_high": 0.06892850802991889,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 24955,
+        "crossovers": 148,
+        "gap_skips": 2,
+        "entries": 146
+      }
+    },
+    {
+      "symbol": "EURCHF",
+      "period": "validation",
+      "cost_pips": 3.0,
+      "trades": 146,
+      "net_pnl_usd": -1336.2500931782156,
+      "return_pct": -13.362500931782106,
+      "max_drawdown_pct": 15.609554326693342,
+      "avg_net_r": -0.19378924291143354,
+      "profit_factor": 0.6729427001468986,
+      "win_pct": 39.04109589041096,
+      "ci_low": -0.3840297958776119,
+      "ci_high": -0.01402343095877294,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 24955,
+        "crossovers": 148,
+        "gap_skips": 2,
+        "entries": 146
+      }
+    },
+    {
+      "symbol": "EURCHF",
+      "period": "final_test",
+      "cost_pips": 1.5,
+      "trades": 118,
+      "net_pnl_usd": -1326.8164413110658,
+      "return_pct": -13.26816441311064,
+      "max_drawdown_pct": 14.68315074930548,
+      "avg_net_r": -0.2382952034049871,
+      "profit_factor": 0.6344218260954182,
+      "win_pct": 33.89830508474576,
+      "ci_low": -0.4268543932472269,
+      "ci_high": -0.06702412999990968,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 18693,
+        "crossovers": 121,
+        "gap_skips": 3,
+        "entries": 118
+      }
+    },
+    {
+      "symbol": "EURCHF",
+      "period": "final_test",
+      "cost_pips": 3.0,
+      "trades": 118,
+      "net_pnl_usd": -1668.188682777727,
+      "return_pct": -16.68188682777727,
+      "max_drawdown_pct": 17.377413697508455,
+      "avg_net_r": -0.3067391346769114,
+      "profit_factor": 0.531746735987003,
+      "win_pct": 33.89830508474576,
+      "ci_low": -0.4776948824449462,
+      "ci_high": -0.15143266831595015,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 18693,
+        "crossovers": 121,
+        "gap_skips": 3,
+        "entries": 118
+      }
+    },
+    {
+      "symbol": "AUDCAD",
+      "period": "development",
+      "cost_pips": 1.5,
+      "trades": 328,
+      "net_pnl_usd": -1980.872696966243,
+      "return_pct": -19.808726969662416,
+      "max_drawdown_pct": 19.949498663530694,
+      "avg_net_r": -0.13133283360489967,
+      "profit_factor": 0.7819143574645592,
+      "win_pct": 37.19512195121951,
+      "ci_low": -0.2416522314813122,
+      "ci_high": -0.02135867448305743,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 54564,
+        "crossovers": 330,
+        "gap_skips": 2,
+        "entries": 328
+      }
+    },
+    {
+      "symbol": "AUDCAD",
+      "period": "development",
+      "cost_pips": 3.0,
+      "trades": 328,
+      "net_pnl_usd": -2582.438434945046,
+      "return_pct": -25.824384349450447,
+      "max_drawdown_pct": 25.90810761210971,
+      "avg_net_r": -0.17918476541992284,
+      "profit_factor": 0.7061367280831357,
+      "win_pct": 36.890243902439025,
+      "ci_low": -0.282162263706706,
+      "ci_high": -0.07699298554744696,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 54564,
+        "crossovers": 330,
+        "gap_skips": 2,
+        "entries": 328
+      }
+    },
+    {
+      "symbol": "AUDCAD",
+      "period": "validation",
+      "cost_pips": 1.5,
+      "trades": 134,
+      "net_pnl_usd": 179.49526546459037,
+      "return_pct": 1.7949526546459982,
+      "max_drawdown_pct": 4.371261269541268,
+      "avg_net_r": 0.029911566878175953,
+      "profit_factor": 1.0484022814454752,
+      "win_pct": 44.776119402985074,
+      "ci_low": -0.13510086634580704,
+      "ci_high": 0.21824074513184807,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 23344,
+        "crossovers": 134,
+        "gap_skips": 0,
+        "entries": 134
+      }
+    },
+    {
+      "symbol": "AUDCAD",
+      "period": "validation",
+      "cost_pips": 3.0,
+      "trades": 134,
+      "net_pnl_usd": -284.2627839113053,
+      "return_pct": -2.84262783911301,
+      "max_drawdown_pct": 7.5679628464992,
+      "avg_net_r": -0.040113217274737635,
+      "profit_factor": 0.9215716510407506,
+      "win_pct": 44.776119402985074,
+      "ci_low": -0.19502616473884837,
+      "ci_high": 0.13637623500588988,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 23344,
+        "crossovers": 134,
+        "gap_skips": 0,
+        "entries": 134
+      }
+    },
+    {
+      "symbol": "AUDCAD",
+      "period": "final_test",
+      "cost_pips": 1.5,
+      "trades": 122,
+      "net_pnl_usd": -1433.4733993506766,
+      "return_pct": -14.334733993506854,
+      "max_drawdown_pct": 18.914379363867802,
+      "avg_net_r": -0.2502388550180392,
+      "profit_factor": 0.621485250999381,
+      "win_pct": 33.60655737704918,
+      "ci_low": -0.4709168033211901,
+      "ci_high": -0.010978933315714305,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 17731,
+        "crossovers": 122,
+        "gap_skips": 0,
+        "entries": 122
+      }
+    },
+    {
+      "symbol": "AUDCAD",
+      "period": "final_test",
+      "cost_pips": 3.0,
+      "trades": 122,
+      "net_pnl_usd": -1706.8200579079628,
+      "return_pct": -17.068200579079694,
+      "max_drawdown_pct": 20.19950694760749,
+      "avg_net_r": -0.3037750223044235,
+      "profit_factor": 0.5427475460617469,
+      "win_pct": 33.60655737704918,
+      "ci_low": -0.5095896816547104,
+      "ci_high": -0.08030002640842358,
+      "adjusted_p": 1.0,
+      "counts": {
+        "bars": 17731,
+        "crossovers": 122,
+        "gap_skips": 0,
+        "entries": 122
+      }
+    }
+  ],
+  "verdicts": [
+    {
+      "symbol": "EURUSD",
+      "research_screen_passed": false
+    },
+    {
+      "symbol": "EURCHF",
+      "research_screen_passed": false
+    },
+    {
+      "symbol": "AUDCAD",
+      "research_screen_passed": false
+    }
+  ]
+}

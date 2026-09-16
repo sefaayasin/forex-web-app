@@ -1,0 +1,7 @@
+{
+  "recorded_on": "2026-09-16",
+  "timing": "Before any strategy result; initial run stopped on OHLC validation",
+  "finding": "13 EURUSD, 18 EURCHF and 10 AUDCAD bars have open/close outside the high/low envelope by at most 0.00001",
+  "rule": "For OHLC envelope inconsistencies no larger than 0.00001 plus 1e-12 floating tolerance, widen High/Low to include observed Open/Close; reject larger inconsistencies. Keep source archives unchanged, count all repairs and hash raw inputs.",
+  "strategy_parameters_changed": false
+}
