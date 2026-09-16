@@ -71,7 +71,7 @@ from forex_indicators import (
 )
 from forex_edge import build_edge_validation_report, edge_validation_table
 from forex_diagnostics import engine_evidence_summary, funnel_rows
-from forex_ml_live import build_research_prediction, research_signal_alignment
+from forex_ml_live import build_research_prediction, load_research_model, research_signal_alignment
 from forex_storage import (
     APP_DB_PATH,
     add_trade_journal_entry,
@@ -5570,6 +5570,116 @@ def render_ml_prediction_card(research_prediction: dict, side: Optional[str], sh
         unsafe_allow_html=True,
     )
 
+
+ML_TOURNAMENT_DIR = Path(__file__).resolve().parent / "data" / "ml" / "tournament"
+
+
+@st.cache_data(ttl=3600)
+def load_ml_final_metrics() -> pd.DataFrame:
+    """Dürüst 2023+ holdout ölçümleri (forex_ml_tournament.final_audit çıktısı)."""
+    path = ML_TOURNAMENT_DIR / "final_metrics.csv"
+    if not path.exists():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame()
+
+
+def scan_ml_predictions(symbols: list[str]) -> pd.DataFrame:
+    """Her paritede kendi eğitilmiş modelini çalıştırıp güncel LONG/SHORT görüşünü toplar."""
+    rows = []
+    progress = st.progress(0, text="Modeller pariteleri değerlendiriyor...")
+    for i, sym in enumerate(symbols, start=1):
+        base_symbol = sym.replace("=X", "").upper()
+        if load_research_model(base_symbol, "direction") is None:
+            progress.progress(i / len(symbols), text=f"{sym} atlandı (model yok)")
+            continue
+        bars = fetch_ohlc(sym, "60m", "730d")
+        prediction = build_research_prediction(base_symbol, "direction", bars=bars)
+        if prediction.get("status") == "ready":
+            probability_up = float(prediction["probability_up"])
+            side = "LONG" if probability_up >= 0.5 else "SHORT"
+            confidence_pct = (probability_up if side == "LONG" else 1 - probability_up) * 100
+            as_of = prediction.get("as_of")
+            rows.append({
+                "Sembol": base_symbol,
+                "Tahmin": side,
+                "Olasılık %": round(confidence_pct, 1),
+                "Son mum": as_of.strftime("%d.%m %H:%M UTC") if as_of is not None else "-",
+                "Ufuk (saat)": prediction.get("horizon_bars", "-"),
+            })
+        progress.progress(i / len(symbols), text=f"{sym} tarandı ({i}/{len(symbols)})")
+    progress.empty()
+    return pd.DataFrame(rows)
+
+
+def render_ml_prediction_page() -> None:
+    """Kendi kendine eğitilmiş, parite başına ayrı modellerin canlı LONG/SHORT görüşü.
+
+    Her sayı, forex_ml_tournament.py'nin 2008-2023 verisiyle eğittiği ve 2023
+    sonrasını hiç görmeden test ettiği dürüst bir sonuçla birlikte gösterilir;
+    model karşılaştırma/heatmap ekranı burada yoktur, sadece güncel tahmin.
+    """
+    st.title("🤖 ML Tahmini")
+    st.caption(
+        "Her parite için 2008-2023 verisiyle eğitilmiş, 2023 sonrasını hiç görmeden test edilmiş ayrı bir "
+        "model var. Aşağıdaki isabet oranları bu dürüst testin sonucu — çoğu paritede yazı turaya (%50) "
+        "yakın, bazı çapraz paritelerde biraz daha yüksek. **Bu sayfa tek başına LONG/SHORT emri değildir**; "
+        "İşlem Asistanı ekranındaki risk ve backtest kontrolünden geçmeden kullanılmamalıdır."
+    )
+    if not SKLEARN_AVAILABLE:
+        st.warning("ML için scikit-learn kurulu değil. requirements.txt içine scikit-learn ekle.")
+        return
+
+    metrics = load_ml_final_metrics()
+    direction_metrics = metrics[metrics["task"] == "direction"].copy() if not metrics.empty else pd.DataFrame()
+    if not direction_metrics.empty:
+        direction_metrics["İstatistiksel Anlamlı"] = np.where(direction_metrics["accuracy_lift_ci_low"] > 0, "Evet", "Hayır")
+
+    if st.button("Tüm Pariteleri Tahminle", use_container_width=True) or "ml_prediction_df" not in st.session_state:
+        with st.spinner("Modeller çalışıyor (28 parite için biraz sürebilir)..."):
+            st.session_state["ml_prediction_df"] = scan_ml_predictions(SYMBOL_LIST)
+
+    predictions = st.session_state.get("ml_prediction_df", pd.DataFrame())
+    if predictions.empty:
+        st.info("Henüz tahmin yok veya hiçbir paritede model bulunamadı.")
+        return
+
+    if not direction_metrics.empty:
+        merged = predictions.merge(
+            direction_metrics[[
+                "symbol", "balanced_accuracy", "accuracy_lift_ci_low", "accuracy_lift_ci_high", "n", "İstatistiksel Anlamlı",
+            ]],
+            left_on="Sembol", right_on="symbol", how="left",
+        ).drop(columns=["symbol"])
+        merged = merged.rename(columns={
+            "balanced_accuracy": "Geçmiş Dengeli İsabet %",
+            "accuracy_lift_ci_low": "Lift %95 alt",
+            "accuracy_lift_ci_high": "Lift %95 üst",
+            "n": "Test Örneği (n)",
+        })
+        for col in ["Geçmiş Dengeli İsabet %", "Lift %95 alt", "Lift %95 üst"]:
+            merged[col] = (merged[col] * 100).round(1)
+    else:
+        merged = predictions
+
+    merged = merged.sort_values("Olasılık %", ascending=False)
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Taranan parite", len(merged))
+    m2.metric("LONG diyen", int((merged["Tahmin"] == "LONG").sum()))
+    m3.metric("SHORT diyen", int((merged["Tahmin"] == "SHORT").sum()))
+
+    st.dataframe(merged, hide_index=True, use_container_width=True)
+    if "İstatistiksel Anlamlı" in merged.columns:
+        st.caption(
+            "İstatistiksel Anlamlı = Evet: modelin 2023 sonrası testte, sadece son yönü tekrarlayan basit bir "
+            "kıyaslamaya göre isabet farkının %95 güven aralığı sıfırın üstünde — şans eseri olma ihtimali "
+            "düşük. Hayır: fark gürültüden ayırt edilemiyor; bu paritedeki tahmine düşük ağırlık verin."
+        )
+    st.caption("Kendi kendine öğrenen model, ders çalıştığı dönemi (2008-2023) tekrar etmez; her ay yeniden eğitilmesi önerilir: python train_all_pair_direction_models.py")
+
+
 # =============================================================================
 # UI
 # =============================================================================
@@ -5577,19 +5687,16 @@ def render_ml_prediction_card(research_prediction: dict, side: Optional[str], sh
 with st.sidebar:
     st.header("Forex Asistanı")
 
-    screen_options = ["İşlem Asistanı", "Parite Alarm Ekranı", "ML Laboratuvarı"]
+    screen_options = ["İşlem Asistanı", "Parite Alarm Ekranı", "ML Tahmini"]
     screen_mode = st.radio("Sayfa", screen_options, index=2 if st.query_params.get("view") == "ml" else 0,
-                           format_func=lambda value: {"İşlem Asistanı": "İşlem", "Parite Alarm Ekranı": "Pariteler", "ML Laboratuvarı": "Araştırma"}[value])
+                           format_func=lambda value: {"İşlem Asistanı": "İşlem", "Parite Alarm Ekranı": "Pariteler", "ML Tahmini": "ML Tahmini"}[value])
     advanced_view = st.toggle("Gelişmiş görünüm", value=False)
 
-    if screen_mode == "ML Laboratuvarı":
-        st.caption("Model karşılaştırmaları, doğruluk ölçümleri ve heatmap'ler.")
+    if screen_mode == "ML Tahmini":
+        st.caption("Her parite için ayrı eğitilmiş modelin güncel LONG/SHORT tahmini ve dürüst geçmiş isabeti.")
 
-if screen_mode == "ML Laboratuvarı":
-    from forex_ml_panel import render_ml_panel
-
-    st.title("ML Laboratuvarı")
-    render_ml_panel()
+if screen_mode == "ML Tahmini":
+    render_ml_prediction_page()
     st.stop()
 
 st.title("Forex Asistanı")
@@ -5761,9 +5868,11 @@ with st.sidebar:
         if not SKLEARN_AVAILABLE:
             st.warning("ML için scikit-learn kurulu değil. requirements.txt içine scikit-learn ekle.")
         st.caption(
-            "Sadece EURUSD için mevcut. 2023 sonrası testte yön isabeti ~%52 (yazı-tura %50) — "
-            "bu yüzden LONG/SHORT kararını tek başına vermez ya da engellemez; teknik sinyalle "
-            "uyumluysa/çelişiyorsa radar puanına küçük (±8) bir ayar olarak yansır."
+            "Artık her parite için ayrı eğitilmiş bir model var (2008-2023 verisiyle eğitildi, "
+            "2023 sonrasında dürüst şekilde test edildi). Paritelere göre isabet oranı değişir — "
+            "çoğu majör paritede yazı-turaya (%50) yakın, bazı çapraz paritelerde biraz daha yüksek "
+            "(detaylar: 🤖 ML Tahmini sekmesi). Bu yüzden LONG/SHORT kararını tek başına vermez ya da "
+            "engellemez; teknik sinyalle uyumluysa/çelişiyorsa radar puanına küçük (±8) bir ayar olarak yansır."
         )
 
 
@@ -6544,7 +6653,7 @@ elif current_strategy_engine is None:
     }
 
 research_symbol = symbol.replace("=X", "").upper()
-research_bars = fetch_ohlc(symbol, "60m", "730d") if research_symbol == "EURUSD" else pd.DataFrame()
+research_bars = fetch_ohlc(symbol, "60m", "730d") if load_research_model(research_symbol, "direction") else pd.DataFrame()
 research_prediction = build_research_prediction(research_symbol, bars=research_bars)
 simple_decision = apply_operational_safety_filters(
     decision=simple_decision,
@@ -7137,9 +7246,7 @@ with tab_advanced:
             clear_trade_journal()
             st.rerun()
 
-    from forex_ml_panel import render_ml_panel
-
-    render_ml_panel()
+    st.caption("Parite başına canlı LONG/SHORT tahmini için kenar çubuğunda Sayfa → ML Tahmini'ni seçin.")
 
     with st.expander("Alarm Geçmişi", expanded=False):
         alert_history = alert_history_dataframe()

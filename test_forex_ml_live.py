@@ -17,7 +17,7 @@ def synthetic_hourly_bars(n=1200, seed=7):
 
 class ForexMlLiveTests(unittest.TestCase):
     def test_unavailable_for_symbol_without_a_saved_model(self):
-        result = build_research_prediction("GBPUSD", bars=synthetic_hourly_bars())
+        result = build_research_prediction("ZZZXXX", bars=synthetic_hourly_bars())
         self.assertEqual(result["status"], "unavailable")
 
     def test_insufficient_data_below_minimum_bar_count(self):
