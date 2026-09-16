@@ -2593,6 +2593,38 @@ def run_symbol_scanner(
     return result
 
 
+def run_symbol_scanner_multi_tf(
+    symbols: list[str],
+    tf_list: list[str],
+    change_window_minutes: int,
+    **scanner_kwargs,
+) -> pd.DataFrame:
+    """15 Dakika + 5 Dakika gibi birden çok giriş zaman dilimini aynı taramada birleştirir.
+
+    Backtest istatistikleri (research/entry_tf_frequency) 5 Dakika girişin aynı onay
+    şartlarıyla ~3-6 kat daha sık sinyal ürettiğini ama kaliteyi garanti etmediğini
+    gösterdi; bu yüzden kaliteyi değil sadece görünürlüğü/frekansı artırmak için
+    ikisini birlikte tarayıp aynı listede gösteriyoruz. Hiçbir onay eşiği değişmedi.
+    """
+    frames = []
+    for tf in tf_list:
+        period = BACKTEST_PERIODS.get(tf, "30d")
+        frame = run_symbol_scanner(
+            symbols=symbols,
+            change_window_minutes=change_window_minutes,
+            scanner_tf=tf,
+            scanner_period=period,
+            **scanner_kwargs,
+        )
+        frame = frame.copy()
+        frame.insert(1, "Giriş TF", tf)
+        frames.append(frame)
+    combined = pd.concat(frames, ignore_index=True)
+    decision_order = {"İZLE": 0, "DEMO/İZLE": 1, "ÖN İZLEME": 2, "PAS": 3}
+    combined["_order"] = combined["Karar"].map(decision_order).fillna(9)
+    combined = combined.sort_values(["_order", "Sinyal Skoru", "Skor"], ascending=[True, False, False]).drop(columns=["_order"])
+    return combined.reset_index(drop=True)
+
 
 def _is_long_bias(label: str) -> bool:
     return str(label) in {"Alım Yönlü", "Güçlü Alım Yönlü"}
@@ -5019,6 +5051,51 @@ def render_intraday_opportunity(opportunity: dict, symbol: str) -> None:
     )
 
 
+def render_opportunity_feed(scanner_df: pd.DataFrame, max_cards: int = 9) -> None:
+    """Tüm taranan pariteleri, tekil radar kartıyla aynı görsel dilde küçük kartlar halinde gösterir.
+
+    Aynı Fırsat/Karar/Sinyal Skoru alanlarını kullanır; hiçbir filtre veya eşiği değiştirmez,
+    sadece 'Parite Tarayıcı' sonucunu tablodan kart akışına çevirir.
+    """
+    if scanner_df is None or scanner_df.empty:
+        st.info("Henüz taranmış parite yok. Kenar çubuğunda 'Parite tarayıcı' bölümünden 'Pariteleri Tara' butonuna basın.")
+        return
+
+    actionable = scanner_df[scanner_df["Karar"] != "PAS"].copy()
+    shown = actionable.head(max_cards) if not actionable.empty else scanner_df.head(max_cards)
+    if actionable.empty:
+        st.caption(f"Şu an aktif fırsat yok; en yüksek sinyal skorlu {len(shown)} parite gösteriliyor.")
+    else:
+        st.caption(f"{len(actionable)} / {len(scanner_df)} paritede yön ve yapı uyumlu; en güçlü {len(shown)} tanesi:")
+
+    cols_per_row = 3
+    rows = [shown.iloc[i:i + cols_per_row] for i in range(0, len(shown), cols_per_row)]
+    for chunk in rows:
+        cols = st.columns(len(chunk))
+        for col, (_, row) in zip(cols, chunk.iterrows()):
+            side = "LONG" if "LONG" in str(row.get("Fırsat", "")) else ("SHORT" if "SHORT" in str(row.get("Fırsat", "")) else "NONE")
+            css = {"LONG": "opportunity-long", "SHORT": "opportunity-short"}.get(side, "opportunity-neutral")
+            score = float(row.get("Sinyal Skoru", 0) or 0)
+            pct = row.get("Değişim %")
+            pct_text = "-" if pct is None or pd.isna(pct) else f"{float(pct):+.2f}%"
+            with col:
+                tf_label = str(row.get("Giriş TF", ""))
+                kicker = f"{row.get('Sembol', '-')} · {tf_label}" if tf_label else str(row.get("Sembol", "-"))
+                st.markdown(
+                    f"<div class='opportunity-card {css}' style='padding:12px; min-height:0;'>"
+                    f"<div class='section-kicker'>{escape(kicker)}</div>"
+                    f"<div class='opportunity-title' style='font-size:1rem;'>{escape(str(row.get('Fırsat', '-')))}</div>"
+                    f"<div class='opportunity-score' style='font-size:1.4rem; margin:4px 0;'>{score:.0f}/100</div>"
+                    f"<div style='font-size:.85rem;'>{escape(str(row.get('Fırsat Nedeni', '-')))}</div>"
+                    f"<div style='font-size:.8rem; opacity:.8;'>{escape(str(row.get('Genel Bias', '-')))} · {pct_text}</div>"
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+    st.caption(
+        "Bu kartlar da aynı yapı/RSI/MACD/Bollinger onaylarından geçiyor; sadece tek parite yerine "
+        "tüm portföyü aynı anda gösteriyor. Karar İZLE olsa bile emir otomatik verilmez."
+    )
+
 
 # =============================================================================
 # PLOTS
@@ -5728,10 +5805,9 @@ with st.sidebar:
 
     with advanced_settings.container(border=True):
         st.subheader("Parite tarayıcı")
-        scanner_tf = st.selectbox("Tarayıcı backtest zamanı", tf_options, index=tf_options.index(chart_tf))
-        scanner_period = st.text_input("Tarayıcı period", value=BACKTEST_PERIODS.get(scanner_tf, "30d"), key=f"scanner_period_{scanner_tf}")
+        st.caption("15 Dakika ve 5 Dakika girişleri birlikte taranır; aynı onay filtreleri her ikisinde de geçerlidir.")
         scanner_include_backtest = st.checkbox("Backtest kalitesi hesapla", value=False)
-        scanner_limit = st.number_input("Maksimum parite", min_value=1, max_value=len(SYMBOL_LIST), value=min(12, len(SYMBOL_LIST)), step=1)
+        scanner_limit = st.number_input("Maksimum parite", min_value=1, max_value=len(SYMBOL_LIST), value=len(SYMBOL_LIST), step=1)
         run_scanner_requested = st.button("Pariteleri Tara", use_container_width=True)
 
     if st.button("Veriyi Yenile", use_container_width=True):
@@ -6125,36 +6201,46 @@ if run_dual_engine_lab_requested or run_bt_requested:
             del cache[next(iter(cache))]
         st.session_state["engine_test_cache"] = cache
 
+_scanner_common_kwargs = dict(
+    initial_balance=account_size,
+    risk_pct=risk_pct,
+    rr=rr,
+    atr_mult=atr_mult,
+    signal_threshold=float(signal_threshold),
+    spread_pips=spread_pips,
+    pip_value_per_lot=pip_value_per_lot,
+    cooldown_bars=int(cooldown_bars),
+    session_filter=session_filter,
+    max_same_direction_trades=int(max_same_direction_trades),
+    min_trades_required=int(min_trades_required),
+    signal_mode=signal_mode,
+    market_structure_enabled=bool(market_structure_enabled),
+    entry_model=entry_model,
+    rsi_regime_enabled=bool(rsi_regime_enabled),
+    rsi_divergence_filter_enabled=bool(rsi_divergence_filter_enabled),
+    bb_extreme_volatility_block=bool(bb_extreme_volatility_block),
+    macd_confirmation_enabled=bool(macd_confirmation_enabled),
+    macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
+)
+
 if run_scanner_requested:
-    scan_symbols = SYMBOL_LIST[:int(scanner_limit)]
-    with st.spinner("Parite tarayıcı çalışıyor..."):
-        scanner_df = run_symbol_scanner(
-            symbols=scan_symbols,
+    with st.spinner("Parite tarayıcı çalışıyor (15 Dakika + 5 Dakika)..."):
+        st.session_state["scanner_df"] = run_symbol_scanner_multi_tf(
+            symbols=SYMBOL_LIST[:int(scanner_limit)],
+            tf_list=["15 Dakika", "5 Dakika"],
             change_window_minutes=change_window_minutes,
             include_backtest=scanner_include_backtest,
-            scanner_tf=scanner_tf,
-            scanner_period=scanner_period,
-            initial_balance=account_size,
-            risk_pct=risk_pct,
-            rr=rr,
-            atr_mult=atr_mult,
-            signal_threshold=float(signal_threshold),
-            spread_pips=spread_pips,
-            pip_value_per_lot=pip_value_per_lot,
-            cooldown_bars=int(cooldown_bars),
-            session_filter=session_filter,
-            max_same_direction_trades=int(max_same_direction_trades),
-            min_trades_required=int(min_trades_required),
-            signal_mode=signal_mode,
-            market_structure_enabled=bool(market_structure_enabled),
-            entry_model=entry_model,
-            rsi_regime_enabled=bool(rsi_regime_enabled),
-            rsi_divergence_filter_enabled=bool(rsi_divergence_filter_enabled),
-            bb_extreme_volatility_block=bool(bb_extreme_volatility_block),
-            macd_confirmation_enabled=bool(macd_confirmation_enabled),
-            macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
+            **_scanner_common_kwargs,
         )
-        st.session_state["scanner_df"] = scanner_df
+elif "scanner_df" not in st.session_state:
+    with st.spinner("Fırsat Akışı ilk kez tüm pariteleri tarıyor (15 Dakika + 5 Dakika)..."):
+        st.session_state["scanner_df"] = run_symbol_scanner_multi_tf(
+            symbols=SYMBOL_LIST[:int(scanner_limit)],
+            tf_list=["15 Dakika", "5 Dakika"],
+            change_window_minutes=change_window_minutes,
+            include_backtest=False,
+            **_scanner_common_kwargs,
+        )
 
 # Top metrics
 price_info = fetch_price_change(symbol, change_window_minutes)
@@ -6390,9 +6476,30 @@ intraday_opportunity = apply_opportunity_cooldown(
     cooldown_bars=16,
 )
 
-tab_signal, tab_chart, tab_position, tab_advanced = st.tabs(
-    ["📊 Sinyal", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
+tab_signal, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
+    ["📊 Sinyal", "🔥 Fırsat Akışı", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
 )
+
+with tab_feed:
+    st.header("Fırsat Akışı — Tüm Pariteler")
+    st.caption(
+        "Aynı katı onay şartlarıyla (yapı, RSI, MACD, Bollinger) 15 Dakika ve 5 Dakika girişlerinin "
+        "ikisi birden taranıp birleştirilir; en güçlü sinyaller burada."
+    )
+    render_opportunity_feed(st.session_state.get("scanner_df"))
+    with st.expander("Tüm tarama tablosu", expanded=False):
+        if isinstance(st.session_state.get("scanner_df"), pd.DataFrame) and not st.session_state["scanner_df"].empty:
+            scanner_view = st.session_state["scanner_df"]
+            st.dataframe(scanner_view, use_container_width=True, hide_index=True)
+            st.download_button(
+                "Tarayıcı Sonucunu CSV İndir",
+                data=scanner_view.to_csv(index=False).encode("utf-8-sig"),
+                file_name="forex_pair_scanner.csv",
+                mime="text/csv",
+            )
+            st.caption("5 Dakika verisi Yahoo tarafında kısa geçmiş sunduğu için bazı paritelerde örnek sayısı yetersiz kalabilir.")
+        else:
+            st.caption("Tarama sonucu yok.")
 
 with tab_advanced:
     with st.expander("Piyasa Radarı ve Çift Motor", expanded=True):
@@ -6592,16 +6699,7 @@ with tab_signal:
             render_simple_decision_card(simple_decision)
 
     if "scanner_df" in st.session_state and isinstance(st.session_state["scanner_df"], pd.DataFrame):
-        with st.expander("Parite Tarayıcı Sonuçları", expanded=False):
-            scanner_view = st.session_state["scanner_df"].copy()
-            st.dataframe(scanner_view, use_container_width=True, height=360)
-            st.download_button(
-                "Tarayıcı Sonucunu CSV İndir",
-                data=scanner_view.to_csv(index=False).encode("utf-8-sig"),
-                file_name="forex_pair_scanner.csv",
-                mime="text/csv",
-            )
-            st.caption("5 Dakika verisi Yahoo tarafında kısa geçmiş sunduğu için bazı paritelerde örnek sayısı yetersiz kalabilir.")
+        st.caption("Tüm parite tarama sonuçları → 🔥 Fırsat Akışı sekmesi.")
 
 with tab_position:
     if show_position_tracker:
