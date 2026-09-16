@@ -25,6 +25,7 @@ import logging
 import os
 from pathlib import Path
 from tempfile import gettempdir
+import time
 from typing import Optional
 
 import numpy as np
@@ -5586,17 +5587,28 @@ def load_ml_final_metrics() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def scan_ml_predictions(symbols: list[str]) -> pd.DataFrame:
-    """Her paritede kendi eğitilmiş modelini çalıştırıp güncel LONG/SHORT görüşünü toplar."""
+def scan_ml_predictions(symbols: list[str]) -> tuple[pd.DataFrame, list[tuple[str, str]]]:
+    """Her paritede kendi eğitilmiş modelini çalıştırıp güncel LONG/SHORT görüşünü toplar.
+
+    Yahoo Finance canlı veri isteği zaman zaman zaman aşımına uğrayabiliyor; bu yüzden
+    her parite için bir kez daha (kısa bir bekleme sonrası) denenir, yine de veri gelmezse
+    o parite sessizce atlanmaz — sebebi `skipped` listesinde döner ve ekranda gösterilir.
+    """
     rows = []
+    skipped: list[tuple[str, str]] = []
     progress = st.progress(0, text="Modeller pariteleri değerlendiriyor...")
     for i, sym in enumerate(symbols, start=1):
         base_symbol = sym.replace("=X", "").upper()
         if load_research_model(base_symbol, "direction") is None:
             progress.progress(i / len(symbols), text=f"{sym} atlandı (model yok)")
             continue
-        bars = fetch_ohlc(sym, "60m", "730d")
+        bars = fetch_ohlc(sym, "60m", "150d")
+        if bars is None or bars.empty:
+            time.sleep(1.0)
+            bars = fetch_ohlc(sym, "60m", "150d")
         prediction = build_research_prediction(base_symbol, "direction", bars=bars)
+        if prediction.get("status") != "ready":
+            skipped.append((base_symbol, str(prediction.get("text", prediction.get("status", "-")))))
         if prediction.get("status") == "ready":
             probability_up = float(prediction["probability_up"])
             side = "LONG" if probability_up >= 0.5 else "SHORT"
@@ -5611,7 +5623,7 @@ def scan_ml_predictions(symbols: list[str]) -> pd.DataFrame:
             })
         progress.progress(i / len(symbols), text=f"{sym} tarandı ({i}/{len(symbols)})")
     progress.empty()
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows), skipped
 
 
 def render_ml_prediction_page() -> None:
@@ -5639,9 +5651,16 @@ def render_ml_prediction_page() -> None:
 
     if st.button("Tüm Pariteleri Tahminle", use_container_width=True) or "ml_prediction_df" not in st.session_state:
         with st.spinner("Modeller çalışıyor (28 parite için biraz sürebilir)..."):
-            st.session_state["ml_prediction_df"] = scan_ml_predictions(SYMBOL_LIST)
+            df, skipped = scan_ml_predictions(SYMBOL_LIST)
+            st.session_state["ml_prediction_df"] = df
+            st.session_state["ml_prediction_skipped"] = skipped
 
     predictions = st.session_state.get("ml_prediction_df", pd.DataFrame())
+    skipped = st.session_state.get("ml_prediction_skipped", [])
+    if skipped:
+        with st.expander(f"{len(skipped)} parite atlandı (veri alınamadı)", expanded=False):
+            st.caption("Genelde Yahoo Finance'ten canlı veri isteğinin zaman aşımına uğraması nedeniyle olur; 'Tüm Pariteleri Tahminle' butonuna tekrar basmak genelde yeterli.")
+            st.dataframe(pd.DataFrame(skipped, columns=["Sembol", "Sebep"]), hide_index=True, use_container_width=True)
     if predictions.empty:
         st.info("Henüz tahmin yok veya hiçbir paritede model bulunamadı.")
         return
@@ -6653,7 +6672,7 @@ elif current_strategy_engine is None:
     }
 
 research_symbol = symbol.replace("=X", "").upper()
-research_bars = fetch_ohlc(symbol, "60m", "730d") if load_research_model(research_symbol, "direction") else pd.DataFrame()
+research_bars = fetch_ohlc(symbol, "60m", "150d") if load_research_model(research_symbol, "direction") else pd.DataFrame()
 research_prediction = build_research_prediction(research_symbol, bars=research_bars)
 simple_decision = apply_operational_safety_filters(
     decision=simple_decision,
