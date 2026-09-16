@@ -1,0 +1,28 @@
+Aşağıdaki 28 forex paritesi için 2008-01-01'den bugüne kadar 5 dakikalık, 15 dakikalık, 30 dakikalık, 1 saatlik, 4 saatlik ve günlük (1d) geçmiş fiyat verisini Dukascopy'den ÜCRETSİZ ve DOĞRUDAN (resample değil, native/borsanın kendi ürettiği mumlar) indirmeni istiyorum. Node.js'in "dukascopy-node" paketini kullan.
+
+Pariteler (Dukascopy sembol formatıyla, küçük harf):
+eurusd, gbpusd, usdjpy, audusd, usdcad, usdchf, nzdusd,
+eurgbp, euraud, eurcad, eurchf, eurjpy, eurnzd,
+gbpjpy, gbpaud, gbpcad, gbpchf, gbpnzd,
+audcad, audchf, audjpy, audnzd,
+cadchf, cadjpy, chfjpy,
+nzdcad, nzdchf, nzdjpy, eurzar
+
+Yapman gerekenler:
+1. Bir klasörde (örn. tick_downloader/) `npm init -y` ile boş bir node projesi kur ve `npm install dukascopy-node` ile paketi yükle.
+2. `getHistoricalRates` fonksiyonunu kullanarak her parite için ayrı ayrı şu zaman dilimlerini indir: m5, m15, m30, h1, h4, d1 (Dukascopy'nin native timeframe isimleri bunlar). Tarih aralığı: from 2008-01-01, to bugünün tarihi. format: 'csv'.
+3. Her parite+zaman dilimi kombinasyonu için ayrı bir CSV dosyası oluştur, klasör yapısı şöyle olsun:
+   data/historical_5m/<PARITE>.csv
+   data/historical_15m/<PARITE>.csv
+   data/historical_30m/<PARITE>.csv
+   data/historical_1h/<PARITE>.csv
+   data/historical_4h/<PARITE>.csv
+   data/historical_1d/<PARITE>.csv
+   (dosya adı parite adının BÜYÜK harfli hali olsun, örn. EURUSD.csv)
+4. useCache: true ve bir cacheFolderPath ver ki iş yarıda kesilirse (bilgisayar kapanırsa vs.) kaldığı yerden devam edebilelim. Ayrıca script, çıktı dosyası zaten varsa o kombinasyonu atlayıp bir sonrakine geçmeli (idempotent olsun) — böylece kesintiden sonra tekrar çalıştırınca baştan başlamaz.
+5. batchSize ve pauseBetweenBatchesMs gibi ayarlarla Dukascopy sunucusunu çok hızlı yormayacak şekilde (örn. batchSize: 20, pauseBetweenBatchesMs: 1000) indir.
+6. Not: Dukascopy'de native "haftalık (w1)" zaman dilimi YOK (hiçbir sağlayıcıda yok, her yerde günlükten türetilir). Bu yüzden 1 haftalık veriyi ayrıca, indirdiğin data/historical_1d CSV'lerinden pandas ile resample ederek (W-FRI kuralıyla, open=first/high=max/low=min/close=last/volume=sum) data/historical_1w/<PARITE>.csv olarak üret. Bu tek istisna dışında hiçbir zaman dilimini resample etme, hepsini doğrudan Dukascopy'den native olarak çek.
+7. İşlem uzun sürebilir (5m verisi parite başına ~5-10 dakika, diğerleri daha hızlı, toplamda birkaç saat). Arka planda çalıştır ve ilerlemeyi konsola logla (her parite/zaman dilimi bitince [OK] <parite>/<tf>: <satır sayısı> satır, <süre>s şeklinde yaz).
+8. Bazı egzotik paritelerde (özellikle eurzar) veri az olabilir, bu normal. Bazı ay/hafta aralıklarında Dukascopy kaynağında gerçek veri boşlukları olabilir (indirirken hata alırsan o aralığı daha küçük parçalara bölüp dene, hâlâ hata alırsan o parçayı atlayıp devam et ve bana hangi aralığın eksik kaldığını raporla).
+
+Sonunda bana: kaç parite/zaman dilimi başarıyla indi, toplam disk boyutu ne kadar tuttu, ve eksik/hatalı kalan bir şey var mı özetle.
