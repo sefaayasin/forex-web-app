@@ -1,0 +1,29 @@
+{
+  "name": "Monthly currency factor strategies: carry, cross-sectional momentum, time-series momentum",
+  "frozen_on": "2026-09-26",
+  "question": "Do the best-documented monthly currency premia exist in 2009-2026 data for the seven major currencies against USD, and would they survive retail trading and swap costs?",
+  "currencies": "EUR, GBP, JPY, CHF, CAD, AUD, NZD against USD (G10 without NOK and SEK, which are not in the archive)",
+  "prices": "5 pm New York time (FX day end) on the last weekday of each month, from data/historical_1h_from_15m (close of the hourly bar opening at 4 pm ET); if that bar is missing, the latest earlier bar within the same day. Prices are expressed as USD per unit of foreign currency.",
+  "interest_rates": "FRED OECD 3-month interbank rates IR3TIB01{US,EZ,GB,JP,CH,CA,AU,NZ}M156N (monthly averages, percent), saved to research/fx_factors/rates.csv. Missing months at the end of a series are filled with its last value (EZ and GB end in January 2026).",
+  "excess_return": "For holding foreign currency i against USD over a month: log spot change + (rate_i - rate_US) / 100 x days / 365, using that month's rates for the accrual",
+  "signal_lag": "Signals formed at month-end t use only the rate observation for month t-1 (published during month t) and prices up to t",
+  "strategies": {
+    "carry": "Rank the 7 currencies by lagged 3-month rate; long the top 2 and short the bottom 2, weights +0.5 / -0.5 (dollar neutral)",
+    "xs_momentum": "Rank by excess return from month-end t-12 to t-1 (12-1 months, Asness-Moskowitz-Pedersen); long top 2, short bottom 2, weights +0.5 / -0.5",
+    "ts_momentum": "For each currency, sign of its excess return over the last 12 months (Moskowitz-Ooi-Pedersen); weight sign / 7",
+    "combo": "Equal-weight average of the three strategies' monthly returns"
+  },
+  "sample": "Holding months January 2009 to August 2026 (the first 12 months of prices feed the momentum signals)",
+  "costs": {
+    "interbank": "Trading cost of 1.5 pips round trip per unit turned over, i.e. 0.75 pip one-way on sum |weight change| per currency at each rebalance, converted to return at that month's price; no swap markup",
+    "retail": "3 pips round trip plus a swap markup of 1% per year on gross exposure (sum of absolute weights), an assumption for a typical retail CFD account"
+  },
+  "statistics": "Monthly net returns. Annualized mean, volatility, Sharpe, max drawdown, worst month, skewness. forex_decision_core.stationary_bootstrap_mean_test on monthly returns (mean block length 3, 5000 simulations, seed 42) for a one-sided p-value and 95% CI of the mean.",
+  "subperiods": {"2009-2013": ["2009-01-01", "2014-01-01"], "2014-2019": ["2014-01-01", "2020-01-01"], "2020-2026": ["2020-01-01", "2027-01-01"]},
+  "success_criteria": {
+    "premium_present": "Interbank-cost mean monthly return > 0 with one-sided bootstrap p <= 0.0125 (0.05 / 4 strategies, Bonferroni) and positive mean in at least 2 of the 3 subperiods",
+    "usable_at_retail": "premium_present and mean monthly return > 0 under the retail cost assumption"
+  },
+  "use": "Research only. Nothing is added to the app from this study; a positive result would first need a separate forward test.",
+  "parameter_search": "None: the definitions above follow the cited papers and are not tuned"
+}

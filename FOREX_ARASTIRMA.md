@@ -23,10 +23,10 @@
 | Emir akışı günlük hareketin büyük kısmını açıklıyor (R² > %60) | Gün | Evans & Lyons (2002) | Bu veri perakendeye açık değil |
 | Oynaklık tahmin edilebilir | Saatler–haftalar | Corsi (2009, HAR modeli) | 72 saatlik model basit tahmini geçiyor (%77,9'a karşı %71,9, 19/28 parite) |
 | Oynaklığa göre pozisyon küçültmek, risk başına getiriyi artırıyor (carry dahil) | Aylar | Moreira & Muir (2017) | ATR stop bunu zaten yapıyor; üstüne model bazlı ek küçültme fayda vermedi (research/vol_sizing) |
-| Carry: yüksek faizli para birimi, düşük faizliden yılda yaklaşık 4,8 puan fazla getiriyor (maliyet sonrası) | Aylar | Lustig, Roussanov & Verdelhan (2011) | Test edilmedi |
+| Carry: yüksek faizli para birimi, düşük faizliden yılda yaklaşık 4,8 puan fazla getiriyor (maliyet sonrası) | Aylar | Lustig, Roussanov & Verdelhan (2011) | 2009–2026, 7 para birimi: yılda +%3,1 (Sharpe 0,38), düzeltme sonrası anlamlı değil; perakende swapla +%1,1 (research/fx_factors) |
 | Carry nadiren ama sert çöküyor; getirisi bir çeşit sigorta primi | Aylar | Brunnermeier, Nagel & Pedersen (2008) | — |
-| Momentum: son dönemin kazananı ile kaybedeni arasında yılda %10'a varan fark. Maliyete duyarlı, pratikte kolay kullanılamıyor | 1–12 ay | Menkhoff, Sarno, Schmeling & Schrimpf (2012) | Test edilmedi |
-| Trend (zaman serisi momentumu) döviz vadelilerinde 1–12 ay sürüyor | 1–12 ay | Moskowitz, Ooi & Pedersen (2012) | Test edilmedi |
+| Momentum: son dönemin kazananı ile kaybedeni arasında yılda %10'a varan fark. Maliyete duyarlı, pratikte kolay kullanılamıyor | 1–12 ay | Menkhoff, Sarno, Schmeling & Schrimpf (2012) | 2009–2026'da yılda −%2,5 (research/fx_factors) |
+| Trend (zaman serisi momentumu) döviz vadelilerinde 1–12 ay sürüyor | 1–12 ay | Moskowitz, Ooi & Pedersen (2012) | 2009–2026'da yılda −%1,1 (research/fx_factors) |
 | Değer (satın alma gücü paritesinden sapma); momentumla ters korelasyonlu | Yıllar | Asness, Moskowitz & Pedersen (2013) | Test edilmedi |
 | Planlı FOMC günlerinde "dolar sat, diğerlerini al" stratejisinin getirisi belirgin yüksek | Gün | Mueller, Tahbaz-Salehi & Vedolin (2017) | 2008–2013'te çok güçlü (+25 bp, p=0,001). Makale sonrası 2014–2026'da +4,8 bp, anlamlı değil (p=0,13). Ayrıntı: research/fomc_day/REPORT.md |
 
@@ -57,14 +57,13 @@
 - **Neden literatürle çelişmiyor:** Moreira & Muir'in bulgusu, sabit pozisyonlu (oynaklığa göre ayarlanmamış) portföyler içindi. ATR stop bu ayarı zaten yapıyor.
 - Ayrıntı: research/vol_sizing/REPORT.md
 
-### C. Günlük/haftalık vadede portföy stratejisi (carry + trend + değer)
-- **Ne:** 28 parite üzerinde ayda bir yeniden dengelenen bir portföy.
-- **Neden:** Literatürdeki kalıcı primlerin olduğu vade bu. İşlem sayısı az olduğu için maliyetin payı küçük.
-- **Nasıl:** Günlük arşiv (`data/historical_1d`) ve FRED faiz serileriyle, dönem ayrımlı ve önceden yazılmış protokolle test edilir.
-- **Riskler:**
-  - Carry nadiren ama sert çöker.
-  - Perakende broker'ların swap (gecelik faiz) oranları bankalar arası faiz farkından genelde daha kötüdür; test gerçek swap tablolarıyla yapılmalı.
-  - Bu, 15M/5M'den tamamen farklı bir işlem tarzı.
+### C. Aylık portföy stratejileri (carry + momentum + trend) — yapıldı, geçmedi
+- **Sonuç (2009–2026, 7 para birimi, aylık):**
+  - Carry yılda +%3,1 (Sharpe 0,38) ve üç alt dönemde de artı. Ama çoklu test düzeltmesinden sonra anlamlı değil, ve toplamın yaklaşık %40'ı 2009 yılından.
+  - Kesitsel momentum yılda −%2,5, trend −%1,1.
+- **Perakende koşulları:** Carry portföyünde toplam pozisyon sermayenin 2 katı olduğu için, broker'ın her %1'lik swap farkı yıllık getiriden 2 puan götürüyor. Başabaş swap farkı yılda yaklaşık %1,6; tipik bir %1 varsayımıyla getiri yılda +%1,1'e iniyor.
+- **Değer stratejisi** test edilmedi; ülke enflasyon verisi gerekir.
+- Ayrıntı: research/fx_factors/REPORT.md
 
 ### D. Haber sürprizi arşivi — şimdi başlamak
 - **Ne:** ForexFactory takvimi her hafta beklenti ve gerçekleşen değerlerle birlikte kaydedilir, örneğin ücretsiz bir GitHub Actions görevi ile.
@@ -84,7 +83,7 @@
 - Kısa vadeli yön için daha büyük ML modelleri denemek. 1.680 eğitim ve yaklaşık 960 bin sinyalle yeterince denendi.
 - Sonuçlara bakarak parametre seçmek. Geçmişte iyi görünen her ayar, gelecekte aynı sonucu vermez.
 
-**Önerilen sıra:** A ve B tamamlandı. Sıradaki C (en büyük potansiyel ama en uzun iş). D'yi şimdiden başlatmak mantıklı, çünkü zaman istiyor, kod değil.
+**Durum:** A, B ve C tamamlandı; üçü de önceden yazılan ölçütü geçmedi. Açık kalanlar: D (haber sürprizi arşivi; zaman istiyor, kod değil), E (gerçek maliyet ölçümü) ve F (daha iyi canlı veri kaynağı).
 
 ## Kaynaklar
 

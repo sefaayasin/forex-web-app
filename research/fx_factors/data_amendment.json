@@ -1,0 +1,6 @@
+{
+  "stage": "after the first run; its full output is kept in results_before_data_amendment.json",
+  "finding": "Three month-end prices were missing from the 15M-rebuilt hourly archive (AUD 2022-11-30 and 2023-08-31, NZD 2026-07-31) because the 15M download lacks most of those days. A missing price made the currency's return count as zero for two months and blanked momentum signals for up to 12 months (cross-sectional momentum held no positions at all while any currency's window had a gap).",
+  "change": "When the 15M-rebuilt archive has no bar in the month-end window, the same rule is applied to the native data/historical_1h archive, which has those days. Where both sources exist they agree within one tick on 99.8% of hours. After the change only December 2007 (before the archive starts) is missing.",
+  "unchanged": "Strategy definitions, costs, statistics and success criteria"
+}
