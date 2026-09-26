@@ -1,0 +1,29 @@
+{
+  "name": "Short-USD returns on scheduled FOMC days: out-of-sample check of Mueller, Tahbaz-Salehi and Vedolin (2017)",
+  "frozen_on": "2026-09-26",
+  "claim_tested": "A portfolio that is short the U.S. dollar against other major currencies earns significantly higher returns on days with scheduled FOMC announcements than on other days (paper sample 1994-2013: simple short-USD strategy 10.77 bps on announcement days).",
+  "primary_period": ["2014-01-01", "end of archive (2026-09-11)"],
+  "primary_period_reason": "The paper's data end on 2013-12-31, so 2014 onwards was never used to find the effect",
+  "secondary_period": ["2008-01-01", "2014-01-01"],
+  "secondary_period_reason": "Overlaps the paper's sample; a check that this data and method reproduce the effect's sign, not new evidence",
+  "currencies": "EUR, GBP, AUD, NZD, JPY, CAD, CHF against USD (the paper's G10 set without NOK and SEK, which are not in the archive)",
+  "data": "data/historical_1h_from_15m (complete hourly bars rebuilt from the 15M archive); spot prices only",
+  "daily_return": "Log change between 4 pm New York time on the previous weekday and 4 pm New York time on the day (the paper's 4 pm ET convention); the 4 pm price is the close of the hourly bar opening at 3 pm ET. Days where either price is missing are dropped.",
+  "portfolio": "Equal-weighted average over the seven currencies of the return from holding the foreign currency against USD (positive when USD weakens), in basis points",
+  "fomc_days": {
+    "scheduled": "Statement dates in data/news/fomc_statements.csv that are the last day of a regular meeting on the Federal Reserve's calendar pages, plus 2008-12-16, which the file lacks",
+    "unscheduled_excluded_from_both_groups": ["2008-01-22", "2008-03-11", "2008-10-08", "2010-05-10", "2011-11-30", "2019-10-11", "2020-03-03", "2020-03-16", "2020-03-19", "2020-03-23", "2020-03-31", "2020-08-27", "2025-08-22"],
+    "note": "Weekend statements (2010-05-09, 2020-03-15) affect the following Monday, which is excluded instead"
+  },
+  "interest_differential": "Not included. It adds the same small daily carry to announcement and other days, so it does not change their difference; this is a spot-return test.",
+  "costs": "Round-trip 1.5 pips per pair (stress 3 pips), converted to bps at the entry price and averaged over the portfolio, for holding the portfolio from 4 pm ET the day before to 4 pm ET on the FOMC day. Overnight swap is not modeled.",
+  "decomposition_info_only": "From 2014 the statement is released at 2 pm ET: pre = 4 pm ET previous day to 2 pm ET; post = 2 pm to 4 pm ET, for FOMC and other days",
+  "statistics": "Difference in means, FOMC minus other days: Welch t-statistic and a one-sided permutation p-value (20000 label shuffles within the period, seed 42)",
+  "success_criteria": [
+    "Primary period: FOMC-day mean exceeds the other-day mean with one-sided permutation p <= 0.05",
+    "Primary period: FOMC-day mean after 1.5-pip round-trip costs > 0",
+    "The FOMC minus other-day difference is positive in both 2014-2019 and 2020-2026"
+  ],
+  "use": "Only if all criteria hold may the app show an informational FOMC-day note; it would not change any decision, ranking or gate",
+  "parameter_search": "None"
+}

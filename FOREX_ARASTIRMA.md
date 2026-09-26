@@ -28,7 +28,7 @@
 | Momentum: son dönemin kazananı ile kaybedeni arasında yılda %10'a varan fark. Maliyete duyarlı, pratikte kolay kullanılamıyor | 1–12 ay | Menkhoff, Sarno, Schmeling & Schrimpf (2012) | Test edilmedi |
 | Trend (zaman serisi momentumu) döviz vadelilerinde 1–12 ay sürüyor | 1–12 ay | Moskowitz, Ooi & Pedersen (2012) | Test edilmedi |
 | Değer (satın alma gücü paritesinden sapma); momentumla ters korelasyonlu | Yıllar | Asness, Moskowitz & Pedersen (2013) | Test edilmedi |
-| Planlı FOMC günlerinde "dolar sat, diğerlerini al" stratejisinin getirisi belirgin yüksek | Gün | Mueller, Tahbaz-Salehi & Vedolin (2017) | Test edilmedi; verisi elimizde |
+| Planlı FOMC günlerinde "dolar sat, diğerlerini al" stratejisinin getirisi belirgin yüksek | Gün | Mueller, Tahbaz-Salehi & Vedolin (2017) | 2008–2013'te çok güçlü (+25 bp, p=0,001). Makale sonrası 2014–2026'da +4,8 bp, anlamlı değil (p=0,13). Ayrıntı: research/fomc_day/REPORT.md |
 
 **Özet:** Literatürdeki kalıcı bulgular ya **çok kısa** (haber sürprizine dakikalar içindeki tepki) ya da **uzun** vadeli (günlerden aylara, portföy düzeyinde carry, trend ve değer). 15 dakika–4 saat arası tek paritede yön tahmini için güçlü bir kanıt yok; bu projenin testleri de bununla örtüşüyor. Güvenilir biçimde tahmin edilebilen şey **oynaklık**. Ayrıca yayımlanan birçok avantaj, yayımlandıktan sonra zayıflamıştır; her biri maliyetle birlikte kendi verimizde yeniden test edilmelidir.
 
@@ -44,11 +44,10 @@
 
 ## 4. Neler yapılabilir (öncelik sırasıyla)
 
-### A. FOMC günü dolar etkisini test etmek — hızlı, verisi hazır
-- **Ne:** Planlı FOMC günlerinde doları diğer para birimlerine karşı satmanın getirisi, diğer günlerle karşılaştırılır.
-- **Neden:** Hakemli bir dergide yayımlanmış bulgu, ve senin "haber anı" gözleminle aynı yöne bakıyor.
-- **Nasıl:** `fomc_statements.csv` (2008–2026) ve yerel saatlik/günlük arşivle, önceden yazılmış protokol ve maliyetle test edilir. Önce, gün içi mi, açıklamadan önce mi gibi sorulara bakılır.
-- **Risk:** Etki yayımlandıktan sonra zayıflamış olabilir; yılda sadece 8 olay var, yani örnek küçük.
+### A. FOMC günü dolar etkisini test etmek — yapıldı, geçmedi
+- **Sonuç:** Etki makalenin döneminde (2008–2013) çok güçlü, yayından sonra (2014–2026) beşte bire inmiş ve anlamlı değil. Maliyet sonrası yılda kabaca 0,2 puanlık bir getiri; perakende için anlamsız.
+- **Açık kalan soru:** Açıklamadan önceki pencerede (önceki gün 16:00 → 14:00) +7,5 bp fark görüldü (p=0,03). Ama bu sonuçlar görüldükten sonra öne çıkarıldı. Ancak 2026 sonrası yeni FOMC günleriyle, önceden yazılmış bir testle doğrulanırsa değerlendirilebilir.
+- Ayrıntı: research/fomc_day/REPORT.md
 
 ### B. Oynaklığa göre pozisyon büyüklüğü — elimizdeki tek güvenilir tahmini kullanmak
 - **Ne:** Lot, beklenen oynaklıkla ters orantılı ayarlanır. Oynaklık yüksekse küçük lot, düşükse büyük lot.
@@ -83,7 +82,7 @@
 - Kısa vadeli yön için daha büyük ML modelleri denemek. 1.680 eğitim ve yaklaşık 960 bin sinyalle yeterince denendi.
 - Sonuçlara bakarak parametre seçmek. Geçmişte iyi görünen her ayar, gelecekte aynı sonucu vermez.
 
-**Önerilen sıra:** A (hızlı ve verisi hazır) → B (tek güvenilir tahmini kullanır) → C (en büyük potansiyel ama en uzun iş). D'yi şimdiden başlatmak mantıklı, çünkü zaman istiyor, kod değil.
+**Önerilen sıra:** A tamamlandı. Sıradaki B (tek güvenilir tahmini kullanır), sonra C (en büyük potansiyel ama en uzun iş). D'yi şimdiden başlatmak mantıklı, çünkü zaman istiyor, kod değil.
 
 ## Kaynaklar
 
