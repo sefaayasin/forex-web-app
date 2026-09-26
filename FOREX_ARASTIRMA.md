@@ -22,7 +22,7 @@
 | Haber sürprizi fiyatı anında sıçratıyor; kötü haberin etkisi daha büyük | Dakikalar | Andersen, Bollerslev, Diebold & Vega (2003) | Yönü teknik göstergeler değil sürpriz belirliyor. Haber testinde 15M/5M yönü tepkiyi bilemedi |
 | Emir akışı günlük hareketin büyük kısmını açıklıyor (R² > %60) | Gün | Evans & Lyons (2002) | Bu veri perakendeye açık değil |
 | Oynaklık tahmin edilebilir | Saatler–haftalar | Corsi (2009, HAR modeli) | 72 saatlik model basit tahmini geçiyor (%77,9'a karşı %71,9, 19/28 parite) |
-| Oynaklığa göre pozisyon küçültmek, risk başına getiriyi artırıyor (carry dahil) | Aylar | Moreira & Muir (2017) | Henüz test edilmedi |
+| Oynaklığa göre pozisyon küçültmek, risk başına getiriyi artırıyor (carry dahil) | Aylar | Moreira & Muir (2017) | ATR stop bunu zaten yapıyor; üstüne model bazlı ek küçültme fayda vermedi (research/vol_sizing) |
 | Carry: yüksek faizli para birimi, düşük faizliden yılda yaklaşık 4,8 puan fazla getiriyor (maliyet sonrası) | Aylar | Lustig, Roussanov & Verdelhan (2011) | Test edilmedi |
 | Carry nadiren ama sert çöküyor; getirisi bir çeşit sigorta primi | Aylar | Brunnermeier, Nagel & Pedersen (2008) | — |
 | Momentum: son dönemin kazananı ile kaybedeni arasında yılda %10'a varan fark. Maliyete duyarlı, pratikte kolay kullanılamıyor | 1–12 ay | Menkhoff, Sarno, Schmeling & Schrimpf (2012) | Test edilmedi |
@@ -49,11 +49,13 @@
 - **Açık kalan soru:** Açıklamadan önceki pencerede (önceki gün 16:00 → 14:00) +7,5 bp fark görüldü (p=0,03). Ama bu sonuçlar görüldükten sonra öne çıkarıldı. Ancak 2026 sonrası yeni FOMC günleriyle, önceden yazılmış bir testle doğrulanırsa değerlendirilebilir.
 - Ayrıntı: research/fomc_day/REPORT.md
 
-### B. Oynaklığa göre pozisyon büyüklüğü — elimizdeki tek güvenilir tahmini kullanmak
-- **Ne:** Lot, beklenen oynaklıkla ters orantılı ayarlanır. Oynaklık yüksekse küçük lot, düşükse büyük lot.
-- **Neden:** Moreira & Muir'e göre risk başına getiriyi artırıyor, düşüşleri küçültüyor.
-- **Nasıl:** Mevcut bir stratejinin geçmiş işlemlerinde sabit lot ile oynaklığa göre lot karşılaştırılır; ölçüler en büyük düşüş ve risk başına getiri.
-- **Sınır:** Avantajı olmayan bir stratejiyi kârlı yapmaz, sadece riski düzenler.
+### B. Oynaklığa göre pozisyon büyüklüğü — yapıldı, gerek çıkmadı
+- **Sonuç:** Uygulama zaten ATR'ye göre stop koyup riski sabit tutuyor; yani lot oynaklıkla kendiliğinden küçülüyor. 2023–2026'daki 188 bin 15M/5M işleminde:
+  - Model "yüksek oynaklık" derken açılan işlemler daha **az** stop oldu (−2,6 puan) ve daha az kaybetti.
+  - O dönemlerde lotu ayrıca yarıya indirmek sonucu iyileştirmedi.
+  - Uygulamadaki "lotu küçült" tavsiyesi buna göre düzeltildi.
+- **Neden literatürle çelişmiyor:** Moreira & Muir'in bulgusu, sabit pozisyonlu (oynaklığa göre ayarlanmamış) portföyler içindi. ATR stop bu ayarı zaten yapıyor.
+- Ayrıntı: research/vol_sizing/REPORT.md
 
 ### C. Günlük/haftalık vadede portföy stratejisi (carry + trend + değer)
 - **Ne:** 28 parite üzerinde ayda bir yeniden dengelenen bir portföy.
@@ -82,7 +84,7 @@
 - Kısa vadeli yön için daha büyük ML modelleri denemek. 1.680 eğitim ve yaklaşık 960 bin sinyalle yeterince denendi.
 - Sonuçlara bakarak parametre seçmek. Geçmişte iyi görünen her ayar, gelecekte aynı sonucu vermez.
 
-**Önerilen sıra:** A tamamlandı. Sıradaki B (tek güvenilir tahmini kullanır), sonra C (en büyük potansiyel ama en uzun iş). D'yi şimdiden başlatmak mantıklı, çünkü zaman istiyor, kod değil.
+**Önerilen sıra:** A ve B tamamlandı. Sıradaki C (en büyük potansiyel ama en uzun iş). D'yi şimdiden başlatmak mantıklı, çünkü zaman istiyor, kod değil.
 
 ## Kaynaklar
 

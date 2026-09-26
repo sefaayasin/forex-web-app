@@ -5564,8 +5564,9 @@ VOLATILITY_LEVEL_ICONS = {"high": "🌪️", "normal": "🌤️", "uncertain": "
 VOLATILITY_SHORT_LABELS = {"high": "Yüksek", "normal": "Olağan", "uncertain": "Belirsiz"}
 VOLATILITY_ADVICE = {
     "high": (
-        "Fiyat önümüzdeki günlerde olağandan geniş salınabilir; aynı stop daha kolay tetiklenebilir. "
-        "Lotu küçültmeyi veya stopu genişletmeyi düşün."
+        "Fiyat önümüzdeki günlerde olağandan geniş salınabilir. Uygulamanın ATR tabanlı stopu bunu zaten hesaba "
+        "katar: stop genişler, aynı riskte lot küçülür; 2023-2026 testinde bu dönemlerde ek lot küçültmenin faydası "
+        "görülmedi. Sabit pip stop kullanıyorsan stop daha kolay tetiklenebilir."
     ),
     "normal": "Önümüzdeki günlerde olağan dışı bir oynaklık beklenmiyor.",
     "uncertain": "Model bu parite için şu an emin değil; oynaklık tahminine ağırlık verme.",
@@ -5773,8 +5774,11 @@ def render_ml_volatility_section(predictions: pd.DataFrame, metrics: pd.DataFram
         "oynaklığını tahmin eder."
     )
     st.caption(
-        "Nasıl kullanılır: yüksek oynaklık beklenen paritede aynı stop daha kolay tetiklenebilir; lotu küçültmek veya "
-        "stopu genişletmek düşünülebilir. Bu kullanım ayrıca geriye dönük test edilmedi, sadece risk bilgisidir."
+        "Nasıl kullanılır: bu bir risk bilgisidir, ek lot ayarı gerektirmez. 2023-2026 testinde (188 bin 15M/5M işlemi) "
+        "model 'yüksek' derken açılan işlemler ATR tabanlı stopla daha sık stop olmadı, daha az kaybetti; o dönemlerde "
+        "lotu yarıya indirmek sonucu iyileştirmedi. Sebep: ATR stop oynak dönemde genişler ve aynı riskte lot zaten "
+        "küçülür. Sabit pip stop kullananlar için yüksek oynaklık stopun daha kolay tetiklenmesi demektir. "
+        "Ayrıntı: research/vol_sizing/REPORT.md"
     )
     st.caption(
         "Canlı veri uyumu: Yahoo'nun saatlik mum fitilleri modelin eğitildiği veriden paritelere göre farklı "

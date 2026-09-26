@@ -1,0 +1,20 @@
+{
+  "name": "Does the 72h volatility forecast help size 15M + 5M trades?",
+  "frozen_on": "2026-09-26",
+  "questions": {
+    "H1_app_advice": "The app tells users that when high volatility is expected 'the same stop is triggered more easily' and suggests a smaller lot or wider stop. Test: with the app's ATR-based stops, are trades entered while the model says 'high' stopped out more often, and do they end with lower net R, than trades entered while it says 'normal'?",
+    "H2_sizing": "Does halving risk on trades entered while the model says 'high', with all multipliers rescaled so the average risk per trade is unchanged, lower the day-to-day swing and the maximum drawdown of the trade stream without lowering its average result?"
+  },
+  "trades": "The 15M + 5M alignment signals of research/meta_label (same entry, 1.5 x ATR14(15M) stop, 1.5R target, 4-hour limit, 1.5 pip cost, net R) in its final split, 2023-01-01 to 2026-09-11. No new trade rules.",
+  "forecast": "The deployed 72h high-volatility model (data/ml/tournament/<PAIR>_high_volatility_research.joblib, trained on 2008-2022 only, so 2023+ is out of sample), scored on data/historical_1h_from_15m. Each trade uses the probability from the last hourly bar closed at its entry time; trades without one within 3 hours are dropped and counted.",
+  "regimes": "high if probability >= 0.65, normal if <= 0.35, uncertain otherwise (the app's thresholds)",
+  "H1_measures": "Per regime: trades, stop-out rate (stop or stop_gap), target rate, mean net R, standard deviation of net R, share of trades losing more than 1.05R (gap past the stop). Differences high minus normal with a day-clustered bootstrap 95% CI (2000 resamples of trading days, seed 42).",
+  "H2_construction": "Risk multiplier 0.5 for 'high', 1 otherwise, then divided by its mean over all trades so average risk is equal to fixed sizing. Daily result = mean over that day's trades of multiplier x net R (a daily risk budget shared by the day's trades). Compared with fixed sizing (multiplier 1): mean daily result, standard deviation of daily results, maximum drawdown of the cumulative daily result, worst day.",
+  "success_criteria": {
+    "H1_supported": "Stop-out rate in 'high' exceeds 'normal' with the bootstrap 95% CI of the difference above 0",
+    "H2_supported": "Regime sizing has lower daily standard deviation and lower maximum drawdown than fixed sizing, and a mean daily result that is not lower"
+  },
+  "consequence": "If H1 is not supported, the app's advice text is corrected to match the evidence. If H2 is supported, the app may show the regime-adjusted risk suggestion as information; it never changes a decision or gate.",
+  "limits_stated_in_advance": "The trade stream has negative expectancy before sizing (research/meta_label), so H2 measures risk shape, not profitability; the user's own discretionary trades are not available.",
+  "parameter_search": "None: one multiplier (0.5) and the app's existing thresholds"
+}

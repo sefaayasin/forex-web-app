@@ -1,0 +1,157 @@
+{
+  "protocol_sha256": "8ff8b6e88184598332259bb32a5b6e9d4e74eae7d86813b281000c420a00b0f3",
+  "trades": 188048,
+  "dropped_without_forecast": 4678,
+  "primary_all_signals": {
+    "regimes": {
+      "high": {
+        "trades": 14781,
+        "share": 0.0786022718,
+        "stop_rate": 0.4905622082,
+        "target_rate": 0.2838779514,
+        "mean_r": -0.1504243093,
+        "std_r": 1.1024207706,
+        "gap_loss_share": 0.424193221,
+        "median_stop_pips": 15.4502141079
+      },
+      "uncertain": {
+        "trades": 110990,
+        "share": 0.5902216455,
+        "stop_rate": 0.5099648617,
+        "target_rate": 0.294071538,
+        "mean_r": -0.2042334794,
+        "std_r": 1.1269691705,
+        "gap_loss_share": 0.5053518335,
+        "median_stop_pips": 10.1812837555
+      },
+      "normal": {
+        "trades": 62277,
+        "share": 0.3311760827,
+        "stop_rate": 0.5168681857,
+        "target_rate": 0.2894326959,
+        "mean_r": -0.2299006608,
+        "std_r": 1.1307877694,
+        "gap_loss_share": 0.5137048991,
+        "median_stop_pips": 9.941810509
+      }
+    },
+    "high_minus_normal": {
+      "stop_rate": {
+        "difference": -0.026305977446221096,
+        "ci_low": -0.03952981702324136,
+        "ci_high": -0.013992826953546825
+      },
+      "mean_r": {
+        "difference": 0.07947635148823004,
+        "ci_low": 0.04831174732784194,
+        "ci_high": 0.10840228974120812
+      },
+      "std_r": {
+        "difference": -0.028366998741868654,
+        "ci_low": -0.03956674195100403,
+        "ci_high": -0.01732080603082625
+      },
+      "gap_loss_share": {
+        "difference": -0.08951167805292298,
+        "ci_low": -0.10863736631232492,
+        "ci_high": -0.07094824226081295
+      }
+    },
+    "sizing": {
+      "multiplier_high": 0.5204544511022238,
+      "multiplier_other": 1.0409089022044475,
+      "fixed": {
+        "days": 1156,
+        "mean_daily_r": -0.20689586192246295,
+        "std_daily_r": 0.20677974526002935,
+        "max_drawdown_r": -238.57397402223066,
+        "worst_day_r": -1.0952346626110137
+      },
+      "regime_sized": {
+        "days": 1156,
+        "mean_daily_r": -0.208074177957547,
+        "std_daily_r": 0.20800137819379988,
+        "max_drawdown_r": -239.91165846592386,
+        "worst_day_r": -1.1400395103146888
+      }
+    }
+  },
+  "info_app_mtf_rule_subset": {
+    "regimes": {
+      "high": {
+        "trades": 2797,
+        "share": 0.0775049878,
+        "stop_rate": 0.5151948516,
+        "target_rate": 0.2992491956,
+        "mean_r": -0.1662858835,
+        "std_r": 1.1170013823,
+        "gap_loss_share": 0.4419020379,
+        "median_stop_pips": 14.7545547074
+      },
+      "uncertain": {
+        "trades": 21233,
+        "share": 0.5883673243,
+        "stop_rate": 0.5295059577,
+        "target_rate": 0.2926576555,
+        "mean_r": -0.2334095856,
+        "std_r": 1.127812258,
+        "gap_loss_share": 0.5262562992,
+        "median_stop_pips": 9.8155117167
+      },
+      "normal": {
+        "trades": 12058,
+        "share": 0.3341276879,
+        "stop_rate": 0.5287775751,
+        "target_rate": 0.2960689998,
+        "mean_r": -0.2383073718,
+        "std_r": 1.1383820385,
+        "gap_loss_share": 0.5259578703,
+        "median_stop_pips": 9.5166252821
+      }
+    },
+    "high_minus_normal": {
+      "stop_rate": {
+        "difference": -0.013582723427163157,
+        "ci_low": -0.03796373653660919,
+        "ci_high": 0.010130690296871431
+      },
+      "mean_r": {
+        "difference": 0.07202148828699331,
+        "ci_low": 0.014894634671999014,
+        "ci_high": 0.1328028050866943
+      },
+      "std_r": {
+        "difference": -0.021380656193016767,
+        "ci_low": -0.04391434646223882,
+        "ci_high": 0.00019335801413765115
+      },
+      "gap_loss_share": {
+        "difference": -0.08405583239583342,
+        "ci_low": -0.1112851566018918,
+        "ci_high": -0.056431868539164924
+      }
+    },
+    "sizing": {
+      "multiplier_high": 0.5201573963303017,
+      "multiplier_other": 1.0403147926606033,
+      "fixed": {
+        "days": 962,
+        "mean_daily_r": -0.2362809096068968,
+        "std_daily_r": 0.24214875538274852,
+        "max_drawdown_r": -227.10669809545203,
+        "worst_day_r": -1.090382864756105
+      },
+      "regime_sized": {
+        "days": 962,
+        "mean_daily_r": -0.23925744133418975,
+        "std_daily_r": 0.24664948457459246,
+        "max_drawdown_r": -230.03427715527025,
+        "worst_day_r": -1.134341423869422
+      }
+    }
+  },
+  "checks": {
+    "H1_supported": false,
+    "H2_supported": false
+  }
+}
