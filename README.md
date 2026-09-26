@@ -53,8 +53,8 @@ python -m unittest -v test_forex_decision_core.py test_forex_modules.py
 - Branch: `main`
 - Main file path: `forex_web_app_streamlit_v14_alert_decision.py`
 
-ML sonuçları için sol menüden `ML Laboratuvarı` seçin veya uygulama adresine
-`?view=ml` ekleyin. Hazır raporlar ve heatmap'ler depoya dahildir; sunucuda
+Parite başına ML tahmini ve Parite Alarm Ekranı, `🔥 Fırsat Akışı` sekmesinin
+alt sekmelerindedir. Hazır raporlar ve heatmap'ler depoya dahildir; sunucuda
 yeniden eğitim yapılmaz. Ham fiyat/haber arşivi ve büyük model/tahmin dosyaları
 yerelde tutulur. Eski `forex_web_app_streamlit.py` giriş yolu da güncel uygulamayı açar.
 

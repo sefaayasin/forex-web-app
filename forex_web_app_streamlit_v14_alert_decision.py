@@ -2701,15 +2701,15 @@ def alert_board_single_decision(row: dict) -> tuple[str, str]:
         if good_quality:
             return "LONG AÇ ADAYI", f"Alarm long yönünde ve kalite {quality}."
         if bad_quality:
-            return "PAS GEÇ", f"Alarm long olsa da kalite {quality}; İşlem Asistanı onayı olmadan açma."
-        return "LONG İÇİN İZLE", "Alarm long yönünde. Detay için İşlem Asistanı ekranında risk/backtest kontrolü yap."
+            return "PAS GEÇ", f"Alarm long olsa da kalite {quality}; Sinyal sekmesi onayı olmadan açma."
+        return "LONG İÇİN İZLE", "Alarm long yönünde. Detay için Sinyal sekmesinde risk/backtest kontrolü yap."
 
     if alarm == "SHORT":
         if good_quality:
             return "SHORT AÇ ADAYI", f"Alarm short yönünde ve kalite {quality}."
         if bad_quality:
-            return "PAS GEÇ", f"Alarm short olsa da kalite {quality}; İşlem Asistanı onayı olmadan açma."
-        return "SHORT İÇİN İZLE", "Alarm short yönünde. Detay için İşlem Asistanı ekranında risk/backtest kontrolü yap."
+            return "PAS GEÇ", f"Alarm short olsa da kalite {quality}; Sinyal sekmesi onayı olmadan açma."
+        return "SHORT İÇİN İZLE", "Alarm short yönünde. Detay için Sinyal sekmesinde risk/backtest kontrolü yap."
 
     return "BEKLE", "4H + 1H ve giriş teyidi aynı yönde net izin vermiyor."
 
@@ -2844,8 +2844,8 @@ def render_pair_alert_screen(
     macd_divergence_filter_enabled: bool = True,
     daily_status: Optional[dict] = None,
 ) -> None:
-    st.header("Parite Alarm Ekranı")
-    st.caption("Major ve minör pariteleri tek bakışta LONG / SHORT / BEKLE olarak gösterir. Bu ekran hızlı takip içindir; gerçek işlem için İşlem Asistanı karar kartı ve demo doğrulama kullanılmalı.")
+    st.subheader("Parite Alarm Ekranı")
+    st.caption("Major ve minör pariteleri tek bakışta LONG / SHORT / BEKLE olarak gösterir. Bu ekran hızlı takip içindir; gerçek işlem için 📊 Sinyal sekmesindeki karar kartı ve demo doğrulama kullanılmalı.")
     if daily_status:
         render_daily_trading_desk(daily_status)
         if daily_status.get("blocks_trade"):
@@ -2860,32 +2860,43 @@ def render_pair_alert_screen(
         st.warning("En az bir parite grubu seçmelisin.")
         return
 
-    with st.spinner("Major/minör pariteler taranıyor..."):
-        board = build_alert_board_rows(
-            selected_symbols,
-            change_window_minutes,
-            alert_entry_tf,
-            signal_threshold,
-            market_structure_enabled=market_structure_enabled,
-            entry_model=entry_model,
-            rsi_regime_enabled=rsi_regime_enabled,
-            rsi_divergence_filter_enabled=rsi_divergence_filter_enabled,
-            bb_extreme_volatility_block=bb_extreme_volatility_block,
-            macd_confirmation_enabled=macd_confirmation_enabled,
-            macd_divergence_filter_enabled=macd_divergence_filter_enabled,
-        )
+    if st.button("Pariteleri Tara", type="primary", use_container_width=True, key="alert_board_scan"):
+        with st.spinner("Major/minör pariteler taranıyor..."):
+            board = build_alert_board_rows(
+                selected_symbols,
+                change_window_minutes,
+                alert_entry_tf,
+                signal_threshold,
+                market_structure_enabled=market_structure_enabled,
+                entry_model=entry_model,
+                rsi_regime_enabled=rsi_regime_enabled,
+                rsi_divergence_filter_enabled=rsi_divergence_filter_enabled,
+                bb_extreme_volatility_block=bb_extreme_volatility_block,
+                macd_confirmation_enabled=macd_confirmation_enabled,
+                macd_divergence_filter_enabled=macd_divergence_filter_enabled,
+            )
+        st.session_state["alert_board_df"] = board
+        st.session_state["alert_board_entry_tf"] = alert_entry_tf
+
+        signal_rows = board[board["Alarm"].isin(["LONG", "SHORT"])].to_dict("records") if not board.empty else []
+        for row in signal_rows:
+            floor_rule = {"5 Dakika": "5min", "15 Dakika": "15min", "1 Saat": "1h"}.get(alert_entry_tf, "15min")
+            candle_key = f"{alert_entry_tf}|{pd.Timestamp.now(tz='UTC').floor(floor_rule)}"
+            payload = {"symbol": row.get("Sembol"), "side": row.get("Alarm"), "reason": row.get("Alarm Nedeni"), "score": row.get("Alarm Skoru")}
+            notifications_allowed = not (daily_status and daily_status.get("blocks_trade"))
+            if notifications_allowed and record_alert_once(str(row.get("Sembol")), str(row.get("Alarm")), candle_key, payload) and webhook_url.strip():
+                send_webhook_notification(webhook_url, payload)
+
+    if "alert_board_df" not in st.session_state:
+        st.info("Henüz taranmış parite yok. 'Pariteleri Tara' butonuna basın.")
+        return
+    board = st.session_state["alert_board_df"]
+    # Tarama, o anki giriş teyidi ayarıyla yapıldı; ayar sonradan değişse de etiket taramayla tutarlı kalsın.
+    alert_entry_tf = st.session_state.get("alert_board_entry_tf", alert_entry_tf)
 
     if board.empty:
         st.warning("Alarm ekranı için veri alınamadı.")
         return
-
-    for row in board[board["Alarm"].isin(["LONG", "SHORT"])].to_dict("records"):
-        floor_rule = {"5 Dakika": "5min", "15 Dakika": "15min", "1 Saat": "1h"}.get(alert_entry_tf, "15min")
-        candle_key = f"{alert_entry_tf}|{pd.Timestamp.now(tz='UTC').floor(floor_rule)}"
-        payload = {"symbol": row.get("Sembol"), "side": row.get("Alarm"), "reason": row.get("Alarm Nedeni"), "score": row.get("Alarm Skoru")}
-        notifications_allowed = not (daily_status and daily_status.get("blocks_trade"))
-        if notifications_allowed and record_alert_once(str(row.get("Sembol")), str(row.get("Alarm")), candle_key, payload) and webhook_url.strip():
-            send_webhook_notification(webhook_url, payload)
 
     if alert_sort_mode == "Önce LONG/SHORT":
         order = {"LONG": 0, "SHORT": 1, "BEKLE": 2}
@@ -2915,7 +2926,7 @@ def render_pair_alert_screen(
     st.info(
         f"Alarm mantığı: 4H + 1H ana yön aynı olmalı; {alert_entry_tf} giriş teyidi verir. "
         + (f"MA50/MA200 + swing yapısı ve '{entry_model}' filtresi aktiftir. " if market_structure_enabled else "")
-        + f"Değişim %, sol menüdeki '{change_window_label}' seçimine göre Yahoo 1 dakikalık kapanış verisinden hesaplanır."
+        + f"Değişim %, Ayarlar'daki '{change_window_label}' seçimine göre Yahoo 1 dakikalık kapanış verisinden hesaplanır."
     )
 
     major_df = board[board["Sembol"].isin(MAJOR_PAIRS)]
@@ -5183,7 +5194,7 @@ def render_opportunity_feed(scanner_df: pd.DataFrame, max_cards: int = 9) -> Non
     sadece 'Parite Tarayıcı' sonucunu tablodan kart akışına çevirir.
     """
     if scanner_df is None or scanner_df.empty:
-        st.info("Henüz taranmış parite yok. Kenar çubuğunda 'Parite tarayıcı' bölümünden 'Pariteleri Tara' butonuna basın.")
+        st.info("Henüz taranmış parite yok. Yukarıdaki '15M + 5M Fırsatlarını Hesapla' butonuna basın.")
         return
 
     actionable = scanner_df[scanner_df["Karar"] != "PAS"].copy()
@@ -5633,12 +5644,12 @@ def render_ml_prediction_page() -> None:
     sonrasını hiç görmeden test ettiği dürüst bir sonuçla birlikte gösterilir;
     model karşılaştırma/heatmap ekranı burada yoktur, sadece güncel tahmin.
     """
-    st.title("🤖 ML Tahmini")
+    st.subheader("🤖 ML Tahmini")
     st.caption(
         "Her parite için 2008-2023 verisiyle eğitilmiş, 2023 sonrasını hiç görmeden test edilmiş ayrı bir "
         "model var. Aşağıdaki isabet oranları bu dürüst testin sonucu — çoğu paritede yazı turaya (%50) "
         "yakın, bazı çapraz paritelerde biraz daha yüksek. **Bu sayfa tek başına LONG/SHORT emri değildir**; "
-        "İşlem Asistanı ekranındaki risk ve backtest kontrolünden geçmeden kullanılmamalıdır."
+        "📊 Sinyal sekmesindeki risk ve backtest kontrolünden geçmeden kullanılmamalıdır."
     )
     if not SKLEARN_AVAILABLE:
         st.warning("ML için scikit-learn kurulu değil. requirements.txt içine scikit-learn ekle.")
@@ -5649,7 +5660,7 @@ def render_ml_prediction_page() -> None:
     if not direction_metrics.empty:
         direction_metrics["İstatistiksel Anlamlı"] = np.where(direction_metrics["accuracy_lift_ci_low"] > 0, "Evet", "Hayır")
 
-    if st.button("Tüm Pariteleri Tahminle", use_container_width=True) or "ml_prediction_df" not in st.session_state:
+    if st.button("Tüm Pariteleri Tahminle", type="primary", use_container_width=True):
         with st.spinner("Modeller çalışıyor (28 parite için biraz sürebilir)..."):
             df, skipped = scan_ml_predictions(SYMBOL_LIST)
             st.session_state["ml_prediction_df"] = df
@@ -5661,8 +5672,11 @@ def render_ml_prediction_page() -> None:
         with st.expander(f"{len(skipped)} parite atlandı (veri alınamadı)", expanded=False):
             st.caption("Genelde Yahoo Finance'ten canlı veri isteğinin zaman aşımına uğraması nedeniyle olur; 'Tüm Pariteleri Tahminle' butonuna tekrar basmak genelde yeterli.")
             st.dataframe(pd.DataFrame(skipped, columns=["Sembol", "Sebep"]), hide_index=True, use_container_width=True)
+    if "ml_prediction_df" not in st.session_state:
+        st.info("Henüz tahmin yok. 'Tüm Pariteleri Tahminle' butonuna basın.")
+        return
     if predictions.empty:
-        st.info("Henüz tahmin yok veya hiçbir paritede model bulunamadı.")
+        st.info("Hiçbir paritede model bulunamadı veya veri alınamadı.")
         return
 
     if not direction_metrics.empty:
@@ -5705,18 +5719,7 @@ def render_ml_prediction_page() -> None:
 
 with st.sidebar:
     st.header("Forex Asistanı")
-
-    screen_options = ["İşlem Asistanı", "Parite Alarm Ekranı", "ML Tahmini"]
-    screen_mode = st.radio("Sayfa", screen_options, index=2 if st.query_params.get("view") == "ml" else 0,
-                           format_func=lambda value: {"İşlem Asistanı": "İşlem", "Parite Alarm Ekranı": "Pariteler", "ML Tahmini": "ML Tahmini"}[value])
     advanced_view = st.toggle("Gelişmiş görünüm", value=False)
-
-    if screen_mode == "ML Tahmini":
-        st.caption("Her parite için ayrı eğitilmiş modelin güncel LONG/SHORT tahmini ve dürüst geçmiş isabeti.")
-
-if screen_mode == "ML Tahmini":
-    render_ml_prediction_page()
-    st.stop()
 
 st.title("Forex Asistanı")
 advanced_settings = st.expander("Ayarlar ve araştırma araçları", expanded=False)
@@ -5890,7 +5893,7 @@ with st.sidebar:
             "Artık her parite için ayrı eğitilmiş bir model var (2008-2023 verisiyle eğitildi, "
             "2023 sonrasında dürüst şekilde test edildi). Paritelere göre isabet oranı değişir — "
             "çoğu majör paritede yazı-turaya (%50) yakın, bazı çapraz paritelerde biraz daha yüksek "
-            "(detaylar: 🤖 ML Tahmini sekmesi). Bu yüzden LONG/SHORT kararını tek başına vermez ya da "
+            "(detaylar: 🔥 Fırsat Akışı → 🤖 ML Tahmini). Bu yüzden LONG/SHORT kararını tek başına vermez ya da "
             "engellemez; teknik sinyalle uyumluysa/çelişiyorsa radar puanına küçük (±8) bir ayar olarak yansır."
         )
 
@@ -6055,13 +6058,6 @@ with st.sidebar:
         use_container_width=True,
     )
 
-    with advanced_settings.container(border=True):
-        st.subheader("Parite tarayıcı")
-        st.caption("15 Dakika ve 5 Dakika girişleri birlikte taranır; aynı onay filtreleri her ikisinde de geçerlidir.")
-        scanner_include_backtest = st.checkbox("Backtest kalitesi hesapla", value=False)
-        scanner_limit = st.number_input("Maksimum parite", min_value=1, max_value=len(SYMBOL_LIST), value=len(SYMBOL_LIST), step=1)
-        run_scanner_requested = st.button("Pariteleri Tara", use_container_width=True)
-
     if st.button("Veriyi Yenile", use_container_width=True):
         _fetch_ohlc_yahoo.clear()
         _fetch_ohlc_mt5.clear()
@@ -6102,26 +6098,6 @@ current_daily_status = daily_trading_status(
     max_closed_trades=int(daily_max_closed_trades),
     stop_after_target=bool(stop_after_daily_target),
 )
-
-if screen_mode == "Parite Alarm Ekranı":
-    render_pair_alert_screen(
-        change_window_minutes=change_window_minutes,
-        change_window_label=change_window_label,
-        alert_entry_tf=alert_entry_tf,
-        alert_groups=alert_groups,
-        alert_sort_mode=alert_sort_mode,
-        signal_threshold=float(signal_threshold),
-        webhook_url=webhook_url,
-        market_structure_enabled=bool(market_structure_enabled),
-        entry_model=entry_model,
-        rsi_regime_enabled=bool(rsi_regime_enabled),
-        rsi_divergence_filter_enabled=bool(rsi_divergence_filter_enabled),
-        bb_extreme_volatility_block=bool(bb_extreme_volatility_block),
-        macd_confirmation_enabled=bool(macd_confirmation_enabled),
-        macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
-        daily_status=current_daily_status,
-    )
-    st.stop()
 
 current_bt_key = make_backtest_key(
     symbol=symbol,
@@ -6475,25 +6451,6 @@ _scanner_common_kwargs = dict(
     macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
 )
 
-if run_scanner_requested:
-    with st.spinner("Parite tarayıcı çalışıyor (15 Dakika + 5 Dakika)..."):
-        st.session_state["scanner_df"] = run_symbol_scanner_multi_tf(
-            symbols=SYMBOL_LIST[:int(scanner_limit)],
-            tf_list=["15 Dakika", "5 Dakika"],
-            change_window_minutes=change_window_minutes,
-            include_backtest=scanner_include_backtest,
-            **_scanner_common_kwargs,
-        )
-elif "scanner_df" not in st.session_state:
-    with st.spinner("Fırsat Akışı ilk kez tüm pariteleri tarıyor (15 Dakika + 5 Dakika)..."):
-        st.session_state["scanner_df"] = run_symbol_scanner_multi_tf(
-            symbols=SYMBOL_LIST[:int(scanner_limit)],
-            tf_list=["15 Dakika", "5 Dakika"],
-            change_window_minutes=change_window_minutes,
-            include_backtest=False,
-            **_scanner_common_kwargs,
-        )
-
 # Top metrics
 price_info = fetch_price_change(symbol, change_window_minutes)
 price = price_info["latest"] if price_info and price_info.get("latest") is not None else fetch_last_price(symbol)
@@ -6734,24 +6691,65 @@ tab_signal, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
 
 with tab_feed:
     st.header("Fırsat Akışı — Tüm Pariteler")
-    st.caption(
-        "Aynı katı onay şartlarıyla (yapı, RSI, MACD, Bollinger) 15 Dakika ve 5 Dakika girişlerinin "
-        "ikisi birden taranıp birleştirilir; en güçlü sinyaller burada."
-    )
-    render_opportunity_feed(st.session_state.get("scanner_df"))
-    with st.expander("Tüm tarama tablosu", expanded=False):
-        if isinstance(st.session_state.get("scanner_df"), pd.DataFrame) and not st.session_state["scanner_df"].empty:
-            scanner_view = st.session_state["scanner_df"]
-            st.dataframe(scanner_view, use_container_width=True, hide_index=True)
-            st.download_button(
-                "Tarayıcı Sonucunu CSV İndir",
-                data=scanner_view.to_csv(index=False).encode("utf-8-sig"),
-                file_name="forex_pair_scanner.csv",
-                mime="text/csv",
-            )
-            st.caption("5 Dakika verisi Yahoo tarafında kısa geçmiş sunduğu için bazı paritelerde örnek sayısı yetersiz kalabilir.")
-        else:
-            st.caption("Tarama sonucu yok.")
+    feed_scan_tab, feed_alert_tab, feed_ml_tab = st.tabs(["⚡ 15M + 5M Tarama", "🚦 Pariteler", "🤖 ML Tahmini"])
+
+    with feed_scan_tab:
+        st.caption(
+            "Aynı katı onay şartlarıyla (yapı, RSI, MACD, Bollinger) 15 Dakika ve 5 Dakika girişlerinin "
+            "ikisi birden taranıp birleştirilir; en güçlü sinyaller burada."
+        )
+        scan_limit_col, scan_bt_col, scan_btn_col = st.columns([1, 1, 1.4], vertical_alignment="bottom")
+        with scan_limit_col:
+            scanner_limit = st.number_input("Maksimum parite", min_value=1, max_value=len(SYMBOL_LIST), value=len(SYMBOL_LIST), step=1)
+        with scan_bt_col:
+            scanner_include_backtest = st.checkbox("Backtest kalitesi hesapla", value=False)
+        with scan_btn_col:
+            run_scanner_requested = st.button("15M + 5M Fırsatlarını Hesapla", type="primary", use_container_width=True)
+        if run_scanner_requested:
+            with st.spinner("Parite tarayıcı çalışıyor (15 Dakika + 5 Dakika)..."):
+                st.session_state["scanner_df"] = run_symbol_scanner_multi_tf(
+                    symbols=SYMBOL_LIST[:int(scanner_limit)],
+                    tf_list=["15 Dakika", "5 Dakika"],
+                    change_window_minutes=change_window_minutes,
+                    include_backtest=scanner_include_backtest,
+                    **_scanner_common_kwargs,
+                )
+        render_opportunity_feed(st.session_state.get("scanner_df"))
+        with st.expander("Tüm tarama tablosu", expanded=False):
+            if isinstance(st.session_state.get("scanner_df"), pd.DataFrame) and not st.session_state["scanner_df"].empty:
+                scanner_view = st.session_state["scanner_df"]
+                st.dataframe(scanner_view, use_container_width=True, hide_index=True)
+                st.download_button(
+                    "Tarayıcı Sonucunu CSV İndir",
+                    data=scanner_view.to_csv(index=False).encode("utf-8-sig"),
+                    file_name="forex_pair_scanner.csv",
+                    mime="text/csv",
+                )
+                st.caption("5 Dakika verisi Yahoo tarafında kısa geçmiş sunduğu için bazı paritelerde örnek sayısı yetersiz kalabilir.")
+            else:
+                st.caption("Tarama sonucu yok.")
+
+    with feed_alert_tab:
+        render_pair_alert_screen(
+            change_window_minutes=change_window_minutes,
+            change_window_label=change_window_label,
+            alert_entry_tf=alert_entry_tf,
+            alert_groups=alert_groups,
+            alert_sort_mode=alert_sort_mode,
+            signal_threshold=float(signal_threshold),
+            webhook_url=webhook_url,
+            market_structure_enabled=bool(market_structure_enabled),
+            entry_model=entry_model,
+            rsi_regime_enabled=bool(rsi_regime_enabled),
+            rsi_divergence_filter_enabled=bool(rsi_divergence_filter_enabled),
+            bb_extreme_volatility_block=bool(bb_extreme_volatility_block),
+            macd_confirmation_enabled=bool(macd_confirmation_enabled),
+            macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
+            daily_status=current_daily_status,
+        )
+
+    with feed_ml_tab:
+        render_ml_prediction_page()
 
 with tab_advanced:
     with st.expander("Piyasa Radarı ve Çift Motor", expanded=True):
@@ -7265,7 +7263,7 @@ with tab_advanced:
             clear_trade_journal()
             st.rerun()
 
-    st.caption("Parite başına canlı LONG/SHORT tahmini için kenar çubuğunda Sayfa → ML Tahmini'ni seçin.")
+    st.caption("Parite başına canlı LONG/SHORT tahmini: 🔥 Fırsat Akışı → 🤖 ML Tahmini.")
 
     with st.expander("Alarm Geçmişi", expanded=False):
         alert_history = alert_history_dataframe()
