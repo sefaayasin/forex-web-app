@@ -24,5 +24,6 @@ data/ml/tournament/final_predictions.csv.gz
 data/ml/tournament_rebuilt/final_predictions.csv.gz
 data/ml/tournament_rebuilt/*.joblib
 research/meta_label/dataset.csv.gz
+research/spreads/cache/
 tick_downloader/node_modules/
 tick_downloader/cache/

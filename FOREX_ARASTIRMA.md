@@ -71,19 +71,35 @@
 - **Sonra:** 6–12 ay içinde "sürprizin yönü, sonraki 15–60 dakikayı tahmin ediyor mu?" sorusu test edilebilir.
 - **Sınır:** Tepkinin çoğu ilk dakikalarda olur. O dakikalarda spread ve kayma en yüksek.
 
-### E. Gerçek maliyeti ölçmek
-- **Ne:** Dukascopy tick verisinden parite ve saate göre gerçek spread çıkarılır (`tick_downloader` projede var).
-- **Uygulamaya yansıması:** "Şu an bu paritede tahmini maliyet riskin %X'i" uyarısı. Asya seansında JPY dışı pariteler için dikkat notu.
+### E. Gerçek maliyeti ölçmek — yapıldı
+- **Ölçüm:** Dukascopy'nin alış/satış fiyatlarından 28 paritenin spreadi ölçüldü (Haziran–Ağustos 2026, 10 gün, dakikalık). Ayrıca 3 NFP ve 1 FOMC anının tick verisi incelendi.
+- **Asıl fark maliyetin stopa oranında:** JPY'li pariteler ve GBPUSD/EURUSD'de maliyet, tipik 15M stopun yaklaşık %7–11'i. CHF/CAD/NZD çaprazlarında %20–26.
+- **Rollover:** New York 17:00'de spread 2–7 katına çıkıyor.
+- **Haber anı:** Açıklamanın ilk saniyelerinde spread 5–25 katına sıçrıyor, çoğunlukla birkaç saniyede normale dönüyor.
+- **Önceki testler:** Araştırmalarda kullanılan 1,5 pip, 28 paritenin 20'sinde gerçek maliyetin altındaydı; yani o testlerin sonuçları gerçekte daha da kötü olurdu.
+- **Uygulamaya yansıyanlar:**
+  - Maliyet ayarının varsayılanı artık ölçülen spread + komisyon.
+  - Sinyal sekmesinde "maliyet planlanan kaybın %X'i" notu.
+  - Tarama tablosunda şu anki spread sütunu.
+- Ayrıntı: research/spreads/REPORT.md
 
-### F. Canlı veri kaynağını iyileştirmek
-- Yahoo, eğitim verisinden farklı fiyat ve fitiller veriyor. Broker API'si, MT5 veya bir FX veri sağlayıcısı hem ML hem pip bazlı seviyeler için daha güvenilir olur.
+### F. Canlı veri kaynağı — değerlendirildi, Yahoo + düzeltmeyle devam
+- **Dukascopy** (modellerin eğitildiği kaynak) canlı kullanım için denendi, uygun değil:
+  - Dosya başına 20–30 saniye sürüyor, sunucu sık sık 503 hatası ve zaman aşımı veriyor.
+  - İçinde bulunulan ayın saatlik dosyası yok (404); gün içi veri saat saat tick dosyası gerektiriyor.
+  - Sadece geçmiş analiz için kullanılabilir.
+- **Yahoo + fitil düzeltmesi** yeterli çalışıyor: ML oynaklık kararının eğitim verisiyle uyumu 28/28 paritede %80'in üstünde (medyan %92).
+- **Yahoo'nun eksikleri:**
+  - Fiyat, broker fiyatından birkaç pip farklı olabiliyor (EURUSD'de medyan 3,6 pip). Pip bazlı stop/hedef, işlem öncesi broker ekranından kontrol edilmeli.
+  - Spread bilgisi yok. Maliyet için ölçülmüş ECN spread profili kullanılıyor (E).
+- **Daha iyi seçenekler (ileride):** Kendi broker'ının MetaTrader 5'i (uygulamada destek var, sadece yerelde çalışır) ya da bir broker API'si, örneğin OANDA (API anahtarı gerekir). Kullanıcı kararıyla (26 Eylül 2026) şimdilik Yahoo + düzeltmeyle devam ediliyor.
 
 ### Yapılmamasını önerdiğim şeyler
 - 15M/5M'ye yeni gösterge veya filtre eklemek. Denenen her varyant maliyet sonrası zarar etti.
 - Kısa vadeli yön için daha büyük ML modelleri denemek. 1.680 eğitim ve yaklaşık 960 bin sinyalle yeterince denendi.
 - Sonuçlara bakarak parametre seçmek. Geçmişte iyi görünen her ayar, gelecekte aynı sonucu vermez.
 
-**Durum:** A, B ve C tamamlandı; üçü de önceden yazılan ölçütü geçmedi. Açık kalanlar: D (haber sürprizi arşivi; zaman istiyor, kod değil), E (gerçek maliyet ölçümü) ve F (daha iyi canlı veri kaynağı).
+**Durum:** A, B ve C tamamlandı; üçü de önceden yazılan ölçütü geçmedi. E yapıldı ve uygulamaya eklendi. F değerlendirildi; şimdilik Yahoo + düzeltmeyle devam ediliyor. Açık kalan: D (haber sürprizi arşivi; zaman istiyor, kod değil).
 
 ## Kaynaklar
 

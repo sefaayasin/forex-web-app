@@ -72,6 +72,15 @@ from forex_indicators import (
 )
 from forex_edge import build_edge_validation_report, edge_validation_table
 from forex_diagnostics import engine_evidence_summary, funnel_rows
+from forex_costs import (
+    ECN_COMMISSION_PIPS,
+    HIGH_COST_SHARE,
+    cost_share_of_risk,
+    current_ny_hour,
+    estimated_round_trip_cost_pips,
+    load_spread_profile,
+    measured_spread_pips,
+)
 from forex_ml_live import (
     LIVE_AGREEMENT_MIN,
     VOLATILITY_CONFIDENCE_THRESHOLD,
@@ -735,8 +744,20 @@ def session_description(session_name: str) -> str:
     return f"Bugün İstanbul saatine göre yaklaşık {start_hour:02d}:00–{end_hour:02d}:00 (DST otomatik)"
 
 
+@st.cache_data(ttl=3600)
+def cached_spread_profile() -> dict:
+    return load_spread_profile()
+
+
 def recommended_spread_pips(symbol: str) -> float:
-    """Canlı spread yokken yalnızca muhafazakâr bir başlangıç maliyeti önerir."""
+    """Canlı broker spreadi yokken başlangıç maliyeti önerir.
+
+    Ölçülmüş profil varsa (measure_spreads.py) bu saatin ECN spread medyanı + tipik ECN
+    komisyonu kullanılır; yoksa muhafazakâr sabit değerler.
+    """
+    measured = estimated_round_trip_cost_pips(cached_spread_profile(), symbol, current_ny_hour())
+    if measured is not None:
+        return measured
     s = normalize_symbol(symbol)
     if s in MAJOR_PAIRS:
         return 1.0
@@ -5577,6 +5598,35 @@ def volatility_badge(view: dict) -> str:
     return f"{VOLATILITY_LEVEL_ICONS[view['level']]} {VOLATILITY_SHORT_LABELS[view['level']]} (%{view['probability_high_pct']:.0f})"
 
 
+def render_cost_note(symbol: str, setup, cost_pips: float) -> None:
+    """Planlanan işlemde maliyetin riske oranı; kaybın en büyük sürücüsü (research/meta_label)."""
+    hour = current_ny_hour()
+    tr_time = pd.Timestamp.now(tz=TR_TZ).strftime("%H:00")
+    profile = cached_spread_profile()
+    median_now = measured_spread_pips(profile, symbol, hour)
+    p90_now = measured_spread_pips(profile, symbol, hour, "p90")
+    spread_text = (
+        f"Bu saatte (TR {tr_time}) ölçülen ECN spreadi: medyan {median_now:.1f}, yüksek anlarda {p90_now:.1f} pip. "
+        if median_now is not None and p90_now is not None else ""
+    )
+    share = cost_share_of_risk(float(cost_pips), float(setup.stop_pips)) if setup is not None else None
+    if share is None:
+        if spread_text:
+            st.caption(f"💸 {spread_text}Ayarlardaki toplam maliyet: {cost_pips:.1f} pip.")
+        return
+    css = "warn-box" if share > HIGH_COST_SHARE else "risk-box"
+    advice = (
+        "Maliyet riskin büyük kısmını yiyor; daha geniş stoplu kurulum veya daha düşük spreadli saat/parite ara."
+        if share > HIGH_COST_SHARE else "Maliyet payı makul."
+    )
+    st.markdown(
+        f"<div class='{css}'><b>💸 Maliyet: {cost_pips:.1f} pip (planlanan kayıptaki payı: %{share * 100:.0f})</b> "
+        f"(stop {setup.stop_pips:.1f} pip). {escape(advice)}<br><small>{escape(spread_text)}Testlerde 10 piplik stopta "
+        "1,5 pip maliyet, 15M/5M işlemlerinin kaybının en büyük sebebiydi.</small></div>",
+        unsafe_allow_html=True,
+    )
+
+
 @st.cache_data(ttl=3600)
 def cached_live_calibration() -> dict:
     return load_live_calibration()
@@ -6135,6 +6185,14 @@ with st.sidebar:
         )
         if observed_spread is not None:
             st.caption(f"Broker son mumlarından medyan spread: {observed_spread:.1f} pip.")
+        else:
+            measured_now = measured_spread_pips(cached_spread_profile(), symbol, current_ny_hour())
+            if measured_now is not None:
+                st.caption(
+                    f"Varsayılan: bu saatte (TR {pd.Timestamp.now(tz=TR_TZ):%H}:00) ölçülen ECN spread medyanı {measured_now:.1f} pip + "
+                    f"~{ECN_COMMISSION_PIPS:.1f} pip komisyon. Standart (komisyonsuz) hesaplarda spread genelde daha geniştir; "
+                    "kendi broker'ının değerini gir."
+                )
         st.caption(session_description(session_filter))
         cooldown_bars = st.number_input(
             "Cooldown (mum)", min_value=0, max_value=200, value=16, step=1,
@@ -6910,6 +6968,9 @@ with tab_feed:
             if isinstance(st.session_state.get("scanner_df"), pd.DataFrame) and not st.session_state["scanner_df"].empty:
                 scanner_view = st.session_state["scanner_df"].copy()
                 scanner_view.insert(2, "Haber", scanner_view["Sembol"].map(lambda s: nearest_news_text(s, news_events) or "-"))
+                spread_hour = current_ny_hour()
+                scanner_view.insert(3, "Spread şimdi (ECN medyan, pip)", scanner_view["Sembol"].map(
+                    lambda s: measured_spread_pips(cached_spread_profile(), s, spread_hour)))
                 st.dataframe(scanner_view, use_container_width=True, hide_index=True)
                 st.download_button(
                     "Tarayıcı Sonucunu CSV İndir",
@@ -7077,6 +7138,7 @@ with tab_signal:
             st.warning(f"{title}: {status.get('text', '-')}")
     render_top_decision_panel(simple_decision)
     render_volatility_risk_card(volatility_prediction, ml_show_research_signal)
+    render_cost_note(symbol, preview_setup, spread_pips)
     if beginner_mode:
         if current_strategy_engine == "RANGE":
             render_simple_decision_card(simple_decision)
