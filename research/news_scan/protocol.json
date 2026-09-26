@@ -1,0 +1,48 @@
+{
+  "name": "15M + 5M bias state at scheduled US news releases (NFP, FOMC)",
+  "frozen_on": "2026-09-26",
+  "question": "Does trading in the direction of the app's 15M and 5M bias state at a scheduled high-impact US release have a positive expectancy after costs, and more than the same rule without the news?",
+  "hypothesis_source": "User report: trades taken when following the 15M/5M buy state and judging the news moment mostly won. Sample size unknown.",
+  "symbols": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF", "NZDUSD"],
+  "source": "Local data/historical_5m and data/historical_15m CSV archives (UTC bar-open timestamps); no network data",
+  "events": {
+    "NFP": {
+      "time": "08:30 America/New_York",
+      "date_rule": "BLS rule: the third Friday after the Saturday that ends the Sunday-Saturday reference week containing the 12th of the reference month",
+      "reference_months": "2008-01 through the last month whose rule date falls inside the archive",
+      "timing_check": "Holiday and government-shutdown reschedules are not modeled. An NFP event is kept only if the EURUSD 5M bar starting at the release time has a high-low range of at least 3x the median range of the 288 preceding EURUSD 5M bars. This check uses only range, never direction, and is applied before any outcome is computed. Excluded dates are listed in the results."
+    },
+    "FOMC": {
+      "time": "14:00 America/New_York",
+      "date_rule": "Statement dates in data/news/fomc_statements.csv from 2013-01-01 onward that fall on a Wednesday (scheduled decisions); earlier release times varied between 12:30 and 14:15, and unscheduled statements had other times",
+      "timing_check": "None used for selection; the same range ratio is reported for information only"
+    }
+  },
+  "state_rule": {
+    "score": "The app's score_series_for_backtest (forex_web_app_streamlit_v14_alert_decision.py), computed causally on the full 15M and 5M series of each pair",
+    "long": "Last closed 15M score >= 25 and last closed 5M score >= 25 (the app's 'Alım Yönlü' label threshold)",
+    "short": "Last closed 15M score <= -25 and last closed 5M score <= -25",
+    "otherwise": "No trade"
+  },
+  "variants": {
+    "before": "Decision at the release time T using bars closed by T; entry at the open of the 5M bar starting at T (the last pre-release price)",
+    "after": "Decision at T + 15 minutes using bars closed by then, including the release reaction; entry at the open of the 5M bar starting at T + 15 minutes"
+  },
+  "trade": {
+    "stop": "1.5 x ATR14 of the last closed 15M bar at decision time",
+    "target": "1.5 x stop distance, before costs",
+    "max_holding": "48 5M bars (4 hours); timeout exits at the close of the last bar",
+    "path": "5M bars from the entry bar; stop first if stop and target are both inside one bar; adverse gap fills at the bar open",
+    "missing_bars": "If the decision bars or the entry bar are missing, that pair-event is skipped and counted",
+    "round_trip_costs_pips": [1.5, 3.0, 5.0],
+    "cost_note": "News spreads and slippage are often wider than normal; 5 pips is the stress case for entries at the release"
+  },
+  "control": "Same variant and rules at T - 7 days, the same weekday and clock time without the scheduled release",
+  "statistics": {
+    "unit": "Event: net R averaged over the pairs that signaled at that event, so correlated USD pairs do not count as independent samples",
+    "test": "forex_decision_core.stationary_bootstrap_mean_test, 2000 simulations, mean block length 1, seed 42",
+    "subperiods": {"2008-2018": ["2008-01-01", "2019-01-01"], "2019-2026": ["2019-01-01", "2027-01-01"]}
+  },
+  "success_criteria": "For an event type and variant to count as promising, all must hold at 3 pip cost: event-level mean net R > 0 with bootstrap 95% CI lower bound > 0; mean net R > 0 in both subperiods; mean net R above the control's. Anything else is reported as no evidence of an edge, which is not proof that none exists.",
+  "parameter_search": "None; thresholds, stop, target, holding time and costs are fixed above and are not tuned after results"
+}

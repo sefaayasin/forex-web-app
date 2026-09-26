@@ -5,6 +5,13 @@ correlation between countries).
 
 Run download_news_events.py first to produce data/news/events.csv.
 
+WARNING: events.csv dates are FRED observation dates (for monthly releases,
+the 1st of the month the data describes), not the day the figure was
+published — e.g. August payrolls sit on Aug 1 but were released in early
+September. Forward returns here are therefore measured on the wrong days for
+release events, and the live app no longer shows the derived tendency panel.
+Release-timed tests live in research_news_scan.py.
+
 Output:
   data/news/events_with_impact.csv   each event + forward return (1d/3d/5d)
                                       for every pair touching that currency

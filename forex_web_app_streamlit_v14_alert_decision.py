@@ -3082,6 +3082,27 @@ def load_default_forexfactory_calendar() -> pd.DataFrame:
     return df
 
 
+def _high_impact_events(events: pd.DataFrame) -> Optional[pd.DataFrame]:
+    """Takvimdeki yüksek etkili haberler (UTC zamanlı); gerekli sütunlar yoksa None."""
+    if not {"time", "currency"}.issubset({str(c).lower() for c in events.columns}):
+        return None
+    e = events.copy()
+    e.columns = [str(c).lower() for c in e.columns]
+    e["time"] = pd.to_datetime(e["time"], utc=True, errors="coerce")
+    e = e.dropna(subset=["time"])
+    if "impact" in e.columns:
+        e = e[e["impact"].astype(str).str.lower().isin({"high", "yüksek", "3"})]
+    return e
+
+
+def _pair_high_impact_events(symbol: str, events: pd.DataFrame) -> Optional[pd.DataFrame]:
+    e = _high_impact_events(events)
+    if e is None:
+        return None
+    base, quote = symbol_pair(symbol)
+    return e[e["currency"].astype(str).str.upper().isin({base, quote})]
+
+
 def news_blackout_status(
     symbol: str,
     events: pd.DataFrame,
@@ -3090,17 +3111,9 @@ def news_blackout_status(
 ) -> dict:
     if events is None or events.empty:
         return {"blocks_trade": False, "state": "ok", "text": "Yüklü yüksek etkili haber yok."}
-    required = {"time", "currency"}
-    if not required.issubset({str(c).lower() for c in events.columns}):
+    e = _pair_high_impact_events(symbol, events)
+    if e is None:
         return {"blocks_trade": True, "state": "bad", "text": "Haber CSV sütunları: time,currency,title,impact olmalı."}
-    e = events.copy()
-    e.columns = [str(c).lower() for c in e.columns]
-    e["time"] = pd.to_datetime(e["time"], utc=True, errors="coerce")
-    e = e.dropna(subset=["time"])
-    if "impact" in e.columns:
-        e = e[e["impact"].astype(str).str.lower().isin({"high", "yüksek", "3"})]
-    base, quote = symbol_pair(symbol)
-    e = e[e["currency"].astype(str).str.upper().isin({base, quote})]
     now = pd.Timestamp.now(tz="UTC")
     active = e[(e["time"] >= now - pd.Timedelta(minutes=after_minutes)) & (e["time"] <= now + pd.Timedelta(minutes=before_minutes))]
     if active.empty:
@@ -3111,128 +3124,48 @@ def news_blackout_status(
     return {"blocks_trade": True, "state": "bad", "text": f"{event['currency']} haberi {local_time}: {title}"}
 
 
-EVENT_DIRECTION_TENDENCY_PATH = Path(__file__).resolve().parent / "data" / "news" / "event_direction_tendency.csv"
-
-# (para birimi, geçmiş veri setindeki olay kategorisi, canlı takvim başlığında aranan alt dizeler).
-# Sadece sayısal "önceki okumaya göre arttı/azaldı" sürprizi olan planlı veri açıklamaları eşleşir;
-# FOMC basın toplantısı gibi konuşma/söylem temelli olaylar kasıtlı olarak eşleşmez.
-_EVENT_CATEGORY_RULES: list[tuple[str, str, tuple[str, ...]]] = [
-    ("USD", "US Nonfarm Payrolls", ("nonfarm payrolls", "non-farm employment change", "nfp")),
-    ("USD", "US Core CPI", ("core cpi",)),
-    ("USD", "US CPI (headline)", ("cpi",)),
-    ("USD", "US PCE Price Index", ("pce price index", "core pce")),
-    ("USD", "US Retail Sales", ("retail sales",)),
-    ("USD", "US Industrial Production", ("industrial production",)),
-    ("USD", "US Unemployment Rate", ("unemployment rate",)),
-    ("USD", "US Michigan Consumer Sentiment", ("michigan consumer sentiment", "uom consumer sentiment")),
-    ("USD", "US GDP", ("gdp",)),
-    ("USD", "Fed Funds Target Rate (Upper)", ("fed interest rate decision", "fomc statement", "federal funds rate", "fed funds")),
-    ("EUR", "ECB Deposit Facility Rate", ("ecb deposit facility rate",)),
-    ("EUR", "Euro Area Interbank Rate", ("ecb interest rate decision", "main refinancing rate", "ecb monetary policy")),
-    ("GBP", "UK Interbank Rate", ("boe interest rate decision", "official bank rate")),
-    ("CAD", "Canada Interbank Rate", ("boc interest rate decision", "overnight rate")),
-    ("JPY", "Japan Interbank Rate", ("boj interest rate decision", "boj policy rate")),
-    ("CHF", "Switzerland Interbank Rate", ("snb interest rate decision", "snb policy rate")),
-    ("AUD", "Australia Interbank Rate", ("rba interest rate decision", "cash rate")),
-    ("NZD", "New Zealand Interbank Rate", ("rbnz interest rate decision", "official cash rate")),
-]
+def _relative_minutes_text(minutes: int) -> str:
+    if minutes == 0:
+        return "şimdi"
+    amount = abs(minutes)
+    if amount < 90:
+        span = f"{amount} dk"
+    else:
+        span = f"{amount // 60} sa" + (f" {amount % 60} dk" if amount % 60 else "")
+    return f"{span} sonra" if minutes > 0 else f"{span} önce"
 
 
-@st.cache_data(ttl=3600)
-def load_event_direction_tendency() -> pd.DataFrame:
-    if not EVENT_DIRECTION_TENDENCY_PATH.exists():
-        return pd.DataFrame()
-    try:
-        return pd.read_csv(EVENT_DIRECTION_TENDENCY_PATH)
-    except Exception:
-        return pd.DataFrame()
-
-
-def match_calendar_event_to_category(title: str, currency: str) -> Optional[str]:
-    """Canlı takvim başlığını, geçmiş sürpriz-yön istatistiği olan bir kategoriye eşler.
-
-    Eşleşme yoksa None döner — bu, o olay için güvenilir bir geçmiş yön istatistiği
-    olmadığı anlamına gelir (ör. konuşma/basın toplantısı), tahmin uydurulmaz.
-    """
-    t = str(title).lower()
-    cur = str(currency).upper()
-    for rule_currency, category, keywords in _EVENT_CATEGORY_RULES:
-        if rule_currency != cur:
-            continue
-        if any(keyword in t for keyword in keywords):
-            return category
-    return None
-
-
-def render_news_direction_panel(symbol: str, news_events: pd.DataFrame, hours_ahead: int = 48, hours_back: int = 6) -> None:
-    """Yaklaşan/son planlı veri açıklamaları için salt-okunur geçmiş yön istatistiği.
-
-    Bu panel hiçbir eşiği veya radar puanını etkilemez; sadece bilgi amaçlıdır.
-    """
-    tendency = load_event_direction_tendency()
-    if tendency.empty or news_events is None or news_events.empty:
-        return
-    required = {"time", "currency", "title"}
-    if not required.issubset({str(c).lower() for c in news_events.columns}):
-        return
-    base, quote = symbol_pair(symbol)
-    pair_clean = f"{base}{quote}"
-
-    events = news_events.copy()
-    events.columns = [str(c).lower() for c in events.columns]
-    events["time"] = pd.to_datetime(events["time"], utc=True, errors="coerce")
-    events = events.dropna(subset=["time"])
-    events = events[events["currency"].astype(str).str.upper().isin({base, quote})]
-    now = pd.Timestamp.now(tz="UTC")
-    window = events[
-        (events["time"] >= now - pd.Timedelta(hours=hours_back))
-        & (events["time"] <= now + pd.Timedelta(hours=hours_ahead))
-    ]
+def nearest_news_text(
+    symbol: str,
+    events: pd.DataFrame,
+    ahead_minutes: int = 240,
+    back_minutes: int = 60,
+    now: Optional[pd.Timestamp] = None,
+) -> Optional[str]:
+    """Paritenin en yakın yüksek etkili haberini kısa metin olarak verir; hiçbir kararı etkilemez."""
+    if events is None or events.empty:
+        return None
+    e = _pair_high_impact_events(symbol, events)
+    if e is None:
+        return None
+    now = now if now is not None else pd.Timestamp.now(tz="UTC")
+    window = e[(e["time"] >= now - pd.Timedelta(minutes=back_minutes)) & (e["time"] <= now + pd.Timedelta(minutes=ahead_minutes))]
     if window.empty:
-        return
+        return None
+    event = window.loc[(window["time"] - now).abs().idxmin()]
+    minutes = int(round((event["time"] - now).total_seconds() / 60))
+    local_time = event["time"].tz_convert(TR_TZ).strftime("%H:%M")
+    title = str(event.get("title", "Yüksek etkili veri"))
+    return f"📰 {event['currency']} {title} · {local_time} ({_relative_minutes_text(minutes)})"
 
-    # Aynı geçmiş kategoriye eşlenen birden fazla takvim başlığı (ör. "Federal Funds
-    # Rate" ve "FOMC Statement") tek satırda birleştirilir; aynı istatistik iki kez
-    # tekrar edilmez.
-    matched_by_category: dict[str, dict] = {}
-    for _, ev in window.sort_values("time").iterrows():
-        category = match_calendar_event_to_category(ev["title"], ev["currency"])
-        if category is None:
-            continue
-        local_time = ev["time"].tz_convert(TR_TZ).strftime("%d.%m %H:%M")
-        label = f"{ev['currency']} {ev['title']}"
-        entry = matched_by_category.setdefault(category, {"time": local_time, "labels": []})
-        if label not in entry["labels"]:
-            entry["labels"].append(label)
 
-    rows = []
-    for category, entry in matched_by_category.items():
-        matches = tendency[(tendency["event"] == category) & (tendency["pair"] == pair_clean)]
-        if matches.empty:
-            continue
-        for _, row in matches.iterrows():
-            rows.append({
-                "Zaman": entry["time"],
-                "Olay": " / ".join(entry["labels"]),
-                "Önceki okumaya göre": row["direction"],
-                "Örnek (n)": int(row["n"]),
-                f"Ort. 1g getiri ({pair_clean})": f"{float(row['mean_ret_1d_pct']):+.2f}%",
-                "%95 GA": f"[{float(row['ci_low_1d_pct']):+.2f}%, {float(row['ci_high_1d_pct']):+.2f}%]",
-                "p-değeri": f"{float(row['p_value']):.2f}",
-            })
-    if not rows:
-        return
-
-    with st.expander("📰 Haber Yön Eğilimi (Geçmiş İstatistik — tahmin değil)", expanded=False):
-        st.caption(
-            "Yaklaşan/son planlı veri açıklamaları için, o veri **önceki okumaya göre arttığında/azaldığında** "
-            f"{pair_clean}'nin 2008'den bu yana ortalama 1 günlük getirisi. Gerçekleşen değer açıklanmadan hangi "
-            "yönün geçerli olacağı bilinmez; bu yalnızca geçmiş eğilimdir, hiçbir işlem kararını tek başına "
-            "vermez veya engellemez, radar puanını etkilemez. p-değeri 0.05'in üstündeyse eğilim istatistiksel "
-            "olarak anlamlı sayılmaz — gürültü olabilir. FOMC basın toplantısı gibi sayısal sürprizi olmayan "
-            "olaylar için geçmiş istatistik hesaplanamaz, bu yüzden listede görünmez."
-        )
-        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+def upcoming_high_impact_events(events: pd.DataFrame, ahead_hours: int = 24, limit: int = 6) -> pd.DataFrame:
+    """Tüm para birimlerinde yaklaşan yüksek etkili haberler (Fırsat Akışı başlığındaki şerit için)."""
+    e = _high_impact_events(events) if events is not None and not events.empty else None
+    if e is None:
+        return pd.DataFrame()
+    now = pd.Timestamp.now(tz="UTC")
+    return e[(e["time"] >= now) & (e["time"] <= now + pd.Timedelta(hours=ahead_hours))].sort_values("time").head(limit)
 
 
 def portfolio_risk_status(
@@ -5195,11 +5128,31 @@ def render_intraday_opportunity(opportunity: dict, symbol: str) -> None:
     )
 
 
-def render_opportunity_feed(scanner_df: pd.DataFrame, max_cards: int = 9) -> None:
+def render_upcoming_news_strip(news_events: Optional[pd.DataFrame]) -> None:
+    """Önümüzdeki 24 saatin yüksek etkili haberleri; bilgi amaçlıdır, hiçbir kararı etkilemez."""
+    upcoming = upcoming_high_impact_events(news_events)
+    if upcoming.empty:
+        st.caption("📰 Önümüzdeki 24 saatte takvimde yüksek etkili haber yok (veya takvim çekilemedi).")
+    else:
+        now = pd.Timestamp.now(tz="UTC")
+        items = [
+            f"**{row['currency']}** {str(row.get('title', '-')).replace('$', chr(92) + '$')} · {row['time'].tz_convert(TR_TZ).strftime('%d.%m %H:%M')} "
+            f"({_relative_minutes_text(int(round((row['time'] - now).total_seconds() / 60)))})"
+            for _, row in upcoming.iterrows()
+        ]
+        st.markdown("📰 **Yaklaşan yüksek etkili haberler (TR saati):** " + " · ".join(items))
+    st.caption(
+        "Geçmiş test (2008–2026, 7 USD paritesi): NFP ve FOMC anında 15M + 5M yönüne mekanik olarak girmek, "
+        "haberden önce de 15 dk sonra da maliyet sonrası ortalama zarar etti. Ayrıntı: research/news_scan/REPORT.md"
+    )
+
+
+def render_opportunity_feed(scanner_df: pd.DataFrame, news_events: Optional[pd.DataFrame] = None, max_cards: int = 9) -> None:
     """Tüm taranan pariteleri, tekil radar kartıyla aynı görsel dilde küçük kartlar halinde gösterir.
 
     Aynı Fırsat/Karar/Sinyal Skoru alanlarını kullanır; hiçbir filtre veya eşiği değiştirmez,
-    sadece 'Parite Tarayıcı' sonucunu tablodan kart akışına çevirir.
+    sadece 'Parite Tarayıcı' sonucunu tablodan kart akışına çevirir. Haber satırı her çizimde
+    o anki saate göre hesaplanır, böylece "35 dk sonra" gibi ifadeler bayatlamaz.
     """
     if scanner_df is None or scanner_df.empty:
         st.info("Henüz taranmış parite yok. Yukarıdaki '15M + 5M Fırsatlarını Hesapla' butonuna basın.")
@@ -5230,6 +5183,11 @@ def render_opportunity_feed(scanner_df: pd.DataFrame, max_cards: int = 9) -> Non
                     f"<div style='font-size:.8rem; margin-top:4px;'>72s oynaklık: {escape(volatility_text)}</div>"
                     if volatility_text not in {"-", "nan"} else ""
                 )
+                news_text = nearest_news_text(str(row.get("Sembol", "")), news_events)
+                news_line = (
+                    f"<div style='font-size:.8rem; margin-top:4px; font-weight:700;'>{escape(news_text)}</div>"
+                    if news_text else ""
+                )
                 st.markdown(
                     f"<div class='opportunity-card {css}' style='padding:12px; min-height:0;'>"
                     f"<div class='section-kicker'>{escape(kicker)}</div>"
@@ -5237,14 +5195,16 @@ def render_opportunity_feed(scanner_df: pd.DataFrame, max_cards: int = 9) -> Non
                     f"<div class='opportunity-score' style='font-size:1.4rem; margin:4px 0;'>{score:.0f}/100</div>"
                     f"<div style='font-size:.85rem;'>{escape(str(row.get('Fırsat Nedeni', '-')))}</div>"
                     f"<div style='font-size:.8rem; opacity:.8;'>{escape(str(row.get('Genel Bias', '-')))} · {pct_text}</div>"
-                    f"{volatility_line}"
+                    f"{volatility_line}{news_line}"
                     "</div>",
                     unsafe_allow_html=True,
                 )
     st.caption(
         "Bu kartlar da aynı yapı/RSI/MACD/Bollinger onaylarından geçiyor; sadece tek parite yerine "
         "tüm portföyü aynı anda gösteriyor. Karar İZLE olsa bile emir otomatik verilmez. "
-        "72s oynaklık, ML modelinin önümüzdeki 3 günün oynaklık beklentisidir; sıralamayı veya kararı değiştirmez."
+        "72s oynaklık, ML modelinin önümüzdeki 3 günün oynaklık beklentisidir; 📰 satırı paritenin para "
+        "birimlerinde son 1 saatteki veya önümüzdeki 4 saatteki en yakın yüksek etkili haberdir. İkisi de "
+        "sıralamayı veya kararı değiştirmez."
     )
 
 
@@ -6866,6 +6826,7 @@ with tab_feed:
             "Aynı katı onay şartlarıyla (yapı, RSI, MACD, Bollinger) 15 Dakika ve 5 Dakika girişlerinin "
             "ikisi birden taranıp birleştirilir; en güçlü sinyaller burada."
         )
+        render_upcoming_news_strip(news_events)
         scan_limit_col, scan_opts_col, scan_btn_col = st.columns([1, 1.2, 1.4], vertical_alignment="bottom")
         with scan_limit_col:
             scanner_limit = st.number_input("Maksimum parite", min_value=1, max_value=len(SYMBOL_LIST), value=len(SYMBOL_LIST), step=1)
@@ -6894,10 +6855,11 @@ with tab_feed:
                     scan_result["Sembol"].map(lambda s: volatility_badge(volatility_views[s]) if s in volatility_views else "-"),
                 )
             st.session_state["scanner_df"] = scan_result
-        render_opportunity_feed(st.session_state.get("scanner_df"))
+        render_opportunity_feed(st.session_state.get("scanner_df"), news_events)
         with st.expander("Tüm tarama tablosu", expanded=False):
             if isinstance(st.session_state.get("scanner_df"), pd.DataFrame) and not st.session_state["scanner_df"].empty:
-                scanner_view = st.session_state["scanner_df"]
+                scanner_view = st.session_state["scanner_df"].copy()
+                scanner_view.insert(2, "Haber", scanner_view["Sembol"].map(lambda s: nearest_news_text(s, news_events) or "-"))
                 st.dataframe(scanner_view, use_container_width=True, hide_index=True)
                 st.download_button(
                     "Tarayıcı Sonucunu CSV İndir",
@@ -7063,7 +7025,6 @@ with tab_signal:
     for title, status in [("Veri", current_data_health), ("Haber", current_news_status), ("Portföy", current_portfolio_status)]:
         if status.get("blocks_trade"):
             st.warning(f"{title}: {status.get('text', '-')}")
-    render_news_direction_panel(symbol, news_events)
     render_top_decision_panel(simple_decision)
     render_volatility_risk_card(volatility_prediction, ml_show_research_signal)
     if beginner_mode:
