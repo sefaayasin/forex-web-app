@@ -18,6 +18,8 @@ data/ml/*_oos.csv
 data/ml/tournament/*.joblib
 !data/ml/tournament/EURUSD_direction_research.joblib
 !data/ml/tournament/EURUSD_high_volatility_research.joblib
+# Volatility models are tiny logistic regressions (~8 KB each); ship all pairs.
+!data/ml/tournament/*_high_volatility_research.joblib
 data/ml/tournament/final_predictions.csv.gz
 tick_downloader/node_modules/
 tick_downloader/cache/

@@ -3,7 +3,13 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from forex_ml_live import build_research_prediction, research_signal_alignment
+from forex_ml_live import (
+    build_research_prediction,
+    direction_cost_verdict,
+    has_research_model,
+    research_signal_alignment,
+    volatility_risk_view,
+)
 
 
 def synthetic_hourly_bars(n=1200, seed=7):
@@ -45,6 +51,42 @@ class ForexMlLiveTests(unittest.TestCase):
 
     def test_alignment_is_none_when_model_not_ready(self):
         self.assertIsNone(research_signal_alignment({"status": "unavailable"}, "LONG"))
+
+    def test_has_research_model_accepts_yahoo_suffix(self):
+        self.assertTrue(has_research_model("EURUSD=X", "high_volatility"))
+        self.assertFalse(has_research_model("ZZZXXX", "high_volatility"))
+
+    def test_ready_volatility_prediction_carries_frozen_threshold(self):
+        result = build_research_prediction("EURUSD", "high_volatility", bars=synthetic_hourly_bars())
+        self.assertEqual(result["status"], "ready")
+        self.assertAlmostEqual(result["confidence_threshold"], 0.65)
+        view = volatility_risk_view(result)
+        self.assertIn(view["level"], {"high", "normal", "uncertain"})
+        self.assertEqual(view["horizon_bars"], 72)
+
+    def test_volatility_view_is_uncertain_between_thresholds(self):
+        def view(p):
+            return volatility_risk_view(
+                {"status": "ready", "task": "high_volatility", "probability_up": p, "confidence_threshold": 0.65}
+            )
+
+        self.assertEqual(view(0.65)["level"], "high")
+        self.assertEqual(view(0.35)["level"], "normal")
+        self.assertEqual(view(0.5)["level"], "uncertain")
+        self.assertFalse(view(0.5)["confident"])
+        self.assertAlmostEqual(view(0.8)["probability_high_pct"], 80.0)
+
+    def test_volatility_view_ignores_direction_and_unready_predictions(self):
+        self.assertIsNone(volatility_risk_view({"status": "ready", "task": "direction", "probability_up": 0.9}))
+        self.assertIsNone(volatility_risk_view({"status": "no_data"}))
+
+    def test_direction_cost_verdict(self):
+        self.assertEqual(direction_cost_verdict(-0.4, -1.2), "Maliyet sonrası zararda")
+        self.assertEqual(direction_cost_verdict(0.0, 0.5), "Maliyet sonrası zararda")
+        self.assertEqual(direction_cost_verdict(0.15, -0.75), "Sadece düşük maliyette artı")
+        self.assertEqual(direction_cost_verdict(0.3, 0.1), "Maliyet sonrası artı")
+        self.assertEqual(direction_cost_verdict(None, None), "-")
+        self.assertEqual(direction_cost_verdict(float("nan"), 1.0), "-")
 
 
 if __name__ == "__main__":

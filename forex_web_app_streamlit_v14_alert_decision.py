@@ -72,7 +72,15 @@ from forex_indicators import (
 )
 from forex_edge import build_edge_validation_report, edge_validation_table
 from forex_diagnostics import engine_evidence_summary, funnel_rows
-from forex_ml_live import build_research_prediction, load_research_model, research_signal_alignment
+from forex_ml_live import (
+    VOLATILITY_CONFIDENCE_THRESHOLD,
+    VOLATILITY_LEVEL_LABELS,
+    build_research_prediction,
+    direction_cost_verdict,
+    has_research_model,
+    research_signal_alignment,
+    volatility_risk_view,
+)
 from forex_storage import (
     APP_DB_PATH,
     add_trade_journal_entry,
@@ -5217,6 +5225,11 @@ def render_opportunity_feed(scanner_df: pd.DataFrame, max_cards: int = 9) -> Non
             with col:
                 tf_label = str(row.get("Giriş TF", ""))
                 kicker = f"{row.get('Sembol', '-')} · {tf_label}" if tf_label else str(row.get("Sembol", "-"))
+                volatility_text = str(row.get("72s Oynaklık", "-") or "-")
+                volatility_line = (
+                    f"<div style='font-size:.8rem; margin-top:4px;'>72s oynaklık: {escape(volatility_text)}</div>"
+                    if volatility_text not in {"-", "nan"} else ""
+                )
                 st.markdown(
                     f"<div class='opportunity-card {css}' style='padding:12px; min-height:0;'>"
                     f"<div class='section-kicker'>{escape(kicker)}</div>"
@@ -5224,12 +5237,14 @@ def render_opportunity_feed(scanner_df: pd.DataFrame, max_cards: int = 9) -> Non
                     f"<div class='opportunity-score' style='font-size:1.4rem; margin:4px 0;'>{score:.0f}/100</div>"
                     f"<div style='font-size:.85rem;'>{escape(str(row.get('Fırsat Nedeni', '-')))}</div>"
                     f"<div style='font-size:.8rem; opacity:.8;'>{escape(str(row.get('Genel Bias', '-')))} · {pct_text}</div>"
+                    f"{volatility_line}"
                     "</div>",
                     unsafe_allow_html=True,
                 )
     st.caption(
         "Bu kartlar da aynı yapı/RSI/MACD/Bollinger onaylarından geçiyor; sadece tek parite yerine "
-        "tüm portföyü aynı anda gösteriyor. Karar İZLE olsa bile emir otomatik verilmez."
+        "tüm portföyü aynı anda gösteriyor. Karar İZLE olsa bile emir otomatik verilmez. "
+        "72s oynaklık, ML modelinin önümüzdeki 3 günün oynaklık beklentisidir; sıralamayı veya kararı değiştirmez."
     )
 
 
@@ -5583,6 +5598,38 @@ def render_ml_prediction_card(research_prediction: dict, side: Optional[str], sh
     )
 
 
+VOLATILITY_LEVEL_ICONS = {"high": "🌪️", "normal": "🌤️", "uncertain": "❔"}
+VOLATILITY_SHORT_LABELS = {"high": "Yüksek", "normal": "Olağan", "uncertain": "Belirsiz"}
+VOLATILITY_ADVICE = {
+    "high": (
+        "Fiyat önümüzdeki günlerde olağandan geniş salınabilir; aynı stop daha kolay tetiklenebilir. "
+        "Lotu küçültmeyi veya stopu genişletmeyi düşün."
+    ),
+    "normal": "Önümüzdeki günlerde olağan dışı bir oynaklık beklenmiyor.",
+    "uncertain": "Model bu parite için şu an emin değil; oynaklık tahminine ağırlık verme.",
+}
+
+
+def volatility_badge(view: dict) -> str:
+    return f"{VOLATILITY_LEVEL_ICONS[view['level']]} {VOLATILITY_SHORT_LABELS[view['level']]} (%{view['probability_high_pct']:.0f})"
+
+
+def render_volatility_risk_card(volatility_prediction: dict, show_enabled: bool) -> None:
+    """72 saatlik oynaklık modelinin görüşünü risk bilgisi olarak gösterir; kararı değiştirmez."""
+    if not show_enabled:
+        return
+    view = volatility_risk_view(volatility_prediction)
+    if view is None:
+        return
+    css = "warn-box" if view["level"] == "high" else "risk-box"
+    st.markdown(
+        f"<div class='{css}'><b>{VOLATILITY_LEVEL_ICONS[view['level']]} Oynaklık riski (72 saat, ML): {escape(view['label'])}</b><br>"
+        f"Yüksek oynaklık olasılığı: %{view['probability_high_pct']:.0f}. {escape(VOLATILITY_ADVICE[view['level']])}<br>"
+        "<small>Yön veya işlem izni vermez; sadece risk bilgisidir. Detay: 🔥 Fırsat Akışı → 🤖 ML Tahmini.</small></div>",
+        unsafe_allow_html=True,
+    )
+
+
 ML_TOURNAMENT_DIR = Path(__file__).resolve().parent / "data" / "ml" / "tournament"
 
 
@@ -5598,47 +5645,194 @@ def load_ml_final_metrics() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def scan_ml_predictions(symbols: list[str]) -> tuple[pd.DataFrame, list[tuple[str, str]]]:
-    """Her paritede kendi eğitilmiş modelini çalıştırıp güncel LONG/SHORT görüşünü toplar.
+@st.cache_data(ttl=3600)
+def load_ml_cost_sensitivity() -> pd.DataFrame:
+    """Yön modelinin 2023+ testinde 0 / 1,5 / 3 pip maliyetle işlem başına net sonucu."""
+    path = ML_TOURNAMENT_DIR / "cost_sensitivity.csv"
+    if not path.exists():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame()
+
+
+def fetch_research_bars(sym: str) -> pd.DataFrame:
+    """ML modellerinin istediği saatlik veri (500 mum alt sınırının çok üstünde, ~3600 mum).
 
     Yahoo Finance canlı veri isteği zaman zaman zaman aşımına uğrayabiliyor; bu yüzden
-    her parite için bir kez daha (kısa bir bekleme sonrası) denenir, yine de veri gelmezse
-    o parite sessizce atlanmaz — sebebi `skipped` listesinde döner ve ekranda gösterilir.
+    kısa bir beklemeden sonra bir kez daha denenir.
+    """
+    bars = fetch_ohlc(sym, "60m", "150d")
+    if bars is None or bars.empty:
+        time.sleep(1.0)
+        bars = fetch_ohlc(sym, "60m", "150d")
+    return bars
+
+
+def scan_volatility_views(symbols) -> dict[str, dict]:
+    """Verilen paritelerin 72 saatlik oynaklık görüşü; modeli veya verisi olmayan parite atlanır."""
+    symbols = list(symbols)
+    views: dict[str, dict] = {}
+    progress = st.progress(0, text="72 saatlik oynaklık riski hesaplanıyor...")
+    for i, sym in enumerate(symbols, start=1):
+        if has_research_model(sym, "high_volatility"):
+            view = volatility_risk_view(build_research_prediction(sym, "high_volatility", bars=fetch_research_bars(sym)))
+            if view is not None:
+                views[sym] = view
+        progress.progress(i / max(len(symbols), 1), text=f"{sym} oynaklık ({i}/{len(symbols)})")
+    progress.empty()
+    return views
+
+
+def scan_ml_predictions(symbols: list[str]) -> tuple[pd.DataFrame, list[tuple[str, str]]]:
+    """Her paritede kendi eğitilmiş yön ve oynaklık modellerini aynı saatlik veriyle çalıştırır.
+
+    Veri gelmeyen parite sessizce atlanmaz — sebebi `skipped` listesinde döner ve ekranda
+    gösterilir. Bir paritede modellerden yalnız biri varsa o modelin sütunları dolar.
     """
     rows = []
     skipped: list[tuple[str, str]] = []
     progress = st.progress(0, text="Modeller pariteleri değerlendiriyor...")
     for i, sym in enumerate(symbols, start=1):
         base_symbol = sym.replace("=X", "").upper()
-        if load_research_model(base_symbol, "direction") is None:
+        tasks = [task for task in ("direction", "high_volatility") if has_research_model(base_symbol, task)]
+        if not tasks:
             progress.progress(i / len(symbols), text=f"{sym} atlandı (model yok)")
             continue
-        bars = fetch_ohlc(sym, "60m", "150d")
-        if bars is None or bars.empty:
-            time.sleep(1.0)
-            bars = fetch_ohlc(sym, "60m", "150d")
-        prediction = build_research_prediction(base_symbol, "direction", bars=bars)
-        if prediction.get("status") != "ready":
-            skipped.append((base_symbol, str(prediction.get("text", prediction.get("status", "-")))))
-        if prediction.get("status") == "ready":
-            probability_up = float(prediction["probability_up"])
+        bars = fetch_research_bars(sym)
+        predictions = {task: build_research_prediction(base_symbol, task, bars=bars) for task in tasks}
+        ready = [p for p in predictions.values() if p.get("status") == "ready"]
+        if not ready:
+            failed = next(iter(predictions.values()))
+            skipped.append((base_symbol, str(failed.get("text", failed.get("status", "-")))))
+            progress.progress(i / len(symbols), text=f"{sym} atlandı ({i}/{len(symbols)})")
+            continue
+
+        row: dict = {"Sembol": base_symbol}
+        direction = predictions.get("direction", {})
+        if direction.get("status") == "ready":
+            probability_up = float(direction["probability_up"])
             side = "LONG" if probability_up >= 0.5 else "SHORT"
-            confidence_pct = (probability_up if side == "LONG" else 1 - probability_up) * 100
-            as_of = prediction.get("as_of")
-            rows.append({
-                "Sembol": base_symbol,
-                "Tahmin": side,
-                "Olasılık %": round(confidence_pct, 1),
-                "Son mum": as_of.strftime("%d.%m %H:%M UTC") if as_of is not None else "-",
-                "Ufuk (saat)": prediction.get("horizon_bars", "-"),
-            })
+            row["Tahmin"] = side
+            row["Olasılık %"] = round((probability_up if side == "LONG" else 1 - probability_up) * 100, 1)
+        view = volatility_risk_view(predictions.get("high_volatility", {}))
+        if view is not None:
+            row["_vol_level"] = view["level"]
+            row["Oynaklık Görüşü"] = f"{VOLATILITY_LEVEL_ICONS[view['level']]} {view['label']}"
+            row["Yüksek Oynaklık %"] = round(view["probability_high_pct"], 1)
+        as_of = ready[0].get("as_of")
+        row["Son mum"] = as_of.strftime("%d.%m %H:%M UTC") if as_of is not None else "-"
+        rows.append(row)
         progress.progress(i / len(symbols), text=f"{sym} tarandı ({i}/{len(symbols)})")
     progress.empty()
     return pd.DataFrame(rows), skipped
 
 
+def render_ml_volatility_section(predictions: pd.DataFrame, metrics: pd.DataFrame) -> None:
+    st.markdown("#### 🌪️ Oynaklık Riski — önümüzdeki 72 saat")
+    if "Oynaklık Görüşü" not in predictions.columns:
+        st.info("Taranan paritelerde oynaklık modeli bulunamadı.")
+        return
+    vol = predictions.dropna(subset=["Oynaklık Görüşü"])[["Sembol", "_vol_level", "Oynaklık Görüşü", "Yüksek Oynaklık %", "Son mum"]]
+    vol_metrics = metrics[metrics["task"] == "high_volatility"] if not metrics.empty else pd.DataFrame()
+    if not vol_metrics.empty:
+        vol = vol.merge(
+            vol_metrics[["symbol", "confident_accuracy", "confident_baseline_accuracy", "confident_coverage"]],
+            left_on="Sembol", right_on="symbol", how="left",
+        ).drop(columns=["symbol"]).rename(columns={
+            "confident_accuracy": "Emin olduğunda geçmiş isabet %",
+            "confident_baseline_accuracy": "Aynı anlarda basit tahmin %",
+            "confident_coverage": "Emin olduğu zaman oranı %",
+        })
+        for col in ["Emin olduğunda geçmiş isabet %", "Aynı anlarda basit tahmin %", "Emin olduğu zaman oranı %"]:
+            vol[col] = (vol[col] * 100).round(1)
+
+    level_order = {"high": 0, "normal": 1, "uncertain": 2}
+    vol = vol.assign(_order=vol["_vol_level"].map(level_order)).sort_values(
+        ["_order", "Yüksek Oynaklık %"], ascending=[True, False]
+    )
+    v1, v2, v3 = st.columns(3)
+    v1.metric(f"🌪️ {VOLATILITY_SHORT_LABELS['high']} oynaklık", int((vol["_vol_level"] == "high").sum()))
+    v2.metric(f"🌤️ {VOLATILITY_SHORT_LABELS['normal']} / sakin", int((vol["_vol_level"] == "normal").sum()))
+    v3.metric(f"❔ {VOLATILITY_SHORT_LABELS['uncertain']}", int((vol["_vol_level"] == "uncertain").sum()))
+    st.dataframe(vol.drop(columns=["_vol_level", "_order"]), hide_index=True, use_container_width=True)
+
+    high_pct = VOLATILITY_CONFIDENCE_THRESHOLD * 100
+    track_record = ""
+    if not vol_metrics.empty:
+        track_record = (
+            f" 2023 sonrası testte model emin olduğu anlarda ortalama %{vol_metrics['confident_accuracy'].mean() * 100:.0f} "
+            f"isabet etti; aynı anlarda \"son 72 saat neyse o devam eder\" diyen basit tahmin "
+            f"%{vol_metrics['confident_baseline_accuracy'].mean() * 100:.0f}'de kaldı."
+        )
+    st.caption(
+        "Ne ölçüyor: önümüzdeki 72 saatte (≈3 işlem günü) saatlik fiyat hareketlerinin büyüklüğü, son 480 saatin "
+        "(≈20 işlem günü) ortalamasını aşacak mı? **Yön söylemez.** Yüksek oynaklık olasılığı "
+        f"%{high_pct:.0f} ve üstündeyse ya da %{100 - high_pct:.0f} ve altındaysa model emin sayılır.{track_record} "
+        "Belirsiz satırlarda modele güvenmeyin. Tek bir haber anındaki ani sıçramayı değil, birkaç günün genel "
+        "oynaklığını tahmin eder."
+    )
+    st.caption(
+        "Nasıl kullanılır: yüksek oynaklık beklenen paritede aynı stop daha kolay tetiklenebilir; lotu küçültmek veya "
+        "stopu genişletmek düşünülebilir. Bu kullanım ayrıca geriye dönük test edilmedi, sadece risk bilgisidir."
+    )
+
+
+def render_ml_direction_section(predictions: pd.DataFrame, metrics: pd.DataFrame, costs: pd.DataFrame) -> None:
+    st.markdown("#### 🧭 Yön Tahmini — önümüzdeki 4 saat")
+    if "Tahmin" not in predictions.columns:
+        st.info("Taranan paritelerde yön modeli bulunamadı.")
+        return
+    direction = predictions.dropna(subset=["Tahmin"])[["Sembol", "Tahmin", "Olasılık %", "Son mum"]]
+    direction_metrics = metrics[metrics["task"] == "direction"] if not metrics.empty else pd.DataFrame()
+    if not direction_metrics.empty:
+        direction = direction.merge(
+            direction_metrics[["symbol", "balanced_accuracy", "accuracy_lift_ci_low", "n"]],
+            left_on="Sembol", right_on="symbol", how="left",
+        ).drop(columns=["symbol"])
+        direction["Geçmiş Dengeli İsabet %"] = (direction.pop("balanced_accuracy") * 100).round(1)
+        lift_ci_low = direction.pop("accuracy_lift_ci_low")
+        direction["Basit tahmini geçti mi (maliyetsiz)"] = np.where(lift_ci_low.isna(), "-", np.where(lift_ci_low > 0, "Evet", "Hayır"))
+        direction = direction.rename(columns={"n": "Test Örneği (n)"})
+
+    always_trade = costs[costs["threshold"] == 0.5] if not costs.empty else pd.DataFrame()
+    if not always_trade.empty:
+        net = always_trade.pivot(index="symbol", columns="cost_pips", values="mean_net_bps")
+        net_columns = {0.0: "Maliyetsiz ort. (baz puan)", 1.5: "1,5 pip sonrası ort. (baz puan)", 3.0: "3 pip sonrası ort. (baz puan)"}
+        net = net[[c for c in net_columns if c in net.columns]].rename(columns=net_columns).round(2)
+        verdicts = pd.Series(
+            [direction_cost_verdict(row.get(net_columns[1.5]), row.get(net_columns[3.0])) for _, row in net.iterrows()],
+            index=net.index,
+        )
+        net["Maliyet Değerlendirmesi"] = verdicts
+        direction = direction.merge(net, left_on="Sembol", right_index=True, how="left")
+        losing = int((verdicts == "Maliyet sonrası zararda").sum())
+        st.warning(
+            f"2023 sonrası testte 1,5 pip toplam maliyetle **{losing}/{len(verdicts)} paritede** yön modeli işlem başına "
+            "zararda. Bu tablo LONG/SHORT açmak için kullanılmamalı; sadece teknik sinyale ikinci görüş olarak bakılabilir."
+        )
+
+    lead_columns = ["Sembol", "Tahmin", "Olasılık %", "Maliyet Değerlendirmesi", "1,5 pip sonrası ort. (baz puan)"]
+    lead_columns = [c for c in lead_columns if c in direction.columns]
+    direction = direction[lead_columns + [c for c in direction.columns if c not in lead_columns]]
+    direction = direction.sort_values("Olasılık %", ascending=False)
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Taranan parite", len(direction))
+    m2.metric("LONG diyen", int((direction["Tahmin"] == "LONG").sum()))
+    m3.metric("SHORT diyen", int((direction["Tahmin"] == "SHORT").sum()))
+    st.dataframe(direction, hide_index=True, use_container_width=True)
+    st.caption(
+        "Baz puan: fiyatın %0,01'i (EURUSD'de yaklaşık 1 pip). Ortalamalar, modelin her 4 saatte bir yön seçip "
+        "işlem açtığı varsayımıyla 2023 sonrası test döneminden hesaplandı; swap ve kayma dahil değil. "
+        "Basit tahmini geçti mi = Evet: isabet farkı, \"son 4 saatin yönü devam eder\" diyen tahmine göre %95 güvenle "
+        "sıfırın üstünde — ama maliyetsiz ve 28 parite için çoklu karşılaştırma düzeltmesi yapılmadan; tek başına "
+        "kârlılık göstergesi değil. EURUSD, GBPUSD ve USDJPY'nin test dönemi model seçiminden önce incelenmişti."
+    )
+
+
 def render_ml_prediction_page() -> None:
-    """Kendi kendine eğitilmiş, parite başına ayrı modellerin canlı LONG/SHORT görüşü.
+    """Kendi kendine eğitilmiş, parite başına ayrı yön ve oynaklık modellerinin canlı görüşü.
 
     Her sayı, forex_ml_tournament.py'nin 2008-2023 verisiyle eğittiği ve 2023
     sonrasını hiç görmeden test ettiği dürüst bir sonuçla birlikte gösterilir;
@@ -5646,19 +5840,16 @@ def render_ml_prediction_page() -> None:
     """
     st.subheader("🤖 ML Tahmini")
     st.caption(
-        "Her parite için 2008-2023 verisiyle eğitilmiş, 2023 sonrasını hiç görmeden test edilmiş ayrı bir "
-        "model var. Aşağıdaki isabet oranları bu dürüst testin sonucu — çoğu paritede yazı turaya (%50) "
-        "yakın, bazı çapraz paritelerde biraz daha yüksek. **Bu sayfa tek başına LONG/SHORT emri değildir**; "
-        "📊 Sinyal sekmesindeki risk ve backtest kontrolünden geçmeden kullanılmamalıdır."
+        "Her parite için 2008-2023 verisiyle eğitilmiş, 2023 sonrasını hiç görmeden test edilmiş iki ayrı model var: "
+        "**72 saatlik oynaklık riski** (daha güvenilir olanı) ve **4 saatlik yön**. Yanlarındaki geçmiş sonuçlar bu "
+        "dürüst testten. **Bu sayfa tek başına LONG/SHORT emri değildir**; 📊 Sinyal sekmesindeki risk ve backtest "
+        "kontrolünden geçmeden kullanılmamalıdır."
     )
     if not SKLEARN_AVAILABLE:
         st.warning("ML için scikit-learn kurulu değil. requirements.txt içine scikit-learn ekle.")
         return
 
     metrics = load_ml_final_metrics()
-    direction_metrics = metrics[metrics["task"] == "direction"].copy() if not metrics.empty else pd.DataFrame()
-    if not direction_metrics.empty:
-        direction_metrics["İstatistiksel Anlamlı"] = np.where(direction_metrics["accuracy_lift_ci_low"] > 0, "Evet", "Hayır")
 
     if st.button("Tüm Pariteleri Tahminle", type="primary", use_container_width=True):
         with st.spinner("Modeller çalışıyor (28 parite için biraz sürebilir)..."):
@@ -5679,37 +5870,9 @@ def render_ml_prediction_page() -> None:
         st.info("Hiçbir paritede model bulunamadı veya veri alınamadı.")
         return
 
-    if not direction_metrics.empty:
-        merged = predictions.merge(
-            direction_metrics[[
-                "symbol", "balanced_accuracy", "accuracy_lift_ci_low", "accuracy_lift_ci_high", "n", "İstatistiksel Anlamlı",
-            ]],
-            left_on="Sembol", right_on="symbol", how="left",
-        ).drop(columns=["symbol"])
-        merged = merged.rename(columns={
-            "balanced_accuracy": "Geçmiş Dengeli İsabet %",
-            "accuracy_lift_ci_low": "Lift %95 alt",
-            "accuracy_lift_ci_high": "Lift %95 üst",
-            "n": "Test Örneği (n)",
-        })
-        for col in ["Geçmiş Dengeli İsabet %", "Lift %95 alt", "Lift %95 üst"]:
-            merged[col] = (merged[col] * 100).round(1)
-    else:
-        merged = predictions
-
-    merged = merged.sort_values("Olasılık %", ascending=False)
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Taranan parite", len(merged))
-    m2.metric("LONG diyen", int((merged["Tahmin"] == "LONG").sum()))
-    m3.metric("SHORT diyen", int((merged["Tahmin"] == "SHORT").sum()))
-
-    st.dataframe(merged, hide_index=True, use_container_width=True)
-    if "İstatistiksel Anlamlı" in merged.columns:
-        st.caption(
-            "İstatistiksel Anlamlı = Evet: modelin 2023 sonrası testte, sadece son yönü tekrarlayan basit bir "
-            "kıyaslamaya göre isabet farkının %95 güven aralığı sıfırın üstünde — şans eseri olma ihtimali "
-            "düşük. Hayır: fark gürültüden ayırt edilemiyor; bu paritedeki tahmine düşük ağırlık verin."
-        )
+    render_ml_volatility_section(predictions, metrics)
+    st.divider()
+    render_ml_direction_section(predictions, metrics, load_ml_cost_sensitivity())
     st.caption("Kendi kendine öğrenen model, ders çalıştığı dönemi (2008-2023) tekrar etmez; her ay yeniden eğitilmesi önerilir: python train_all_pair_direction_models.py")
 
 
@@ -6629,8 +6792,13 @@ elif current_strategy_engine is None:
     }
 
 research_symbol = symbol.replace("=X", "").upper()
-research_bars = fetch_ohlc(symbol, "60m", "150d") if load_research_model(research_symbol, "direction") else pd.DataFrame()
+research_bars = (
+    fetch_ohlc(symbol, "60m", "150d")
+    if has_research_model(research_symbol, "direction") or has_research_model(research_symbol, "high_volatility")
+    else pd.DataFrame()
+)
 research_prediction = build_research_prediction(research_symbol, bars=research_bars)
+volatility_prediction = build_research_prediction(research_symbol, "high_volatility", bars=research_bars)
 simple_decision = apply_operational_safety_filters(
     decision=simple_decision,
     data_health=current_data_health,
@@ -6698,22 +6866,34 @@ with tab_feed:
             "Aynı katı onay şartlarıyla (yapı, RSI, MACD, Bollinger) 15 Dakika ve 5 Dakika girişlerinin "
             "ikisi birden taranıp birleştirilir; en güçlü sinyaller burada."
         )
-        scan_limit_col, scan_bt_col, scan_btn_col = st.columns([1, 1, 1.4], vertical_alignment="bottom")
+        scan_limit_col, scan_opts_col, scan_btn_col = st.columns([1, 1.2, 1.4], vertical_alignment="bottom")
         with scan_limit_col:
             scanner_limit = st.number_input("Maksimum parite", min_value=1, max_value=len(SYMBOL_LIST), value=len(SYMBOL_LIST), step=1)
-        with scan_bt_col:
+        with scan_opts_col:
             scanner_include_backtest = st.checkbox("Backtest kalitesi hesapla", value=False)
+            scanner_include_volatility = st.checkbox(
+                "72 saatlik oynaklık riskini ekle",
+                value=True,
+                help="Her parite için ML oynaklık modelini çalıştırır (yön söylemez, risk bilgisidir). Taramayı biraz uzatır.",
+            )
         with scan_btn_col:
             run_scanner_requested = st.button("15M + 5M Fırsatlarını Hesapla", type="primary", use_container_width=True)
         if run_scanner_requested:
             with st.spinner("Parite tarayıcı çalışıyor (15 Dakika + 5 Dakika)..."):
-                st.session_state["scanner_df"] = run_symbol_scanner_multi_tf(
+                scan_result = run_symbol_scanner_multi_tf(
                     symbols=SYMBOL_LIST[:int(scanner_limit)],
                     tf_list=["15 Dakika", "5 Dakika"],
                     change_window_minutes=change_window_minutes,
                     include_backtest=scanner_include_backtest,
                     **_scanner_common_kwargs,
                 )
+            if scanner_include_volatility and not scan_result.empty:
+                volatility_views = scan_volatility_views(scan_result["Sembol"].unique())
+                scan_result.insert(
+                    2, "72s Oynaklık",
+                    scan_result["Sembol"].map(lambda s: volatility_badge(volatility_views[s]) if s in volatility_views else "-"),
+                )
+            st.session_state["scanner_df"] = scan_result
         render_opportunity_feed(st.session_state.get("scanner_df"))
         with st.expander("Tüm tarama tablosu", expanded=False):
             if isinstance(st.session_state.get("scanner_df"), pd.DataFrame) and not st.session_state["scanner_df"].empty:
@@ -6885,6 +7065,7 @@ with tab_signal:
             st.warning(f"{title}: {status.get('text', '-')}")
     render_news_direction_panel(symbol, news_events)
     render_top_decision_panel(simple_decision)
+    render_volatility_risk_card(volatility_prediction, ml_show_research_signal)
     if beginner_mode:
         if current_strategy_engine == "RANGE":
             render_simple_decision_card(simple_decision)
