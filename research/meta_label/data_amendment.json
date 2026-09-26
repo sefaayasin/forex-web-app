@@ -1,0 +1,6 @@
+{
+  "stage": "after the first build, before model selection; only train-split features and outcomes had been inspected",
+  "finding": "The native data/historical_1h and _4h archives are incomplete for many crosses relative to the complete 15M archive (1H bar coverage 0.60-1.00 of the expected 15M/4 count; e.g. GBPCHF 0.60, EURNZD 0.65, CADJPY 0.70). In the first build, 1H/4H scores were missing for 15% of train signals, and up to 42% for GBPCHF.",
+  "change": "1H and 4H bars are built in memory by resampling the 15M archive into UTC-aligned bins (open first, high max, low min, close last; empty bins dropped) instead of reading historical_1h/_4h. The dataset is rebuilt; every other rule is unchanged.",
+  "coverage_is_recorded_in": "build.json (native_archive_coverage)"
+}

@@ -1,0 +1,119 @@
+[
+  {
+    "symbol": "AUDCAD",
+    "status": "included"
+  },
+  {
+    "symbol": "AUDCHF",
+    "status": "included"
+  },
+  {
+    "symbol": "AUDJPY",
+    "status": "included"
+  },
+  {
+    "symbol": "AUDNZD",
+    "status": "included"
+  },
+  {
+    "symbol": "AUDUSD",
+    "status": "included"
+  },
+  {
+    "symbol": "CADCHF",
+    "status": "included"
+  },
+  {
+    "symbol": "CADJPY",
+    "status": "included"
+  },
+  {
+    "symbol": "CHFJPY",
+    "status": "included"
+  },
+  {
+    "symbol": "EURAUD",
+    "status": "included"
+  },
+  {
+    "symbol": "EURCAD",
+    "status": "included"
+  },
+  {
+    "symbol": "EURCHF",
+    "status": "included"
+  },
+  {
+    "symbol": "EURGBP",
+    "status": "included"
+  },
+  {
+    "symbol": "EURJPY",
+    "status": "included"
+  },
+  {
+    "symbol": "EURNZD",
+    "status": "included"
+  },
+  {
+    "symbol": "EURUSD",
+    "status": "included"
+  },
+  {
+    "symbol": "EURZAR",
+    "status": "excluded",
+    "reason": "insufficient pre-2023 or final history"
+  },
+  {
+    "symbol": "GBPAUD",
+    "status": "included"
+  },
+  {
+    "symbol": "GBPCAD",
+    "status": "included"
+  },
+  {
+    "symbol": "GBPCHF",
+    "status": "included"
+  },
+  {
+    "symbol": "GBPJPY",
+    "status": "included"
+  },
+  {
+    "symbol": "GBPNZD",
+    "status": "included"
+  },
+  {
+    "symbol": "GBPUSD",
+    "status": "included"
+  },
+  {
+    "symbol": "NZDCAD",
+    "status": "included"
+  },
+  {
+    "symbol": "NZDCHF",
+    "status": "included"
+  },
+  {
+    "symbol": "NZDJPY",
+    "status": "included"
+  },
+  {
+    "symbol": "NZDUSD",
+    "status": "included"
+  },
+  {
+    "symbol": "USDCAD",
+    "status": "included"
+  },
+  {
+    "symbol": "USDCHF",
+    "status": "included"
+  },
+  {
+    "symbol": "USDJPY",
+    "status": "included"
+  }
+]

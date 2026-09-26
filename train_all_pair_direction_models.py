@@ -11,11 +11,17 @@ same frozen recipe and training split, and simply also saves the fitted
 model for every other pair, so forex_ml_live.build_research_prediction
 (already symbol-generic) can serve live LONG/SHORT predictions for them.
 
-Run: python train_all_pair_direction_models.py
+Run: python train_all_pair_direction_models.py [--hourly-dir data/historical_1h_from_15m]
+
+The deployed models are trained on data/historical_1h_from_15m (complete hourly
+bars rebuilt by rebuild_hourly_from_15m.py); the native data/historical_1h
+download skipped whole weeks for many pairs.
 """
 from __future__ import annotations
 
+import argparse
 import json
+from pathlib import Path
 
 import joblib
 from threadpoolctl import threadpool_limits
@@ -34,11 +40,11 @@ from forex_ml_tournament import (
 MIN_PRE_FINAL_BARS = 20000  # same inclusion threshold forex_ml_tournament.final_audit uses
 
 
-def main() -> None:
+def main(hourly_dir: Path) -> None:
     selected = json.loads((OUT / "selected.json").read_text(encoding="utf-8"))
     saved, skipped = [], []
 
-    for path in sorted((ROOT / "data" / "historical_1h").glob("*.csv")):
+    for path in sorted(hourly_dir.glob("*.csv")):
         symbol = path.stem
         try:
             bars = load_hourly(path, quarantine=True)
@@ -72,6 +78,7 @@ def main() -> None:
                 "task": task,
                 "symbol": symbol,
                 "trained_before": str(FINAL_START),
+                "hourly_source": hourly_dir.name,
                 "status": "RESEARCH_ONLY",
             }, out_path)
             saved.append(out_path.name)
@@ -85,4 +92,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--hourly-dir", type=Path, default=ROOT / "data" / "historical_1h_from_15m")
+    main(parser.parse_args().hourly_dir)

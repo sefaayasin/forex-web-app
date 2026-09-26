@@ -1,0 +1,24 @@
+{
+  "model": "hist_boost",
+  "coverage": 0.1,
+  "threshold": 0.4111154828206368,
+  "validation": {
+    "trades": 20801.0,
+    "win_rate": 0.43925772799384644,
+    "mean_r": -0.06073677398907101,
+    "mean_r_stress": -0.14173257285556914
+  },
+  "validation_all_signals": {
+    "trades": 207984,
+    "win_rate": 0.3954967689822294,
+    "mean_r": -0.19006946631653734,
+    "mean_r_stress": -0.3409871981833879
+  },
+  "validation_app_mtf_rule": {
+    "trades": 39782,
+    "win_rate": 0.38947262581066816,
+    "mean_r": -0.20563602511954296,
+    "mean_r_stress": -0.3638719314376121
+  },
+  "train_signals": 557155
+}

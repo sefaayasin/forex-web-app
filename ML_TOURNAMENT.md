@@ -1,5 +1,35 @@
 # Otomatik ML karşılaştırma laboratuvarı
 
+## Veri düzeltmesi ve yeniden denetim — 26 Eylül 2026
+
+Yerel `data/historical_1h` indirmesi birçok paritede bütün işlem haftalarını atlamış
+(GBPCHF saatlerin ~%40'ı, EURNZD ~%35'i eksik; EURUSD bile ~2.000 saat). 15 dakikalık
+arşiv tam ve iki kaynağın ortak saatlerinde mumlar %99,8 oranında bir tik içinde aynı.
+`rebuild_hourly_from_15m.py` tam saatlik arşivi `data/historical_1h_from_15m` altına
+kurar; ham dosyalar değiştirilmez. Dondurulmuş seçim (selected.json) aynı bölünme ve
+ölçümlerle bu veride yeniden denetlendi:
+`python forex_ml_tournament.py --reaudit-hourly-dir data/historical_1h_from_15m --output data/ml/tournament_rebuilt`.
+Yayındaki modeller `train_all_pair_direction_models.py` ile aynı veriden eğitilir ve
+denetimdeki tahminleri birebir üretir; uygulama ölçümleri `data/ml/tournament_rebuilt`
+altından okur.
+
+| 72 saatlik oynaklık | Eksik veri | Tam veri |
+|---|---:|---:|
+| Parite başına test örneği | 274 | 298 |
+| Emin tahminde isabet | %79,2 | %77,9 |
+| Aynı örneklerde süreklilik referansı | %71,7 | %71,9 |
+| Referansı güvenle geçen parite | 10/28 | 19/28 |
+
+Yön modelinin sonucu değişmedi: 1,5 pip maliyette 28 paritenin 27'sinde işlem başına zarar.
+
+Canlı Yahoo mumlarının yüksek-düşük aralığı eğitim verisinden paritelere göre farklıdır
+(CAD/CHF çaprazlarında ~2 kat). `audit_live_data_skew.py` bu oranı eski dönemden ölçer,
+son 30 günde düzeltilmiş Yahoo verisiyle model kararının eğitim verisindekiyle uyumunu
+test eder ve `data/ml/live_calibration.json` dosyasını yazar. Düzeltme olmadan 28 paritenin
+15'inde, düzeltmeyle 28'inde uyum %80'in üstündedir (medyan %83 → %92).
+
+Aşağıdaki bölüm ilk turnuvanın (eksik veriyle) kaydıdır.
+
 ## Tamamlanan deneyin sonucu — 14 Eylül 2026
 
 1.680 geliştirme eğitimi, 28 güven eşiği seçimi eğitimi ve 56 final eğitimi

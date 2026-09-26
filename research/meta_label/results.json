@@ -1,0 +1,96 @@
+{
+  "selected": {
+    "model": "hist_boost",
+    "coverage": 0.1,
+    "threshold": 0.4111154828206368,
+    "validation": {
+      "trades": 20801.0,
+      "win_rate": 0.43925772799384644,
+      "mean_r": -0.06073677398907101,
+      "mean_r_stress": -0.14173257285556914
+    },
+    "validation_all_signals": {
+      "trades": 207984,
+      "win_rate": 0.3954967689822294,
+      "mean_r": -0.19006946631653734,
+      "mean_r_stress": -0.3409871981833879
+    },
+    "validation_app_mtf_rule": {
+      "trades": 39782,
+      "win_rate": 0.38947262581066816,
+      "mean_r": -0.20563602511954296,
+      "mean_r_stress": -0.3638719314376121
+    },
+    "train_signals": 557155
+  },
+  "final": {
+    "kept": {
+      "trades": 16191,
+      "win_rate": 0.43036254709406463,
+      "mean_r": -0.07626532448784856,
+      "mean_r_stress": -0.15909707040659513,
+      "day_test": {
+        "days": 993,
+        "mean_r": -0.09612300326414283,
+        "ci_low": -0.1233017967640531,
+        "ci_high": -0.06792526816521235,
+        "p_value": 1.0
+      },
+      "day_test_stress": {
+        "days": 993,
+        "mean_r": -0.18710182567481062,
+        "ci_low": -0.2148603872378137,
+        "ci_high": -0.15805498325022277,
+        "p_value": 1.0
+      }
+    },
+    "all_signals": {
+      "trades": 192726,
+      "win_rate": 0.3897190830505484,
+      "mean_r": -0.21658494588345642,
+      "mean_r_stress": -0.3796484129772628,
+      "day_test": {
+        "days": 1157,
+        "mean_r": -0.23890218863517387,
+        "ci_low": -0.2514835619580477,
+        "ci_high": -0.22662589913111575,
+        "p_value": 1.0
+      },
+      "day_test_stress": {
+        "days": 1157,
+        "mean_r": -0.39923112204027816,
+        "ci_low": -0.41502927822292557,
+        "ci_high": -0.38340167788180957,
+        "p_value": 1.0
+      }
+    },
+    "app_mtf_rule": {
+      "trades": 36088,
+      "win_rate": 0.3849479051208158,
+      "mean_r": -0.2298436498667174,
+      "mean_r_stress": -0.39915749808967266,
+      "day_test": {
+        "days": 962,
+        "mean_r": -0.2362809096068968,
+        "ci_low": -0.25160432857421555,
+        "ci_high": -0.22112780150134378,
+        "p_value": 1.0
+      },
+      "day_test_stress": {
+        "days": 962,
+        "mean_r": -0.40545627896019576,
+        "ci_low": -0.42353686731386003,
+        "ci_high": -0.38800432482842395,
+        "p_value": 1.0
+      }
+    }
+  },
+  "checks": {
+    "mean_positive_with_ci": false,
+    "beats_all_signals": true,
+    "beats_app_mtf_rule": true,
+    "positive_at_stress_cost": false,
+    "at_least_300_trades": true
+  },
+  "passes": false
+}

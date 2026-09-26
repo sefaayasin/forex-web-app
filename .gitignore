@@ -21,5 +21,8 @@ data/ml/tournament/*.joblib
 # Volatility models are tiny logistic regressions (~8 KB each); ship all pairs.
 !data/ml/tournament/*_high_volatility_research.joblib
 data/ml/tournament/final_predictions.csv.gz
+data/ml/tournament_rebuilt/final_predictions.csv.gz
+data/ml/tournament_rebuilt/*.joblib
+research/meta_label/dataset.csv.gz
 tick_downloader/node_modules/
 tick_downloader/cache/

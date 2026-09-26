@@ -73,11 +73,13 @@ from forex_indicators import (
 from forex_edge import build_edge_validation_report, edge_validation_table
 from forex_diagnostics import engine_evidence_summary, funnel_rows
 from forex_ml_live import (
+    LIVE_AGREEMENT_MIN,
     VOLATILITY_CONFIDENCE_THRESHOLD,
     VOLATILITY_LEVEL_LABELS,
     build_research_prediction,
     direction_cost_verdict,
     has_research_model,
+    load_live_calibration,
     research_signal_alignment,
     volatility_risk_view,
 )
@@ -5574,11 +5576,38 @@ def volatility_badge(view: dict) -> str:
     return f"{VOLATILITY_LEVEL_ICONS[view['level']]} {VOLATILITY_SHORT_LABELS[view['level']]} (%{view['probability_high_pct']:.0f})"
 
 
+@st.cache_data(ttl=3600)
+def cached_live_calibration() -> dict:
+    return load_live_calibration()
+
+
+def research_range_ratio(symbol: str) -> Optional[float]:
+    """Yahoo saatlik mumlarının eğitim verisine göre fitil oranı (audit_live_data_skew.py).
+
+    Sadece veri kaynağı Yahoo iken kullanılır; MT5/CSV verisi düzeltilmez.
+    """
+    if st.session_state.get("data_provider", "Yahoo Finance") != "Yahoo Finance":
+        return None
+    return cached_live_calibration().get(symbol.replace("=X", "").upper(), {}).get("range_ratio")
+
+
+def reliable_volatility_view(prediction: dict) -> Optional[dict]:
+    """Canlı veride modelin kararı eğitim verisinden sık ayrışıyorsa görüşü 'belirsiz' sayar."""
+    view = volatility_risk_view(prediction)
+    symbol = str(prediction.get("symbol", ""))
+    if view is None or research_range_ratio(symbol) is None:
+        return view
+    agreement = cached_live_calibration().get(symbol, {}).get("volatility_agreement")
+    if agreement is not None and agreement < LIVE_AGREEMENT_MIN:
+        return {**view, "level": "uncertain", "confident": False, "label": "Belirsiz (canlı veri eğitim verisinden farklı)"}
+    return view
+
+
 def render_volatility_risk_card(volatility_prediction: dict, show_enabled: bool) -> None:
     """72 saatlik oynaklık modelinin görüşünü risk bilgisi olarak gösterir; kararı değiştirmez."""
     if not show_enabled:
         return
-    view = volatility_risk_view(volatility_prediction)
+    view = reliable_volatility_view(volatility_prediction)
     if view is None:
         return
     css = "warn-box" if view["level"] == "high" else "risk-box"
@@ -5590,7 +5619,9 @@ def render_volatility_risk_card(volatility_prediction: dict, show_enabled: bool)
     )
 
 
-ML_TOURNAMENT_DIR = Path(__file__).resolve().parent / "data" / "ml" / "tournament"
+# Aynı dondurulmuş tarifin, 15M'den yeniden kurulan tam saatlik veriyle yapılan son denetimi;
+# yayındaki modeller de bu veriyle eğitildi (rebuild_hourly_from_15m.py).
+ML_TOURNAMENT_DIR = Path(__file__).resolve().parent / "data" / "ml" / "tournament_rebuilt"
 
 
 @st.cache_data(ttl=3600)
@@ -5637,7 +5668,8 @@ def scan_volatility_views(symbols) -> dict[str, dict]:
     progress = st.progress(0, text="72 saatlik oynaklık riski hesaplanıyor...")
     for i, sym in enumerate(symbols, start=1):
         if has_research_model(sym, "high_volatility"):
-            view = volatility_risk_view(build_research_prediction(sym, "high_volatility", bars=fetch_research_bars(sym)))
+            view = reliable_volatility_view(build_research_prediction(
+                sym, "high_volatility", bars=fetch_research_bars(sym), range_ratio=research_range_ratio(sym)))
             if view is not None:
                 views[sym] = view
         progress.progress(i / max(len(symbols), 1), text=f"{sym} oynaklık ({i}/{len(symbols)})")
@@ -5661,7 +5693,8 @@ def scan_ml_predictions(symbols: list[str]) -> tuple[pd.DataFrame, list[tuple[st
             progress.progress(i / len(symbols), text=f"{sym} atlandı (model yok)")
             continue
         bars = fetch_research_bars(sym)
-        predictions = {task: build_research_prediction(base_symbol, task, bars=bars) for task in tasks}
+        ratio = research_range_ratio(base_symbol)
+        predictions = {task: build_research_prediction(base_symbol, task, bars=bars, range_ratio=ratio) for task in tasks}
         ready = [p for p in predictions.values() if p.get("status") == "ready"]
         if not ready:
             failed = next(iter(predictions.values()))
@@ -5676,7 +5709,7 @@ def scan_ml_predictions(symbols: list[str]) -> tuple[pd.DataFrame, list[tuple[st
             side = "LONG" if probability_up >= 0.5 else "SHORT"
             row["Tahmin"] = side
             row["Olasılık %"] = round((probability_up if side == "LONG" else 1 - probability_up) * 100, 1)
-        view = volatility_risk_view(predictions.get("high_volatility", {}))
+        view = reliable_volatility_view(predictions.get("high_volatility", {}))
         if view is not None:
             row["_vol_level"] = view["level"]
             row["Oynaklık Görüşü"] = f"{VOLATILITY_LEVEL_ICONS[view['level']]} {view['label']}"
@@ -5708,6 +5741,12 @@ def render_ml_volatility_section(predictions: pd.DataFrame, metrics: pd.DataFram
         for col in ["Emin olduğunda geçmiş isabet %", "Aynı anlarda basit tahmin %", "Emin olduğu zaman oranı %"]:
             vol[col] = (vol[col] * 100).round(1)
 
+    calibration = cached_live_calibration()
+    if calibration and st.session_state.get("data_provider", "Yahoo Finance") == "Yahoo Finance":
+        vol["Canlı veri uyumu %"] = vol["Sembol"].map(
+            lambda s: round(calibration[s]["volatility_agreement"] * 100, 1) if s in calibration else np.nan
+        )
+
     level_order = {"high": 0, "normal": 1, "uncertain": 2}
     vol = vol.assign(_order=vol["_vol_level"].map(level_order)).sort_values(
         ["_order", "Yüksek Oynaklık %"], ascending=[True, False]
@@ -5736,6 +5775,12 @@ def render_ml_volatility_section(predictions: pd.DataFrame, metrics: pd.DataFram
     st.caption(
         "Nasıl kullanılır: yüksek oynaklık beklenen paritede aynı stop daha kolay tetiklenebilir; lotu küçültmek veya "
         "stopu genişletmek düşünülebilir. Bu kullanım ayrıca geriye dönük test edilmedi, sadece risk bilgisidir."
+    )
+    st.caption(
+        "Canlı veri uyumu: Yahoo'nun saatlik mum fitilleri modelin eğitildiği veriden paritelere göre farklı "
+        "(CAD/CHF çaprazlarında ~2 kat geniş). Uygulama Yahoo mumlarını bu orana göre düzeltir; sütun, düzeltmeden "
+        f"sonra son 30 günde modelin Yahoo ve eğitim verisinde aynı kararı verme oranıdır. %{LIVE_AGREEMENT_MIN * 100:.0f}'in "
+        "altındaki paritelerde görüş 'belirsiz' gösterilir."
     )
 
 
@@ -6757,8 +6802,9 @@ research_bars = (
     if has_research_model(research_symbol, "direction") or has_research_model(research_symbol, "high_volatility")
     else pd.DataFrame()
 )
-research_prediction = build_research_prediction(research_symbol, bars=research_bars)
-volatility_prediction = build_research_prediction(research_symbol, "high_volatility", bars=research_bars)
+research_range = research_range_ratio(research_symbol)
+research_prediction = build_research_prediction(research_symbol, bars=research_bars, range_ratio=research_range)
+volatility_prediction = build_research_prediction(research_symbol, "high_volatility", bars=research_bars, range_ratio=research_range)
 simple_decision = apply_operational_safety_filters(
     decision=simple_decision,
     data_health=current_data_health,

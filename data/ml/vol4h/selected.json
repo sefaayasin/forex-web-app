@@ -1,0 +1,9 @@
+{
+  "horizon": 4,
+  "bundle": "context",
+  "model": "hist_boost",
+  "development_balanced_accuracy": 0.6149262303757498,
+  "development_auc": 0.7663911533559427,
+  "development_persistence_balanced_accuracy": 0.5730619133887164,
+  "confidence_threshold": 0.5
+}

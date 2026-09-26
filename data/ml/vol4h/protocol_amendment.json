@@ -1,0 +1,10 @@
+{
+  "stage": "after development-only threshold selection (selected.json), before the final audit ran",
+  "reason": "The features include hour_sin/hour_cos, and 4-hour volatility has a strong intraday session pattern. Beating persistence (which is wrong at every session change) could therefore reflect only clock knowledge a trader already has.",
+  "added_baselines": {
+    "clock": "Per UTC hour of day, the high-volatility rate in the training period (2008-2022, same sampled rows); predict high when that rate is >= 0.5; hours unseen in training fall back to the training prevalence",
+    "simple_logistic_info_only": "Logistic regression (median impute, standardize, C=0.1) on 24 hour-of-day indicators plus rv_ratio_4 and rv_ratio_24, trained on the same rows; reported for information, not a pass/fail criterion"
+  },
+  "added_success_criterion": "Equal-weighted across pairs, the model's balanced accuracy must also exceed the clock baseline's balanced accuracy. All original criteria still apply.",
+  "unchanged": "Selection, threshold, training split, test split and all other criteria"
+}

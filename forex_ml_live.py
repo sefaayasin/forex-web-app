@@ -15,10 +15,12 @@ without starting the web app.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Optional
 
 import joblib
+import numpy as np
 import pandas as pd
 
 from forex_ml_tournament import build_features
@@ -60,7 +62,50 @@ def normalize_to_utc_hourly(bars: pd.DataFrame) -> pd.DataFrame:
     return out.sort_index()
 
 
-def build_research_prediction(symbol: str, task: str = "direction", bars: Optional[pd.DataFrame] = None) -> dict:
+LIVE_CALIBRATION_PATH = ROOT / "data/ml/live_calibration.json"
+LIVE_AGREEMENT_MIN = 0.8
+MAX_RANGE_SCALE = 3.0
+
+
+def calibrate_ranges(bars: pd.DataFrame, range_ratio: float) -> pd.DataFrame:
+    """Rescale each bar's high-low range by 1/range_ratio without cutting into its body.
+
+    Yahoo's hourly high/low differ from the Dukascopy bars the models were trained
+    on by a stable, pair-specific factor (e.g. ~1.8x wider for AUDCAD). Open and
+    close are kept; wicks shrink (ratio > 1) or grow (ratio < 1) proportionally.
+    """
+    o, h, l, c = bars.Open, bars.High, bars.Low, bars.Close
+    body_high, body_low = np.maximum(o, c), np.minimum(o, c)
+    wick = (h - l) - (body_high - body_low)
+    target_wick = (h - l) / range_ratio - (body_high - body_low)
+    scale = (target_wick / wick.where(wick > 0)).clip(0, MAX_RANGE_SCALE).fillna(1.0)
+    return bars.assign(High=body_high + (h - body_high) * scale, Low=body_low - (body_low - l) * scale)
+
+
+def load_live_calibration() -> dict:
+    """Per-pair Yahoo range ratios and out-of-sample verdict agreement (audit_live_data_skew.py)."""
+    if not LIVE_CALIBRATION_PATH.exists():
+        return {}
+    return json.loads(LIVE_CALIBRATION_PATH.read_text(encoding="utf-8")).get("pairs", {})
+
+
+def drop_unclosed_bars(bars: pd.DataFrame, now: Optional[pd.Timestamp] = None) -> pd.DataFrame:
+    """Keep only hourly bars that have closed by `now`.
+
+    Live Yahoo intraday data includes the still-forming current bar, while the
+    models were trained on closed bars only.
+    """
+    now = pd.Timestamp.now(tz="UTC") if now is None else now
+    return bars[bars.index + pd.Timedelta(hours=1) <= now]
+
+
+def build_research_prediction(
+    symbol: str,
+    task: str = "direction",
+    bars: Optional[pd.DataFrame] = None,
+    now: Optional[pd.Timestamp] = None,
+    range_ratio: Optional[float] = None,
+) -> dict:
     """Score the latest closed hourly bar with the frozen research model.
 
     `bars` must be hourly OHLC with a UTC (or tz-naive UTC) index when
@@ -68,7 +113,8 @@ def build_research_prediction(symbol: str, task: str = "direction", bars: Option
     data from the caller since this module does not fetch market data itself.
 
     `probability_up` is the model's positive-class probability: price up for
-    "direction", above-normal volatility for "high_volatility".
+    "direction", above-normal volatility for "high_volatility". Pass
+    `range_ratio` (from load_live_calibration) when `bars` come from Yahoo.
     """
     base_symbol = str(symbol).replace("=X", "").upper()
     bundle = load_research_model(base_symbol, task)
@@ -81,7 +127,9 @@ def build_research_prediction(symbol: str, task: str = "direction", bars: Option
     if bars is None or bars.empty:
         return {"status": "no_data", "text": "Canlı saatlik veri alınamadı."}
 
-    normalized = normalize_to_utc_hourly(bars)
+    normalized = drop_unclosed_bars(normalize_to_utc_hourly(bars), now)
+    if range_ratio:
+        normalized = calibrate_ranges(normalized, float(range_ratio))
     if len(normalized) < MIN_BARS_REQUIRED:
         return {
             "status": "insufficient_data",

@@ -379,9 +379,9 @@ def run(output=OUT, majors=MAJORS, models=MODELS, horizons=HORIZONS):
     generate(output)
 
 
-def final_audit(output, selected):
+def final_audit(output, selected, hourly_dir=ROOT / "data/historical_1h"):
     all_metrics, all_trades, quality, predictions, importances = [], [], [], [], []
-    for path in sorted((ROOT / "data/historical_1h").glob("*.csv")):
+    for path in sorted(Path(hourly_dir).glob("*.csv")):
         symbol = path.stem
         try:
             bars = load_hourly(path, quarantine=True)
@@ -454,7 +454,18 @@ if __name__ == "__main__":
     parser.add_argument("--models", nargs="+", choices=MODELS, default=MODELS)
     parser.add_argument("--symbols", nargs="+", default=MAJORS)
     parser.add_argument("--horizons", nargs="+", type=int, default=HORIZONS)
+    parser.add_argument("--reaudit-hourly-dir", type=Path, default=None,
+                        help="Re-run only the final audit of the frozen selection on another hourly archive, into --output")
     args = parser.parse_args()
+    if args.reaudit_hourly_dir is not None:
+        if args.output.resolve() == OUT.resolve():
+            parser.error("A re-audit needs its own --output directory")
+        args.output.mkdir(parents=True, exist_ok=True)
+        frozen = json.loads((OUT / "selected.json").read_text(encoding="utf-8"))
+        write_json(args.output / "reaudit.json", {"frozen_selection": frozen, "hourly_dir": str(args.reaudit_hourly_dir),
+            "note": "Same frozen recipe, split and metrics as the original final audit; only the hourly source differs"})
+        final_audit(args.output, frozen, args.reaudit_hourly_dir)
+        raise SystemExit(0)
     if any(h < 4 or h % 4 for h in args.horizons):
         parser.error("Horizons must be positive multiples of four")
     run(args.output, args.symbols, args.models, args.horizons)

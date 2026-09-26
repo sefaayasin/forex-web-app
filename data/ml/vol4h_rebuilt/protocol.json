@@ -1,0 +1,20 @@
+{
+  "name": "4-hour high-volatility model: development-only selection and one final 2023+ audit",
+  "frozen_on": "2026-09-26",
+  "motivation": "The deployed volatility model forecasts 72 hours, which is long for a 15M/5M trader. In the tournament's development results the best 4-hour volatility candidates had higher AUC and lift over persistence than the selected 72-hour model, but no 4-hour model was ever audited on 2023+ data.",
+  "target": "forex_ml_tournament.make_targets(horizon=4).high_volatility: realized RMS hourly return over the next 4 closed hourly bars exceeds the RMS hourly return over the last 480 bars",
+  "baselines": "Persistence (the last 4 hours' RMS return exceeds the 480-bar level) and the training-majority class, measured on the same observations",
+  "selection": {
+    "source": "data/ml/tournament/rankings.csv (development folds 2016-2018 and 2019-2022 on the seven majors; computed in the original tournament, before this study)",
+    "rule": "task high_volatility, horizon 4, bundle not cot_exploratory, model in the scikit-learn set {logistic, hist_boost, extra_trees} so the app can load it without catboost/xgboost; take the highest selection_score (mean balanced accuracy minus 0.5 standard deviation)"
+  },
+  "confidence_threshold": "Same rule as the tournament amendment: refit the selected configuration on the same development folds only, compare 0.50 through 0.90 in steps of 0.05 on non-overlapping observations, require >=20% coverage and >=30 examples with both classes in all 14 currency/fold cells, maximize mean balanced accuracy minus 0.5 standard deviation. Written to selected.json before the final audit runs.",
+  "final_audit": "Every data/historical_1h pair with >=20000 pre-2023 and >=5000 post-2023 bars; train 2008-01-01 to 2023-01-01, test from 2023-01-01; headline metrics on non-overlapping observations, as in forex_ml_tournament.final_audit. The fitted models are saved for live use.",
+  "success_criteria": {
+    "full_sample": "Equal-weighted across pairs, balanced accuracy exceeds persistence balanced accuracy by at least 2 percentage points, and the accuracy-lift 95% block-bootstrap lower bound is above 0 in at least half of the pairs",
+    "confident": "Equal-weighted across pairs, accuracy on confident predictions exceeds both persistence accuracy and majority accuracy on the same observations",
+    "use": "Only if both hold is the model shown in the app, and then only as risk information that never changes a decision, ranking or gate"
+  },
+  "known_limits": "The 2023+ period was already used to audit other targets and horizons, and EURUSD/GBPUSD/USDJPY 2023+ data were inspected in earlier research, so this is not a fully blind test. Pairs share currencies and are not independent experiments.",
+  "parameter_search": "None beyond the rule above; no change after the final audit"
+}

@@ -5,6 +5,7 @@ import pandas as pd
 
 from forex_ml_live import (
     build_research_prediction,
+    calibrate_ranges,
     direction_cost_verdict,
     has_research_model,
     research_signal_alignment,
@@ -51,6 +52,35 @@ class ForexMlLiveTests(unittest.TestCase):
 
     def test_alignment_is_none_when_model_not_ready(self):
         self.assertIsNone(research_signal_alignment({"status": "unavailable"}, "LONG"))
+
+    def test_unclosed_last_bar_is_not_scored(self):
+        bars = synthetic_hourly_bars()
+        last_open = bars.index[-1]
+        forming = build_research_prediction("EURUSD", "high_volatility", bars=bars, now=last_open + pd.Timedelta(minutes=30))
+        closed = build_research_prediction("EURUSD", "high_volatility", bars=bars, now=last_open + pd.Timedelta(hours=1))
+        self.assertEqual(forming["as_of"], bars.index[-2])
+        self.assertEqual(closed["as_of"], last_open)
+
+    def test_calibrate_ranges_rescales_wicks_and_keeps_bodies(self):
+        bars = pd.DataFrame({"Open": [1.0, 1.0, 1.0], "Close": [1.002, 1.0, 1.001], "High": [1.006, 1.004, 1.001],
+                             "Low": [0.998, 0.996, 1.0]})
+        shrunk = calibrate_ranges(bars, 2.0)
+        self.assertTrue(np.allclose(shrunk.Open, bars.Open) and np.allclose(shrunk.Close, bars.Close))
+        self.assertAlmostEqual(shrunk.High[0] - shrunk.Low[0], 0.004)
+        self.assertAlmostEqual(shrunk.High[1] - shrunk.Low[1], 0.004)
+        self.assertTrue(((shrunk.High >= shrunk[["Open", "Close"]].max(axis=1)) &
+                         (shrunk.Low <= shrunk[["Open", "Close"]].min(axis=1))).all())
+        self.assertAlmostEqual(shrunk.High[2], 1.001)
+        widened = calibrate_ranges(bars, 0.5)
+        self.assertAlmostEqual(widened.High[1] - widened.Low[1], 0.016)
+
+    def test_range_calibration_changes_volatility_features_only_through_ranges(self):
+        bars = synthetic_hourly_bars()
+        raw = build_research_prediction("EURUSD", "high_volatility", bars=bars)
+        same = build_research_prediction("EURUSD", "high_volatility", bars=bars, range_ratio=1.0)
+        wider = build_research_prediction("EURUSD", "high_volatility", bars=bars, range_ratio=0.5)
+        self.assertAlmostEqual(raw["probability_up"], same["probability_up"])
+        self.assertNotAlmostEqual(raw["probability_up"], wider["probability_up"])
 
     def test_has_research_model_accepts_yahoo_suffix(self):
         self.assertTrue(has_research_model("EURUSD=X", "high_volatility"))

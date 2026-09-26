@@ -1,0 +1,174 @@
+{
+  "as_of": "2026-09-26 15:05:00+00:00",
+  "method": "range_ratio = median Yahoo/Dukascopy hourly (high-low)/close on the overlap older than 37 days; agreements are measured on the last 30 days after calibration",
+  "pairs": {
+    "AUDCAD": {
+      "range_ratio": 1.7982,
+      "volatility_agreement": 0.9115,
+      "volatility_agreement_uncalibrated": 0.0135,
+      "direction_agreement": 0.9115
+    },
+    "AUDCHF": {
+      "range_ratio": 1.8425,
+      "volatility_agreement": 0.8569,
+      "volatility_agreement_uncalibrated": 0.1069,
+      "direction_agreement": 0.9456
+    },
+    "AUDJPY": {
+      "range_ratio": 1.0615,
+      "volatility_agreement": 0.9962,
+      "volatility_agreement_uncalibrated": 0.9769,
+      "direction_agreement": 0.9481
+    },
+    "AUDNZD": {
+      "range_ratio": 1.4379,
+      "volatility_agreement": 0.9404,
+      "volatility_agreement_uncalibrated": 0.7692,
+      "direction_agreement": 0.9346
+    },
+    "AUDUSD": {
+      "range_ratio": 0.9587,
+      "volatility_agreement": 0.8558,
+      "volatility_agreement_uncalibrated": 0.8385,
+      "direction_agreement": 0.9385
+    },
+    "CADCHF": {
+      "range_ratio": 1.9413,
+      "volatility_agreement": 0.8635,
+      "volatility_agreement_uncalibrated": 0.1019,
+      "direction_agreement": 0.8846
+    },
+    "CADJPY": {
+      "range_ratio": 1.0765,
+      "volatility_agreement": 0.9304,
+      "volatility_agreement_uncalibrated": 0.9226,
+      "direction_agreement": 0.8897
+    },
+    "CHFJPY": {
+      "range_ratio": 1.0486,
+      "volatility_agreement": 0.9346,
+      "volatility_agreement_uncalibrated": 0.9173,
+      "direction_agreement": 0.9019
+    },
+    "EURAUD": {
+      "range_ratio": 1.1803,
+      "volatility_agreement": 0.9,
+      "volatility_agreement_uncalibrated": 0.7038,
+      "direction_agreement": 0.9519
+    },
+    "EURCAD": {
+      "range_ratio": 1.2333,
+      "volatility_agreement": 0.9404,
+      "volatility_agreement_uncalibrated": 0.6596,
+      "direction_agreement": 0.8769
+    },
+    "EURCHF": {
+      "range_ratio": 1.556,
+      "volatility_agreement": 0.9212,
+      "volatility_agreement_uncalibrated": 0.3519,
+      "direction_agreement": 0.9019
+    },
+    "EURGBP": {
+      "range_ratio": 1.0772,
+      "volatility_agreement": 0.8904,
+      "volatility_agreement_uncalibrated": 0.8692,
+      "direction_agreement": 0.9038
+    },
+    "EURJPY": {
+      "range_ratio": 1.0511,
+      "volatility_agreement": 0.9839,
+      "volatility_agreement_uncalibrated": 0.9698,
+      "direction_agreement": 0.9435
+    },
+    "EURNZD": {
+      "range_ratio": 1.144,
+      "volatility_agreement": 0.9712,
+      "volatility_agreement_uncalibrated": 0.8558,
+      "direction_agreement": 0.9615
+    },
+    "EURUSD": {
+      "range_ratio": 0.9036,
+      "volatility_agreement": 0.9519,
+      "volatility_agreement_uncalibrated": 0.9019,
+      "direction_agreement": 0.95
+    },
+    "GBPAUD": {
+      "range_ratio": 1.0979,
+      "volatility_agreement": 0.9442,
+      "volatility_agreement_uncalibrated": 0.8962,
+      "direction_agreement": 0.95
+    },
+    "GBPCAD": {
+      "range_ratio": 1.1086,
+      "volatility_agreement": 0.9115,
+      "volatility_agreement_uncalibrated": 0.8192,
+      "direction_agreement": 0.8904
+    },
+    "GBPCHF": {
+      "range_ratio": 1.3397,
+      "volatility_agreement": 0.8952,
+      "volatility_agreement_uncalibrated": 0.496,
+      "direction_agreement": 0.8992
+    },
+    "GBPJPY": {
+      "range_ratio": 1.0405,
+      "volatility_agreement": 0.8528,
+      "volatility_agreement_uncalibrated": 0.8327,
+      "direction_agreement": 0.9375
+    },
+    "GBPNZD": {
+      "range_ratio": 1.1485,
+      "volatility_agreement": 0.8121,
+      "volatility_agreement_uncalibrated": 0.6687,
+      "direction_agreement": 0.8949
+    },
+    "GBPUSD": {
+      "range_ratio": 0.8995,
+      "volatility_agreement": 0.9192,
+      "volatility_agreement_uncalibrated": 0.8442,
+      "direction_agreement": 0.9212
+    },
+    "NZDCAD": {
+      "range_ratio": 1.1407,
+      "volatility_agreement": 0.8865,
+      "volatility_agreement_uncalibrated": 0.7058,
+      "direction_agreement": 0.9212
+    },
+    "NZDCHF": {
+      "range_ratio": 1.2486,
+      "volatility_agreement": 0.8387,
+      "volatility_agreement_uncalibrated": 0.6331,
+      "direction_agreement": 0.9093
+    },
+    "NZDJPY": {
+      "range_ratio": 1.0437,
+      "volatility_agreement": 0.9884,
+      "volatility_agreement_uncalibrated": 0.9827,
+      "direction_agreement": 0.9441
+    },
+    "NZDUSD": {
+      "range_ratio": 0.8318,
+      "volatility_agreement": 0.9481,
+      "volatility_agreement_uncalibrated": 0.725,
+      "direction_agreement": 0.9346
+    },
+    "USDCAD": {
+      "range_ratio": 1.4012,
+      "volatility_agreement": 0.9214,
+      "volatility_agreement_uncalibrated": 0.3488,
+      "direction_agreement": 0.8911
+    },
+    "USDCHF": {
+      "range_ratio": 1.0956,
+      "volatility_agreement": 0.9038,
+      "volatility_agreement_uncalibrated": 0.875,
+      "direction_agreement": 0.95
+    },
+    "USDJPY": {
+      "range_ratio": 1.0327,
+      "volatility_agreement": 0.9962,
+      "volatility_agreement_uncalibrated": 0.9788,
+      "direction_agreement": 0.9731
+    }
+  }
+}

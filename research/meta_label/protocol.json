@@ -1,0 +1,58 @@
+{
+  "name": "Meta-labeling the 15M + 5M alignment signal",
+  "frozen_on": "2026-09-26",
+  "question": "Can a model trained on 2008-2018 choose a subset of 15M + 5M alignment signals that has positive expectancy after costs in 2023-2026, and does better than taking every signal and better than the app's own 4H/1H multi-timeframe rule?",
+  "symbols": "All 28 pairs in data/historical_5m except EURZAR (its 5M archive has about 10k bars)",
+  "source": "Local data/historical_5m, _15m, _1h, _4h CSV archives (UTC bar-open timestamps); no network data. High/Low are widened in memory to contain Open/Close; the number of repaired bars is reported. Non-positive or non-finite prices stop the run.",
+  "scores": "The app's score_series_for_backtest on each timeframe. A bar's score is usable only after that bar closes (open time + bar length).",
+  "primary_signal": {
+    "state": "At each 5M bar close: +1 if the last closed 15M score >= 25 and this 5M score >= 25; -1 if both <= -25; otherwise 0",
+    "signal": "The state becomes nonzero or changes sign versus the previous 5M bar",
+    "entry": "Open of the next 5M bar, only if it starts exactly 5 minutes later",
+    "positions": "One per pair; signals while a position is open are ignored"
+  },
+  "trade": {
+    "stop": "1.5 x ATR14 of the last closed 15M bar",
+    "target": "1.5 x stop distance before costs",
+    "max_holding": "4 hours of clock time (at most 48 5M bars); timeout exits at the close of the last bar in the window",
+    "path": "Stop first if both levels are inside one bar; adverse gap fills at the bar open"
+  },
+  "label": "1 if net R at 1.5 pip round-trip cost is > 0, else 0",
+  "costs_pips": {"primary": 1.5, "stress": 3.0},
+  "features": [
+    "side (+1/-1)",
+    "side-signed last closed 5M, 15M, 1H and 4H scores",
+    "stop distance in pips and cost fraction (1.5 pip / stop pips)",
+    "15M ATR14 over its median of the previous 1920 15M bars (about 20 trading days)",
+    "5M realized volatility of the last 48 bars over that of the last 5760 bars",
+    "15M RSI14 and Bollinger band position, side-signed around their midpoints",
+    "side-signed distance of the 1H close from 1H EMA200, in 1H ATR14",
+    "UTC hour of day (sin, cos) and weekday",
+    "USD pair within 60 minutes before or after a scheduled NFP/FOMC release (research_news_scan.build_events kept events)"
+  ],
+  "splits": {
+    "train": ["2008-01-01", "2019-01-01"],
+    "validation": ["2019-01-01", "2023-01-01"],
+    "final": ["2023-01-01", "end of archive"],
+    "purge": "A trade belongs to a split only if both its entry and exit fall inside it"
+  },
+  "models": {
+    "logistic": "Median impute, standardize, LogisticRegression(C=0.1, max_iter=400)",
+    "hist_boost": "forex_ml_tournament.make_model('hist_boost')"
+  },
+  "selection_on_validation": "Fit each model on train. For coverage levels 10%, 20%, 30% and 50%, the probability threshold is the validation quantile that keeps that share of validation signals. Choose the (model, coverage) with the highest validation mean net R at 1.5 pips, among choices keeping at least 1000 validation trades. Freeze the model trained on 2008-2018 and the probability threshold value; neither is refit or changed afterwards.",
+  "comparisons_on_final": {
+    "all_signals": "Every primary signal",
+    "app_mtf_rule": "Signals where side-signed 4H and 1H scores are >= 25 and the side-signed 5M score is >= 60 (forex_decision_core.decide_mtf_signal for a 5M entry at the default threshold 60, without the structure/RSI/MACD/Bollinger gates)"
+  },
+  "statistics": "Unit: UTC calendar day, averaging net R over the kept trades that day across pairs. forex_decision_core.stationary_bootstrap_mean_test, 2000 simulations, mean block length 5, seed 42.",
+  "success_criteria": [
+    "Kept final trades mean net R at 1.5 pips > 0 with bootstrap 95% CI lower bound > 0",
+    "Kept mean net R at 1.5 pips above all_signals",
+    "Kept mean net R at 1.5 pips above app_mtf_rule",
+    "Kept mean net R at 3 pips > 0",
+    "At least 300 kept final trades"
+  ],
+  "use": "Only if all criteria hold may the model's probability be shown on scan cards, as information that never changes a decision, ranking or gate.",
+  "parameter_search": "None beyond the validation choice above; nothing is changed after the final evaluation"
+}
