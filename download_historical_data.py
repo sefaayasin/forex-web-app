@@ -17,7 +17,7 @@ from pathlib import Path
 import pandas as pd
 import yfinance as yf
 
-from forex_config import SYMBOL_LIST
+from forex_config import SYMBOL_LIST, yahoo_ticker
 
 OUT_DIR = Path(__file__).resolve().parent / "data" / "historical"
 START_DATE = "2008-01-01"
@@ -26,7 +26,7 @@ START_DATE = "2008-01-01"
 def download_symbol(symbol: str) -> tuple[bool, str]:
     try:
         df = yf.download(
-            symbol,
+            yahoo_ticker(symbol),
             start=START_DATE,
             interval="1d",
             progress=False,

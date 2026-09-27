@@ -10,7 +10,18 @@ import numpy as np
 import pandas as pd
 
 from forex_analysis import evaluate_bias, evaluate_market_structure
-from forex_config import get_pip_size, normalize_symbol, price_decimals, symbol_pair
+from forex_config import (
+    ALERT_PAIR_GROUPS,
+    MINOR_PAIRS,
+    SYMBOL_LIST,
+    contract_size,
+    get_pip_size,
+    is_metal,
+    normalize_symbol,
+    price_decimals,
+    symbol_pair,
+    yahoo_ticker,
+)
 from forex_edge import build_edge_validation_report, edge_validation_table
 from forex_indicators import add_indicators
 import forex_storage
@@ -23,6 +34,23 @@ class ConfigModuleTests(unittest.TestCase):
         self.assertEqual(get_pip_size("USDJPY=X"), 0.01)
         self.assertEqual(price_decimals("USDJPY=X"), 3)
         self.assertEqual(get_pip_size("EURUSD=X"), 0.0001)
+
+    def test_gold_conventions(self):
+        for typed in ("xau/usd", "XAUUSD", "gold", "GOLD/USD", "gold usd", "GOLDUSD=X"):
+            self.assertEqual(normalize_symbol(typed), "XAUUSD=X", typed)
+        self.assertIn("XAUUSD=X", SYMBOL_LIST)
+        self.assertNotIn("XAUUSD=X", MINOR_PAIRS)
+        self.assertEqual(ALERT_PAIR_GROUPS["Altın"], ["XAUUSD=X"])
+        self.assertEqual(symbol_pair("XAUUSD=X"), ("XAU", "USD"))
+        self.assertEqual(yahoo_ticker("XAUUSD=X"), "GC=F")
+        self.assertEqual(yahoo_ticker("EURUSD=X"), "EURUSD=X")
+        self.assertEqual(get_pip_size("XAUUSD=X"), 0.1)
+        self.assertEqual(price_decimals("XAUUSD=X"), 2)
+        # 1 lot = 100 oz, so a 0.10$ pip is worth 10$ per lot, like EURUSD.
+        self.assertEqual(contract_size("XAUUSD=X") * get_pip_size("XAUUSD=X"), 10.0)
+        self.assertEqual(contract_size("EURUSD=X"), 100_000)
+        self.assertTrue(is_metal("XAUUSD=X"))
+        self.assertFalse(is_metal("EURUSD=X"))
 
 
 class IndicatorModuleTests(unittest.TestCase):

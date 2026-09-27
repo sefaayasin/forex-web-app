@@ -42,15 +42,19 @@ from forex_config import (
     EDGE_DUAL_ENGINE_TRIALS,
     INTRADAY_CHART_WINDOWS,
     MAJOR_PAIRS,
+    METAL_SYMBOLS,
     MINOR_PAIRS,
     PRICE_CHANGE_WINDOWS,
     SYMBOL_LIST,
     TIMEFRAMES,
     TRADING_SESSIONS,
+    contract_size,
     get_pip_size,
+    is_metal,
     normalize_symbol,
     price_decimals,
     symbol_pair,
+    yahoo_ticker,
 )
 from forex_analysis import (
     BiasResult,
@@ -566,9 +570,9 @@ st.markdown(
 )
 
 def estimate_pip_value_per_lot_usd(symbol: str, reference_price: Optional[float] = None) -> Optional[float]:
-    """Standart 100k lot için yaklaşık USD pip değeri üretir."""
+    """Standart 1 lot (paritede 100k, altında 100 ons) için yaklaşık USD pip değeri üretir."""
     base, quote = symbol_pair(symbol)
-    contract_units = 100_000
+    contract_units = contract_size(symbol)
     quote_pip_value = get_pip_size(symbol) * contract_units
 
     if quote == "USD":
@@ -763,6 +767,9 @@ def recommended_spread_pips(symbol: str) -> float:
         return 1.0
     if s == "EURZAR=X":
         return 25.0
+    if s == "XAUUSD=X":
+        # Altında pip 0.10$: ~0.20-0.30$ spread + komisyon ≈ 3 pip (1 lotta ~30$).
+        return 3.0
     return 2.0
 
 
@@ -790,7 +797,7 @@ def observed_broker_spread_pips(symbol: str, tf_name: str) -> Optional[float]:
 @st.cache_data(ttl=60, show_spinner=False)
 def _fetch_ohlc_yahoo(symbol: str, interval: str, period: str) -> pd.DataFrame:
     """Yahoo Finance verisini çeker. 4h için 60m veriyi güvenli şekilde resample eder."""
-    symbol = normalize_symbol(symbol)
+    symbol = yahoo_ticker(symbol)
     interval_l = interval.lower()
 
     if interval_l in {"4h", "4hr", "4hour"}:
@@ -929,7 +936,7 @@ def fetch_ohlc(symbol: str, interval: str, period: str) -> pd.DataFrame:
 @st.cache_data(ttl=30, show_spinner=False)
 def _fetch_intraday_history_yahoo(symbol: str, period: str = "2d") -> pd.DataFrame:
     """Kısa vadeli fiyat, yüzde değişim ve grafik için ortak 1 dakikalık veri."""
-    symbol = normalize_symbol(symbol)
+    symbol = yahoo_ticker(symbol)
     try:
         df = yf.download(symbol, period=period, interval="1m", progress=False, auto_adjust=False, threads=False)
         if df is None or df.empty:
@@ -2876,7 +2883,7 @@ def render_pair_alert_screen(
     daily_status: Optional[dict] = None,
 ) -> None:
     st.subheader("Parite Alarm Ekranı")
-    st.caption("Major ve minör pariteleri tek bakışta LONG / SHORT / BEKLE olarak gösterir. Bu ekran hızlı takip içindir; gerçek işlem için 📊 Sinyal sekmesindeki karar kartı ve demo doğrulama kullanılmalı.")
+    st.caption("Major, minör pariteleri ve altını tek bakışta LONG / SHORT / BEKLE olarak gösterir. Bu ekran hızlı takip içindir; gerçek işlem için 📊 Sinyal sekmesindeki karar kartı ve demo doğrulama kullanılmalı.")
     if daily_status:
         render_daily_trading_desk(daily_status)
         if daily_status.get("blocks_trade"):
@@ -2892,7 +2899,7 @@ def render_pair_alert_screen(
         return
 
     if st.button("Pariteleri Tara", type="primary", use_container_width=True, key="alert_board_scan"):
-        with st.spinner("Major/minör pariteler taranıyor..."):
+        with st.spinner("Pariteler taranıyor..."):
             board = build_alert_board_rows(
                 selected_symbols,
                 change_window_minutes,
@@ -2962,11 +2969,14 @@ def render_pair_alert_screen(
 
     major_df = board[board["Sembol"].isin(MAJOR_PAIRS)]
     minor_df = board[board["Sembol"].isin(MINOR_PAIRS)]
+    metal_df = board[board["Sembol"].isin(METAL_SYMBOLS)]
 
     if "Major" in alert_groups:
         render_alert_section("Major Pariteler", major_df)
     if "Minör" in alert_groups:
         render_alert_section("Minör Pariteler", minor_df)
+    if "Altın" in alert_groups:
+        render_alert_section("Altın", metal_df)
 
     with st.expander("Tablo görünümü", expanded=False):
         table_cols = [
@@ -5956,7 +5966,7 @@ with st.sidebar:
         index=SYMBOL_LIST.index(default_symbol) if default_symbol in SYMBOL_LIST else 0,
     )
     with st.expander("Bağlantı ve grafik", expanded=False):
-        manual_symbol = st.text_input("Elle gir", value="", placeholder="EURUSD veya EURUSD=X")
+        manual_symbol = st.text_input("Elle gir", value="", placeholder="EURUSD, XAUUSD veya GOLD")
         symbol = normalize_symbol(manual_symbol) if manual_symbol.strip() else selected_symbol
         st.session_state["symbol"] = symbol
         data_provider = st.selectbox("Veri kaynağı", ["Yahoo Finance", "MetaTrader 5", "Broker CSV"], index=0)
@@ -5989,6 +5999,13 @@ with st.sidebar:
 
         chart_tf = st.radio("Grafik zamanı", tf_options, index=1)
         st.caption("Bu seçim grafiği değiştirir. Yeni Başlayan Modu açıksa işlem kararı yine 4H + 1H ana yön ve 15M giriş mantığıyla hesaplanır.")
+
+    if is_metal(symbol) and data_provider == "Yahoo Finance":
+        st.caption(
+            "🥇 Yahoo anlık (spot) altın fiyatı vermiyor; bunun yerine COMEX altın vadelisi (GC=F) kullanılıyor. "
+            "Bu fiyat brokerındaki XAUUSD'den genelde birkaç–birkaç on dolar yüksektir. Stop ve hedefi pip "
+            "mesafesi olarak kendi fiyatına uygula ya da veri kaynağı olarak MetaTrader 5'i seç."
+        )
 
     st.divider()
     st.subheader("Temel Risk")

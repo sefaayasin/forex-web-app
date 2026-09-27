@@ -10,13 +10,22 @@ SYMBOL_LIST = [
     "AUDCAD=X", "AUDCHF=X", "AUDJPY=X", "AUDNZD=X",
     "CADCHF=X", "CADJPY=X", "CHFJPY=X",
     "NZDCAD=X", "NZDCHF=X", "NZDJPY=X", "EURZAR=X",
+    "XAUUSD=X",
 ]
 
 MAJOR_PAIRS = [
     "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X", "USDCHF=X", "NZDUSD=X",
 ]
-MINOR_PAIRS = [symbol for symbol in SYMBOL_LIST if symbol not in MAJOR_PAIRS]
-ALERT_PAIR_GROUPS = {"Major": MAJOR_PAIRS, "Minör": MINOR_PAIRS}
+METAL_SYMBOLS = ["XAUUSD=X"]
+MINOR_PAIRS = [symbol for symbol in SYMBOL_LIST if symbol not in MAJOR_PAIRS and symbol not in METAL_SYMBOLS]
+ALERT_PAIR_GROUPS = {"Major": MAJOR_PAIRS, "Minör": MINOR_PAIRS, "Altın": METAL_SYMBOLS}
+
+# Broker names for the same instrument; "GOLD/USD" and "XAU/USD" are both spot gold.
+SYMBOL_ALIASES = {"GOLD": "XAUUSD", "GOLDUSD": "XAUUSD", "XAU": "XAUUSD"}
+# Yahoo no longer serves spot gold (XAUUSD=X returns 404), so the app reads the
+# front-month COMEX future instead. It trades a few dollars to tens of dollars
+# above spot and jumps when the contract rolls.
+YAHOO_TICKERS = {"XAUUSD=X": "GC=F"}
 
 TIMEFRAMES = {
     "4 Saat": {"interval": "4h", "period": "60d", "weight": 4},
@@ -65,10 +74,27 @@ EDGE_DUAL_ENGINE_TRIALS = 2
 
 
 def normalize_symbol(symbol: str) -> str:
-    normalized = str(symbol).strip().upper().replace("/", "")
+    normalized = str(symbol).strip().upper().replace("/", "").replace(" ", "")
+    normalized = SYMBOL_ALIASES.get(normalized.removesuffix("=X"), normalized)
     if normalized and not normalized.endswith("=X") and len(normalized) == 6:
         normalized += "=X"
     return normalized
+
+
+def yahoo_ticker(symbol: str) -> str:
+    """Ticker Yahoo actually serves for an app symbol (spot gold -> COMEX gold future)."""
+    normalized = normalize_symbol(symbol)
+    return YAHOO_TICKERS.get(normalized, normalized)
+
+
+def is_metal(symbol: str) -> bool:
+    return symbol_pair(symbol)[0] in {"XAU", "XAG"}
+
+
+def contract_size(symbol: str) -> int:
+    """Units in one standard lot: 100 oz of gold, 5,000 oz of silver, 100,000 of a currency."""
+    base, _ = symbol_pair(symbol)
+    return {"XAU": 100, "XAG": 5_000}.get(base, 100_000)
 
 
 def symbol_pair(symbol: str) -> tuple[str, str]:
@@ -88,5 +114,9 @@ def get_pip_size(symbol: str) -> float:
 
 
 def price_decimals(symbol: str) -> int:
-    _, quote = symbol_pair(symbol)
+    base, quote = symbol_pair(symbol)
+    if base == "XAU":
+        return 2
+    if base == "XAG":
+        return 3
     return 3 if quote == "JPY" else 5
