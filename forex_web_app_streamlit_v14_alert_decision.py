@@ -85,6 +85,18 @@ from forex_costs import (
     load_spread_profile,
     measured_spread_pips,
 )
+from forex_lot_calculator import (
+    MIN_LOT,
+    ceil_lot,
+    floor_lot,
+    lot_comparison,
+    lot_for_profit,
+    lot_for_risk,
+    margin_usd,
+    pips_for_profit,
+    price_levels,
+    trade_outcome,
+)
 from forex_ml_live import (
     LIVE_AGREEMENT_MIN,
     VOLATILITY_CONFIDENCE_THRESHOLD,
@@ -5161,6 +5173,182 @@ def render_intraday_opportunity(opportunity: dict, symbol: str) -> None:
     )
 
 
+def current_atr_pips(symbol: str, tf_name: str) -> Optional[float]:
+    """Son kapanmış mumun ATR14 değeri, pip cinsinden."""
+    prm = TIMEFRAMES[tf_name]
+    df = fetch_ohlc(symbol, prm["interval"], prm["period"])
+    if df is None or df.empty or len(df) < 40:
+        return None
+    row = latest_valid_row(add_indicators(df.iloc[:-1]))
+    if row is None:
+        return None
+    atr = float(row["ATR14"])
+    return atr / get_pip_size(symbol) if np.isfinite(atr) and atr > 0 else None
+
+
+def render_lot_calculator(
+    symbol: str,
+    price: Optional[float],
+    account_size: float,
+    risk_pct: float,
+    rr: float,
+    atr_mult: float,
+    pip_value_per_lot: float,
+    cost_pips: float,
+    target_usd: float,
+    setup: Optional[TradeSetup],
+    tf_name: str,
+    typical_move_pips: float,
+) -> None:
+    st.header("Lot Hesaplayıcı")
+    st.caption(
+        "Bakiyeni gir: kaç lotla gireceğini, stop ve kâr al seviyesini, kaç dolar kazanıp kaybedeceğini hesaplar. "
+        "Bu yalnızca matematik; fiyatın hedefe gideceğini söylemez. Hesap para birimi USD varsayılır."
+    )
+    pip = get_pip_size(symbol)
+    dec = price_decimals(symbol)
+    if setup is not None:
+        default_side, default_stop, default_target = setup.side, setup.stop_pips, setup.target_pips
+        source_text = "Önerilen stop ve kâr al, Sinyal sekmesindeki işlem planından geliyor."
+    else:
+        atr_pips = current_atr_pips(symbol, tf_name)
+        default_side = "LONG"
+        if atr_pips:
+            default_stop = atr_pips * float(atr_mult)
+            source_text = f"Önerilen stop: {tf_name} ATR'nin {atr_mult:.1f} katı; kâr al: stopun {rr:.1f} katı."
+        else:
+            default_stop = 20.0
+            source_text = "Güncel ATR alınamadı; stop için 20 pip varsayıldı, kendi değerini gir."
+        default_target = default_stop * float(rr)
+    default_stop = round(max(float(default_stop), 0.1), 1)
+    default_target = round(max(float(default_target), 0.1), 1)
+
+    c1, c2, c3, c4 = st.columns(4)
+    balance = c1.number_input("Hesap bakiyem ($)", min_value=10.0, value=float(account_size), step=100.0, key="lotcalc_balance")
+    calc_risk = c2.number_input(
+        "Stop'ta göze aldığım (%)", min_value=0.1, max_value=20.0, value=float(risk_pct), step=0.1, key="lotcalc_risk",
+        help="Stop olursa bakiyenin yüzde kaçını kaybetmeyi kabul ediyorsun. Profesyoneller genelde %0.5–1 kullanır.",
+    )
+    wanted_usd = c3.number_input("Kazanmak istediğim ($)", min_value=0.0, value=float(target_usd), step=10.0, key="lotcalc_target")
+    side = c4.selectbox("Yön", ["LONG", "SHORT"], index=0 if default_side == "LONG" else 1, key=f"lotcalc_side_{symbol}_{default_side}")
+
+    with st.expander("Stop, kâr al ve maliyet ayarları", expanded=False):
+        e1, e2, e3, e4 = st.columns(4)
+        stop_pips = e1.number_input("Stop mesafesi (pip)", min_value=0.1, value=default_stop, step=1.0, key=f"lotcalc_stop_{symbol}_{default_stop}")
+        target_pips = e2.number_input("Kâr al mesafesi (pip)", min_value=0.1, value=default_target, step=1.0, key=f"lotcalc_tp_{symbol}_{default_target}")
+        cost = e3.number_input("İşlem maliyeti (pip)", min_value=0.0, value=float(cost_pips), step=0.1, key=f"lotcalc_cost_{symbol}")
+        leverage = e4.number_input("Kaldıraç (1:x)", min_value=1, max_value=1000, value=100, step=10, key="lotcalc_leverage")
+        st.caption(
+            f"{source_text} 1 lot için pip değeri ≈ ${pip_value_per_lot:.2f}; brokerındakinden farklıysa "
+            "soldaki Gelişmiş risk ayarından düzelt."
+        )
+
+    raw_lot = lot_for_risk(balance, calc_risk, stop_pips, cost, pip_value_per_lot)
+    lot = floor_lot(raw_lot)
+    too_small = lot < MIN_LOT
+    if too_small:
+        lot = MIN_LOT
+    out = trade_outcome(balance, lot, stop_pips, target_pips, cost, pip_value_per_lot)
+    entry = float(price) if price is not None and price > 0 else None
+
+    st.subheader("Önerim")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Lot", f"{lot:.2f}")
+    m2.metric("1 pip", f"${out['usd_per_pip']:.2f}")
+    if entry is not None:
+        stop_price, tp_price = price_levels(entry, side, stop_pips, target_pips, pip)
+        m3.metric("Stop", f"{stop_price:.{dec}f}", f"-{stop_pips:.1f} pip", delta_color="off")
+        m4.metric("Kâr Al", f"{tp_price:.{dec}f}", f"+{target_pips:.1f} pip", delta_color="off")
+        stop_text, tp_text = f"**{stop_price:.{dec}f}**", f"**{tp_price:.{dec}f}**"
+        entry_text = f"şu anki fiyattan (**{entry:.{dec}f}**) "
+    else:
+        m3.metric("Stop", f"{stop_pips:.1f} pip")
+        m4.metric("Kâr Al", f"{target_pips:.1f} pip")
+        stop_text, tp_text, entry_text = f"{stop_pips:.1f} pip", f"{target_pips:.1f} pip", ""
+    margin = margin_usd(lot, entry or 0.0, pip, pip_value_per_lot, leverage)
+    margin_line = f"\n- Bu işlem için gereken marjin ≈ **${margin:,.0f}** (1:{int(leverage)} kaldıraç)." if margin else ""
+    side_word = "AL (LONG)" if side == "LONG" else "SAT (SHORT)"
+    base, quote = symbol_pair(symbol)
+    st.markdown(
+        f"Hesabında **${balance:,.0f}** var. {base}/{quote} için {entry_text}**{lot:.2f} lot {side_word}** "
+        f"girersen her pip ≈ **${out['usd_per_pip']:.2f}** eder.\n"
+        f"- Fiyat {tp_text} seviyesine gelirse ≈ **+${out['profit_usd']:,.0f}** kazanırsın (bakiyenin %{out['profit_pct']:.1f} kadarı).\n"
+        f"- Fiyat {stop_text} seviyesine gelirse ≈ **−${out['loss_usd']:,.0f}** kaybedersin (bakiyenin %{out['loss_pct']:.1f} kadarı)."
+        f"{margin_line}"
+    )
+    if too_small:
+        st.warning(
+            f"Bu bakiye ve %{calc_risk:.1f} riskle hesaplanan lot 0.01'in altında kaldı; en küçük lot olan 0.01 gösteriliyor. "
+            f"0.01 lotla stop'ta bakiyenin %{out['loss_pct']:.1f} kadarını kaybedersin. Stopu daraltmak yerine işlemi atlamayı düşün."
+        )
+
+    if wanted_usd > 0:
+        st.subheader(f"${wanted_usd:,.0f} kazanmak için")
+        needed_pips = pips_for_profit(wanted_usd, lot, cost, pip_value_per_lot)
+        move_text = ""
+        if needed_pips is not None and pd.notna(typical_move_pips) and typical_move_pips > 0:
+            ratio = needed_pips / float(typical_move_pips)
+            if ratio <= 0.65:
+                move_text = f" Bu, son günlerdeki tipik 4 saatlik hareketin (≈{typical_move_pips:.0f} pip) içinde."
+            elif ratio <= 1.0:
+                move_text = f" Bu, tipik 4 saatlik hareket (≈{typical_move_pips:.0f} pip) kadar; güçlü bir hareket gerekir."
+            else:
+                move_text = f" Bu, tipik 4 saatlik hareketin (≈{typical_move_pips:.0f} pip) {ratio:.1f} katı; birkaç saatte olması beklenmez."
+        if needed_pips is not None:
+            st.markdown(f"**1) Önerilen {lot:.2f} lotla:** fiyatın ≈ **{needed_pips:.0f} pip** gitmesi gerekir.{move_text}")
+
+        lot_needed = lot_for_profit(wanted_usd, target_pips, cost, pip_value_per_lot)
+        lot_needed = None if lot_needed is None else max(ceil_lot(lot_needed), MIN_LOT)
+        if lot_needed is None:
+            st.markdown("**2) Lotu büyüterek:** kâr al mesafesi işlem maliyetini karşılamıyor; hesaplanamadı.")
+        else:
+            big = trade_outcome(balance, lot_needed, stop_pips, target_pips, cost, pip_value_per_lot)
+            five_losses_pct = (1 - (1 - min(big["loss_pct"], 100.0) / 100.0) ** 5) * 100.0
+            text = (
+                f"**2) Lotu büyüterek ({target_pips:.0f} pip hedefle):** **{lot_needed:.2f} lot** gerekir. "
+                f"Stop olursa ≈ **−${big['loss_usd']:,.0f}** = bakiyenin **%{big['loss_pct']:.1f}** kadarı → **{big['risk_level']}**."
+            )
+            if big["risk_level"] == "Makul":
+                st.success(text)
+            elif big["risk_level"] == "Dikkat":
+                st.warning(text)
+            else:
+                st.error(
+                    text + f" Bu lotla üst üste 5 stop bakiyenin ≈ %{five_losses_pct:.0f} kadarını siler. "
+                    "Kısa sürede büyük kazanç için lotu büyütmek, stop'ta da aynı oranda büyük kayıp demektir."
+                )
+
+    st.subheader("Lot karşılaştırma")
+    extra = (lot,)
+    if wanted_usd > 0:
+        needed = lot_for_profit(wanted_usd, target_pips, cost, pip_value_per_lot)
+        if needed is not None:
+            extra = (lot, max(ceil_lot(needed), MIN_LOT))
+    rows = lot_comparison(balance, stop_pips, target_pips, cost, pip_value_per_lot, wanted_usd, extra_lots=extra)
+    table = pd.DataFrame(
+        {
+            "Lot": [f"{row['lot']:.2f}" + ("  ← önerilen" if abs(row["lot"] - lot) < 1e-9 else "") for row in rows],
+            "1 pip ($)": [round(row["usd_per_pip"], 2) for row in rows],
+            "Stop'ta zarar ($)": [round(row["loss_usd"], 2) for row in rows],
+            "Bakiyenin %": [round(row["loss_pct"], 1) for row in rows],
+            "Kâr al'da kazanç ($)": [round(row["profit_usd"], 2) for row in rows],
+            f"${wanted_usd:,.0f} için gereken pip": [
+                None if row["pips_for_target"] is None else round(row["pips_for_target"], 1) for row in rows
+            ],
+            "Marjin ($)": [
+                None if (m := margin_usd(row["lot"], entry or 0.0, pip, pip_value_per_lot, leverage)) is None else round(m)
+                for row in rows
+            ],
+            "Değerlendirme": [row["risk_level"] for row in rows],
+        }
+    )
+    st.dataframe(table, hide_index=True, use_container_width=True)
+    st.caption(
+        "Değerlendirme, stop olursa bakiyenin ne kadarının gittiğine göre: ≤%1 Makul · ≤%2 Dikkat · ≤%5 Yüksek · üstü Çok tehlikeli. "
+        "Maliyet (spread + komisyon) stop'taki zarara eklenir, kâr al'daki kazançtan düşülür."
+    )
+
+
 def render_upcoming_news_strip(news_events: Optional[pd.DataFrame]) -> None:
     """Önümüzdeki 24 saatin yüksek etkili haberleri; bilgi amaçlıdır, hiçbir kararı etkilemez."""
     upcoming = upcoming_high_impact_events(news_events)
@@ -6938,9 +7126,25 @@ intraday_opportunity = apply_opportunity_cooldown(
     cooldown_bars=16,
 )
 
-tab_signal, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
-    ["📊 Sinyal", "🔥 Fırsat Akışı", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
+tab_signal, tab_lot, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
+    ["📊 Sinyal", "🧮 Lot Hesaplayıcı", "🔥 Fırsat Akışı", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
 )
+
+with tab_lot:
+    render_lot_calculator(
+        symbol=symbol,
+        price=price,
+        account_size=float(account_size),
+        risk_pct=float(risk_pct),
+        rr=float(rr),
+        atr_mult=float(atr_mult),
+        pip_value_per_lot=float(pip_value_per_lot),
+        cost_pips=float(spread_pips),
+        target_usd=float(daily_target_min_usd),
+        setup=preview_setup,
+        tf_name=selected_tf,
+        typical_move_pips=intraday_opportunity.get("recent_range_pips", np.nan),
+    )
 
 with tab_feed:
     st.header("Fırsat Akışı — Tüm Pariteler")
