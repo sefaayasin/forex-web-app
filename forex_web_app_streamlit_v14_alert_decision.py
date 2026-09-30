@@ -5272,7 +5272,7 @@ def render_lot_calculator(
         stop_pips = e1.number_input("Stop mesafesi (pip)", min_value=0.1, value=default_stop, step=1.0, key=f"lotcalc_stop_{symbol}_{default_stop}")
         target_pips = e2.number_input("Kâr al mesafesi (pip)", min_value=0.1, value=default_target, step=1.0, key=f"lotcalc_tp_{symbol}_{default_target}")
         cost = e3.number_input("İşlem maliyeti (pip)", min_value=0.0, value=float(cost_pips), step=0.1, key=f"lotcalc_cost_{symbol}")
-        leverage = e4.number_input("Kaldıraç (1:x)", min_value=1, max_value=1000, value=100, step=10, key="lotcalc_leverage")
+        leverage = e4.number_input("Kaldıraç (1:x)", min_value=1, max_value=1000, value=500, step=10, key="lotcalc_leverage")
         st.caption(
             f"{source_text} 1 lot için pip değeri ≈ ${pip_value_per_lot:.2f}; brokerındakinden farklıysa "
             "soldaki Gelişmiş risk ayarından düzelt."
@@ -6241,17 +6241,64 @@ def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dic
         )
 
 
+def render_chip_group(title: str, items: list[tuple[str, float]], css: str) -> None:
+    """Başlık + (parite, skor) etiketleri; liste boşsa 'Yok' yazar."""
+    st.markdown(f"**{title} ({len(items)})**")
+    if not items:
+        st.caption("Yok")
+        return
+    chips = "".join(
+        f"<span class='summary-chip {css}'>{escape(sym.replace('=X', ''))} · {score:.0f}</span>" for sym, score in items
+    )
+    st.markdown(f"<div class='summary-chips'>{chips}</div>", unsafe_allow_html=True)
+
+
+def strong_bias_pairs(scanner_df: pd.DataFrame) -> dict[str, list[tuple[str, float]]]:
+    """15M ve 5M satırlarını parite başına birleştirip 'Güçlü Alım/Satış Yönlü' olanları döndürür.
+
+    İki giriş zaman diliminden biri güçlü alım, diğeri güçlü satış diyorsa parite hiçbir listeye girmez.
+    Skor, paritenin satırlarındaki en büyük mutlak genel skordur; listeler skora göre sıralıdır.
+    """
+    result: dict[str, list[tuple[str, float]]] = {"LONG": [], "SHORT": []}
+    for sym, rows in scanner_df.groupby("Sembol", sort=False):
+        labels = set(rows["Genel Bias"].astype(str))
+        is_long, is_short = "Güçlü Alım Yönlü" in labels, "Güçlü Satış Yönlü" in labels
+        if is_long == is_short:
+            continue
+        score = float(pd.to_numeric(rows["Skor"], errors="coerce").abs().max())
+        result["LONG" if is_long else "SHORT"].append((str(sym), score))
+    return {side: sorted(items, key=lambda item: item[1], reverse=True) for side, items in result.items()}
+
+
+def aligned_timeframe_pairs(board: pd.DataFrame) -> dict[str, list[tuple[str, float]]]:
+    """4H, 1H, 15M ve 5M'nin dördü de aynı yönü gösteren pariteler, genel skora göre sıralı."""
+    result: dict[str, list[tuple[str, float]]] = {"LONG": [], "SHORT": []}
+    for _, row in board.iterrows():
+        sides = {_mini_tf_text(row.get(tf, "-")) for tf in ("4H", "1H", "15M", "5M")}
+        if sides in ({"LONG"}, {"SHORT"}):
+            score = pd.to_numeric(row.get("Skor"), errors="coerce")
+            result[sides.pop()].append((str(row["Sembol"]), 0.0 if pd.isna(score) else abs(float(score))))
+    return {side: sorted(items, key=lambda item: item[1], reverse=True) for side, items in result.items()}
+
+
 def render_summary_opportunities(scanner_df: Optional[pd.DataFrame], max_cards: int = 6) -> None:
     st.markdown("#### ⚡ Fırsatlar · 15M + 5M")
     if not isinstance(scanner_df, pd.DataFrame) or scanner_df.empty:
         st.caption("Henüz tarama yok.")
         return
+    strong = strong_bias_pairs(scanner_df)
+    long_col, short_col = st.columns(2)
+    with long_col:
+        render_chip_group("🟢 Güçlü Alım", strong["LONG"], "summary-chip-long")
+    with short_col:
+        render_chip_group("🔴 Güçlü Satış", strong["SHORT"], "summary-chip-short")
+
     actionable = scanner_df[scanner_df["Karar"] != "PAS"]
     if actionable.empty:
-        st.caption(f"{scanner_df['Sembol'].nunique()} paritede şu an fırsat yok.")
+        st.caption("Onaylı giriş fırsatı şu an yok.")
         return
     shown = actionable.head(max_cards)
-    st.caption(f"{len(actionable)} fırsat · en güçlü {len(shown)} tanesi")
+    st.caption(f"Onaylı giriş: {len(actionable)} · en güçlü {len(shown)} tanesi")
     for start in range(0, len(shown), 3):
         chunk = shown.iloc[start:start + 3]
         for col, (_, row) in zip(st.columns(3), chunk.iterrows()):
@@ -6276,18 +6323,11 @@ def render_summary_pairs(board: Optional[pd.DataFrame]) -> None:
     if not isinstance(board, pd.DataFrame) or board.empty:
         st.caption("Henüz tarama yok.")
         return
-    for alarm, icon, css in [("LONG", "🟢", "summary-chip-long"), ("SHORT", "🔴", "summary-chip-short")]:
-        rows = board[board["Alarm"] == alarm].sort_values("Alarm Skoru", ascending=False)
-        st.markdown(f"**{icon} {alarm} ({len(rows)})**")
-        if rows.empty:
-            st.caption("Yok")
-            continue
-        chips = "".join(
-            f"<span class='summary-chip {css}'>{escape(str(r['Sembol']).replace('=X', ''))} · {float(r['Alarm Skoru']):.0f}</span>"
-            for _, r in rows.iterrows()
-        )
-        st.markdown(f"<div class='summary-chips'>{chips}</div>", unsafe_allow_html=True)
-    st.markdown(f"**🟡 BEKLE ({int((board['Alarm'] == 'BEKLE').sum())})**")
+    aligned = aligned_timeframe_pairs(board)
+    render_chip_group("🟢 4H · 1H · 15M · 5M hepsi LONG", aligned["LONG"], "summary-chip-long")
+    render_chip_group("🔴 4H · 1H · 15M · 5M hepsi SHORT", aligned["SHORT"], "summary-chip-short")
+    counts = board["Alarm"].value_counts()
+    st.caption(f"Alarm: LONG {int(counts.get('LONG', 0))} · SHORT {int(counts.get('SHORT', 0))} · BEKLE {int(counts.get('BEKLE', 0))}")
 
 
 def render_summary_ml(predictions: Optional[pd.DataFrame]) -> None:
@@ -6296,17 +6336,14 @@ def render_summary_ml(predictions: Optional[pd.DataFrame]) -> None:
         st.caption("Henüz tahmin yok.")
         return
     table = pd.DataFrame({"Sembol": predictions["Sembol"]})
-    order = pd.Series(9, index=predictions.index)
     if "_vol_level" in predictions.columns:
-        levels = predictions["_vol_level"]
-        table["72s Oynaklık"] = levels.map(
+        table["72s Oynaklık"] = predictions["_vol_level"].map(
             lambda lvl: f"{VOLATILITY_LEVEL_ICONS[lvl]} {VOLATILITY_SHORT_LABELS[lvl]}" if lvl in VOLATILITY_LEVEL_ICONS else "-"
         )
-        order = levels.map({"high": 0, "normal": 1, "uncertain": 2}).fillna(9)
     if "Tahmin" in predictions.columns:
         table["4s Yön"] = predictions["Tahmin"].fillna("-")
         table["Olasılık %"] = predictions["Olasılık %"]
-    table = table.assign(_order=order).sort_values("_order").drop(columns=["_order"])
+        table = table.sort_values("Olasılık %", ascending=False, na_position="last")
     st.dataframe(table, hide_index=True, use_container_width=True, height=320)
     st.caption("Yön modeli zayıf (≈%52 isabet), tek başına işlem sinyali değil.")
 
@@ -6449,7 +6486,7 @@ with st.sidebar:
 
     st.divider()
     st.subheader("Temel Risk")
-    account_size = st.number_input("Hesap büyüklüğü", min_value=100.0, value=10000.0, step=500.0)
+    account_size = st.number_input("Hesap büyüklüğü", min_value=100.0, value=1000.0, step=100.0)
     risk_pct = st.number_input("İşlem başına risk %", min_value=0.1, max_value=2.0, value=0.5, step=0.1)
     if risk_pct > 1.0:
         st.warning("%1 üzerindeki işlem riski kayıp serilerinde hesabı hızlı küçültebilir.")
