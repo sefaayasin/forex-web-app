@@ -561,6 +561,16 @@ st.markdown(
         .opportunity-title { font-size:1.45rem; font-weight:950; margin:4px 0 8px 0; }
         .opportunity-score { font-size:2rem; font-weight:950; line-height:1; margin:10px 0; }
         .opportunity-line { margin-top:8px; font-size:.92rem; }
+        .summary-chips { display:flex; flex-wrap:wrap; gap:6px; margin: 4px 0 12px 0; }
+        .summary-chip {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--fa-border);
+            font-size: .86rem;
+            font-weight: 800;
+        }
+        .summary-chip-long { background: var(--fa-success-bg); border-color: var(--fa-success-border); color: var(--fa-success-text) !important; }
+        .summary-chip-short { background: var(--fa-danger-bg); border-color: var(--fa-danger-border); color: var(--fa-danger-text) !important; }
 
         @media (max-width: 1100px) {
             .alert-summary-row { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
@@ -2877,6 +2887,38 @@ def render_alert_section(title: str, df: pd.DataFrame) -> None:
                 render_alert_card(row)
 
 
+def alert_group_symbols(alert_groups: list[str]) -> list[str]:
+    symbols: list[str] = []
+    for group in alert_groups:
+        symbols.extend(ALERT_PAIR_GROUPS.get(group, []))
+    return list(dict.fromkeys(symbols))
+
+
+def run_alert_board_scan(
+    symbols: list[str],
+    change_window_minutes: int,
+    alert_entry_tf: str,
+    signal_threshold: float,
+    webhook_url: str = "",
+    daily_status: Optional[dict] = None,
+    **filter_kwargs,
+) -> pd.DataFrame:
+    """Parite alarm tablosunu tarar, oturuma kaydeder ve yeni LONG/SHORT alarmlarını bildirir."""
+    board = build_alert_board_rows(symbols, change_window_minutes, alert_entry_tf, signal_threshold, **filter_kwargs)
+    st.session_state["alert_board_df"] = board
+    st.session_state["alert_board_entry_tf"] = alert_entry_tf
+
+    signal_rows = board[board["Alarm"].isin(["LONG", "SHORT"])].to_dict("records") if not board.empty else []
+    notifications_allowed = not (daily_status and daily_status.get("blocks_trade"))
+    floor_rule = {"5 Dakika": "5min", "15 Dakika": "15min", "1 Saat": "1h"}.get(alert_entry_tf, "15min")
+    for row in signal_rows:
+        candle_key = f"{alert_entry_tf}|{pd.Timestamp.now(tz='UTC').floor(floor_rule)}"
+        payload = {"symbol": row.get("Sembol"), "side": row.get("Alarm"), "reason": row.get("Alarm Nedeni"), "score": row.get("Alarm Skoru")}
+        if notifications_allowed and record_alert_once(str(row.get("Sembol")), str(row.get("Alarm")), candle_key, payload) and webhook_url.strip():
+            send_webhook_notification(webhook_url, payload)
+    return board
+
+
 def render_pair_alert_screen(
     change_window_minutes: int,
     change_window_label: str,
@@ -2901,22 +2943,20 @@ def render_pair_alert_screen(
         if daily_status.get("blocks_trade"):
             st.info("Günlük plan yeni işlem bildirimlerini durdurdu. Pariteler yalnızca piyasa takibi için gösteriliyor.")
 
-    selected_symbols: list[str] = []
-    for group in alert_groups:
-        selected_symbols.extend(ALERT_PAIR_GROUPS.get(group, []))
-    selected_symbols = list(dict.fromkeys(selected_symbols))
-
+    selected_symbols = alert_group_symbols(alert_groups)
     if not selected_symbols:
         st.warning("En az bir parite grubu seçmelisin.")
         return
 
     if st.button("Pariteleri Tara", type="primary", use_container_width=True, key="alert_board_scan"):
         with st.spinner("Pariteler taranıyor..."):
-            board = build_alert_board_rows(
+            run_alert_board_scan(
                 selected_symbols,
                 change_window_minutes,
                 alert_entry_tf,
                 signal_threshold,
+                webhook_url=webhook_url,
+                daily_status=daily_status,
                 market_structure_enabled=market_structure_enabled,
                 entry_model=entry_model,
                 rsi_regime_enabled=rsi_regime_enabled,
@@ -2925,17 +2965,6 @@ def render_pair_alert_screen(
                 macd_confirmation_enabled=macd_confirmation_enabled,
                 macd_divergence_filter_enabled=macd_divergence_filter_enabled,
             )
-        st.session_state["alert_board_df"] = board
-        st.session_state["alert_board_entry_tf"] = alert_entry_tf
-
-        signal_rows = board[board["Alarm"].isin(["LONG", "SHORT"])].to_dict("records") if not board.empty else []
-        for row in signal_rows:
-            floor_rule = {"5 Dakika": "5min", "15 Dakika": "15min", "1 Saat": "1h"}.get(alert_entry_tf, "15min")
-            candle_key = f"{alert_entry_tf}|{pd.Timestamp.now(tz='UTC').floor(floor_rule)}"
-            payload = {"symbol": row.get("Sembol"), "side": row.get("Alarm"), "reason": row.get("Alarm Nedeni"), "score": row.get("Alarm Skoru")}
-            notifications_allowed = not (daily_status and daily_status.get("blocks_trade"))
-            if notifications_allowed and record_alert_once(str(row.get("Sembol")), str(row.get("Alarm")), candle_key, payload) and webhook_url.strip():
-                send_webhook_notification(webhook_url, payload)
 
     if "alert_board_df" not in st.session_state:
         st.info("Henüz taranmış parite yok. 'Pariteleri Tara' butonuna basın.")
@@ -5186,6 +5215,26 @@ def current_atr_pips(symbol: str, tf_name: str) -> Optional[float]:
     return atr / get_pip_size(symbol) if np.isfinite(atr) and atr > 0 else None
 
 
+def default_lot_plan(
+    symbol: str, setup: Optional[TradeSetup], tf_name: str, atr_mult: float, rr: float
+) -> tuple[str, float, float, str]:
+    """Lot hesaplayıcının önerdiği yön, stop ve kâr al (pip) ile kaynağını açıklayan not."""
+    if setup is not None:
+        side, stop, target = setup.side, setup.stop_pips, setup.target_pips
+        source_text = "Önerilen stop ve kâr al, Sinyal sekmesindeki işlem planından geliyor."
+    else:
+        atr_pips = current_atr_pips(symbol, tf_name)
+        side = "LONG"
+        if atr_pips:
+            stop = atr_pips * float(atr_mult)
+            source_text = f"Önerilen stop: {tf_name} ATR'nin {atr_mult:.1f} katı; kâr al: stopun {rr:.1f} katı."
+        else:
+            stop = 20.0
+            source_text = "Güncel ATR alınamadı; stop için 20 pip varsayıldı, kendi değerini gir."
+        target = stop * float(rr)
+    return side, round(max(float(stop), 0.1), 1), round(max(float(target), 0.1), 1), source_text
+
+
 def render_lot_calculator(
     symbol: str,
     price: Optional[float],
@@ -5207,21 +5256,7 @@ def render_lot_calculator(
     )
     pip = get_pip_size(symbol)
     dec = price_decimals(symbol)
-    if setup is not None:
-        default_side, default_stop, default_target = setup.side, setup.stop_pips, setup.target_pips
-        source_text = "Önerilen stop ve kâr al, Sinyal sekmesindeki işlem planından geliyor."
-    else:
-        atr_pips = current_atr_pips(symbol, tf_name)
-        default_side = "LONG"
-        if atr_pips:
-            default_stop = atr_pips * float(atr_mult)
-            source_text = f"Önerilen stop: {tf_name} ATR'nin {atr_mult:.1f} katı; kâr al: stopun {rr:.1f} katı."
-        else:
-            default_stop = 20.0
-            source_text = "Güncel ATR alınamadı; stop için 20 pip varsayıldı, kendi değerini gir."
-        default_target = default_stop * float(rr)
-    default_stop = round(max(float(default_stop), 0.1), 1)
-    default_target = round(max(float(default_target), 0.1), 1)
+    default_side, default_stop, default_target, source_text = default_lot_plan(symbol, setup, tf_name, atr_mult, rr)
 
     c1, c2, c3, c4 = st.columns(4)
     balance = c1.number_input("Hesap bakiyem ($)", min_value=10.0, value=float(account_size), step=100.0, key="lotcalc_balance")
@@ -5971,6 +6006,38 @@ def scan_ml_predictions(symbols: list[str]) -> tuple[pd.DataFrame, list[tuple[st
     return pd.DataFrame(rows), skipped
 
 
+def run_ml_scan() -> pd.DataFrame:
+    df, skipped = scan_ml_predictions(SYMBOL_LIST)
+    st.session_state["ml_prediction_df"] = df
+    st.session_state["ml_prediction_skipped"] = skipped
+    return df
+
+
+def run_feed_scan(
+    symbols: list[str],
+    change_window_minutes: int,
+    include_backtest: bool,
+    include_volatility: bool,
+    scanner_kwargs: dict,
+) -> pd.DataFrame:
+    """15M + 5M fırsat taramasını çalıştırır, istenirse 72 saatlik oynaklığı ekler ve oturuma kaydeder."""
+    scan_result = run_symbol_scanner_multi_tf(
+        symbols=symbols,
+        tf_list=["15 Dakika", "5 Dakika"],
+        change_window_minutes=change_window_minutes,
+        include_backtest=include_backtest,
+        **scanner_kwargs,
+    )
+    if include_volatility and not scan_result.empty:
+        volatility_views = scan_volatility_views(scan_result["Sembol"].unique())
+        scan_result.insert(
+            2, "72s Oynaklık",
+            scan_result["Sembol"].map(lambda s: volatility_badge(volatility_views[s]) if s in volatility_views else "-"),
+        )
+    st.session_state["scanner_df"] = scan_result
+    return scan_result
+
+
 def render_ml_volatility_section(predictions: pd.DataFrame, metrics: pd.DataFrame) -> None:
     st.markdown("#### 🌪️ Oynaklık Riski — önümüzdeki 72 saat")
     if "Oynaklık Görüşü" not in predictions.columns:
@@ -6110,9 +6177,7 @@ def render_ml_prediction_page() -> None:
 
     if st.button("Tüm Pariteleri Tahminle", type="primary", use_container_width=True):
         with st.spinner("Modeller çalışıyor (28 parite için biraz sürebilir)..."):
-            df, skipped = scan_ml_predictions(SYMBOL_LIST)
-            st.session_state["ml_prediction_df"] = df
-            st.session_state["ml_prediction_skipped"] = skipped
+            run_ml_scan()
 
     predictions = st.session_state.get("ml_prediction_df", pd.DataFrame())
     skipped = st.session_state.get("ml_prediction_skipped", [])
@@ -6131,6 +6196,193 @@ def render_ml_prediction_page() -> None:
     st.divider()
     render_ml_direction_section(predictions, metrics, load_ml_cost_sensitivity())
     st.caption("Kendi kendine öğrenen model, ders çalıştığı dönemi (2008-2023) tekrar etmez; her ay yeniden eğitilmesi önerilir: python train_all_pair_direction_models.py")
+
+
+# =============================================================================
+# ÖZET (diğer sekmelerin sade, tek sayfalık görünümü)
+# =============================================================================
+
+SUMMARY_TF_SHORT = {"15 Dakika": "15M", "5 Dakika": "5M", "1 Saat": "1H"}
+
+
+def _side_of(text: object) -> str:
+    text = str(text)
+    return "LONG" if "LONG" in text else ("SHORT" if "SHORT" in text else "NONE")
+
+
+def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dict) -> None:
+    st.markdown(f"#### 📈 {symbol.replace('=X', '')} · son 24 saat")
+    change_table = intraday_change_snapshot(symbol)
+    if not change_table.empty:
+        for col, (_, change_row) in zip(st.columns(len(change_table)), change_table.iterrows()):
+            pct_value = change_row["Değişim %"]
+            col.metric(str(change_row["Pencere"]).replace("Son ", ""), "-" if pd.isna(pct_value) else f"{float(pct_value):+.3f}%")
+
+    chart_col, card_col = st.columns([2.1, 1.0])
+    with chart_col:
+        fig = go.Figure(intraday_fig).update_layout(height=280, title_text="", margin=dict(l=20, r=10, t=10, b=20))
+        st.plotly_chart(fig, use_container_width=True, key="summary_intraday_chart")
+    with card_col:
+        css = {"long": "opportunity-long", "short": "opportunity-short"}.get(str(opportunity.get("state")), "opportunity-neutral")
+        readiness = {"READY": "Tetik hazır", "WATCH": "Yalnızca izle", "NEUTRAL": "Nötr"}.get(
+            str(opportunity.get("readiness", "NEUTRAL")), str(opportunity.get("readiness", "-"))
+        )
+        target_price = opportunity.get("target_price", np.nan)
+        target_text = "-" if pd.isna(target_price) else f"{float(target_price):.{price_decimals(symbol)}f}"
+        st.markdown(
+            f"<div class='opportunity-card {css}' style='min-height:0;'>"
+            "<div class='section-kicker'>Önümüzdeki birkaç saat</div>"
+            f"<div class='opportunity-title'>{escape(str(opportunity.get('label', '-')))}</div>"
+            f"<div class='opportunity-score'>{float(opportunity.get('radar_score', opportunity.get('confidence', 0))):.0f}/100</div>"
+            f"<div class='opportunity-line'><b>Durum:</b> {escape(readiness)}</div>"
+            f"<div class='opportunity-line'><b>Hedef fiyat:</b> {escape(target_text)}</div>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+
+
+def render_summary_opportunities(scanner_df: Optional[pd.DataFrame], max_cards: int = 6) -> None:
+    st.markdown("#### ⚡ Fırsatlar · 15M + 5M")
+    if not isinstance(scanner_df, pd.DataFrame) or scanner_df.empty:
+        st.caption("Henüz tarama yok.")
+        return
+    actionable = scanner_df[scanner_df["Karar"] != "PAS"]
+    if actionable.empty:
+        st.caption(f"{scanner_df['Sembol'].nunique()} paritede şu an fırsat yok.")
+        return
+    shown = actionable.head(max_cards)
+    st.caption(f"{len(actionable)} fırsat · en güçlü {len(shown)} tanesi")
+    for start in range(0, len(shown), 3):
+        chunk = shown.iloc[start:start + 3]
+        for col, (_, row) in zip(st.columns(3), chunk.iterrows()):
+            side = _side_of(row.get("Fırsat", ""))
+            css = {"LONG": "opportunity-long", "SHORT": "opportunity-short"}.get(side, "opportunity-neutral")
+            tf = SUMMARY_TF_SHORT.get(str(row.get("Giriş TF", "")), str(row.get("Giriş TF", "")))
+            volatility = str(row.get("72s Oynaklık", "-") or "-")
+            volatility_line = f"<div style='font-size:.82rem;'>72s oynaklık: {escape(volatility)}</div>" if volatility not in {"-", "nan"} else ""
+            with col:
+                st.markdown(
+                    f"<div class='opportunity-card {css}' style='padding:12px; min-height:0;'>"
+                    f"<div class='section-kicker'>{escape(str(row.get('Sembol', '-')))} · {escape(tf)}</div>"
+                    f"<div class='opportunity-title' style='font-size:1rem;'>{escape(str(row.get('Fırsat', '-')))}</div>"
+                    f"<div class='opportunity-score' style='font-size:1.4rem; margin:4px 0;'>{float(row.get('Sinyal Skoru', 0) or 0):.0f}/100</div>"
+                    f"{volatility_line}</div>",
+                    unsafe_allow_html=True,
+                )
+
+
+def render_summary_pairs(board: Optional[pd.DataFrame]) -> None:
+    st.markdown("#### 🚦 Pariteler")
+    if not isinstance(board, pd.DataFrame) or board.empty:
+        st.caption("Henüz tarama yok.")
+        return
+    for alarm, icon, css in [("LONG", "🟢", "summary-chip-long"), ("SHORT", "🔴", "summary-chip-short")]:
+        rows = board[board["Alarm"] == alarm].sort_values("Alarm Skoru", ascending=False)
+        st.markdown(f"**{icon} {alarm} ({len(rows)})**")
+        if rows.empty:
+            st.caption("Yok")
+            continue
+        chips = "".join(
+            f"<span class='summary-chip {css}'>{escape(str(r['Sembol']).replace('=X', ''))} · {float(r['Alarm Skoru']):.0f}</span>"
+            for _, r in rows.iterrows()
+        )
+        st.markdown(f"<div class='summary-chips'>{chips}</div>", unsafe_allow_html=True)
+    st.markdown(f"**🟡 BEKLE ({int((board['Alarm'] == 'BEKLE').sum())})**")
+
+
+def render_summary_ml(predictions: Optional[pd.DataFrame]) -> None:
+    st.markdown("#### 🤖 ML")
+    if not isinstance(predictions, pd.DataFrame) or predictions.empty:
+        st.caption("Henüz tahmin yok.")
+        return
+    table = pd.DataFrame({"Sembol": predictions["Sembol"]})
+    order = pd.Series(9, index=predictions.index)
+    if "_vol_level" in predictions.columns:
+        levels = predictions["_vol_level"]
+        table["72s Oynaklık"] = levels.map(
+            lambda lvl: f"{VOLATILITY_LEVEL_ICONS[lvl]} {VOLATILITY_SHORT_LABELS[lvl]}" if lvl in VOLATILITY_LEVEL_ICONS else "-"
+        )
+        order = levels.map({"high": 0, "normal": 1, "uncertain": 2}).fillna(9)
+    if "Tahmin" in predictions.columns:
+        table["4s Yön"] = predictions["Tahmin"].fillna("-")
+        table["Olasılık %"] = predictions["Olasılık %"]
+    table = table.assign(_order=order).sort_values("_order").drop(columns=["_order"])
+    st.dataframe(table, hide_index=True, use_container_width=True, height=320)
+    st.caption("Yön modeli zayıf (≈%52 isabet), tek başına işlem sinyali değil.")
+
+
+def render_summary_lot(
+    symbol: str,
+    price: Optional[float],
+    account_size: float,
+    risk_pct: float,
+    rr: float,
+    atr_mult: float,
+    pip_value_per_lot: float,
+    cost_pips: float,
+    setup: Optional[TradeSetup],
+    tf_name: str,
+) -> None:
+    st.markdown(f"#### 🧮 Lot · {symbol.replace('=X', '')}")
+    default_side, default_stop, default_target, _ = default_lot_plan(symbol, setup, tf_name, atr_mult, rr)
+    c1, c2, c3, c4 = st.columns(4)
+    balance = c1.number_input("Bakiye ($)", min_value=10.0, value=float(account_size), step=100.0, key="summary_lot_balance")
+    calc_risk = c2.number_input("Risk (%)", min_value=0.1, max_value=20.0, value=float(risk_pct), step=0.1, key="summary_lot_risk")
+    stop_pips = c3.number_input("Stop (pip)", min_value=0.1, value=default_stop, step=1.0, key=f"summary_lot_stop_{symbol}_{default_stop}")
+    side = c4.selectbox("Yön", ["LONG", "SHORT"], index=0 if default_side == "LONG" else 1, key=f"summary_lot_side_{symbol}_{default_side}")
+    target_pips = stop_pips * default_target / default_stop
+
+    lot = floor_lot(lot_for_risk(balance, calc_risk, stop_pips, cost_pips, pip_value_per_lot))
+    too_small = lot < MIN_LOT
+    lot = max(lot, MIN_LOT)
+    out = trade_outcome(balance, lot, stop_pips, target_pips, cost_pips, pip_value_per_lot)
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Lot", f"{lot:.2f}")
+    m2.metric("1 pip", f"${out['usd_per_pip']:.2f}")
+    if price is not None and price > 0:
+        dec = price_decimals(symbol)
+        stop_price, tp_price = price_levels(float(price), side, stop_pips, target_pips, get_pip_size(symbol))
+        m3.metric("Stop", f"{stop_price:.{dec}f}", f"-${out['loss_usd']:,.0f}")
+        m4.metric("Kâr Al", f"{tp_price:.{dec}f}", f"+${out['profit_usd']:,.0f}")
+    else:
+        m3.metric("Stop", f"{stop_pips:.1f} pip", f"-${out['loss_usd']:,.0f}")
+        m4.metric("Kâr Al", f"{target_pips:.1f} pip", f"+${out['profit_usd']:,.0f}")
+    if too_small:
+        st.warning(f"En küçük lot (0.01) bile stopta bakiyenin %{out['loss_pct']:.1f} kadarını riske atıyor.")
+
+
+def render_summary_page(
+    symbol: str,
+    intraday_fig: go.Figure,
+    opportunity: dict,
+    scan_all,
+    lot_kwargs: dict,
+) -> None:
+    """Fırsat Akışı, Pariteler, ML, 24 saatlik radar ve lot hesabının tek sayfalık sade özeti.
+
+    Tarama sonuçları detay sekmeleriyle aynı oturum anahtarlarını kullanır; hangisinde
+    taranırsa taransın iki yerde de görünür.
+    """
+    button_col, time_col = st.columns([3, 1], vertical_alignment="center")
+    if button_col.button("🔄 Hepsini Tara", type="primary", use_container_width=True, key="summary_scan_all"):
+        with st.spinner("ML, fırsatlar ve pariteler sırayla taranıyor (birkaç dakika sürebilir)..."):
+            scan_all()
+        st.session_state["summary_scanned_at"] = pd.Timestamp.now(tz=TR_TZ)
+    scanned_at = st.session_state.get("summary_scanned_at")
+    time_col.caption(f"Son tarama: {scanned_at:%H:%M}" if scanned_at is not None else "Henüz taranmadı")
+
+    render_summary_market(symbol, intraday_fig, opportunity)
+    st.divider()
+    render_summary_opportunities(st.session_state.get("scanner_df"))
+    st.divider()
+    pairs_col, ml_col = st.columns(2, gap="large")
+    with pairs_col:
+        render_summary_pairs(st.session_state.get("alert_board_df"))
+    with ml_col:
+        render_summary_ml(st.session_state.get("ml_prediction_df"))
+    st.divider()
+    render_summary_lot(symbol=symbol, **lot_kwargs)
 
 
 # =============================================================================
@@ -7126,9 +7378,63 @@ intraday_opportunity = apply_opportunity_cooldown(
     cooldown_bars=16,
 )
 
-tab_signal, tab_lot, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
-    ["📊 Sinyal", "🧮 Lot Hesaplayıcı", "🔥 Fırsat Akışı", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
+tab_summary, tab_signal, tab_lot, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
+    ["📋 Özet", "📊 Sinyal", "🧮 Lot Hesaplayıcı", "🔥 Fırsat Akışı", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
 )
+
+_alert_filter_kwargs = dict(
+    market_structure_enabled=bool(market_structure_enabled),
+    entry_model=entry_model,
+    rsi_regime_enabled=bool(rsi_regime_enabled),
+    rsi_divergence_filter_enabled=bool(rsi_divergence_filter_enabled),
+    bb_extreme_volatility_block=bool(bb_extreme_volatility_block),
+    macd_confirmation_enabled=bool(macd_confirmation_enabled),
+    macd_divergence_filter_enabled=bool(macd_divergence_filter_enabled),
+)
+
+
+def scan_everything_for_summary() -> None:
+    """Özet sayfasının tek butonu: detay sekmelerindeki üç taramayı aynı ayarlarla çalıştırır."""
+    if SKLEARN_AVAILABLE:
+        run_ml_scan()
+    run_feed_scan(
+        SYMBOL_LIST,
+        change_window_minutes,
+        include_backtest=False,
+        include_volatility=SKLEARN_AVAILABLE,
+        scanner_kwargs=_scanner_common_kwargs,
+    )
+    alert_symbols = alert_group_symbols(alert_groups)
+    if alert_symbols:
+        run_alert_board_scan(
+            alert_symbols,
+            change_window_minutes,
+            alert_entry_tf,
+            float(signal_threshold),
+            webhook_url=webhook_url,
+            daily_status=current_daily_status,
+            **_alert_filter_kwargs,
+        )
+
+
+with tab_summary:
+    render_summary_page(
+        symbol=symbol,
+        intraday_fig=intraday_fig,
+        opportunity=intraday_opportunity,
+        scan_all=scan_everything_for_summary,
+        lot_kwargs=dict(
+            price=price,
+            account_size=float(account_size),
+            risk_pct=float(risk_pct),
+            rr=float(rr),
+            atr_mult=float(atr_mult),
+            pip_value_per_lot=float(pip_value_per_lot),
+            cost_pips=float(spread_pips),
+            setup=preview_setup,
+            tf_name=selected_tf,
+        ),
+    )
 
 with tab_lot:
     render_lot_calculator(
@@ -7170,20 +7476,13 @@ with tab_feed:
             run_scanner_requested = st.button("15M + 5M Fırsatlarını Hesapla", type="primary", use_container_width=True)
         if run_scanner_requested:
             with st.spinner("Parite tarayıcı çalışıyor (15 Dakika + 5 Dakika)..."):
-                scan_result = run_symbol_scanner_multi_tf(
-                    symbols=SYMBOL_LIST[:int(scanner_limit)],
-                    tf_list=["15 Dakika", "5 Dakika"],
-                    change_window_minutes=change_window_minutes,
+                run_feed_scan(
+                    SYMBOL_LIST[:int(scanner_limit)],
+                    change_window_minutes,
                     include_backtest=scanner_include_backtest,
-                    **_scanner_common_kwargs,
+                    include_volatility=scanner_include_volatility,
+                    scanner_kwargs=_scanner_common_kwargs,
                 )
-            if scanner_include_volatility and not scan_result.empty:
-                volatility_views = scan_volatility_views(scan_result["Sembol"].unique())
-                scan_result.insert(
-                    2, "72s Oynaklık",
-                    scan_result["Sembol"].map(lambda s: volatility_badge(volatility_views[s]) if s in volatility_views else "-"),
-                )
-            st.session_state["scanner_df"] = scan_result
         render_opportunity_feed(st.session_state.get("scanner_df"), news_events)
         with st.expander("Tüm tarama tablosu", expanded=False):
             if isinstance(st.session_state.get("scanner_df"), pd.DataFrame) and not st.session_state["scanner_df"].empty:
