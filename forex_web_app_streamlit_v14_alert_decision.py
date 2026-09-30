@@ -85,6 +85,7 @@ from forex_costs import (
     load_spread_profile,
     measured_spread_pips,
 )
+from forex_calendar import fetch_calendar
 from forex_lot_calculator import (
     MIN_LOT,
     ceil_lot,
@@ -561,8 +562,8 @@ st.markdown(
         .opportunity-title { font-size:1.45rem; font-weight:950; margin:4px 0 8px 0; }
         .opportunity-score { font-size:2rem; font-weight:950; line-height:1; margin:10px 0; }
         .opportunity-line { margin-top:8px; font-size:.92rem; }
-        /* Yeni Streamlit sürümleri pill'leri tek satırda yatay kaydırıyor; alt satıra geçsinler. */
-        [class*="st-key-pick_"] [data-testid="stButtonGroup"] > div { flex-wrap: wrap !important; overflow-x: visible !important; }
+        /* Yeni Streamlit sürümleri pill/segment butonlarını tek satırda yatay kaydırıyor; alt satıra geçsinler. */
+        [data-testid="stButtonGroup"] > div { flex-wrap: wrap !important; overflow-x: visible !important; }
         [class*="st-key-pick_long"] button *, [class*="st-key-pick_short"] button * { font-weight: 800 !important; }
         [class*="st-key-pick_long"] button { background: var(--fa-success-bg) !important; border-color: var(--fa-success-border) !important; }
         [class*="st-key-pick_short"] button { background: var(--fa-danger-bg) !important; border-color: var(--fa-danger-border) !important; }
@@ -6435,6 +6436,98 @@ def render_summary_lot(
         )
 
 
+CALENDAR_IMPACT_LABELS = {3: "🔴 Yüksek", 2: "🟠 Orta", 1: "🟡 Düşük", 0: "⚪ Tatil"}
+CALENDAR_DAYS = ["Dün", "Bugün", "Yarın", "Bu hafta"]
+CALENDAR_CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "NZD", "CHF"]
+CALENDAR_TIME_LABELS = {"All Day": "Tüm gün", "Tentative": "Belirsiz"}
+TR_WEEKDAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cached_calendar() -> tuple[pd.DataFrame, bool, pd.Timestamp]:
+    """10 dakikada bir kendiliğinden yenilenir; Yenile butonu önbelleği hemen boşaltır."""
+    events, with_actuals = fetch_calendar()
+    return events, with_actuals, pd.Timestamp.now(tz=TR_TZ)
+
+
+def calendar_day_window(choice: str, now: pd.Timestamp) -> tuple[pd.Timestamp, pd.Timestamp]:
+    """Seçilen günün İstanbul saatine göre [başlangıç, bitiş) aralığı; 'Bu hafta' pazartesiden başlar."""
+    today = now.normalize()
+    if choice == "Bu hafta":
+        monday = today - pd.Timedelta(days=today.weekday())
+        return monday, monday + pd.Timedelta(days=7)
+    start = today + pd.Timedelta(days={"Dün": -1, "Bugün": 0, "Yarın": 1}[choice])
+    return start, start + pd.Timedelta(days=1)
+
+
+def render_calendar_page() -> None:
+    """ForexFactory takvimi: önem, açıklanan, beklenti, önceki (research/calendar_sources/REPORT.md)."""
+    refresh_col, time_col = st.columns([1, 4], vertical_alignment="center")
+    if refresh_col.button("🔄 Yenile", use_container_width=True, key="calendar_refresh"):
+        cached_calendar.clear()
+    try:
+        events, with_actuals, fetched_at = cached_calendar()
+    except Exception:
+        st.error("Ekonomik takvim şu an alınamadı. Birazdan tekrar dene.")
+        return
+
+    time_col.caption(f"Son güncelleme: {fetched_at:%H:%M} · 10 dakikada bir kendiliğinden yenilenir.")
+
+    c1, c2, c3 = st.columns([1.7, 1.6, 1.7])
+    with c1:
+        day_choice = st.segmented_control("Gün", CALENDAR_DAYS, default="Bugün", key="calendar_day") or "Bugün"
+    with c2:
+        impacts = st.pills(
+            "Önem", [3, 2, 1, 0], selection_mode="multi", default=[3, 2],
+            format_func=CALENDAR_IMPACT_LABELS.get, key="calendar_impact",
+        ) or [3, 2, 1, 0]
+    available = sorted(events["currency"].dropna().unique())
+    currencies = c3.multiselect(
+        "Para birimi", available, default=[c for c in CALENDAR_CURRENCIES if c in available], key="calendar_currency",
+    ) or available
+
+    now = pd.Timestamp.now(tz=TR_TZ)
+    start, end = calendar_day_window(day_choice, now)
+    local_time = events["time"].dt.tz_convert(TR_TZ)
+    shown = events[
+        (local_time >= start) & (local_time < end) & events["impact"].isin(impacts) & events["currency"].isin(currencies)
+    ].copy()
+    if shown.empty:
+        st.info("Bu seçimde haber yok.")
+        return
+
+    shown_local = shown["time"].dt.tz_convert(TR_TZ)
+    upcoming = shown[shown["time"] > now]
+    next_id = upcoming.index[0] if not upcoming.empty else None
+    times = [
+        CALENDAR_TIME_LABELS.get(label, label) if label else ("▶ " if idx == next_id else "") + t.strftime("%H:%M")
+        for idx, label, t in zip(shown.index, shown["time_label"], shown_local)
+    ]
+    table = pd.DataFrame({"Saat": times})
+    if day_choice == "Bu hafta":
+        table.insert(0, "Gün", [f"{t:%d.%m} {TR_WEEKDAYS[t.weekday()]}" for t in shown_local])
+    table["Para Birimi"] = shown["currency"].to_numpy()
+    table["Önem"] = shown["impact"].map(CALENDAR_IMPACT_LABELS).to_numpy()
+    table["Olay"] = shown["event"].to_numpy()
+    table["Açıklanan"] = shown["actual"].to_numpy()
+    table["Beklenti"] = shown["forecast"].to_numpy()
+    table["Önceki"] = shown["previous"].to_numpy()
+
+    outcome_colors = {"better": "color: #147A47; font-weight: 800", "worse": "color: #C0392B; font-weight: 800"}
+    actual_css = [outcome_colors.get(o, "") for o in shown["outcome"]]
+    styled = table.style.apply(lambda _: actual_css, subset=["Açıklanan"], axis=0)
+    st.dataframe(styled, hide_index=True, use_container_width=True, height=min(35 * (len(table) + 1) + 3, 720))
+
+    notes = "Kaynak: ForexFactory · İstanbul saati · Açıklanan yeşil: beklentiden iyi, kırmızı: kötü · ▶ sıradaki haber."
+    if not with_actuals:
+        notes += " Açıklanan değerler şu an alınamıyor (yedek kaynak kullanılıyor)."
+    st.caption(notes)
+    st.caption(
+        "Neden ForexFactory: 2 yıllık testte hiçbir ücretsiz takvimin (Investing, FXStreet, Nasdaq) beklentisi "
+        "daha isabetli çıkmadı; beklentisi en geniş kaynak ForexFactory."
+    )
+
+
 def render_summary_page(
     symbol: str,
     intraday_fig: go.Figure,
@@ -7462,9 +7555,12 @@ intraday_opportunity = apply_opportunity_cooldown(
     cooldown_bars=16,
 )
 
-tab_summary, tab_signal, tab_lot, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
-    ["📋 Özet", "📊 Sinyal", "🧮 Lot Hesaplayıcı", "🔥 Fırsat Akışı", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
+tab_summary, tab_calendar, tab_signal, tab_lot, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
+    ["📋 Özet", "📅 Takvim", "📊 Sinyal", "🧮 Lot Hesaplayıcı", "🔥 Fırsat Akışı", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
 )
+
+with tab_calendar:
+    render_calendar_page()
 
 _alert_filter_kwargs = dict(
     market_structure_enabled=bool(market_structure_enabled),

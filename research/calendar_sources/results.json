@@ -1,0 +1,517 @@
+{
+  "primary_high": {
+    "events": 1056,
+    "coverage": {
+      "forexfactory": 0.9810606060606061,
+      "fxstreet": 0.7869318181818182,
+      "nasdaq": 0.3816287878787879
+    },
+    "mean_scaled_error_on_own_coverage": {
+      "forexfactory": 1.0741779000534257,
+      "fxstreet": 1.0707754025126661,
+      "nasdaq": 1.1207074322310093
+    },
+    "pairs": [
+      {
+        "a": "forexfactory",
+        "b": "fxstreet",
+        "n": 831,
+        "a_closer": 170,
+        "tie": 534,
+        "b_closer": 127,
+        "sign_p": 0.014667449113253694,
+        "mean_scaled_a": 1.0618058497046305,
+        "mean_scaled_b": 1.0707754025126661,
+        "diff_ci_low": -0.035713583694752936,
+        "diff_ci_high": 0.01796638796767985,
+        "sign_p_holm": 0.04400234733976108
+      },
+      {
+        "a": "forexfactory",
+        "b": "nasdaq",
+        "n": 400,
+        "a_closer": 7,
+        "tie": 385,
+        "b_closer": 8,
+        "sign_p": 1.0,
+        "mean_scaled_a": 1.1151510789319012,
+        "mean_scaled_b": 1.1201127379727418,
+        "diff_ci_low": -0.016889430164012658,
+        "diff_ci_high": 0.006949180184463367,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "fxstreet",
+        "b": "nasdaq",
+        "n": 324,
+        "a_closer": 48,
+        "tie": 216,
+        "b_closer": 60,
+        "sign_p": 0.2897982154050616,
+        "mean_scaled_a": 1.1116584721777383,
+        "mean_scaled_b": 1.1093644484281313,
+        "diff_ci_low": -0.037732047833360094,
+        "diff_ci_high": 0.040055142122478196,
+        "sign_p_holm": 0.5795964308101232
+      }
+    ],
+    "match_rate": {
+      "forexfactory": 1.0,
+      "fxstreet": 0.8191287878787878,
+      "nasdaq": 0.38636363636363635
+    },
+    "by_currency_mean_scaled": {
+      "AUD": {
+        "forexfactory": 0.948492529923363,
+        "fxstreet": 0.9912775236676962,
+        "nasdaq": 1.0266167226384237
+      },
+      "CAD": {
+        "forexfactory": 1.1073053078556252,
+        "fxstreet": 1.2004599388379187,
+        "nasdaq": 1.061763742690058
+      },
+      "CHF": {
+        "forexfactory": 0.8823529411764706,
+        "fxstreet": 0.8823529411764706,
+        "nasdaq": 0.8571428571428571
+      },
+      "EUR": {
+        "forexfactory": 0.9792078234802686,
+        "fxstreet": 0.06249999999999998,
+        "nasdaq": 0.9133771929824563
+      },
+      "GBP": {
+        "forexfactory": 1.0882260101010102,
+        "fxstreet": 1.1157407407407405,
+        "nasdaq": 1.1496337964361218
+      },
+      "NZD": {
+        "forexfactory": 0.8173913043478251,
+        "fxstreet": 0.7733333333333324,
+        "nasdaq": 0.7466666666666656
+      },
+      "USD": {
+        "forexfactory": 1.1349707846947004,
+        "fxstreet": 1.1300413976818104,
+        "nasdaq": 1.2118254819683496
+      }
+    },
+    "best_source": null
+  },
+  "side_investing_window_high": {
+    "events": 144,
+    "coverage": {
+      "investing": 0.8055555555555556,
+      "forexfactory": 0.9930555555555556,
+      "fxstreet": 0.7569444444444444,
+      "nasdaq": 0.3263888888888889
+    },
+    "mean_scaled_error_on_own_coverage": {
+      "investing": 0.6916554482406099,
+      "forexfactory": 0.7455527570443209,
+      "fxstreet": 0.7205145585812088,
+      "nasdaq": 0.7090346823810988
+    },
+    "pairs": [
+      {
+        "a": "investing",
+        "b": "forexfactory",
+        "n": 116,
+        "a_closer": 7,
+        "tie": 105,
+        "b_closer": 4,
+        "sign_p": 0.548828125,
+        "mean_scaled_a": 0.6916554482406098,
+        "mean_scaled_b": 0.7001873052372504,
+        "diff_ci_low": -0.027656021577682696,
+        "diff_ci_high": 0.003073065894989489,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "investing",
+        "b": "fxstreet",
+        "n": 108,
+        "a_closer": 21,
+        "tie": 73,
+        "b_closer": 14,
+        "sign_p": 0.31050465907901537,
+        "mean_scaled_a": 0.6947647786895819,
+        "mean_scaled_b": 0.7210131501730102,
+        "diff_ci_low": -0.08132275459543528,
+        "diff_ci_high": 0.02339343723975508,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "investing",
+        "b": "nasdaq",
+        "n": 47,
+        "a_closer": 0,
+        "tie": 47,
+        "b_closer": 0,
+        "sign_p": 1.0,
+        "mean_scaled_a": 0.7090346823810988,
+        "mean_scaled_b": 0.7090346823810988,
+        "diff_ci_low": 0.0,
+        "diff_ci_high": 0.0,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "forexfactory",
+        "b": "fxstreet",
+        "n": 109,
+        "a_closer": 21,
+        "tie": 69,
+        "b_closer": 19,
+        "sign_p": 0.8746293123804207,
+        "mean_scaled_a": 0.7097029802148486,
+        "mean_scaled_b": 0.7205145585812087,
+        "diff_ci_low": -0.06731104566727372,
+        "diff_ci_high": 0.04045398485004227,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "forexfactory",
+        "b": "nasdaq",
+        "n": 47,
+        "a_closer": 1,
+        "tie": 43,
+        "b_closer": 3,
+        "sign_p": 0.625,
+        "mean_scaled_a": 0.7087343820807984,
+        "mean_scaled_b": 0.7090346823810988,
+        "diff_ci_low": -0.007668779891002135,
+        "diff_ci_high": 0.007777979198710889,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "fxstreet",
+        "b": "nasdaq",
+        "n": 42,
+        "a_closer": 6,
+        "tie": 25,
+        "b_closer": 11,
+        "sign_p": 0.332305908203125,
+        "mean_scaled_a": 0.819530292833865,
+        "mean_scaled_b": 0.743077272774453,
+        "diff_ci_low": -0.022594378773371265,
+        "diff_ci_high": 0.18600751982824337,
+        "sign_p_holm": 1.0
+      }
+    ],
+    "match_rate": {
+      "investing": 0.8055555555555556,
+      "forexfactory": 1.0,
+      "fxstreet": 0.7708333333333334,
+      "nasdaq": 0.3263888888888889
+    },
+    "by_currency_mean_scaled": {
+      "AUD": {
+        "investing": 1.1176677946982498,
+        "forexfactory": 1.1059010152284248,
+        "fxstreet": 0.9443104906937378,
+        "nasdaq": 1.024904822335025
+      },
+      "CAD": {
+        "investing": 0.5442804262680048,
+        "forexfactory": 0.7048409561453047,
+        "fxstreet": 0.6083061463496257,
+        "nasdaq": 0.49265951439864586
+      },
+      "CHF": {
+        "investing": 0.5,
+        "forexfactory": 0.5,
+        "fxstreet": 0.5,
+        "nasdaq": 0.5000000000000001
+      },
+      "EUR": {
+        "investing": 0.040000000000000015,
+        "forexfactory": 0.6550778388278384,
+        "fxstreet": 0.24999999999999992,
+        "nasdaq": 0.05000000000000002
+      },
+      "GBP": {
+        "investing": 0.994671201814059,
+        "forexfactory": 0.9477045177045171,
+        "fxstreet": 0.994671201814059,
+        "nasdaq": 0.7249999999999999
+      },
+      "NZD": {
+        "investing": 0.4351851851851852,
+        "forexfactory": 0.4351851851851852,
+        "fxstreet": 0.39351851851851855,
+        "nasdaq": 0.25
+      },
+      "USD": {
+        "investing": 0.7018706132542184,
+        "forexfactory": 0.7096234606219746,
+        "fxstreet": 0.7424416039925614,
+        "nasdaq": 0.8996119631732056
+      }
+    },
+    "best_source": null
+  },
+  "secondary_medium": {
+    "events": 754,
+    "coverage": {
+      "forexfactory": 0.9549071618037135,
+      "fxstreet": 0.6923076923076923,
+      "nasdaq": 0.3063660477453581
+    },
+    "mean_scaled_error_on_own_coverage": {
+      "forexfactory": 1.2043630167901727,
+      "fxstreet": 1.1927746959598418,
+      "nasdaq": 1.1721145528096049
+    },
+    "pairs": [
+      {
+        "a": "forexfactory",
+        "b": "fxstreet",
+        "n": 521,
+        "a_closer": 152,
+        "tie": 242,
+        "b_closer": 127,
+        "sign_p": 0.15063314469077432,
+        "mean_scaled_a": 1.1701152616205182,
+        "mean_scaled_b": 1.1911786600744187,
+        "diff_ci_low": -0.053769776862830514,
+        "diff_ci_high": 0.013390145780609044,
+        "sign_p_holm": 0.45189943407232297
+      },
+      {
+        "a": "forexfactory",
+        "b": "nasdaq",
+        "n": 228,
+        "a_closer": 6,
+        "tie": 210,
+        "b_closer": 12,
+        "sign_p": 0.237884521484375,
+        "mean_scaled_a": 1.1191161829395753,
+        "mean_scaled_b": 1.1656072881535908,
+        "diff_ci_low": -0.17529668606798907,
+        "diff_ci_high": 0.022065639411006283,
+        "sign_p_holm": 0.45189943407232297
+      },
+      {
+        "a": "fxstreet",
+        "b": "nasdaq",
+        "n": 181,
+        "a_closer": 42,
+        "tie": 83,
+        "b_closer": 56,
+        "sign_p": 0.18884671980890225,
+        "mean_scaled_a": 1.1676444951527982,
+        "mean_scaled_b": 1.1840379178984186,
+        "diff_ci_low": -0.1651798146529487,
+        "diff_ci_high": 0.08018450104988342,
+        "sign_p_holm": 0.45189943407232297
+      }
+    ],
+    "match_rate": {
+      "forexfactory": 1.0,
+      "fxstreet": 0.7599469496021221,
+      "nasdaq": 0.3076923076923077
+    },
+    "by_currency_mean_scaled": {
+      "AUD": {
+        "forexfactory": 1.3636363636363635,
+        "fxstreet": 1.4545454545454546,
+        "nasdaq": 0.9
+      },
+      "CAD": {
+        "forexfactory": 1.1577812018489984,
+        "fxstreet": 1.165694915254237,
+        "nasdaq": 1.6947740112994343
+      },
+      "CHF": {
+        "forexfactory": 0.9393939393939394,
+        "fxstreet": 1.0303030303030305,
+        "nasdaq": 1.1111111111111114
+      },
+      "EUR": {
+        "forexfactory": 1.0362466721999315,
+        "fxstreet": 0.9697646554625123,
+        "nasdaq": 0.9561959089756432
+      },
+      "GBP": {
+        "forexfactory": 1.3125533788245642,
+        "fxstreet": 1.0186948824705748,
+        "nasdaq": 0.69711172604635
+      },
+      "JPY": {
+        "forexfactory": 1.282608695652172,
+        "fxstreet": 1.194444444444443,
+        "nasdaq": 1.07142857142857
+      },
+      "NZD": {
+        "forexfactory": 1.6000000000000003,
+        "fxstreet": 1.5466666666666666,
+        "nasdaq": 2.1333333333333333
+      },
+      "USD": {
+        "forexfactory": 1.2669795945040256,
+        "fxstreet": 1.287083232927051,
+        "nasdaq": 1.284201168126874
+      }
+    },
+    "best_source": null
+  },
+  "side_investing_window_medium": {
+    "events": 93,
+    "coverage": {
+      "investing": 0.7526881720430108,
+      "forexfactory": 0.967741935483871,
+      "fxstreet": 0.6451612903225806,
+      "nasdaq": 0.3225806451612903
+    },
+    "mean_scaled_error_on_own_coverage": {
+      "investing": 0.8930976298070539,
+      "forexfactory": 0.8818963405942881,
+      "fxstreet": 0.9118909572705861,
+      "nasdaq": 0.9939652253805356
+    },
+    "pairs": [
+      {
+        "a": "investing",
+        "b": "forexfactory",
+        "n": 67,
+        "a_closer": 5,
+        "tie": 55,
+        "b_closer": 7,
+        "sign_p": 0.7744140625,
+        "mean_scaled_a": 0.9082114540272703,
+        "mean_scaled_b": 0.8924019052797795,
+        "diff_ci_low": -0.007919603653181626,
+        "diff_ci_high": 0.04491752056282072,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "investing",
+        "b": "fxstreet",
+        "n": 58,
+        "a_closer": 22,
+        "tie": 20,
+        "b_closer": 16,
+        "sign_p": 0.417692190836533,
+        "mean_scaled_a": 0.9104574320032884,
+        "mean_scaled_b": 0.8993853498858281,
+        "diff_ci_low": -0.039871079404358946,
+        "diff_ci_high": 0.06122542934252637,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "investing",
+        "b": "nasdaq",
+        "n": 30,
+        "a_closer": 0,
+        "tie": 30,
+        "b_closer": 0,
+        "sign_p": 1.0,
+        "mean_scaled_a": 0.9939652253805357,
+        "mean_scaled_b": 0.9939652253805357,
+        "diff_ci_low": 0.0,
+        "diff_ci_high": 0.0,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "forexfactory",
+        "b": "fxstreet",
+        "n": 60,
+        "a_closer": 25,
+        "tie": 17,
+        "b_closer": 18,
+        "sign_p": 0.3603776529357674,
+        "mean_scaled_a": 0.9073149738827665,
+        "mean_scaled_b": 0.9118909572705861,
+        "diff_ci_low": -0.044760675886005324,
+        "diff_ci_high": 0.039388882697893854,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "forexfactory",
+        "b": "nasdaq",
+        "n": 29,
+        "a_closer": 4,
+        "tie": 23,
+        "b_closer": 2,
+        "sign_p": 0.6875,
+        "mean_scaled_a": 0.9940898580766584,
+        "mean_scaled_b": 1.0052513825775657,
+        "diff_ci_low": -0.027571491228069882,
+        "diff_ci_high": 0.00011732456140350877,
+        "sign_p_holm": 1.0
+      },
+      {
+        "a": "fxstreet",
+        "b": "nasdaq",
+        "n": 26,
+        "a_closer": 9,
+        "tie": 7,
+        "b_closer": 10,
+        "sign_p": 1.0,
+        "mean_scaled_a": 1.1148089593244679,
+        "mean_scaled_b": 1.1007291062083104,
+        "diff_ci_low": -0.038589285287652486,
+        "diff_ci_high": 0.06733307329060513,
+        "sign_p_holm": 1.0
+      }
+    ],
+    "match_rate": {
+      "investing": 0.7526881720430108,
+      "forexfactory": 1.0,
+      "fxstreet": 0.7204301075268817,
+      "nasdaq": 0.3225806451612903
+    },
+    "by_currency_mean_scaled": {
+      "AUD": {
+        "investing": 0.38888888888888884,
+        "forexfactory": 0.38888888888888884,
+        "fxstreet": 0.4444444444444444,
+        "nasdaq": 0.3333333333333333
+      },
+      "CAD": {
+        "investing": 1.318181818181819,
+        "forexfactory": 1.2121212121212126,
+        "fxstreet": 1.681818181818181,
+        "nasdaq": 1.272727272727273
+      },
+      "CHF": {
+        "investing": 0.0,
+        "forexfactory": 0.0,
+        "fxstreet": 0.0,
+        "nasdaq": NaN
+      },
+      "EUR": {
+        "investing": 0.5064926372155283,
+        "forexfactory": 0.6120936125454193,
+        "fxstreet": 0.4890896921017398,
+        "nasdaq": 0.4679049531459186
+      },
+      "GBP": {
+        "investing": 0.5500000000000003,
+        "forexfactory": 0.6492610837438421,
+        "fxstreet": 0.35000000000000003,
+        "nasdaq": 0.0
+      },
+      "JPY": {
+        "investing": 0.5000000000000004,
+        "forexfactory": 0.5000000000000004,
+        "fxstreet": 0.3333333333333336,
+        "nasdaq": 0.3333333333333336
+      },
+      "NZD": {
+        "investing": 0.3636363636363637,
+        "forexfactory": 0.3636363636363637,
+        "fxstreet": NaN,
+        "nasdaq": NaN
+      },
+      "USD": {
+        "investing": 1.0544194980290706,
+        "forexfactory": 1.0227650919170748,
+        "fxstreet": 1.1126219867926856,
+        "nasdaq": 1.1778674160338658
+      }
+    },
+    "best_source": null
+  }
+}

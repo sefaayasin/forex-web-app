@@ -1,0 +1,46 @@
+{
+  "question": "Which free economic-calendar source's forecast (consensus) lands closest to the released value?",
+  "written_before_results": "2026-09-30",
+  "period_utc": [
+    "2024-10-01",
+    "2026-09-29"
+  ],
+  "currencies": [
+    "USD",
+    "EUR",
+    "GBP",
+    "JPY",
+    "CAD",
+    "AUD",
+    "NZD",
+    "CHF"
+  ],
+  "sources": {
+    "investing": "investing.com economic calendar (getCalendarFilteredData, timeZone 55 = UTC), fetched from a browser session because plain HTTP is blocked",
+    "forexfactory": "forexfactory.com weekly calendar page, embedded calendarComponentStates JSON (dateline = UTC epoch)",
+    "fxstreet": "calendar-api.fxstreet.com eventDates (dateUtc, potency multiplier)",
+    "nasdaq": "api.nasdaq.com economicevents; the 'gmt' column is New York time and date=D returns D-1's releases"
+  },
+  "reference_events": "ForexFactory events in the period and currencies above with a numeric actual. Primary set: FF impact 'high'. Secondary set: FF impact 'medium'. Events other sources list but ForexFactory does not are out of scope.",
+  "value_parsing": "Strip commas, %, currency signs; K=1e3, M=1e6, B=1e9, T=1e12; FXStreet values are multiplied by their potency (K, M, B, T). Non-numeric values are missing.",
+  "matching": "A source row matches a reference event when the currency is the same, the release time is within 5 minutes, and the numeric actuals agree (relative difference <= 0.5% or absolute difference <= 1e-9). When several rows qualify, the one with the highest event-name token similarity wins. Each source row can match at most one reference event.",
+  "error": "Per source and event: absolute error |actual - forecast| using that source's own actual and forecast. Scaled error = absolute error / scale, where scale is the median, over all releases of the same ForexFactory series (ebaseId), of the median-across-sources absolute error; series whose scale is 0 or that have fewer than 6 releases use the median absolute change actual-minus-previous of that series instead; series where both are 0 are dropped.",
+  "comparisons": [
+    "Coverage: share of reference events where the source has a matched row with a numeric forecast.",
+    "Head-to-head for each source pair on events both forecast: closer / tie (equal absolute error) / farther. Sign test on non-tied events, two-sided, Holm-corrected over the 6 pairs.",
+    "Mean scaled error for each pair on common events, with a 95% bootstrap interval of the difference, resampling release days (5000 draws, seed 7)."
+  ],
+  "decision_rule": "A source is called the best only if, on the primary set, it has the lowest mean scaled error and it beats every other source both in the Holm-corrected sign test (p < 0.05) and with a bootstrap interval of the mean scaled error difference entirely below 0. Otherwise the report states that no source is reliably better, and ranks them by coverage and mean scaled error as description only.",
+  "amendments": [
+    {
+      "date": "2026-09-30",
+      "before_results": true,
+      "change": "investing.com rate-limited the download (HTTP 429 after a few requests). From the week of 2024-11-18 on, Investing rows are fetched with its importance filter set to medium + high (2-3 bulls); the first 7 weeks were fetched unfiltered. A ForexFactory high/medium event that Investing rates low importance therefore counts as not covered by Investing; its coverage figure is a lower bound, while the head-to-head comparisons are unaffected."
+    },
+    {
+      "date": "2026-09-30",
+      "before_results": true,
+      "change": "investing.com kept blocking the download (HTTP 429/403) and the user agreed to drop it. The main comparison and the decision rule use the other three sources (forexfactory, fxstreet, nasdaq). The 12 downloaded Investing weeks (2024-09-30 to 2024-12-16) are reported separately as a short-window side comparison of all four sources, description only."
+    }
+  ]
+}
