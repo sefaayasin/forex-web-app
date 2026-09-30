@@ -6348,11 +6348,18 @@ def render_summary_ml(predictions: Optional[pd.DataFrame]) -> None:
     st.caption("Yön modeli zayıf (≈%52 isabet), tek başına işlem sinyali değil.")
 
 
+def usd_text(amount: float) -> str:
+    """Küçük tutarları kuruşuyla (2,23 $ gibi), büyükleri tam dolar gösterir."""
+    return f"${amount:,.2f}" if abs(amount) < 100 else f"${amount:,.0f}"
+
+
+SUMMARY_PROFIT_TARGETS = [25, 50, 100, 200, 500]
+
+
 def render_summary_lot(
     symbol: str,
     price: Optional[float],
     account_size: float,
-    risk_pct: float,
     rr: float,
     atr_mult: float,
     pip_value_per_lot: float,
@@ -6360,33 +6367,44 @@ def render_summary_lot(
     setup: Optional[TradeSetup],
     tf_name: str,
 ) -> None:
+    """Seçilen dolar kârı için lot; stop teknik plandan gelir, stoptaki kayıp riske göre renklenir."""
     st.markdown(f"#### 🧮 Lot · {symbol.replace('=X', '')}")
     default_side, default_stop, default_target, _ = default_lot_plan(symbol, setup, tf_name, atr_mult, rr)
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4 = st.columns([1, 1.6, 1, 1])
     balance = c1.number_input("Bakiye ($)", min_value=10.0, value=float(account_size), step=100.0, key="summary_lot_balance")
-    calc_risk = c2.number_input("Risk (%)", min_value=0.1, max_value=20.0, value=float(risk_pct), step=0.1, key="summary_lot_risk")
+    with c2:
+        wanted_usd = st.segmented_control(
+            "Kâr hedefi", SUMMARY_PROFIT_TARGETS, default=50, format_func=lambda v: f"${v}", key="summary_lot_target",
+        ) or 50
     stop_pips = c3.number_input("Stop (pip)", min_value=0.1, value=default_stop, step=1.0, key=f"summary_lot_stop_{symbol}_{default_stop}")
     side = c4.selectbox("Yön", ["LONG", "SHORT"], index=0 if default_side == "LONG" else 1, key=f"summary_lot_side_{symbol}_{default_side}")
     target_pips = stop_pips * default_target / default_stop
 
-    lot = floor_lot(lot_for_risk(balance, calc_risk, stop_pips, cost_pips, pip_value_per_lot))
-    too_small = lot < MIN_LOT
-    lot = max(lot, MIN_LOT)
+    needed = lot_for_profit(float(wanted_usd), target_pips, cost_pips, pip_value_per_lot)
+    if needed is None:
+        st.warning("Kâr al mesafesi işlem maliyetini karşılamıyor; stopu büyüt.")
+        return
+    lot = max(ceil_lot(needed), MIN_LOT)
     out = trade_outcome(balance, lot, stop_pips, target_pips, cost_pips, pip_value_per_lot)
 
+    loss_text, profit_text = f"-{usd_text(out['loss_usd'])}", f"+{usd_text(out['profit_usd'])}"
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Lot", f"{lot:.2f}")
     m2.metric("1 pip", f"${out['usd_per_pip']:.2f}")
     if price is not None and price > 0:
         dec = price_decimals(symbol)
         stop_price, tp_price = price_levels(float(price), side, stop_pips, target_pips, get_pip_size(symbol))
-        m3.metric("Stop", f"{stop_price:.{dec}f}", f"-${out['loss_usd']:,.0f}")
-        m4.metric("Kâr Al", f"{tp_price:.{dec}f}", f"+${out['profit_usd']:,.0f}")
+        m3.metric("Stop Loss", f"{stop_price:.{dec}f}", loss_text)
+        m4.metric("Kâr Al", f"{tp_price:.{dec}f}", profit_text)
     else:
-        m3.metric("Stop", f"{stop_pips:.1f} pip", f"-${out['loss_usd']:,.0f}")
-        m4.metric("Kâr Al", f"{target_pips:.1f} pip", f"+${out['profit_usd']:,.0f}")
-    if too_small:
-        st.warning(f"En küçük lot (0.01) bile stopta bakiyenin %{out['loss_pct']:.1f} kadarını riske atıyor.")
+        m3.metric("Stop Loss", f"{stop_pips:.1f} pip", loss_text)
+        m4.metric("Kâr Al", f"{target_pips:.1f} pip", profit_text)
+
+    text = (
+        f"Stop olursa **{loss_text}** = bakiyenin **%{out['loss_pct']:.1f}**'i → **{out['risk_level']}** "
+        f"· stop {stop_pips:.0f} pip, kâr al {target_pips:.0f} pip"
+    )
+    {"Makul": st.success, "Dikkat": st.warning}.get(out["risk_level"], st.error)(text)
 
 
 def render_summary_page(
@@ -7463,7 +7481,6 @@ with tab_summary:
         lot_kwargs=dict(
             price=price,
             account_size=float(account_size),
-            risk_pct=float(risk_pct),
             rr=float(rr),
             atr_mult=float(atr_mult),
             pip_value_per_lot=float(pip_value_per_lot),
