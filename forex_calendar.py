@@ -30,6 +30,27 @@ OUTCOMES = {1: "better", 2: "worse"}
 COLUMNS = ["time", "currency", "impact", "event", "actual", "forecast", "previous", "outcome", "time_label"]
 
 
+def pair_directions(currency: str, outcome: Optional[str], symbols: list[str]) -> tuple[list[str], list[str]]:
+    """Pairs pushed up (LONG) and down (SHORT) when `currency` beats ('better') or misses ('worse') the forecast.
+
+    A better-than-forecast release strengthens its currency: pairs quoting it as the
+    base currency rise and pairs quoting it as the quote currency fall. This is the
+    textbook first reaction to the surprise, not a trade signal.
+    """
+    if outcome not in ("better", "worse"):
+        return [], []
+    strong = outcome == "better"
+    up, down = [], []
+    for symbol in symbols:
+        pair = symbol.replace("=X", "").upper()
+        base, quote = pair[:3], pair[3:6]
+        if currency == base:
+            (up if strong else down).append(pair)
+        elif currency == quote:
+            (down if strong else up).append(pair)
+    return up, down
+
+
 def extract_days(page: str) -> list[dict]:
     """The weekly page embeds `window.calendarComponentStates[1] = { days: [...] ...`."""
     start = page.index("days: [", page.index("window.calendarComponentStates")) + len("days: ")

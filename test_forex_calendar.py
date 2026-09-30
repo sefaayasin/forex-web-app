@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 
 import forex_calendar
-from forex_calendar import extract_days, feed_rows, fetch_calendar, rows_from_days, week_param
+from forex_calendar import extract_days, feed_rows, fetch_calendar, pair_directions, rows_from_days, week_param
 
 EVENT = {
     "id": 1, "name": "Non-Farm Employment Change", "currency": "USD", "dateline": 1788525000,
@@ -20,6 +20,15 @@ PAGE = 'x window.calendarComponentStates[1] = {\ndays: [{"date":"Fri","events":[
 
 
 class CalendarTests(unittest.TestCase):
+    def test_better_release_strengthens_its_currency(self):
+        symbols = ["EURUSD=X", "USDJPY=X", "XAUUSD=X", "EURGBP=X"]
+        self.assertEqual(pair_directions("USD", "better", symbols), (["USDJPY"], ["EURUSD", "XAUUSD"]))
+        self.assertEqual(pair_directions("USD", "worse", symbols), (["EURUSD", "XAUUSD"], ["USDJPY"]))
+        self.assertEqual(pair_directions("GBP", "better", symbols), ([], ["EURGBP"]))
+
+    def test_no_direction_without_a_surprise(self):
+        self.assertEqual(pair_directions("USD", None, ["EURUSD=X"]), ([], []))
+
     def test_week_param(self):
         self.assertEqual(week_param(date(2026, 9, 28)), "sep28.2026")
         self.assertEqual(week_param(date(2024, 10, 7)), "oct7.2024")

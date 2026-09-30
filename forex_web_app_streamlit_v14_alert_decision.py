@@ -85,7 +85,7 @@ from forex_costs import (
     load_spread_profile,
     measured_spread_pips,
 )
-from forex_calendar import fetch_calendar
+from forex_calendar import fetch_calendar, pair_directions
 from forex_lot_calculator import (
     MIN_LOT,
     ceil_lot,
@@ -6512,13 +6512,40 @@ def render_calendar_page() -> None:
     table["Açıklanan"] = shown["actual"].to_numpy()
     table["Beklenti"] = shown["forecast"].to_numpy()
     table["Önceki"] = shown["previous"].to_numpy()
+    long_cells, short_cells = [], []
+    for row in shown.itertuples():
+        up, down = pair_directions(row.currency, row.outcome, SYMBOL_LIST)
+        if up or down:
+            long_cells.append(", ".join(up))
+            short_cells.append(", ".join(down))
+            continue
+        if row.time > now:
+            mark = "⏳"
+        elif str(row.actual).strip() and str(row.forecast).strip():
+            mark = "—"
+        else:
+            mark = ""
+        long_cells.append(mark)
+        short_cells.append(mark)
+    table["📈 LONG"] = long_cells
+    table["📉 SHORT"] = short_cells
 
     outcome_colors = {"better": "color: #147A47; font-weight: 800", "worse": "color: #C0392B; font-weight: 800"}
     actual_css = [outcome_colors.get(o, "") for o in shown["outcome"]]
-    styled = table.style.apply(lambda _: actual_css, subset=["Açıklanan"], axis=0)
-    st.dataframe(styled, hide_index=True, use_container_width=True, height=min(35 * (len(table) + 1) + 3, 720))
+    styled = (
+        table.style.apply(lambda _: actual_css, subset=["Açıklanan"], axis=0)
+        .map(lambda _: outcome_colors["better"], subset=["📈 LONG"])
+        .map(lambda _: outcome_colors["worse"], subset=["📉 SHORT"])
+        .hide(axis="index")
+    )
+    # st.table metni satır içinde alta kaydırır; uzun parite listeleri yatay kaydırma olmadan sığar.
+    st.table(styled)
 
     notes = "Kaynak: ForexFactory · İstanbul saati · Açıklanan yeşil: beklentiden iyi, kırmızı: kötü · ▶ sıradaki haber."
+    notes += (
+        " LONG/SHORT: veri beklentiden iyi/kötü gelince para biriminin güçlendiği/zayıfladığı yöndeki pariteler"
+        " (ilk tepki; işlem sinyali değil). ⏳ henüz açıklanmadı · — beklentiye eşit."
+    )
     if not with_actuals:
         notes += " Açıklanan değerler şu an alınamıyor (yedek kaynak kullanılıyor)."
     st.caption(notes)
