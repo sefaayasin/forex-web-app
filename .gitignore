@@ -16,9 +16,9 @@ data/news/*
 !data/news/fomc_statements.csv
 data/ml/*_oos.csv
 data/ml/tournament/*.joblib
-!data/ml/tournament/EURUSD_direction_research.joblib
-!data/ml/tournament/EURUSD_high_volatility_research.joblib
-# Volatility models are tiny logistic regressions (~8 KB each); ship all pairs.
+# The ML page scores every pair, so the deployed app needs every pair's model.
+# Direction models are ~1 MB each (~28 MB total); volatility models ~8 KB each.
+!data/ml/tournament/*_direction_research.joblib
 !data/ml/tournament/*_high_volatility_research.joblib
 data/ml/tournament/final_predictions.csv.gz
 data/ml/tournament_rebuilt/final_predictions.csv.gz
@@ -27,3 +27,6 @@ research/meta_label/dataset.csv.gz
 research/spreads/cache/
 tick_downloader/node_modules/
 tick_downloader/cache/
+research/feed_calls/rows/
+research/feed_calls/yahoo_cache/
+research/levels/trades/
