@@ -561,16 +561,11 @@ st.markdown(
         .opportunity-title { font-size:1.45rem; font-weight:950; margin:4px 0 8px 0; }
         .opportunity-score { font-size:2rem; font-weight:950; line-height:1; margin:10px 0; }
         .opportunity-line { margin-top:8px; font-size:.92rem; }
-        .summary-chips { display:flex; flex-wrap:wrap; gap:6px; margin: 4px 0 12px 0; }
-        .summary-chip {
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: 1px solid var(--fa-border);
-            font-size: .86rem;
-            font-weight: 800;
-        }
-        .summary-chip-long { background: var(--fa-success-bg); border-color: var(--fa-success-border); color: var(--fa-success-text) !important; }
-        .summary-chip-short { background: var(--fa-danger-bg); border-color: var(--fa-danger-border); color: var(--fa-danger-text) !important; }
+        [class*="st-key-pick_long"] button *, [class*="st-key-pick_short"] button * { font-weight: 800 !important; }
+        [class*="st-key-pick_long"] button { background: var(--fa-success-bg) !important; border-color: var(--fa-success-border) !important; }
+        [class*="st-key-pick_short"] button { background: var(--fa-danger-bg) !important; border-color: var(--fa-danger-border) !important; }
+        [class*="st-key-pick_long"] button, [class*="st-key-pick_long"] button * { color: var(--fa-success-text) !important; }
+        [class*="st-key-pick_short"] button, [class*="st-key-pick_short"] button * { color: var(--fa-danger-text) !important; }
 
         @media (max-width: 1100px) {
             .alert-summary-row { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
@@ -6216,7 +6211,7 @@ def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dic
     if not change_table.empty:
         for col, (_, change_row) in zip(st.columns(len(change_table)), change_table.iterrows()):
             pct_value = change_row["Değişim %"]
-            col.metric(str(change_row["Pencere"]).replace("Son ", ""), "-" if pd.isna(pct_value) else f"{float(pct_value):+.3f}%")
+            col.metric(str(change_row["Pencere"]).replace("Son ", ""), "-" if pd.isna(pct_value) else f"{float(pct_value):+.2f}%")
 
     chart_col, card_col = st.columns([2.1, 1.0])
     with chart_col:
@@ -6241,16 +6236,26 @@ def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dic
         )
 
 
-def render_chip_group(title: str, items: list[tuple[str, float]], css: str) -> None:
-    """Başlık + (parite, skor) etiketleri; liste boşsa 'Yok' yazar."""
+def _pick_symbol(widget_key: str) -> None:
+    """Etikete tıklanınca pariteyi seçili parite yapar; seçim kutusu bir sonraki tıklama için boşalır."""
+    picked = st.session_state.get(widget_key)
+    if picked:
+        st.session_state["symbol"] = picked
+    st.session_state[widget_key] = None
+
+
+def render_chip_group(title: str, items: list[tuple[str, float]], side: str, group: str) -> None:
+    """Başlık + tıklanabilir (parite, skor) etiketleri; tıklanan parite sayfanın seçili paritesi olur."""
     st.markdown(f"**{title} ({len(items)})**")
     if not items:
         st.caption("Yok")
         return
-    chips = "".join(
-        f"<span class='summary-chip {css}'>{escape(sym.replace('=X', ''))} · {score:.0f}</span>" for sym, score in items
+    scores = dict(items)
+    key = f"pick_{side.lower()}_{group}"
+    st.pills(
+        title, [sym for sym, _ in items], format_func=lambda sym: f"{sym.replace('=X', '')} · {scores[sym]:.0f}",
+        key=key, on_change=_pick_symbol, args=(key,), label_visibility="collapsed",
     )
-    st.markdown(f"<div class='summary-chips'>{chips}</div>", unsafe_allow_html=True)
 
 
 def strong_bias_pairs(scanner_df: pd.DataFrame) -> dict[str, list[tuple[str, float]]]:
@@ -6289,9 +6294,9 @@ def render_summary_opportunities(scanner_df: Optional[pd.DataFrame], max_cards: 
     strong = strong_bias_pairs(scanner_df)
     long_col, short_col = st.columns(2)
     with long_col:
-        render_chip_group("🟢 Güçlü Alım", strong["LONG"], "summary-chip-long")
+        render_chip_group("🟢 Güçlü Alım", strong["LONG"], "LONG", "feed")
     with short_col:
-        render_chip_group("🔴 Güçlü Satış", strong["SHORT"], "summary-chip-short")
+        render_chip_group("🔴 Güçlü Satış", strong["SHORT"], "SHORT", "feed")
 
     actionable = scanner_df[scanner_df["Karar"] != "PAS"]
     if actionable.empty:
@@ -6324,8 +6329,8 @@ def render_summary_pairs(board: Optional[pd.DataFrame]) -> None:
         st.caption("Henüz tarama yok.")
         return
     aligned = aligned_timeframe_pairs(board)
-    render_chip_group("🟢 4H · 1H · 15M · 5M hepsi LONG", aligned["LONG"], "summary-chip-long")
-    render_chip_group("🔴 4H · 1H · 15M · 5M hepsi SHORT", aligned["SHORT"], "summary-chip-short")
+    render_chip_group("🟢 4H · 1H · 15M · 5M hepsi LONG", aligned["LONG"], "LONG", "board")
+    render_chip_group("🔴 4H · 1H · 15M · 5M hepsi SHORT", aligned["SHORT"], "SHORT", "board")
     counts = board["Alarm"].value_counts()
     st.caption(f"Alarm: LONG {int(counts.get('LONG', 0))} · SHORT {int(counts.get('SHORT', 0))} · BEKLE {int(counts.get('BEKLE', 0))}")
 
@@ -6447,6 +6452,7 @@ def render_summary_page(
         st.session_state["summary_scanned_at"] = pd.Timestamp.now(tz=TR_TZ)
     scanned_at = st.session_state.get("summary_scanned_at")
     time_col.caption(f"Son tarama: {scanned_at:%H:%M}" if scanned_at is not None else "Henüz taranmadı")
+    st.caption("Aşağıdaki bir pariteye tıklayınca bu sayfa o pariteye geçer.")
 
     render_summary_market(symbol, intraday_fig, opportunity)
     st.divider()
