@@ -561,6 +561,8 @@ st.markdown(
         .opportunity-title { font-size:1.45rem; font-weight:950; margin:4px 0 8px 0; }
         .opportunity-score { font-size:2rem; font-weight:950; line-height:1; margin:10px 0; }
         .opportunity-line { margin-top:8px; font-size:.92rem; }
+        /* Yeni Streamlit sürümleri pill'leri tek satırda yatay kaydırıyor; alt satıra geçsinler. */
+        [class*="st-key-pick_"] [data-testid="stButtonGroup"] > div { flex-wrap: wrap !important; overflow-x: visible !important; }
         [class*="st-key-pick_long"] button *, [class*="st-key-pick_short"] button * { font-weight: 800 !important; }
         [class*="st-key-pick_long"] button { background: var(--fa-success-bg) !important; border-color: var(--fa-success-border) !important; }
         [class*="st-key-pick_short"] button { background: var(--fa-danger-bg) !important; border-color: var(--fa-danger-border) !important; }
