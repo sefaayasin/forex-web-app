@@ -6367,30 +6367,45 @@ def render_summary_lot(
     setup: Optional[TradeSetup],
     tf_name: str,
 ) -> None:
-    """Seçilen dolar kârı için lot; stop teknik plandan gelir, stoptaki kayıp riske göre renklenir."""
+    """Seçilen dolar kârı ve stopta göze alınan zarar yüzdesinden lot ve stop seviyesi.
+
+    Kâr al mesafesi teknik plandan gelir; lot kâr hedefini bu mesafede getirecek kadardır.
+    Stop mesafesi, stopta kaybedilecek tutar tam seçilen yüzde olacak şekilde hesaplanır.
+    """
     st.markdown(f"#### 🧮 Lot · {symbol.replace('=X', '')}")
-    default_side, default_stop, default_target, _ = default_lot_plan(symbol, setup, tf_name, atr_mult, rr)
+    default_side, technical_stop, target_pips, _ = default_lot_plan(symbol, setup, tf_name, atr_mult, rr)
     c1, c2, c3, c4 = st.columns([1, 1.6, 1, 1])
     balance = c1.number_input("Bakiye ($)", min_value=10.0, value=float(account_size), step=100.0, key="summary_lot_balance")
     with c2:
         wanted_usd = st.segmented_control(
             "Kâr hedefi", SUMMARY_PROFIT_TARGETS, default=50, format_func=lambda v: f"${v}", key="summary_lot_target",
         ) or 50
-    stop_pips = c3.number_input("Stop (pip)", min_value=0.1, value=default_stop, step=1.0, key=f"summary_lot_stop_{symbol}_{default_stop}")
+    loss_pct = c3.number_input(
+        "Stopta zarar (%)", min_value=0.1, max_value=50.0, value=2.0, step=0.5, key="summary_lot_loss_pct",
+        help="Stop olursa bakiyenin yüzde kaçını kaybetmeyi kabul ediyorsun. Stop seviyesi buna göre ayarlanır.",
+    )
     side = c4.selectbox("Yön", ["LONG", "SHORT"], index=0 if default_side == "LONG" else 1, key=f"summary_lot_side_{symbol}_{default_side}")
-    target_pips = stop_pips * default_target / default_stop
 
     needed = lot_for_profit(float(wanted_usd), target_pips, cost_pips, pip_value_per_lot)
     if needed is None:
-        st.warning("Kâr al mesafesi işlem maliyetini karşılamıyor; stopu büyüt.")
+        st.warning("Kâr al mesafesi işlem maliyetini karşılamıyor; hesaplanamadı.")
         return
     lot = max(ceil_lot(needed), MIN_LOT)
+    per_pip = lot * pip_value_per_lot
+    loss_usd = balance * loss_pct / 100.0
+    stop_pips = loss_usd / per_pip - max(cost_pips, 0.0)
+    if stop_pips <= 0:
+        st.error(
+            f"{lot:.2f} lotta {usd_text(loss_usd)} zarar, işlem maliyetini ({cost_pips:.1f} pip) bile karşılamıyor. "
+            "Zarar yüzdesini artır veya kâr hedefini düşür."
+        )
+        return
     out = trade_outcome(balance, lot, stop_pips, target_pips, cost_pips, pip_value_per_lot)
 
     loss_text, profit_text = f"-{usd_text(out['loss_usd'])}", f"+{usd_text(out['profit_usd'])}"
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Lot", f"{lot:.2f}")
-    m2.metric("1 pip", f"${out['usd_per_pip']:.2f}")
+    m2.metric("1 pip", f"${per_pip:.2f}")
     if price is not None and price > 0:
         dec = price_decimals(symbol)
         stop_price, tp_price = price_levels(float(price), side, stop_pips, target_pips, get_pip_size(symbol))
@@ -6405,6 +6420,12 @@ def render_summary_lot(
         f"· stop {stop_pips:.0f} pip, kâr al {target_pips:.0f} pip"
     )
     {"Makul": st.success, "Dikkat": st.warning}.get(out["risk_level"], st.error)(text)
+    if stop_pips < technical_stop:
+        technical_pct = trade_outcome(balance, lot, technical_stop, target_pips, cost_pips, pip_value_per_lot)["loss_pct"]
+        st.warning(
+            f"Bu stop, piyasanın normal dalgalanmasından ({technical_stop:.0f} pip) dar; erken stop olma ihtimali yüksek. "
+            f"Teknik stop için ≈ %{technical_pct:.1f} gerekir."
+        )
 
 
 def render_summary_page(
