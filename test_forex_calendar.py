@@ -6,7 +6,19 @@ import pandas as pd
 import requests
 
 import forex_calendar
-from forex_calendar import extract_days, feed_rows, fetch_calendar, pair_directions, rows_from_days, week_param
+from forex_calendar import (
+    expected_outcome,
+    extract_days,
+    feed_rows,
+    fetch_calendar,
+    learn_polarity,
+    load_polarity,
+    pair_directions,
+    parse_value,
+    release_outcome,
+    rows_from_days,
+    week_param,
+)
 
 EVENT = {
     "id": 1, "name": "Non-Farm Employment Change", "currency": "USD", "dateline": 1788525000,
@@ -71,6 +83,45 @@ class CalendarTests(unittest.TestCase):
         self.assertTrue(with_actuals)
         self.assertEqual(len(df), 2)
         self.assertTrue(df["time"].is_monotonic_increasing)
+
+    def test_parse_value_handles_units_and_rejects_text(self):
+        self.assertEqual(parse_value("162K"), 162000)
+        self.assertEqual(parse_value("-0.3%"), -0.3)
+        self.assertEqual(parse_value("<0.1%"), 0.1)
+        self.assertIsNone(parse_value("2.92|2.1"))
+        self.assertIsNone(parse_value(""))
+
+    def test_polarity_is_learned_from_marked_surprises(self):
+        jobs = {**EVENT, "id": 10, "actual": "162K", "forecast": "55K", "actualBetterWorse": 1}
+        claims = {**EVENT, "id": 11, "name": "Unemployment Claims", "actual": "230K", "forecast": "220K", "actualBetterWorse": 2}
+        unmarked = {**EVENT, "id": 12, "name": "Trade Balance", "actual": "1.0B", "forecast": "2.0B", "actualBetterWorse": 0}
+        polarity = learn_polarity(rows_from_days([{"events": [jobs, claims, unmarked]}]))
+        self.assertEqual(polarity, {("USD", "Non-Farm Employment Change"): 1, ("USD", "Unemployment Claims"): -1})
+
+    def test_saved_polarity_knows_lower_unemployment_is_good(self):
+        polarity = load_polarity()
+        self.assertEqual(polarity[("USD", "Unemployment Rate")], -1)
+        self.assertEqual(polarity[("USD", "Non-Farm Employment Change")], 1)
+
+    def test_expectation_compares_forecast_with_previous_using_polarity(self):
+        polarity = {("USD", "Unemployment Rate"): -1, ("USD", "Non-Farm Employment Change"): 1}
+        row = lambda event, forecast, previous: pd.Series(
+            {"currency": "USD", "event": event, "forecast": forecast, "previous": previous, "actual": "", "outcome": None}
+        )
+        self.assertEqual(expected_outcome(row("Unemployment Rate", "4.0%", "4.1%"), polarity), "better")
+        self.assertEqual(expected_outcome(row("Non-Farm Employment Change", "89K", "162K"), polarity), "worse")
+        self.assertEqual(expected_outcome(row("Non-Farm Employment Change", "89K", "89K"), polarity), "equal")
+        self.assertIsNone(expected_outcome(row("FOMC Press Conference", "", ""), polarity))
+        self.assertIsNone(expected_outcome(row("Unknown Index", "1.0", "2.0"), polarity))
+
+    def test_unmarked_surprise_is_not_reported_as_equal(self):
+        polarity = {("USD", "Unemployment Claims"): -1}
+        row = lambda actual, outcome=None: pd.Series(
+            {"currency": "USD", "event": "Unemployment Claims", "actual": actual, "forecast": "220K", "outcome": outcome}
+        )
+        self.assertEqual(release_outcome(row("230K"), polarity), "worse")
+        self.assertEqual(release_outcome(row("220K"), polarity), "equal")
+        self.assertEqual(release_outcome(row("210K", "better"), polarity), "better")
 
 
 if __name__ == "__main__":

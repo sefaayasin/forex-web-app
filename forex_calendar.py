@@ -15,7 +15,9 @@ This module has no Streamlit dependency so it can be tested on its own.
 from __future__ import annotations
 
 import json
+import re
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Optional
 
 import pandas as pd
@@ -28,6 +30,10 @@ IMPACT_LEVELS = {"high": 3, "medium": 2, "low": 1, "holiday": 0}
 # ForexFactory's actualBetterWorse: 1 = better than forecast, 2 = worse, 0 = neither/no forecast.
 OUTCOMES = {1: "better", 2: "worse"}
 COLUMNS = ["time", "currency", "impact", "event", "actual", "forecast", "previous", "outcome", "time_label"]
+# +1: a higher value is good for the currency, -1: a lower value is (unemployment, claims...).
+# Learned from two years of ForexFactory releases by build_calendar_polarity.py.
+POLARITY_PATH = Path(__file__).resolve().parent / "data" / "calendar_polarity.json"
+VALUE_UNITS = {"K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12}
 
 
 def pair_directions(currency: str, outcome: Optional[str], symbols: list[str]) -> tuple[list[str], list[str]]:
@@ -49,6 +55,65 @@ def pair_directions(currency: str, outcome: Optional[str], symbols: list[str]) -
         elif currency == quote:
             (down if strong else up).append(pair)
     return up, down
+
+
+def parse_value(text) -> Optional[float]:
+    """'162K' -> 162000, '-0.3%' -> -0.3, '<0.1%' -> 0.1; None for text such as '2.92|2.1' or ''."""
+    m = re.fullmatch(r"[<>]?(-?\d+(?:\.\d+)?)([KMBT%]?)", str(text or "").strip().replace(",", ""))
+    if not m:
+        return None
+    return float(m.group(1)) * VALUE_UNITS.get(m.group(2), 1.0)
+
+
+def learn_polarity(events: pd.DataFrame) -> dict[tuple[str, str], int]:
+    """Whether a higher value is good (+1) or bad (-1) for each (currency, event), from released surprises."""
+    votes: dict[tuple[str, str], int] = {}
+    for row in events.itertuples():
+        actual, forecast = parse_value(row.actual), parse_value(row.forecast)
+        if row.outcome not in ("better", "worse") or actual is None or forecast is None or actual == forecast:
+            continue
+        key = (row.currency, row.event)
+        votes[key] = votes.get(key, 0) + (1 if (actual > forecast) == (row.outcome == "better") else -1)
+    return {key: 1 if vote > 0 else -1 for key, vote in votes.items() if vote != 0}
+
+
+def load_polarity(path: Path = POLARITY_PATH) -> dict[tuple[str, str], int]:
+    try:
+        items = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {(item["currency"], item["event"]): int(item["polarity"]) for item in items}
+
+
+def _direction(new: Optional[float], old: Optional[float], polarity: Optional[int]) -> Optional[str]:
+    if new is None or old is None or not polarity:
+        return None
+    if new == old:
+        return "equal"
+    return "better" if (new > old) == (polarity > 0) else "worse"
+
+
+def release_outcome(row, polarity: dict[tuple[str, str], int]) -> Optional[str]:
+    """Released value against the forecast: ForexFactory's mark, else worked out from the event's polarity.
+
+    ForexFactory leaves some surprises unmarked (e.g. US Unemployment Claims); 'equal' only when the values match.
+    """
+    if row.outcome in ("better", "worse"):
+        return row.outcome
+    actual, forecast = parse_value(row.actual), parse_value(row.forecast)
+    if actual is not None and actual == forecast:
+        return "equal"
+    return _direction(actual, forecast, polarity.get((row.currency, row.event)))
+
+
+def expected_outcome(row, polarity: dict[tuple[str, str], int]) -> Optional[str]:
+    """Before the release: is the forecast better or worse for the currency than the previous value?
+
+    Over two years of ForexFactory releases the data came out on the forecast's side of the
+    previous value ~75% of the time, but the surprise against the forecast (what moves price)
+    went the same way only ~53% of the time; see build_calendar_polarity.py.
+    """
+    return _direction(parse_value(row.forecast), parse_value(row.previous), polarity.get((row.currency, row.event)))
 
 
 def extract_days(page: str) -> list[dict]:

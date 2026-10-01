@@ -85,7 +85,7 @@ from forex_costs import (
     load_spread_profile,
     measured_spread_pips,
 )
-from forex_calendar import fetch_calendar, pair_directions
+from forex_calendar import expected_outcome, fetch_calendar, learn_polarity, load_polarity, pair_directions, release_outcome
 from forex_lot_calculator import (
     MIN_LOT,
     ceil_lot,
@@ -6440,10 +6440,15 @@ TR_WEEKDAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
 
 @st.cache_data(ttl=600, show_spinner=False)
-def cached_calendar() -> tuple[pd.DataFrame, bool, pd.Timestamp]:
-    """10 dakikada bir kendiliğinden yenilenir; Yenile butonu önbelleği hemen boşaltır."""
+def cached_calendar() -> tuple[pd.DataFrame, bool, pd.Timestamp, dict]:
+    """10 dakikada bir kendiliğinden yenilenir; Yenile butonu önbelleği hemen boşaltır.
+
+    Haberin yüksek gelmesi iyi mi kötü mü (polarite) iki yıllık geçmişten gelir; yeni bir
+    seri bu üç haftanın açıklanan değerlerinden öğrenilir.
+    """
     events, with_actuals = fetch_calendar()
-    return events, with_actuals, pd.Timestamp.now(tz=TR_TZ)
+    polarity = {**load_polarity(), **learn_polarity(events)}
+    return events, with_actuals, pd.Timestamp.now(tz=TR_TZ), polarity
 
 
 def calendar_day_window(choice: str, now: pd.Timestamp) -> tuple[pd.Timestamp, pd.Timestamp]:
@@ -6462,7 +6467,7 @@ def render_calendar_page() -> None:
     if refresh_col.button("🔄 Yenile", use_container_width=True, key="calendar_refresh"):
         cached_calendar.clear()
     try:
-        events, with_actuals, fetched_at = cached_calendar()
+        events, with_actuals, fetched_at, polarity = cached_calendar()
     except Exception:
         st.error("Ekonomik takvim şu an alınamadı. Birazdan tekrar dene.")
         return
@@ -6493,7 +6498,9 @@ def render_calendar_page() -> None:
         return
 
     shown_local = shown["time"].dt.tz_convert(TR_TZ)
-    upcoming = shown[shown["time"] > now]
+    released = shown["actual"].astype(str).str.strip() != ""
+    pending = (shown["time"] > now) & ~released
+    upcoming = shown[pending & (shown["time_label"] == "")]
     next_id = upcoming.index[0] if not upcoming.empty else None
     times = [
         CALENDAR_TIME_LABELS.get(label, label) if label else ("▶ " if idx == next_id else "") + t.strftime("%H:%M")
@@ -6508,17 +6515,22 @@ def render_calendar_page() -> None:
     table["Açıklanan"] = shown["actual"].to_numpy()
     table["Beklenti"] = shown["forecast"].to_numpy()
     table["Önceki"] = shown["previous"].to_numpy()
-    long_cells, short_cells = [], []
-    for row in shown.itertuples():
-        up, down = pair_directions(row.currency, row.outcome, SYMBOL_LIST)
+
+    # Yön yalnızca açıklanmamış haberlerde: beklenti öncekinden iyiyse para birimi güçlenir diye varsayılır.
+    results, expectations, long_cells, short_cells = [], [], [], []
+    for row, is_pending in zip(shown.itertuples(), pending):
+        results.append(release_outcome(row, polarity))
+        expected = expected_outcome(row, polarity) if is_pending else None
+        expectations.append(expected)
+        up, down = pair_directions(row.currency, expected, SYMBOL_LIST)
         if up or down:
             long_cells.append(", ".join(up))
             short_cells.append(", ".join(down))
             continue
-        if row.time > now:
-            mark = "⏳"
-        elif str(row.actual).strip() and str(row.forecast).strip():
-            mark = "—"
+        if expected == "equal":
+            mark = "＝"
+        elif is_pending and str(row.forecast).strip():
+            mark = "?"
         else:
             mark = ""
         long_cells.append(mark)
@@ -6527,9 +6539,11 @@ def render_calendar_page() -> None:
     table["📉 SHORT"] = short_cells
 
     outcome_colors = {"better": "color: #147A47; font-weight: 800", "worse": "color: #C0392B; font-weight: 800"}
-    actual_css = [outcome_colors.get(o, "") for o in shown["outcome"]]
+    actual_css = [outcome_colors.get(o, "") for o in results]
+    forecast_css = [outcome_colors.get(o, "") for o in expectations]
     styled = (
         table.style.apply(lambda _: actual_css, subset=["Açıklanan"], axis=0)
+        .apply(lambda _: forecast_css, subset=["Beklenti"], axis=0)
         .map(lambda _: outcome_colors["better"], subset=["📈 LONG"])
         .map(lambda _: outcome_colors["worse"], subset=["📉 SHORT"])
         .hide(axis="index")
@@ -6537,14 +6551,23 @@ def render_calendar_page() -> None:
     # st.table metni satır içinde alta kaydırır; uzun parite listeleri yatay kaydırma olmadan sığar.
     st.table(styled)
 
-    notes = "Kaynak: ForexFactory · İstanbul saati · Açıklanan yeşil: beklentiden iyi, kırmızı: kötü · ▶ sıradaki haber."
+    notes = (
+        "Kaynak: ForexFactory · İstanbul saati · ▶ sıradaki haber · Beklenti yeşil/kırmızı: öncekinden iyi/kötü · "
+        "Açıklanan yeşil/kırmızı: beklentiden iyi/kötü."
+    )
     notes += (
-        " LONG/SHORT: veri beklentiden iyi/kötü gelince para biriminin güçlendiği/zayıfladığı yöndeki pariteler"
-        " (ilk tepki; işlem sinyali değil). ⏳ henüz açıklanmadı · — beklentiye eşit."
+        " LONG/SHORT yalnızca açıklanmamış haberler için, beklentiye göre: beklenti öncekinden iyiyse para birimi "
+        "güçlenir varsayımıyla yükselmesi/düşmesi beklenen pariteler. Haber açıklanınca yön gösterilmez. "
+        "＝ beklenti öncekiyle aynı · ? bu haberin yönü bilinmiyor."
     )
     if not with_actuals:
         notes += " Açıklanan değerler şu an alınamıyor (yedek kaynak kullanılıyor)."
     st.caption(notes)
+    st.warning(
+        "Beklenti çoğunlukla zaten fiyatlanmıştır. Son 2 yılda veri, beklentinin gösterdiği yönde öncekinden %78 "
+        "ayrıldı; ama fiyatı oynatan sürpriz (beklentiyi aşma/altında kalma) aynı yönde yalnızca %53 geldi, "
+        "yani yazı tura sayılır. Bu sütunlar işlem sinyali değil, haber öncesi riski görmek içindir."
+    )
     st.caption(
         "Neden ForexFactory: 2 yıllık testte hiçbir ücretsiz takvimin (Investing, FXStreet, Nasdaq) beklentisi "
         "daha isabetli çıkmadı; beklentisi en geniş kaynak ForexFactory."
