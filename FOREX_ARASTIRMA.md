@@ -94,12 +94,23 @@
   - Spread bilgisi yok. Maliyet için ölçülmüş ECN spread profili kullanılıyor (E).
 - **Daha iyi seçenekler (ileride):** Kendi broker'ının MetaTrader 5'i (uygulamada destek var, sadece yerelde çalışır) ya da bir broker API'si, örneğin OANDA (API anahtarı gerekir). Kullanıcı kararıyla (26 Eylül 2026) şimdilik Yahoo + düzeltmeyle devam ediliyor.
 
+### H. Özet kartında sinyal tazeliği ve dönüş uyarısı — yapıldı, geçmedi
+- **Soru:** Kart 100/100 gösterirken "taze" anda girmek "geç" anda girmekten daha mı iyi? Kart "dönüş sinyali var" derken girmek daha mı kötü? (Kullanıcı aynı 100/100'de önce kazandı, sonra tekrar girip kaybetti.)
+- **Kurgu:** 28 parite, 2008–2026. 15M skorunun yön gösterdiği her an sayıldı, toplam 10,3 milyon an. Tazelik ve uyarılar uygulamanın kendi kodu (forex_freshness.py) ile hesaplandı. 1 ve 4 saat sonraki hareket ölçüldü, ölçülen maliyet düşüldü.
+- **Sonuç:** İki hipotez de geçmedi.
+  - Taze − geç farkı 4 saatte +0,13 pip; aralık sıfırı içeriyor.
+  - Dönüş uyarısının hiçbir etkisi yok.
+  - Her grupta kazanma oranı ≈ %48. Maliyetten önce hafif eksi, sonra ≈ −3 pip.
+- **Ders:** Sorun girişin geç olması değil. 15M yönünde girmek her durumda maliyet kadar kaybettiriyor.
+- **Uygulamaya:** Satırlar kartta kaldı, ama altına tahmin olmadıklarını söyleyen bir not eklendi.
+- Ayrıntı: research/freshness/REPORT.md
+
 ### Yapılmamasını önerdiğim şeyler
 - 15M/5M'ye yeni gösterge veya filtre eklemek. Denenen her varyant maliyet sonrası zarar etti.
 - Kısa vadeli yön için daha büyük ML modelleri denemek. 1.680 eğitim ve yaklaşık 960 bin sinyalle yeterince denendi.
 - Sonuçlara bakarak parametre seçmek. Geçmişte iyi görünen her ayar, gelecekte aynı sonucu vermez.
 
-**Durum:** A, B ve C tamamlandı; üçü de önceden yazılan ölçütü geçmedi. E yapıldı ve uygulamaya eklendi. F değerlendirildi; şimdilik Yahoo + düzeltmeyle devam ediliyor. Açık kalan: D (haber sürprizi arşivi; zaman istiyor, kod değil).
+**Durum:** A, B, C ve H tamamlandı; dördü de önceden yazılan ölçütü geçmedi. E yapıldı ve uygulamaya eklendi. F değerlendirildi; şimdilik Yahoo + düzeltmeyle devam ediliyor. Açık kalan: D (haber sürprizi arşivi; zaman istiyor, kod değil).
 
 ## Kaynaklar
 

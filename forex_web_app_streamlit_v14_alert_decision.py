@@ -66,6 +66,7 @@ from forex_analysis import (
     latest_valid_row,
     market_structure_frame,
 )
+from forex_freshness import FRESHNESS_TEXT, reversal_level, reversal_warnings, signal_freshness
 from forex_indicators import (
     add_indicators,
     compute_atr,
@@ -6208,6 +6209,67 @@ def _side_of(text: object) -> str:
     return "LONG" if "LONG" in text else ("SHORT" if "SHORT" in text else "NONE")
 
 
+def _closed_structure_frame(symbol: str, tf_name: str) -> pd.DataFrame:
+    """Kapanmış mumların market yapısı + yön skoru; analyse_symbol gibi son (oluşan) mumu atar."""
+    prm = TIMEFRAMES[tf_name]
+    df = fetch_ohlc(symbol, prm["interval"], prm["period"])
+    if df is None or len(df) < 60:
+        return pd.DataFrame()
+    df = _utc_index_df(df.iloc[:-1])
+    frame = market_structure_frame(df)
+    frame["Score"] = score_series_for_backtest(df).reindex(frame.index)
+    return frame
+
+
+def summary_signal_context(symbol: str, side: str, typical_move_pips: float) -> dict:
+    """Radar yönünün tazeliği ve 15M/5M ters dönüş uyarıları (bilgi; giriş kuralı değil)."""
+    if side not in {"LONG", "SHORT"}:
+        return {}
+    m15, m5 = _closed_structure_frame(symbol, "15 Dakika"), _closed_structure_frame(symbol, "5 Dakika")
+    freshness = (
+        signal_freshness(m15, m15["Score"], side, get_pip_size(symbol), typical_move_pips)
+        if not m15.empty else {"state": "UNKNOWN"}
+    )
+    warnings = {"15M": reversal_warnings(m15, side), "5M": reversal_warnings(m5, side)}
+    return {"freshness": freshness, "warnings": warnings, "reversal": reversal_level(warnings["15M"], warnings["5M"])}
+
+
+def _duration_text(minutes: float) -> str:
+    hours, mins = divmod(int(minutes), 60)
+    return f"{hours} sa {mins} dk" if hours else f"{mins} dk"
+
+
+def signal_context_lines(context: dict) -> str:
+    """Özet kartının altına eklenen tazelik ve dönüş satırları (HTML)."""
+    if not context:
+        return ""
+    fresh = context["freshness"]
+    state = fresh.get("state", "UNKNOWN")
+    icon = {"FRESH": "🟢", "MATURE": "🟡", "LATE": "🔴"}.get(state, "⚪")
+    fresh_text = f"{icon} {FRESHNESS_TEXT[state]}"
+    if state in {"FRESH", "MATURE", "LATE"}:
+        age = "10 günden uzun" if fresh["started_before_data"] else f"{_duration_text(fresh['bars'] * 15)} önce başladı"
+        fresh_text += f" · {age} · o zamandan beri {fresh['moved_pips']:+.0f} pip"
+        if pd.notna(fresh["typical_move_pips"]):
+            fresh_text += f" (tipik 4 saatlik hareket {fresh['typical_move_pips']:.0f} pip)"
+        stretch = fresh["stretch_atr"]
+        if pd.notna(stretch):
+            fresh_text += (
+                f" · fiyat EMA20'nin {stretch:.1f} ATR ilerisinde" if stretch >= 0
+                else f" · fiyat EMA20'nin {abs(stretch):.1f} ATR gerisinde"
+            )
+
+    level = context["reversal"]
+    reversal_text = {"STRONG": "🔴 Var", "WEAK": "🟡 Tek tük işaret", "NONE": "🟢 Yok"}[level]
+    details = [f"{tf}: {', '.join(items)}" for tf, items in context["warnings"].items() if items]
+    if details:
+        reversal_text += " — " + " · ".join(details)
+    return (
+        f"<div class='opportunity-line'><b>Tazelik:</b> {escape(fresh_text)}</div>"
+        f"<div class='opportunity-line'><b>Dönüş sinyali:</b> {escape(reversal_text)}</div>"
+    )
+
+
 def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dict) -> None:
     st.markdown(f"#### 📈 {symbol.replace('=X', '')} · son 24 saat")
     change_table = intraday_change_snapshot(symbol)
@@ -6227,6 +6289,9 @@ def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dic
         )
         target_price = opportunity.get("target_price", np.nan)
         target_text = "-" if pd.isna(target_price) else f"{float(target_price):.{price_decimals(symbol)}f}"
+        context = summary_signal_context(
+            symbol, str(opportunity.get("side", "NONE")), opportunity.get("recent_range_pips", np.nan)
+        )
         st.markdown(
             f"<div class='opportunity-card {css}' style='min-height:0;'>"
             "<div class='section-kicker'>Önümüzdeki birkaç saat</div>"
@@ -6234,9 +6299,16 @@ def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dic
             f"<div class='opportunity-score'>{float(opportunity.get('radar_score', opportunity.get('confidence', 0))):.0f}/100</div>"
             f"<div class='opportunity-line'><b>Durum:</b> {escape(readiness)}</div>"
             f"<div class='opportunity-line'><b>Hedef fiyat:</b> {escape(target_text)}</div>"
+            f"{signal_context_lines(context)}"
             "</div>",
             unsafe_allow_html=True,
         )
+        if context:
+            st.caption(
+                "Tazelik ve dönüş satırları fiyatın nerede olduğunu anlatır, sonrasını tahmin etmez. 2008–2026, "
+                "28 paritede 15M yönüne girilen 10 milyon anda taze, geç, dönüş var ve dönüş yok anlarının "
+                "sonucu aynıydı: kazanma oranı ≈ %48, maliyetten sonra ≈ −3 pip. (research/freshness)"
+            )
 
 
 def _pick_symbol(widget_key: str) -> None:

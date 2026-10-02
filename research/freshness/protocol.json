@@ -1,0 +1,40 @@
+{
+  "name": "Signal freshness and reversal warnings: does the Özet card's new information predict the next move?",
+  "frozen_on": "2026-10-02",
+  "question": "The Özet card now shows how fresh the current direction is (Taze / Olgun / Geç) and whether 15M and 5M show reversal signs (Yok / Tek tük işaret / Var). Entering in the 15M direction at a 'Taze' moment: is the next move better than at a 'Geç' moment? Entering when the card says reversal 'Var': is the next move worse than when it says 'Yok'?",
+  "motivation": "The user won a trade while the card showed 100/100, exited, re-entered later while it still showed 100/100 and lost. The radar score measures how strong the trend already is and stays at 100 as the move matures; the freshness and reversal lines were added (forex_freshness.py) without any test of whether they predict anything.",
+  "prior_evidence": "This project: 15M/5M direction signals carried no direction information over ~960k signals 2008-2026 (-0.05 R before costs); RSI/MACD divergence filters did not rescue them. Literature (FOREX_ARASTIRMA.md section 2): no strong evidence for 15 minute - 4 hour single-pair direction prediction.",
+  "symbols": "All 28 pairs in data/historical_15m except EURZAR",
+  "period": ["2008-01-01", "end of archive (2026-09-11)"],
+  "data": {
+    "signal": "data/historical_15m (native Dukascopy 15M, UTC bar-open timestamps) for the 15M score, freshness and 15M warnings; data/historical_5m (native 5M) for 5M warnings and for entry/outcome prices",
+    "cleaning": "research_meta_label.load_bars"
+  },
+  "decision_moments": "Every closed 15M bar whose 15M score (score_series_for_backtest, compiled from the app) is >= 25 in absolute value; side = sign of the score. Decision time = bar close (open time + 15 minutes). Each moment means 'if you entered now in the 15M direction'. All such moments are used, not only the first of a streak, because the user's problem is entering at any point while the card shows a direction.",
+  "definitions": {
+    "freshness": "forex_freshness.signal_freshness as the app runs it: streak start = first bar after the last bar whose score was not >= 25 on the side; moved = signed close-to-close move from the streak's first bar to the decision bar, in pips; typical 4h move = median over the last 96 bars of the 16-bar High-Low range (as build_intraday_opportunity); stretch = signed (Close - EMA20) / ATR14. Geç if moved >= 1.0 x typical or stretch >= 2.0 ATR; Olgun if moved >= 0.5 x typical; else Taze.",
+    "reversal": "forex_freshness.reversal_warnings on the 15M frame at the decision bar and on the 5M frame at the last 5M bar closed at the decision time (market_structure_frame + Score); level from forex_freshness.reversal_level: Var = >= 2 warnings on 15M and >= 1 on 5M; Tek tük = any warning; Yok = none.",
+    "implementation_check": "The research computes both vectorised over full history. Before any outcome is computed, the vectorised values are compared with the module's own functions on 300 random decision moments per pair (same full-history frames); every state, level and warning count must match exactly or the run stops.",
+    "known_difference_from_live": "The app computes indicators on its 10-day (15M) and 5-day (5M) download windows; the research uses full history. EMA200 and the Bollinger width percentile can differ slightly; the freshness streak start can be older than the app's 10-day window."
+  },
+  "outcome": "Signed move in pips from the open of the 5M bar starting at the decision time to the last 5M open at or before decision time + horizon; horizons 1 hour and 4 hours. Net = signed move minus round-trip cost: measured median spread for the pair at the decision's New York hour (data/ml/spread_profile.json; 1.5 pip if missing) + 0.7 pip commission. Moments without a 5M bar at the decision time are dropped.",
+  "hypotheses": {
+    "H1_fresh_beats_late": "mean signed move (Taze) - mean signed move (Geç) > 0",
+    "H2_reversal_warning_precedes_worse_move": "mean signed move (reversal Yok) - mean signed move (reversal Var) > 0"
+  },
+  "statistics": "Pooled over pairs. Differences of group means with intervals from a bootstrap that resamples calendar days (UTC) as blocks, 2000 resamples, seed 42; same-day moments of all pairs stay together. Two hypotheses x two horizons = 4 tests, so each uses a two-sided 98.75% interval (Bonferroni 0.05/4).",
+  "success_criterion": "A hypothesis passes if its difference is above zero with the 98.75% interval above zero at BOTH 1h and 4h over the full period, AND the point estimate at 4h is above zero in each of the three sub-periods 2008-2015, 2016-2023, 2024-2026.",
+  "what_follows": {
+    "pass": "The line stays on the card and its caption says it was measured (with the size of the effect in pips).",
+    "fail": "The line is not presented as a prediction: the research summary and the app say it describes where price is, not what it will do next. Removing it is left to the user."
+  },
+  "information_only": [
+    "Mean net move (after costs) for each freshness state and reversal level, to see whether any state is profitable on its own",
+    "Hit rates",
+    "The same comparisons restricted to |score| >= 90 (what the card shows as roughly 90-100/100)",
+    "Olgun and Tek tük groups",
+    "Per sub-period results"
+  ],
+  "not_tested": "1M warnings: there is no local 1M archive (Yahoo serves only ~30 days of 1M), so 1M cannot be tested on the same 2008-2026 basis.",
+  "parameter_search": "None. All thresholds are the ones already in forex_freshness.py at freezing time."
+}
