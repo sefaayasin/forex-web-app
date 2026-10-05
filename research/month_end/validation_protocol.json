@@ -1,0 +1,26 @@
+{
+  "name": "Large month-end hedging flows: validation on unseen 2003-2007 data and a forward test",
+  "frozen_on": "2026-10-05",
+  "why": "The pre-registered month-end test (protocol.json) failed (2014-2026 net -0.29 pip). An information-only cut, the third of month-ends with the largest |R|, was strongly positive in every sub-period (2008-2013 +3.5, 2014-2019 +5.7, 2020-2026 +3.7 pip net; 95% interval 2014-2026 [+0.04, +8.73]); the same hour on other days of the month with the same |R| was flat (-0.09). It was found after seeing the results, and its threshold comes from the data, so it is a hypothesis, not a finding. It is consistent with the paper: the hedging flow is proportional to R, so small-|R| months carry little flow and only cost.",
+  "rule": {
+    "threshold": "|R| >= 0.0291 (the 2014-2026 top-third cut, fixed now and never re-estimated)",
+    "signal_and_trade": "Exactly as protocol.json: R = r_foreign - r_US over the month up to the business day before the trade day; R > 0 -> sell the foreign currency vs USD from 15:00 to 16:00 London on the month's last business day with bars; R < 0 -> buy it. Same 7 pairs, same cost model."
+  },
+  "validation_A_unseen_history": {
+    "period": "Month-ends from 2003-06 to 2007-12 (before the local archive starts; never loaded in this project)",
+    "data": "Dukascopy m5 bid bars for the 7 pairs, downloaded only for each month's last business days (and the days before, to walk back over holidays) with tick_downloader/dukascopy-node; equity closes from Yahoo Finance",
+    "deviation": "^STOXX50E starts on Yahoo in 2007-03, so the EUR index is ^GDAXI (DAX) for the whole validation period",
+    "note": "This period is inside the paper's own sample (2004-2012), so it validates the threshold rule, not the paper.",
+    "pass": "Mean net pips per trade > 0 with a 90% month-end-block bootstrap interval above zero (one-sided 5%; one test). Sample is small (~55 month-ends), so a fail with a positive mean is reported as inconclusive, not as a refutation."
+  },
+  "validation_B_forward": {
+    "period": "Month-ends from 2026-09 onward (after the local archive end, 2026-09-11; none observed when this file was written)",
+    "data": "Yahoo Finance or Dukascopy 5M for the hour, Yahoo closes for the indices; evaluated by re-running research_month_end_validation.py with --forward",
+    "pass": "Same criterion as A once at least 24 month-ends have accumulated (about 2 years). Until then the app labels the panel as unconfirmed."
+  },
+  "what_follows": {
+    "A_pass": "The app may show a month-end panel on the last business day: pairs with |R| >= 0.0291, the predicted side for 15:00-16:00 London, and the measured numbers, labelled as 'tested on 2003-2026 history, forward test running'.",
+    "A_fail_or_inconclusive": "No trading panel. The rule stays a hypothesis whose forward test (B) can be evaluated later; FOREX_ARASTIRMA.md records it."
+  },
+  "parameter_search": "None. The threshold, indices (with the DAX deviation), window and pairs are fixed above."
+}

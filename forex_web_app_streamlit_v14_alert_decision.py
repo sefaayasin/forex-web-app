@@ -67,6 +67,8 @@ from forex_analysis import (
     market_structure_frame,
 )
 from forex_freshness import FRESHNESS_TEXT, reversal_level, reversal_warnings, signal_freshness
+from forex_overall import SOURCE_NOTE as OVERALL_SOURCE_NOTE, overall_reading, view_sides_now
+from forex_trade_plan import build_trade_plan, load_plan_stats, trading_blockers
 from forex_indicators import (
     add_indicators,
     compute_atr,
@@ -6314,6 +6316,155 @@ def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dic
             )
 
 
+def pair_news(symbol: str, news_events: Optional[pd.DataFrame], ahead_hours: int, after_minutes: int = 0) -> tuple[Optional[int], str]:
+    """Paritenin para birimlerindeki en yakın yüksek etkili haber: (kaç dk sonra; negatifse önce, başlık)."""
+    events = _high_impact_events(news_events) if news_events is not None and not news_events.empty else None
+    if events is None or events.empty:
+        return None, ""
+    now = pd.Timestamp.now(tz="UTC")
+    pair = symbol.replace("=X", "").upper()
+    mine = events[
+        events["currency"].astype(str).str.upper().isin({pair[:3], pair[3:6]})
+        & (events["time"] >= now - pd.Timedelta(minutes=after_minutes))
+        & (events["time"] <= now + pd.Timedelta(hours=ahead_hours))
+    ].sort_values("time")
+    if mine.empty:
+        return None, ""
+    first = mine.iloc[0]
+    return int((first["time"] - now).total_seconds() // 60), f"{first['currency']} {first.get('title', '')}".strip()
+
+
+@st.cache_data(ttl=3600)
+def cached_plan_stats() -> dict:
+    return load_plan_stats()
+
+
+def render_summary_trade_plan(
+    symbol: str,
+    price: Optional[float],
+    direction_prediction: dict,
+    news_events: Optional[pd.DataFrame],
+    account_usd: float,
+    pip_value_per_lot: float,
+    cost_pips: float,
+) -> None:
+    """İşlem Planı: yön (ML), teknik stop, dolar hedefinden hedef ve lot, şart kontrolü ve planın geçmiş sonucu."""
+    st.markdown(f"#### 🎯 İşlem Planı · {symbol.replace('=X', '')}")
+    target_col, loss_col = st.columns(2)
+    target_usd = target_col.number_input("Hedef kâr ($)", min_value=1.0, value=50.0, step=5.0, key="plan_target_usd")
+    loss_usd = loss_col.number_input("Kabul ettiğin en büyük kayıp ($)", min_value=1.0, value=50.0, step=5.0, key="plan_loss_usd")
+
+    pip = get_pip_size(symbol)
+    atr = None
+    df = fetch_ohlc(symbol, TIMEFRAMES["15 Dakika"]["interval"], TIMEFRAMES["15 Dakika"]["period"])
+    if df is not None and len(df) >= 40:
+        row = latest_valid_row(add_indicators(df.iloc[:-1]))
+        atr = float(row["ATR14"]) if row is not None else None
+    probability_up = float(direction_prediction["probability_up"]) if direction_prediction.get("status") == "ready" else None
+    stop_pips = 1.5 * atr / pip if atr else None
+    share = cost_share_of_risk(float(cost_pips), stop_pips) if stop_pips else None
+    news_minutes, news_title = pair_news(symbol, news_events, ahead_hours=1, after_minutes=15)
+    blockers = trading_blockers(pd.Timestamp.now(tz="UTC"), news_minutes, news_title, share)
+    plan = build_trade_plan(
+        symbol.replace("=X", "").upper(), price, pip, atr, probability_up, float(target_usd), float(loss_usd),
+        float(account_usd), float(pip_value_per_lot), float(cost_pips), cached_plan_stats(), blockers,
+    )
+
+    if plan["status"] != "ready":
+        st.info(f"BEKLE — {plan['reason']}")
+        return
+    decimals = price_decimals(symbol)
+    css = {"LONG": "opportunity-long", "SHORT": "opportunity-short"}.get(plan["action"], "opportunity-neutral")
+    measured = plan["measured"]
+    history = ""
+    if measured:
+        ml, opposite = measured["ml"], measured["opposite"]
+        timeout = round(ml["timeout_rate"] * 100)
+        expected = f"{plan['expected_usd']:+.2f}".replace(".", ",").replace("-", "−")
+        history = (
+            f"<div class='opportunity-line'><b>Geçmişte bu plan (2023–2026, bu parite, her saat):</b> 100 işlemden "
+            f"{ml['target_rate'] * 100:.0f} hedefe, {ml['stop_rate'] * 100:.0f} stopa gitti"
+            + (f", {timeout} bir gün içinde ikisine de değmedi" if timeout else "")
+            + f". Ters yöne girilseydi hedefe giden {opposite['target_rate'] * 100:.0f} olurdu.</div>"
+            f"<div class='opportunity-line'><b>Ortalama sonuç:</b> işlem başına {expected} $ (maliyet dahil). "
+            f"Bu plan geçmişte ortalamada {'kazandırdı' if plan['expected_usd'] > 0 else 'kaybettirdi'}.</div>"
+        )
+    lines = "".join(f"<div class='opportunity-line'>⛔ {escape(b)}</div>" for b in plan["blockers"])
+    lines += "".join(f"<div class='opportunity-line'>⚠️ {escape(w)}</div>" for w in plan["warnings"])
+    title = plan["action"] if plan["action"] != "BEKLE" else f"BEKLE (yön: {plan['side']})"
+    st.markdown(
+        f"<div class='opportunity-card {css}' style='min-height:0;'>"
+        f"<div class='section-kicker'>ML 4 saatlik yön · {plan['side']} olasılığı %{plan['side_probability'] * 100:.0f}</div>"
+        f"<div class='opportunity-title'>{escape(title)}</div>"
+        f"<div class='opportunity-line'><b>Giriş:</b> {plan['entry']:.{decimals}f} · <b>Stop:</b> {plan['stop']:.{decimals}f} "
+        f"({plan['stop_pips']:.1f} pip) · <b>Hedef:</b> {plan['target']:.{decimals}f} ({plan['target_pips']:.1f} pip)</div>"
+        f"<div class='opportunity-line'><b>Lot:</b> {plan['lot']:.2f} → hedefte +{target_usd:.0f} $, stopta −{loss_usd:.0f} $ "
+        f"(maliyet {cost_pips:.1f} pip dahil)</div>"
+        f"{history}{lines}</div>",
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "Yön ML modelinden: 2023 sonrası testte yazı-turadan 2–3 puan iyi, ama maliyeti tek başına karşılamıyor. "
+        "Stop teknik (15M ATR × 1,5); hedef senin dolar hedefinden. Hedefi stoptan küçük tutarsan tutma oranı artar, "
+        "ama kaybettiğin işlem daha çok götürür; asıl ölçü 'ortalama sonuç' satırı. (research_trade_plan.py)"
+    )
+
+
+def build_overall_reading(
+    symbol: str,
+    summary: pd.DataFrame,
+    opportunity: dict,
+    direction_prediction: dict,
+    volatility_prediction: dict,
+    news_events: Optional[pd.DataFrame],
+    setup,
+    cost_pips: float,
+) -> Optional[dict]:
+    """Seçili paritenin dört yön görüşünü ve risk uyarılarını Genel Yorum paneli için toplar."""
+    if not isinstance(summary, pd.DataFrame) or summary.empty:
+        return None
+    tf_labels = dict(zip(summary["Zaman Dilimi"], summary["Bias"]))
+    entry_labels = (global_bias(summary, "15 Dakika")[0], global_bias(summary, "5 Dakika")[0])
+    probability_up = (
+        float(direction_prediction["probability_up"])
+        if direction_prediction.get("status") == "ready" else None
+    )
+    sides = view_sides_now(
+        tf_labels, entry_labels, str(opportunity.get("side", "NONE")),
+        float(opportunity.get("confidence", 0) or 0), probability_up,
+    )
+
+    news_minutes, news_title = pair_news(symbol, news_events, ahead_hours=4)
+
+    share = cost_share_of_risk(float(cost_pips), float(setup.stop_pips)) if setup is not None else None
+    volatility_view = reliable_volatility_view(volatility_prediction) if volatility_prediction else None
+    return overall_reading(
+        sides, news_minutes=news_minutes, news_title=news_title, cost_share=share,
+        volatility_level=volatility_view["level"] if volatility_view else None,
+    )
+
+
+def render_summary_overall(symbol: str, reading: Optional[dict]) -> None:
+    """Genel Yorum: görüşler ne diyor, uyuşuyorlar mı, bu durum geçmişte ne verdi, ne yapmalı."""
+    if not reading:
+        return
+    st.markdown(f"#### 🧭 Genel Yorum · {symbol.replace('=X', '')}")
+    views = " · ".join(f"{name}: <b>{escape(side)}</b>" for name, side in reading["views"])
+    warnings = "".join(f"<div class='opportunity-line'>{escape(w)}</div>" for w in reading["warnings"])
+    st.markdown(
+        "<div class='opportunity-card opportunity-neutral' style='min-height:0;'>"
+        f"<div class='section-kicker'>{escape(reading['headline'])}</div>"
+        f"<div class='opportunity-title'>Karar: {escape(reading['verdict'])}</div>"
+        f"<div class='opportunity-line'>{escape(reading['verdict_reason'])}</div>"
+        f"<div class='opportunity-line'><b>Görüşler:</b> {views}</div>"
+        f"<div class='opportunity-line'><b>Bu durum geçmişte:</b> {escape(reading['evidence'])}</div>"
+        + (f"<div class='opportunity-line'><b>Yine de girersen dikkat:</b></div>{warnings}" if warnings else "")
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+    st.caption(OVERALL_SOURCE_NOTE)
+
+
 def _pick_symbol(widget_key: str) -> None:
     """Etikete tıklanınca pariteyi seçili parite yapar; seçim kutusu bir sonraki tıklama için boşalır."""
     picked = st.session_state.get(widget_key)
@@ -6655,6 +6806,8 @@ def render_summary_page(
     opportunity: dict,
     scan_all,
     lot_kwargs: dict,
+    overall: Optional[dict] = None,
+    plan_kwargs: Optional[dict] = None,
 ) -> None:
     """Fırsat Akışı, Pariteler, ML, 24 saatlik radar ve lot hesabının tek sayfalık sade özeti.
 
@@ -6671,6 +6824,9 @@ def render_summary_page(
     st.caption("Aşağıdaki bir pariteye tıklayınca bu sayfa o pariteye geçer.")
 
     render_summary_market(symbol, intraday_fig, opportunity)
+    render_summary_overall(symbol, overall)
+    if plan_kwargs:
+        render_summary_trade_plan(symbol=symbol, **plan_kwargs)
     st.divider()
     render_summary_opportunities(st.session_state.get("scanner_df"))
     st.divider()
@@ -7675,6 +7831,10 @@ intraday_opportunity = apply_opportunity_cooldown(
     symbol=symbol,
     cooldown_bars=16,
 )
+overall_reading_now = build_overall_reading(
+    symbol, summary_df, intraday_opportunity, research_prediction, volatility_prediction,
+    news_events, preview_setup, float(spread_pips),
+)
 
 tab_summary, tab_calendar, tab_signal, tab_lot, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
     ["📋 Özet", "📅 Takvim", "📊 Sinyal", "🧮 Lot Hesaplayıcı", "🔥 Fırsat Akışı", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
@@ -7733,6 +7893,15 @@ with tab_summary:
             cost_pips=float(spread_pips),
             setup=preview_setup,
             tf_name=selected_tf,
+        ),
+        overall=overall_reading_now,
+        plan_kwargs=dict(
+            price=price,
+            direction_prediction=research_prediction,
+            news_events=news_events,
+            account_usd=float(account_size),
+            pip_value_per_lot=float(pip_value_per_lot),
+            cost_pips=float(spread_pips),
         ),
     )
 

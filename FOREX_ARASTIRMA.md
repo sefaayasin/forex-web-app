@@ -29,6 +29,9 @@
 | Trend (zaman serisi momentumu) döviz vadelilerinde 1–12 ay sürüyor | 1–12 ay | Moskowitz, Ooi & Pedersen (2012) | 2009–2026'da yılda −%1,1 (research/fx_factors) |
 | Değer (satın alma gücü paritesinden sapma); momentumla ters korelasyonlu | Yıllar | Asness, Moskowitz & Pedersen (2013) | Test edilmedi |
 | Planlı FOMC günlerinde "dolar sat, diğerlerini al" stratejisinin getirisi belirgin yüksek | Gün | Mueller, Tahbaz-Salehi & Vedolin (2017) | 2008–2013'te çok güçlü (+25 bp, p=0,001). Makale sonrası 2014–2026'da +4,8 bp, anlamlı değil (p=0,13). Ayrıntı: research/fomc_day/REPORT.md |
+| Fiyat destek/direnç seviyelerinde ve yuvarlak sayılarda daha sık duruyor; yuvarlak sayı geçilince hızlanıyor | Dakikalar–saatler | Osler (2000, 2003) | 2008–2026, 28 parite, 15M: otomatik çizilen seviye ve trend çizgileri rastgele çizgilerden farksız. Yuvarlak sayı kırılımında anlamlı ama çok küçük etki (+0,004 R, maliyetin 60'ta biri). Ayrıntı: research/levels/REPORT.md |
+| Dolar Tokyo/ECB sabitlemesinden önce değer kazanıp Tokyo/Londra sabitlemesinden sonra geri veriyor; pencere başına ~2,5–3,5 bp | Saatler | Krohn, Mueller & Whelan (2024) | 2008–2019'da yön aynı. 2020–2026'da 0,6–0,8 pipe inmiş, ~1–1,5 pip maliyetin altında (research/fix_reversal) |
+| Ay içinde hisseleri iyi giden ülkenin parası, ay sonu Londra 16:00 sabitlemesinden önceki saatte değer kaybediyor (hisse korumaları) | 1 saat, ayda bir | Melvin & Prins (2015) | 2008–2012'de var (+1,4 pip net). 2014–2026'da −0,3 pip. Sonradan bulunan alt kural 2003–2007'de doğrulanmadı (research/month_end) |
 
 **Özet:** Literatürdeki kalıcı bulgular ya **çok kısa** (haber sürprizine dakikalar içindeki tepki) ya da **uzun** vadeli (günlerden aylara, portföy düzeyinde carry, trend ve değer). 15 dakika–4 saat arası tek paritede yön tahmini için güçlü bir kanıt yok; bu projenin testleri de bununla örtüşüyor. Güvenilir biçimde tahmin edilebilen şey **oynaklık**. Ayrıca yayımlanan birçok avantaj, yayımlandıktan sonra zayıflamıştır; her biri maliyetle birlikte kendi verimizde yeniden test edilmelidir.
 
@@ -94,6 +97,18 @@
   - Spread bilgisi yok. Maliyet için ölçülmüş ECN spread profili kullanılıyor (E).
 - **Daha iyi seçenekler (ileride):** Kendi broker'ının MetaTrader 5'i (uygulamada destek var, sadece yerelde çalışır) ya da bir broker API'si, örneğin OANDA (API anahtarı gerekir). Kullanıcı kararıyla (26 Eylül 2026) şimdilik Yahoo + düzeltmeyle devam ediliyor.
 
+### G. Grafikten çizilen çizgiler (destek/direnç, yuvarlak sayı, trend çizgisi) — yapıldı, geçmedi
+- **Soru:** Day trader'ların çizdiği çizgiler sabit kurallarla otomatik çizilirse, çizgiden dönüşte ya da kırılımda işlem açmak maliyetten sonra kazandırıyor mu? Aynı kurallar rastgele kaydırılmış sahte çizgilerde daha mı kötü çalışıyor?
+- **Kurgu:** 28 parite, 2008–2026, 15M grafik. Tepe/diplerden yatay seviyeler, 50 piplik yuvarlak sayılar ve son iki tepe/dipten trend çizgileri çizildi. Dönüş ve kırılım kuralları, ölçülen spread + komisyonla test edildi. Toplam yaklaşık 4,6 milyon gerçek işlem var.
+- **Sonuç:** 6 hipotezin 6'sı da geçmedi.
+  - Net sonuç işlem başına −0,28 ile −0,42 R arasında. 19 yılın hepsinde ve 28 paritenin hepsinde eksi.
+  - Dönüş kuralı maliyetten önce tam başabaş: kazanma oranı %40, 1,5R hedefte başabaş oranı da %40. Kırılım kuralı maliyetten önce bile −0,06 R.
+  - Sahte çizgiler aynı sonucu veriyor. Yani çizgi fiyat hakkında bilgi taşımıyor.
+  - Tek istisna yuvarlak sayı kırılımı: sahte ızgaradan anlamlı derecede iyi (Osler 2003 yönünde). Ama fark işlem başına ~0,04 pip, maliyet ise 2,2 pip.
+- **Neden kaybediyor:** 15M çizgi işlemlerinde stop medyan 7–10 pip; maliyet riskin %18–23'ü. Başabaş için kazanma oranının ~%50 olması gerekirdi.
+- **Uygulamaya:** Çizgi tabanlı AL/SAT sinyali eklenmedi.
+- Ayrıntı: research/levels/REPORT.md
+
 ### H. Özet kartında sinyal tazeliği ve dönüş uyarısı — yapıldı, geçmedi
 - **Soru:** Kart 100/100 gösterirken "taze" anda girmek "geç" anda girmekten daha mı iyi? Kart "dönüş sinyali var" derken girmek daha mı kötü? (Kullanıcı aynı 100/100'de önce kazandı, sonra tekrar girip kaybetti.)
 - **Kurgu:** 28 parite, 2008–2026. 15M skorunun yön gösterdiği her an sayıldı, toplam 10,3 milyon an. Tazelik ve uyarılar uygulamanın kendi kodu (forex_freshness.py) ile hesaplandı. 1 ve 4 saat sonraki hareket ölçüldü, ölçülen maliyet düşüldü.
@@ -105,12 +120,39 @@
 - **Uygulamaya:** Satırlar kartta kaldı, ama altına tahmin olmadıklarını söyleyen bir not eklendi.
 - Ayrıntı: research/freshness/REPORT.md
 
+### I. Özet sekmesindeki dört görüş aynı yönde olunca — yapıldı, geçmedi
+- **Soru:** Radar kartı, Fırsatlar, Pariteler ve ML yön modeli aynı yönü gösterdiğinde o yöne girmek maliyetten sonra kazandırıyor mu? (Kullanıcı, ekranı okuyup LONG/SHORT diyen tek bir alan istedi.)
+- **Kurgu:** Uygulamanın kendi kodu geçmişte her saat yeniden çalıştırıldı. Dönem 2023 sonrası, çünkü ML'nin görmediği dönem bu. 1 ve 4 saat sonraki hareketten ölçülen maliyet düşüldü.
+- **Kapsam:** Kullanıcının isteğiyle ilk dalgadan sonra durduruldu: 14 parite, 2023, 85.839 saatlik an.
+- **Sonuç:** Geçmedi.
+  - Dördü aynı yöndeyken (anların %14'ü) kazanma oranı %50. Maliyetten sonra 4 saatte −2,2 pip; aralık tamamen sıfırın altında.
+  - Teknik görüşler maliyetten önce bile hafif eksi. ML tek başına %52 isabetle +0,6 pip, ama maliyetin altında.
+  - Teknik ile ML çeliştiğinde teknik yöne girmek en kötüsü: %46,6 kazanma, −3,6 pip.
+- **Uygulamaya:** LONG/SHORT diyen kutu eklenmedi. Özet'e "Genel Yorum" paneli eklendi. Panel dört görüşü, uyuşup uyuşmadıklarını, o durumun ölçülen sonucunu ve haber/maliyet/oynaklık uyarılarını gösteriyor; karar satırı "Yeni işlem açma".
+- Ayrıntı: research/consensus/REPORT.md
+
+### J. Sabitleme saatleri etrafında dolar dönüşü — yapıldı, geçmedi
+- **Soru:** Krohn, Mueller & Whelan'ın 1999–2019'da her yıl gördüğü örüntü (dolar sabitlemeden önce değer kazanıp sonra geri veriyor) makaleden sonra, 2020–2026'da, maliyetten sonra kazandırıyor mu?
+- **Kurgu:** 7 dolar paritesi; 4 pencere, her biri bir işlem. Ölçülen spread + komisyon.
+- **Sonuç:** Dört pencerenin hiçbiri geçmedi.
+  - 2008–2019'da yönler makaleyle aynı; uygulama doğru.
+  - 2020 sonrası temiz iki pencerede işlem başına sadece +0,65 ve +0,77 pip. Makaledekinin yaklaşık dörtte biri; maliyetin altında.
+  - 17:00 New York'a değen pencereler gün sonu spread sıçramasıyla bozuluyor.
+- Ayrıntı: research/fix_reversal/REPORT.md
+
+### K. Ay sonu hisse korumaları ve Londra 16:00 sabitlemesi — yapıldı, geçmedi
+- **Soru:** Ay içinde hisseleri iyi giden ülkenin parasını ay sonu 15:00–16:00 Londra saatinde satmak (Melvin & Prins) 2014–2026'da kazandırıyor mu?
+- **Sonuç:** Net −0,29 pip [−2,75, +1,94]. Etki makalenin döneminde vardı, 2020'den beri eksi.
+- **Sonradan bulunan alt kural:** Büyük hisse farkı olan aylarda +4,5 pip görünüyordu. Kuralları yazıp hiç kullanılmamış 2003–2007 verisini indirerek doğrulandı ve geçmedi: net −1,52 pip.
+- **Ders:** Sonuçlara bakarak bulunan kuralın görülmemiş veride sınanması şart. Bu kural sınanmasaydı uygulamaya girerdi.
+- Ayrıntı: research/month_end/REPORT.md
+
 ### Yapılmamasını önerdiğim şeyler
 - 15M/5M'ye yeni gösterge veya filtre eklemek. Denenen her varyant maliyet sonrası zarar etti.
 - Kısa vadeli yön için daha büyük ML modelleri denemek. 1.680 eğitim ve yaklaşık 960 bin sinyalle yeterince denendi.
 - Sonuçlara bakarak parametre seçmek. Geçmişte iyi görünen her ayar, gelecekte aynı sonucu vermez.
 
-**Durum:** A, B, C ve H tamamlandı; dördü de önceden yazılan ölçütü geçmedi. E yapıldı ve uygulamaya eklendi. F değerlendirildi; şimdilik Yahoo + düzeltmeyle devam ediliyor. Açık kalan: D (haber sürprizi arşivi; zaman istiyor, kod değil).
+**Durum:** A, B, C, G, H, I, J ve K tamamlandı; sekizi de önceden yazılan ölçütü geçmedi. E yapıldı ve uygulamaya eklendi. F değerlendirildi; şimdilik Yahoo + düzeltmeyle devam ediliyor. Açık kalan: D (haber sürprizi arşivi; zaman istiyor, kod değil).
 
 ## Kaynaklar
 
@@ -129,3 +171,7 @@
 - Moskowitz, Ooi & Pedersen (2012): [AQR](https://www.aqr.com/Insights/Research/Journal-Article/Time-Series-Momentum)
 - Asness, Moskowitz & Pedersen (2013): [AQR](https://www.aqr.com/Insights/Research/Journal-Article/Value-and-Momentum-Everywhere)
 - Mueller, Tahbaz-Salehi & Vedolin (2017): [SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2705818)
+- Osler (2000), destek/direnç seviyeleri ve gün içi kurlar: [SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=888805)
+- Krohn, Mueller & Whelan, sabitleme saatleri ve gün içi dönüşler: [Bank of Canada SWP 2021-48](https://www.bankofcanada.ca/wp-content/uploads/2021/10/swp2021-48.pdf)
+- Melvin & Prins (2015), hisse korumaları ve Londra 16:00 sabitlemesi: [RePEc](https://ideas.repec.org/a/eee/finmar/v22y2015icp50-72.html)
+- Osler (2003), döviz emirleri ve teknik analizin açıklaması: [Journal of Finance](https://onlinelibrary.wiley.com/doi/abs/10.1111/1540-6261.00588)

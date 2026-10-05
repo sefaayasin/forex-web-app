@@ -1,0 +1,38 @@
+{
+  "name": "Month-end equity hedging flows at the London 4pm fix: does the predicted side pay after costs, out of sample?",
+  "frozen_on": "2026-10-05",
+  "question": "Melvin & Prins (Journal of Financial Markets 22, 2015; sample 2004-2012) show that when a country's equity market outperforms over the month, its currency depreciates in the hour before the 4pm London fix on the last business day of the month, because international equity managers re-hedge at that fix (10% equity appreciation -> ~14 bp currency depreciation). In the 7 USD pairs: does a trade in the predicted direction, held from 15:00 to 16:00 London time on the last business day of each month, earn more than the measured cost in months the paper never saw?",
+  "motivation": "The user asked for something that works after every direction signal failed (FOREX_ARASTIRMA.md). The fixing-reversal test (research/fix_reversal) found the paper's sign but a post-2019 size below the cost. Month-end hedging is a different, flow-based mechanism with a predicted size (several bp per month-end) well above the ~1 pip round trip in the majors.",
+  "symbols": ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDJPY", "USDCAD", "USDCHF"],
+  "equity_indices": {
+    "USD": "^GSPC", "EUR": "^STOXX50E", "GBP": "^FTSE", "AUD": "^AXJO", "NZD": "^NZ50", "JPY": "^N225", "CAD": "^GSPTSE", "CHF": "^SSMI",
+    "source": "Yahoo Finance daily closes in local currency, downloaded once and saved to research/month_end/equity_closes.csv before any outcome is computed"
+  },
+  "signal": {
+    "relative_return": "R = r_foreign - r_US, each the index's local-currency return from its last close on or before the previous month's last business day to its last close on or before the second-to-last business day of the current month (the paper's 'up until the second-to-last day').",
+    "predicted_side": "R > 0 -> foreign currency depreciates vs USD (sell foreign: SHORT XXXUSD / LONG USDXXX); R < 0 -> foreign currency appreciates. R = 0 or missing -> no trade. The sign only is traded; no size threshold."
+  },
+  "trades": "One trade per pair and month: last business day (Mon-Fri) of the month; enter at the open of the first 5M bar at or after 15:00 Europe/London, exit at the open of the first 5M bar at or after 16:00 Europe/London (both within 10 minutes, else skipped). If the last business day has no bars (holiday), the latest earlier business day with bars at both times is used.",
+  "cost": "Round trip in pips = (measured median spread at entry NY hour + at exit NY hour) / 2 + 0.7 pip commission (data/ml/spread_profile.json). Spreads around the month-end fix can be wider than the median; the p90 version is reported.",
+  "periods": {
+    "primary_out_of_sample": ["2014-01-01", "2026-08-31"],
+    "sub_periods": {"2014-2019": ["2014-01-01", "2019-12-31"], "2020-2026": ["2020-01-01", "2026-08-31"]},
+    "in_paper_sample_info": ["2008-01-01", "2012-12-31"]
+  },
+  "hypothesis": {"H1": "Mean net pips per trade, pooled over the 7 pairs, 2014-2026 > 0"},
+  "statistics": "Bootstrap resampling month-end dates as blocks (all pairs of a month-end together), 2000 resamples, seed 42; one hypothesis, two-sided 95% interval.",
+  "success_criterion": "H1 passes if the 2014-2026 mean net is above zero with the 95% interval above zero, AND the mean net is above zero in both 2014-2019 and 2020-2026.",
+  "what_follows": {
+    "pass": "The app gets a month-end panel: on the last business day of the month it shows, per USD pair, the month's relative equity return, the predicted side for 15:00-16:00 London (17:00-18:00 / 18:00-19:00 Turkish time), and the measured 2014-2026 net pips and hit rate per pair. Pairs whose own net mean is not above zero are marked as not covering the cost.",
+    "fail": "No trading panel; the result is added to FOREX_ARASTIRMA.md."
+  },
+  "information_only": [
+    "Per pair and per sub-period gross, net, hit rate",
+    "2008-2012 (inside the paper's sample) as a replication of the sign",
+    "Own-index return instead of the relative return",
+    "Top third of months by |R|",
+    "Net at p90 spreads",
+    "The same hour on the other business days of the month (control: should show no relation)"
+  ],
+  "parameter_search": "None. Indices, window and rule are fixed above before outcomes are computed."
+}

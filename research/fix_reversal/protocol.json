@@ -1,0 +1,46 @@
+{
+  "name": "Dollar reversals around the Tokyo, ECB and London fixes: do they pay after a retail ECN cost, out of sample?",
+  "frozen_on": "2026-10-05",
+  "question": "Krohn, Mueller & Whelan (Bank of Canada SWP 2021-48; Journal of Finance 2024) find that the U.S. dollar appreciates before the Tokyo and ECB fixes and depreciates after the Tokyo and London fixes, every year 1999-2019. Taking each window as one trade in the 7 USD pairs of the archive: is the mean net result per trade positive after the measured spread + commission, in data the paper never saw (2020 onward)?",
+  "motivation": "Every direction signal tested in this project lost the cost (FOREX_ARASTIRMA.md, sections 3, G, H, I). The user asked for something that works. This is a published, mechanism-backed (dealer hedging of fixing demand), clock-based effect with a reported size of ~2.5-3.5 bp per window, larger than the measured EURUSD round-trip cost (~1 pip). It has not been tested in this project.",
+  "source": {
+    "paper": "Krohn, I., Mueller, P., Whelan, P. Foreign Exchange Fixings and Returns Around the Clock. Bank of Canada Staff Working Paper 2021-48; Journal of Finance 79(1), 2024",
+    "windows_from_paper": "All in New York time (DST aware): pre-T 17:00 -> Tokyo fix (09:55 Tokyo time), post-T Tokyo fix -> 02:00, pre-E 02:00 -> 08:15 (ECB fix 14:15 Frankfurt), post-L 11:00 (London fix 16:00 London) -> 17:00",
+    "paper_signs": "Foreign currency vs USD: pre-T negative, post-T positive, pre-E negative, post-L positive for every G9 currency except JPY in post-L (Table I, 1999-2019)",
+    "paper_caveats": "Returns fall to below 5% a year in the last two sample years; with full indicative bid-ask spreads the strategies lose, with 50% of them they mostly earn."
+  },
+  "symbols": ["EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDJPY", "USDCAD", "USDCHF"],
+  "data": "data/historical_5m (Dukascopy 5M, UTC bar-open timestamps). Cleaning: research_meta_label.load_bars, as in the earlier tests.",
+  "trades": {
+    "definition": "For each trading day and each of the four windows, one trade per pair: enter at the open of the first 5M bar at or after the window start (within 10 minutes, else the day/window is skipped), exit at the open of the first 5M bar at or after the window end (within 10 minutes, else skipped). The exit uses the bar open at the end time, i.e. the price at the window end.",
+    "direction": "Long USD in pre-T and pre-E; short USD in post-T and post-L. For EURUSD/GBPUSD/AUDUSD/NZDUSD long USD = SHORT the pair; for USDJPY/USDCAD/USDCHF long USD = LONG the pair. The paper's general hypothesis is used for all pairs; the JPY post-L exception is reported, not used to flip the sign.",
+    "days": "Window start times are evaluated on every calendar date; a window whose start or end bar is missing (weekend, holiday, data gap) is skipped. Windows that start before 2008-01-08 are skipped."
+  },
+  "cost": "Round trip in pips = (measured median spread at the entry's New York hour + measured median spread at the exit's New York hour) / 2 + 0.7 pip commission (data/ml/spread_profile.json, forex_costs). The profile was measured in June-August 2026; it is applied to all years, which flatters early years whose spreads were wider. The pre-T entry at 17:00 New York pays the rollover spread.",
+  "periods": {
+    "primary_out_of_sample": ["2020-01-01", "2026-09-11"],
+    "sub_periods": {"2020-2022": ["2020-01-01", "2022-12-31"], "2023-2026": ["2023-01-01", "2026-09-11"]},
+    "replication_in_paper_sample": ["2008-01-08", "2019-12-31"]
+  },
+  "implementation_check": "Before the 2020+ results are read: in 2008-2019 the equal-weight mean gross move (before cost) of the 7 pairs, signed in the paper's foreign-vs-USD direction, must have the paper's sign in all four windows (pre-T < 0, post-T > 0, pre-E < 0, post-L > 0). If not, the windows or time zones are wrong and the run stops for a fix.",
+  "hypotheses": {
+    "H_preT": "Mean net pips per trade in pre-T (long USD), pooled over the 7 pairs, 2020-2026 > 0",
+    "H_postT": "Same for post-T (short USD)",
+    "H_preE": "Same for pre-E (long USD)",
+    "H_postL": "Same for post-L (short USD)"
+  },
+  "statistics": "Pooled mean of net pips per trade. Interval from a bootstrap resampling calendar days (New York trading date) as blocks, 2000 resamples, seed 42; all pairs' trades of a day stay together. Four tests, so each uses a two-sided 98.75% interval (Bonferroni 0.05/4).",
+  "success_criterion": "A window passes if, in 2020-2026, its mean net pips per trade is above zero with the 98.75% interval above zero, AND its mean net is above zero in both 2020-2022 and 2023-2026.",
+  "what_follows": {
+    "pass": "The app gets a 'Saat etkisi' (fixing clock) panel: for the pairs of a passing window it says, while the window is open or about to open, which side the window favours, when it ends (Turkish time), and the measured 2020-2026 net pips and hit rate per pair. Pairs whose own 2020-2026 net mean is not above zero are shown as not covering the cost. The Genel Yorum panel mentions it as the only measured edge.",
+    "fail": "No trading panel. The result is added to FOREX_ARASTIRMA.md as another tested idea."
+  },
+  "information_only": [
+    "Per pair: mean gross, mean net, hit rate per window, 2020-2026 and 2008-2019",
+    "Per year net per window",
+    "Combined reversals as in the paper: Tokyo (pre-T + post-T) and Europe (pre-E + post-L)",
+    "pre-T entering at 18:00 New York instead of 17:00 (after rollover)",
+    "Cost at the profile's p90 spreads instead of the median"
+  ],
+  "parameter_search": "None. Windows, signs and pairs are the paper's; costs are the project's measured ones."
+}

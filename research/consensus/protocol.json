@@ -1,0 +1,49 @@
+{
+  "name": "When every direction view on the Özet tab agrees, does entering that way beat the cost?",
+  "frozen_on": "2026-10-05",
+  "question": "The Özet tab shows four direction views for a pair: the radar card (LONG/SHORT İÇİN İZLE or TETİĞİ HAZIR), Fırsatlar (Güçlü Alım/Satış on the 15M or 5M entry), Pariteler (4H, 1H, 15M and 5M all LONG or all SHORT) and the ML 4-hour direction model. At moments when all four point the same way, does the pair then move that way by more than the round-trip cost?",
+  "motivation": "The user asked for one panel that reads the tab and says LONG or SHORT. Each view on its own has already failed a test (FOREX_ARASTIRMA.md: 15M/5M signals, 4H/1H rule, ML direction ~52%, freshness). A panel that only says LONG/SHORT when all of them agree would be a new rule; it is only shown as a call if it passes here.",
+  "prior_evidence": "15M/5M direction signals: -0.05 R before costs over ~960k signals 2008-2026; the 4H/1H filter did not improve them. ML direction model: ~52% balanced accuracy on 2023+ holdout, negative after 1.5 pip cost. Freshness test (research/freshness): every group ~48% hit rate, ~-3 pip after cost. Expectation going in: fail.",
+  "symbols": "The 28 pairs that have both a frozen direction model (data/ml/tournament/<PAIR>_direction_research.joblib) and the local 5M/15M/1H archives (all but EURZAR)",
+  "period": [
+    "2023-01-01",
+    "end of archive (2026-09-11)"
+  ],
+  "why_this_period": "The deployed direction models were fitted on data before 2023-01-01 (forex_ml_tournament.FINAL_START, train_all_pair_direction_models.py); 2023 onward is the only stretch where the ML view is out of sample.",
+  "data": {
+    "technical_views": "The app's own code compiled from forex_web_app_streamlit_v14_alert_decision.py (analyse_symbol, global_bias, build_intraday_opportunity and their helpers) with only fetch_ohlc replaced by feed_replay.ReplayFeed: at each moment it returns the bars the app would have downloaded (its 60/30/10/5 day windows, forming bar last, which the app drops; 4h rebuilt from hourly like the app). Archives: data/historical_5m, data/historical_15m, data/historical_1h_from_15m (Dukascopy).",
+    "ml_view": "forex_ml_tournament.build_features on the pair's full data/historical_1h_from_15m history and the frozen direction bundle's predict_proba, read at the last hourly bar closed by the decision time (the live app scores the last closed hourly bar). Dukascopy is the models' training source, so no Yahoo range calibration is applied."
+  },
+  "decision_moments": "Every full hour t (UTC) from 2023-01-01 to 2026-09-11 at which a 5M bar opens at t (market open) and all four timeframes return data. Every moment counts, not only the first of a streak, because the question is whether entering when the panel would say LONG/SHORT pays.",
+  "views": {
+    "radar": "build_intraday_opportunity(...)['side'] with confidence >= 42 (the card shows İZLE or HAZIR rather than NÖTR; classify_opportunity_readiness candidate threshold). The ML nudge is included exactly as the app adds it. Account size, target and session do not change side or confidence; they only split İZLE from HAZIR, which is not used.",
+    "firsatlar": "strong_bias_pairs logic on global_bias(summary, '15 Dakika') and global_bias(summary, '5 Dakika'): side s if at least one is 'Güçlü <s> Yönlü' and neither is the opposite strong label.",
+    "pariteler": "aligned_timeframe_pairs logic: the 4H, 1H, 15M and 5M Bias labels are all Alım (LONG) or all Satış (SHORT).",
+    "ml": "Side LONG if probability_up > 0.5, SHORT if < 0.5 (the app's 4s Yön column); none if features are missing.",
+    "consensus": "All four views give the same side s. Side of the trade = s."
+  },
+  "outcome": "Signed move in pips, in direction s, from the open of the 5M bar starting at t to the last 5M open at or before t + horizon; horizons 1 hour and 4 hours (24 hours information only). Net = signed move minus round-trip cost: measured median spread for the pair at t's New York hour (data/ml/spread_profile.json; 1.5 pip if missing) + 0.7 pip commission, as forex_costs and the earlier tests.",
+  "hypothesis": {
+    "H1_consensus_beats_cost": "Mean net move at consensus moments > 0"
+  },
+  "statistics": "Pooled over pairs. Mean with an interval from a bootstrap that resamples calendar days (UTC) as blocks, 2000 resamples, seed 42; same-day moments of all pairs stay together. One hypothesis at two horizons, so each uses a two-sided 97.5% interval (Bonferroni 0.05/2).",
+  "success_criterion": "H1 passes if the mean net move is above zero with the 97.5% interval above zero at BOTH 1h and 4h, AND the 4h mean net move is above zero in each of the sub-periods 2023, 2024, 2025-2026.",
+  "what_follows": {
+    "pass": "A 'Genel Yorum' panel on the Özet tab may say LONG/SHORT when the four views agree, with the measured net pips and hit rate next to it.",
+    "fail": "The panel is not built as a LONG/SHORT call. If built at all, it lists what each view says, marks agreement or conflict, and states that agreement was measured and does not beat the cost."
+  },
+  "information_only": [
+    "Mean move, net move and hit rate for each view alone and for the technical three (radar, Fırsatlar, Pariteler) agreeing with ML agreeing vs ML disagreeing (the AUDNZD screen of 2026-10-05 was technical LONG, ML SHORT)",
+    "Consensus moments that are the first of their streak per pair (a new call)",
+    "24-hour horizon",
+    "Per sub-period and per pair counts"
+  ],
+  "known_differences_from_live": [
+    "Live data is Yahoo; the replay uses Dukascopy archives. Yahoo hourly wicks differ (CAD/CHF crosses ~2x) and prices can differ by a few pips.",
+    "The app refreshes on user action; the replay samples once per hour.",
+    "apply_opportunity_cooldown only turns HAZIR into İZLE; it does not change side or confidence and is not replayed."
+  ],
+  "implementation_check": "Before outcomes are computed, for 20 random moments per pair the replayed views are recomputed from scratch with a fresh feed and must match the stored values exactly, and the ML probability read from the vectorised history must equal forex_ml_live.build_research_prediction on the same hourly bars (within 1e-9), or the run stops.",
+  "parameter_search": "None. All thresholds are the app's at freezing time.",
+  "amendment_2026-10-05": "Stopped early at the user's request after the first wave (14 pairs, 2023, 85,839 moments) finished and an interim readout had been shown; the full run would have taken ~6 hours. The rules above were not changed. Results cover only those 14 pair-years, so the 2024 and 2025-2026 sub-period checks could not be evaluated; H1 already fails on the full-period interval."
+}
