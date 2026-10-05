@@ -82,6 +82,14 @@ class ForexMlLiveTests(unittest.TestCase):
         self.assertAlmostEqual(raw["probability_up"], same["probability_up"])
         self.assertNotAlmostEqual(raw["probability_up"], wider["probability_up"])
 
+    def test_duplicate_yahoo_columns_do_not_break_range_calibration(self):
+        bars = synthetic_hourly_bars()
+        duplicated = pd.concat([bars, bars], axis=1)
+        result = build_research_prediction("EURUSD", "high_volatility", bars=duplicated, range_ratio=1.8)
+        expected = build_research_prediction("EURUSD", "high_volatility", bars=bars, range_ratio=1.8)
+        self.assertEqual(result["status"], "ready")
+        self.assertAlmostEqual(result["probability_up"], expected["probability_up"])
+
     def test_has_research_model_accepts_yahoo_suffix(self):
         self.assertTrue(has_research_model("EURUSD=X", "high_volatility"))
         self.assertFalse(has_research_model("ZZZXXX", "high_volatility"))

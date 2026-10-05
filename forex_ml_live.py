@@ -54,7 +54,7 @@ def load_research_model(symbol: str, task: str) -> Optional[dict]:
 
 def normalize_to_utc_hourly(bars: pd.DataFrame) -> pd.DataFrame:
     """Match the tz-aware UTC index forex_ml_tournament.build_features expects."""
-    out = bars[["Open", "High", "Low", "Close"]].dropna().copy()
+    out = bars.loc[:, ~bars.columns.duplicated()][["Open", "High", "Low", "Close"]].dropna().copy()
     if out.index.tz is None:
         out.index = out.index.tz_localize("UTC")
     else:

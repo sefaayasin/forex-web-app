@@ -630,6 +630,9 @@ def _fix_cols(df: pd.DataFrame) -> pd.DataFrame:
         df.columns = [str(c[0]).title() for c in df.columns]
     else:
         df.columns = [str(c).title() for c in df.columns]
+    # yfinance bazen aynı alanı iki kez döndürüyor; MultiIndex düzleşince "Close" gibi
+    # tekrarlı sütunlar oluşuyor ve df.Close Series yerine DataFrame dönüyor.
+    df = df.loc[:, ~df.columns.duplicated()]
 
     required = ["Open", "High", "Low", "Close"]
     for col in required:
