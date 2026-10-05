@@ -1,0 +1,428 @@
+{
+  "protocol_sha256": "cc693969a3bb4325e3a12b78acc22e1201d8c7086ae34f7c5f5e450ef9ca0763",
+  "alpha_per_hypothesis": 0.008333333333333333,
+  "days": 5850,
+  "hypotheses": {
+    "levels_bounce": {
+      "real": {
+        "trades": 1056103,
+        "win_rate": 0.39999791686985076,
+        "stop_rate": 0.5668651637198265,
+        "mean_gross_r": -0.005136408500933842,
+        "mean_net_r": -0.3544326475387112,
+        "mean_stress_r": -0.7037288865764882,
+        "median_stop_pips": 7.492477798339836,
+        "median_cost_share_of_risk": 0.2197018536802331,
+        "exit_reasons": {
+          "stop": 593937,
+          "target": 385896,
+          "time": 68229,
+          "stop_gap": 4731,
+          "target_gap": 3310
+        }
+      },
+      "placebo": {
+        "trades": 4160677,
+        "win_rate": 0.40000557601563397,
+        "stop_rate": 0.5672187482950491,
+        "mean_gross_r": -0.00335409401301733,
+        "mean_net_r": -0.3535112344913326,
+        "mean_stress_r": -0.7036683749696484,
+        "median_stop_pips": 7.443807422071735,
+        "median_cost_share_of_risk": 0.22031543655599933,
+        "exit_reasons": {
+          "stop": 2341761,
+          "target": 1522798,
+          "time": 264992,
+          "stop_gap": 18253,
+          "target_gap": 12873
+        }
+      },
+      "net_r_test": {
+        "mean": -0.3544326475387112,
+        "ci_low": -0.3631582231100448,
+        "ci_high": -0.3458551498543008,
+        "p_at_or_below_zero": 1.0
+      },
+      "net_r_minus_placebo": {
+        "difference": -0.0009214130473785831,
+        "ci_low": -0.003535035352055421,
+        "ci_high": 0.0018504344396421213,
+        "p_at_or_below_zero": 0.738
+      },
+      "gross_r_minus_placebo_info": {
+        "difference": -0.0017823144879165116,
+        "ci_low": -0.004326735257488779,
+        "ci_high": 0.0008957816973862308,
+        "p_at_or_below_zero": 0.91
+      },
+      "net_r_by_period": {
+        "2008-2013": -0.26261304361461885,
+        "2014-2019": -0.37146189314128375,
+        "2020-2026": -0.4207096950493497
+      },
+      "pairs_positive": 0,
+      "pairs": 28,
+      "checks": {
+        "mean_positive_significant": false,
+        "beats_placebo_significant": false,
+        "positive_at_stress_cost": false,
+        "positive_in_every_period": false,
+        "positive_in_15_of_28_pairs": false,
+        "at_least_1000_trades": true
+      },
+      "passes": false
+    },
+    "levels_break": {
+      "real": {
+        "trades": 1125004,
+        "win_rate": 0.37744488019598155,
+        "stop_rate": 0.5938503329765938,
+        "mean_gross_r": -0.060074114803121394,
+        "mean_net_r": -0.3943665509055357,
+        "mean_stress_r": -0.7286589870079501,
+        "median_stop_pips": 7.674462012070249,
+        "median_cost_share_of_risk": 0.21525748421565052,
+        "exit_reasons": {
+          "stop": 662521,
+          "target": 391192,
+          "time": 62707,
+          "stop_gap": 5563,
+          "target_gap": 3021
+        }
+      },
+      "placebo": {
+        "trades": 4342368,
+        "win_rate": 0.37672279272507536,
+        "stop_rate": 0.5944332677469989,
+        "mean_gross_r": -0.06131995740614244,
+        "mean_net_r": -0.3952943639928722,
+        "mean_stress_r": -0.7292687705796008,
+        "median_stop_pips": 7.672933131587789,
+        "median_cost_share_of_risk": 0.2149198260564103,
+        "exit_reasons": {
+          "stop": 2560955,
+          "target": 1505664,
+          "time": 243333,
+          "stop_gap": 20293,
+          "target_gap": 12123
+        }
+      },
+      "net_r_test": {
+        "mean": -0.3943665509055357,
+        "ci_low": -0.40226998644277645,
+        "ci_high": -0.38640488140246165,
+        "p_at_or_below_zero": 1.0
+      },
+      "net_r_minus_placebo": {
+        "difference": 0.0009278130873365265,
+        "ci_low": -0.0012739788052215275,
+        "ci_high": 0.0033179349170869327,
+        "p_at_or_below_zero": 0.206
+      },
+      "gross_r_minus_placebo_info": {
+        "difference": 0.0012458426030210468,
+        "ci_low": -0.000916413153349336,
+        "ci_high": 0.003476700378517025,
+        "p_at_or_below_zero": 0.1255
+      },
+      "net_r_by_period": {
+        "2008-2013": -0.3335243037517903,
+        "2014-2019": -0.409094118704949,
+        "2020-2026": -0.43509456715413886
+      },
+      "pairs_positive": 0,
+      "pairs": 28,
+      "checks": {
+        "mean_positive_significant": false,
+        "beats_placebo_significant": false,
+        "positive_at_stress_cost": false,
+        "positive_in_every_period": false,
+        "positive_in_15_of_28_pairs": false,
+        "at_least_1000_trades": true
+      },
+      "passes": false
+    },
+    "round_bounce": {
+      "real": {
+        "trades": 983442,
+        "win_rate": 0.4026795682917752,
+        "stop_rate": 0.5652961740499185,
+        "mean_gross_r": -0.002741756231565097,
+        "mean_net_r": -0.28368053269002574,
+        "mean_stress_r": -0.5646193091484869,
+        "median_stop_pips": 9.947610131703888,
+        "median_cost_share_of_risk": 0.18351968526316145,
+        "exit_reasons": {
+          "stop": 551357,
+          "target": 357888,
+          "time": 66390,
+          "stop_gap": 4579,
+          "target_gap": 3228
+        }
+      },
+      "placebo": {
+        "trades": 3989537,
+        "win_rate": 0.40214014809237264,
+        "stop_rate": 0.5659907402788845,
+        "mean_gross_r": -0.003634743761662717,
+        "mean_net_r": -0.2851714340499717,
+        "mean_stress_r": -0.5667081243382808,
+        "median_stop_pips": 9.857768028362912,
+        "median_cost_share_of_risk": 0.1837554481095524,
+        "exit_reasons": {
+          "stop": 2239677,
+          "target": 1451762,
+          "time": 266762,
+          "stop_gap": 18364,
+          "target_gap": 12972
+        }
+      },
+      "net_r_test": {
+        "mean": -0.28368053269002574,
+        "ci_low": -0.2923644681999245,
+        "ci_high": -0.2752500540788046,
+        "p_at_or_below_zero": 1.0
+      },
+      "net_r_minus_placebo": {
+        "difference": 0.0014909013599459509,
+        "ci_low": -0.0012629347752153518,
+        "ci_high": 0.004381155773775193,
+        "p_at_or_below_zero": 0.1625
+      },
+      "gross_r_minus_placebo_info": {
+        "difference": 0.0008929875300976199,
+        "ci_low": -0.0017223974973521925,
+        "ci_high": 0.003705392727678376,
+        "p_at_or_below_zero": 0.2665
+      },
+      "net_r_by_period": {
+        "2008-2013": -0.21374658690922657,
+        "2014-2019": -0.3125956207468292,
+        "2020-2026": -0.34617491051249627
+      },
+      "pairs_positive": 0,
+      "pairs": 28,
+      "checks": {
+        "mean_positive_significant": false,
+        "beats_placebo_significant": false,
+        "positive_at_stress_cost": false,
+        "positive_in_every_period": false,
+        "positive_in_15_of_28_pairs": false,
+        "at_least_1000_trades": true
+      },
+      "passes": false
+    },
+    "round_break": {
+      "real": {
+        "trades": 1045711,
+        "win_rate": 0.3801566589621798,
+        "stop_rate": 0.5898111428492193,
+        "mean_gross_r": -0.057909083607670275,
+        "mean_net_r": -0.3250057211509876,
+        "mean_stress_r": -0.5921023586943045,
+        "median_stop_pips": 10.29440011406848,
+        "median_cost_share_of_risk": 0.1782646558382647,
+        "exit_reasons": {
+          "stop": 611310,
+          "target": 360416,
+          "time": 65418,
+          "stop_gap": 5462,
+          "target_gap": 3105
+        }
+      },
+      "placebo": {
+        "trades": 4243709,
+        "win_rate": 0.37857331876431677,
+        "stop_rate": 0.5917601795976114,
+        "mean_gross_r": -0.061504537012347774,
+        "mean_net_r": -0.33006066277609686,
+        "mean_stress_r": -0.5986167885398465,
+        "median_stop_pips": 10.1515667590931,
+        "median_cost_share_of_risk": 0.17918266779395498,
+        "exit_reasons": {
+          "stop": 2489165,
+          "target": 1459960,
+          "time": 259747,
+          "stop_gap": 22093,
+          "target_gap": 12744
+        }
+      },
+      "net_r_test": {
+        "mean": -0.3250057211509876,
+        "ci_low": -0.3324379261043285,
+        "ci_high": -0.3174122353675198,
+        "p_at_or_below_zero": 1.0
+      },
+      "net_r_minus_placebo": {
+        "difference": 0.005054941625109277,
+        "ci_low": 0.0025384832072571305,
+        "ci_high": 0.007412508402741957,
+        "p_at_or_below_zero": 0.0
+      },
+      "gross_r_minus_placebo_info": {
+        "difference": 0.0035954534046774983,
+        "ci_low": 0.0012623743491651355,
+        "ci_high": 0.005878198836927735,
+        "p_at_or_below_zero": 0.001
+      },
+      "net_r_by_period": {
+        "2008-2013": -0.2826357600974781,
+        "2014-2019": -0.3500697929961044,
+        "2020-2026": -0.35597948735542884
+      },
+      "pairs_positive": 0,
+      "pairs": 28,
+      "checks": {
+        "mean_positive_significant": false,
+        "beats_placebo_significant": true,
+        "positive_at_stress_cost": false,
+        "positive_in_every_period": false,
+        "positive_in_15_of_28_pairs": false,
+        "at_least_1000_trades": true
+      },
+      "passes": false
+    },
+    "trendline_bounce": {
+      "real": {
+        "trades": 211660,
+        "win_rate": 0.400023622791269,
+        "stop_rate": 0.5663233487668903,
+        "mean_gross_r": 0.0006197284929197657,
+        "mean_net_r": -0.37879611830318827,
+        "mean_stress_r": -0.7582119650992959,
+        "median_stop_pips": 6.977853641552123,
+        "median_cost_share_of_risk": 0.23412712625528842,
+        "exit_reasons": {
+          "stop": 118826,
+          "target": 77827,
+          "time": 13166,
+          "stop_gap": 1042,
+          "target_gap": 799
+        }
+      },
+      "placebo": {
+        "trades": 546248,
+        "win_rate": 0.4022312209838755,
+        "stop_rate": 0.5650730071322916,
+        "mean_gross_r": 0.002022894266884207,
+        "mean_net_r": -0.3541589744053039,
+        "mean_stress_r": -0.710340843077492,
+        "median_stop_pips": 7.316796888806598,
+        "median_cost_share_of_risk": 0.22253134638853353,
+        "exit_reasons": {
+          "stop": 306263,
+          "target": 201291,
+          "time": 34698,
+          "stop_gap": 2407,
+          "target_gap": 1589
+        }
+      },
+      "net_r_test": {
+        "mean": -0.37879611830318827,
+        "ci_low": -0.3902819165767778,
+        "ci_high": -0.36726803714095135,
+        "p_at_or_below_zero": 1.0
+      },
+      "net_r_minus_placebo": {
+        "difference": -0.02463714389788435,
+        "ci_low": -0.031235359906461847,
+        "ci_high": -0.01836095324190624,
+        "p_at_or_below_zero": 1.0
+      },
+      "gross_r_minus_placebo_info": {
+        "difference": -0.0014031657739644412,
+        "ci_low": -0.007835241322592694,
+        "ci_high": 0.004698634015449947,
+        "p_at_or_below_zero": 0.663
+      },
+      "net_r_by_period": {
+        "2008-2013": -0.2688424464671015,
+        "2014-2019": -0.4021406844105246,
+        "2020-2026": -0.4614946364826395
+      },
+      "pairs_positive": 0,
+      "pairs": 28,
+      "checks": {
+        "mean_positive_significant": false,
+        "beats_placebo_significant": false,
+        "positive_at_stress_cost": false,
+        "positive_in_every_period": false,
+        "positive_in_15_of_28_pairs": false,
+        "at_least_1000_trades": true
+      },
+      "passes": false
+    },
+    "trendline_break": {
+      "real": {
+        "trades": 172264,
+        "win_rate": 0.3783204848372266,
+        "stop_rate": 0.5931593368318395,
+        "mean_gross_r": -0.05665522416834056,
+        "mean_net_r": -0.41962641292767205,
+        "mean_stress_r": -0.7825976016870035,
+        "median_stop_pips": 7.111359595781153,
+        "median_cost_share_of_risk": 0.2300019443005949,
+        "exit_reasons": {
+          "stop": 101328,
+          "target": 60249,
+          "time": 9357,
+          "stop_gap": 852,
+          "target_gap": 478
+        }
+      },
+      "placebo": {
+        "trades": 510172,
+        "win_rate": 0.3816889205993273,
+        "stop_rate": 0.5891738472515152,
+        "mean_gross_r": -0.05032943492094808,
+        "mean_net_r": -0.39122861575232165,
+        "mean_stress_r": -0.7321277965836954,
+        "median_stop_pips": 7.459250078199764,
+        "median_cost_share_of_risk": 0.21868430434666444,
+        "exit_reasons": {
+          "stop": 298238,
+          "target": 178837,
+          "time": 29323,
+          "stop_gap": 2342,
+          "target_gap": 1432
+        }
+      },
+      "net_r_test": {
+        "mean": -0.41962641292767205,
+        "ci_low": -0.43038351167501526,
+        "ci_high": -0.40931615235269514,
+        "p_at_or_below_zero": 1.0
+      },
+      "net_r_minus_placebo": {
+        "difference": -0.028397797175350403,
+        "ci_low": -0.03500696581039521,
+        "ci_high": -0.02210209741521821,
+        "p_at_or_below_zero": 1.0
+      },
+      "gross_r_minus_placebo_info": {
+        "difference": -0.00632578924739248,
+        "ci_low": -0.012760122782558782,
+        "ci_high": -4.343091897080172e-06,
+        "p_at_or_below_zero": 0.975
+      },
+      "net_r_by_period": {
+        "2008-2013": -0.3503508240260156,
+        "2014-2019": -0.44306868209339006,
+        "2020-2026": -0.46056155345048927
+      },
+      "pairs_positive": 0,
+      "pairs": 28,
+      "checks": {
+        "mean_positive_significant": false,
+        "beats_placebo_significant": false,
+        "positive_at_stress_cost": false,
+        "positive_in_every_period": false,
+        "positive_in_15_of_28_pairs": false,
+        "at_least_1000_trades": true
+      },
+      "passes": false
+    }
+  },
+  "any_passes": false
+}

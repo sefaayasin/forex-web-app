@@ -1,0 +1,6388 @@
+{
+  "protocol_sha256": "cc693969a3bb4325e3a12b78acc22e1201d8c7086ae34f7c5f5e450ef9ca0763",
+  "pairs": 28,
+  "trades_by_hypothesis": {
+    "levels_bounce": {
+      "real": 1056103,
+      "placebo": 4160677
+    },
+    "levels_break": {
+      "real": 1125004,
+      "placebo": 4342368
+    },
+    "round_bounce": {
+      "real": 983442,
+      "placebo": 3989537
+    },
+    "round_break": {
+      "real": 1045711,
+      "placebo": 4243709
+    },
+    "trendline_bounce": {
+      "real": 211660,
+      "placebo": 546248
+    },
+    "trendline_break": {
+      "real": 172264,
+      "placebo": 510172
+    }
+  },
+  "per_pair": {
+    "AUDCAD": {
+      "bars_15m": 466129,
+      "bars_5m": 1397784,
+      "ohlc_repaired": {
+        "15m": 16,
+        "5m": 81
+      },
+      "swings": 25688,
+      "mean_active_levels": 5.767283305694346,
+      "share_of_bars_with_level_in_reach": 0.388126462846122,
+      "trendlines": {
+        "support": 5664,
+        "resistance": 5336
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 87451,
+          "trades": 42088,
+          "no_5m_bar": 295,
+          "rollover_hour": 3797,
+          "position_open": 41271
+        },
+        "levels_break|0": {
+          "signals": 61678,
+          "trades": 44517,
+          "no_5m_bar": 229,
+          "rollover_hour": 2538,
+          "position_open": 14394
+        },
+        "levels_bounce|-3": {
+          "signals": 79955,
+          "trades": 39070,
+          "no_5m_bar": 250,
+          "rollover_hour": 3656,
+          "position_open": 36979
+        },
+        "levels_break|-3": {
+          "signals": 57324,
+          "trades": 40473,
+          "no_5m_bar": 250,
+          "rollover_hour": 2538,
+          "position_open": 14063
+        },
+        "levels_bounce|-1.5": {
+          "signals": 87053,
+          "trades": 41923,
+          "no_5m_bar": 270,
+          "rollover_hour": 3807,
+          "position_open": 41053
+        },
+        "levels_break|-1.5": {
+          "signals": 61794,
+          "trades": 44087,
+          "no_5m_bar": 257,
+          "rollover_hour": 2580,
+          "position_open": 14870
+        },
+        "levels_bounce|1.5": {
+          "signals": 87428,
+          "trades": 41953,
+          "no_5m_bar": 261,
+          "rollover_hour": 3791,
+          "position_open": 41423
+        },
+        "levels_break|1.5": {
+          "signals": 61730,
+          "trades": 44127,
+          "no_5m_bar": 246,
+          "rollover_hour": 2588,
+          "position_open": 14769
+        },
+        "levels_bounce|3": {
+          "signals": 83772,
+          "trades": 40691,
+          "no_5m_bar": 244,
+          "rollover_hour": 3616,
+          "position_open": 39221
+        },
+        "levels_break|3": {
+          "signals": 58843,
+          "trades": 41589,
+          "no_5m_bar": 234,
+          "rollover_hour": 2465,
+          "position_open": 14555
+        },
+        "round_bounce|0": {
+          "signals": 54542,
+          "trades": 28991,
+          "no_5m_bar": 182,
+          "rollover_hour": 2426,
+          "position_open": 22943
+        },
+        "round_break|0": {
+          "signals": 36311,
+          "trades": 30483,
+          "no_5m_bar": 149,
+          "rollover_hour": 1543,
+          "position_open": 4136
+        },
+        "round_bounce|10": {
+          "signals": 55918,
+          "trades": 29613,
+          "no_5m_bar": 170,
+          "rollover_hour": 2408,
+          "position_open": 23727
+        },
+        "round_break|10": {
+          "signals": 37222,
+          "trades": 31185,
+          "no_5m_bar": 172,
+          "rollover_hour": 1617,
+          "position_open": 4248
+        },
+        "round_bounce|20": {
+          "signals": 56573,
+          "trades": 30076,
+          "no_5m_bar": 200,
+          "rollover_hour": 2477,
+          "position_open": 23820
+        },
+        "round_break|20": {
+          "signals": 37833,
+          "trades": 31522,
+          "no_5m_bar": 145,
+          "rollover_hour": 1612,
+          "position_open": 4554
+        },
+        "round_bounce|30": {
+          "signals": 56104,
+          "trades": 29752,
+          "no_5m_bar": 183,
+          "rollover_hour": 2538,
+          "position_open": 23631
+        },
+        "round_break|30": {
+          "signals": 37266,
+          "trades": 31216,
+          "no_5m_bar": 170,
+          "rollover_hour": 1580,
+          "position_open": 4300
+        },
+        "round_bounce|40": {
+          "signals": 55706,
+          "trades": 29588,
+          "no_5m_bar": 159,
+          "rollover_hour": 2548,
+          "position_open": 23411
+        },
+        "round_break|40": {
+          "signals": 36942,
+          "trades": 30786,
+          "no_5m_bar": 138,
+          "rollover_hour": 1704,
+          "position_open": 4314
+        },
+        "trendline_bounce|0": {
+          "signals": 15221,
+          "trades": 8197,
+          "no_5m_bar": 38,
+          "rollover_hour": 698,
+          "position_open": 6288
+        },
+        "trendline_break|0": {
+          "signals": 6942,
+          "trades": 6591,
+          "no_5m_bar": 37,
+          "rollover_hour": 294,
+          "position_open": 20
+        },
+        "trendline_bounce|-3": {
+          "signals": 6806,
+          "trades": 3757,
+          "no_5m_bar": 21,
+          "rollover_hour": 328,
+          "position_open": 2700
+        },
+        "trendline_break|-3": {
+          "signals": 4000,
+          "trades": 3784,
+          "no_5m_bar": 6,
+          "rollover_hour": 158,
+          "position_open": 52
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 11799,
+          "trades": 6443,
+          "no_5m_bar": 34,
+          "rollover_hour": 598,
+          "position_open": 4724
+        },
+        "trendline_break|-1.5": {
+          "signals": 5819,
+          "trades": 5534,
+          "no_5m_bar": 12,
+          "rollover_hour": 245,
+          "position_open": 28
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11957,
+          "trades": 6572,
+          "no_5m_bar": 35,
+          "rollover_hour": 414,
+          "position_open": 4936
+        },
+        "trendline_break|1.5": {
+          "signals": 6028,
+          "trades": 5753,
+          "no_5m_bar": 32,
+          "rollover_hour": 206,
+          "position_open": 37
+        },
+        "trendline_bounce|3": {
+          "signals": 7608,
+          "trades": 4230,
+          "no_5m_bar": 22,
+          "rollover_hour": 207,
+          "position_open": 3149
+        },
+        "trendline_break|3": {
+          "signals": 4210,
+          "trades": 4009,
+          "no_5m_bar": 18,
+          "rollover_hour": 132,
+          "position_open": 51
+        }
+      }
+    },
+    "AUDCHF": {
+      "bars_15m": 466274,
+      "bars_5m": 1397970,
+      "ohlc_repaired": {
+        "15m": 5,
+        "5m": 30
+      },
+      "swings": 25522,
+      "mean_active_levels": 5.724005627592359,
+      "share_of_bars_with_level_in_reach": 0.3601744896777431,
+      "trendlines": {
+        "support": 5529,
+        "resistance": 5070
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 80514,
+          "trades": 39518,
+          "no_5m_bar": 242,
+          "rollover_hour": 3640,
+          "position_open": 37114
+        },
+        "levels_break|0": {
+          "signals": 57952,
+          "trades": 41763,
+          "no_5m_bar": 254,
+          "rollover_hour": 2519,
+          "position_open": 13416
+        },
+        "levels_bounce|-3": {
+          "signals": 74798,
+          "trades": 37240,
+          "no_5m_bar": 224,
+          "rollover_hour": 3613,
+          "position_open": 33721
+        },
+        "levels_break|-3": {
+          "signals": 54238,
+          "trades": 38070,
+          "no_5m_bar": 220,
+          "rollover_hour": 2422,
+          "position_open": 13526
+        },
+        "levels_bounce|-1.5": {
+          "signals": 80247,
+          "trades": 39828,
+          "no_5m_bar": 230,
+          "rollover_hour": 3695,
+          "position_open": 36494
+        },
+        "levels_break|-1.5": {
+          "signals": 57923,
+          "trades": 41208,
+          "no_5m_bar": 268,
+          "rollover_hour": 2547,
+          "position_open": 13900
+        },
+        "levels_bounce|1.5": {
+          "signals": 80677,
+          "trades": 39848,
+          "no_5m_bar": 227,
+          "rollover_hour": 3629,
+          "position_open": 36973
+        },
+        "levels_break|1.5": {
+          "signals": 58416,
+          "trades": 41749,
+          "no_5m_bar": 250,
+          "rollover_hour": 2560,
+          "position_open": 13857
+        },
+        "levels_bounce|3": {
+          "signals": 77122,
+          "trades": 38599,
+          "no_5m_bar": 233,
+          "rollover_hour": 3377,
+          "position_open": 34913
+        },
+        "levels_break|3": {
+          "signals": 56045,
+          "trades": 39566,
+          "no_5m_bar": 233,
+          "rollover_hour": 2360,
+          "position_open": 13886
+        },
+        "round_bounce|0": {
+          "signals": 53172,
+          "trades": 28917,
+          "no_5m_bar": 156,
+          "rollover_hour": 2302,
+          "position_open": 21797
+        },
+        "round_break|0": {
+          "signals": 36393,
+          "trades": 30408,
+          "no_5m_bar": 141,
+          "rollover_hour": 1468,
+          "position_open": 4376
+        },
+        "round_bounce|10": {
+          "signals": 52990,
+          "trades": 28749,
+          "no_5m_bar": 152,
+          "rollover_hour": 2325,
+          "position_open": 21764
+        },
+        "round_break|10": {
+          "signals": 36342,
+          "trades": 30244,
+          "no_5m_bar": 146,
+          "rollover_hour": 1494,
+          "position_open": 4458
+        },
+        "round_bounce|20": {
+          "signals": 53629,
+          "trades": 29080,
+          "no_5m_bar": 157,
+          "rollover_hour": 2390,
+          "position_open": 22002
+        },
+        "round_break|20": {
+          "signals": 36323,
+          "trades": 30367,
+          "no_5m_bar": 132,
+          "rollover_hour": 1483,
+          "position_open": 4341
+        },
+        "round_bounce|30": {
+          "signals": 53472,
+          "trades": 28843,
+          "no_5m_bar": 154,
+          "rollover_hour": 2374,
+          "position_open": 22101
+        },
+        "round_break|30": {
+          "signals": 36371,
+          "trades": 30399,
+          "no_5m_bar": 142,
+          "rollover_hour": 1471,
+          "position_open": 4359
+        },
+        "round_bounce|40": {
+          "signals": 53862,
+          "trades": 29120,
+          "no_5m_bar": 175,
+          "rollover_hour": 2404,
+          "position_open": 22163
+        },
+        "round_break|40": {
+          "signals": 36611,
+          "trades": 30412,
+          "no_5m_bar": 149,
+          "rollover_hour": 1561,
+          "position_open": 4489
+        },
+        "trendline_bounce|0": {
+          "signals": 14159,
+          "trades": 7642,
+          "no_5m_bar": 53,
+          "rollover_hour": 683,
+          "position_open": 5781
+        },
+        "trendline_break|0": {
+          "signals": 6585,
+          "trades": 6227,
+          "no_5m_bar": 28,
+          "rollover_hour": 313,
+          "position_open": 17
+        },
+        "trendline_bounce|-3": {
+          "signals": 6987,
+          "trades": 3859,
+          "no_5m_bar": 24,
+          "rollover_hour": 413,
+          "position_open": 2691
+        },
+        "trendline_break|-3": {
+          "signals": 3950,
+          "trades": 3686,
+          "no_5m_bar": 12,
+          "rollover_hour": 209,
+          "position_open": 43
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10595,
+          "trades": 5867,
+          "no_5m_bar": 47,
+          "rollover_hour": 630,
+          "position_open": 4051
+        },
+        "trendline_break|-1.5": {
+          "signals": 5686,
+          "trades": 5317,
+          "no_5m_bar": 18,
+          "rollover_hour": 310,
+          "position_open": 41
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11159,
+          "trades": 6200,
+          "no_5m_bar": 29,
+          "rollover_hour": 430,
+          "position_open": 4500
+        },
+        "trendline_break|1.5": {
+          "signals": 5830,
+          "trades": 5518,
+          "no_5m_bar": 27,
+          "rollover_hour": 247,
+          "position_open": 38
+        },
+        "trendline_bounce|3": {
+          "signals": 6977,
+          "trades": 3948,
+          "no_5m_bar": 13,
+          "rollover_hour": 196,
+          "position_open": 2820
+        },
+        "trendline_break|3": {
+          "signals": 4159,
+          "trades": 3932,
+          "no_5m_bar": 18,
+          "rollover_hour": 146,
+          "position_open": 63
+        }
+      }
+    },
+    "AUDJPY": {
+      "bars_15m": 464593,
+      "bars_5m": 1393411,
+      "ohlc_repaired": {
+        "15m": 0,
+        "5m": 0
+      },
+      "swings": 25427,
+      "mean_active_levels": 5.632549349645819,
+      "share_of_bars_with_level_in_reach": 0.3338750260981117,
+      "trendlines": {
+        "support": 5736,
+        "resistance": 5113
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 74836,
+          "trades": 37583,
+          "no_5m_bar": 219,
+          "rollover_hour": 2895,
+          "position_open": 34139
+        },
+        "levels_break|0": {
+          "signals": 53489,
+          "trades": 39654,
+          "no_5m_bar": 165,
+          "rollover_hour": 1813,
+          "position_open": 11857
+        },
+        "levels_bounce|-3": {
+          "signals": 68806,
+          "trades": 35308,
+          "no_5m_bar": 180,
+          "rollover_hour": 2651,
+          "position_open": 30667
+        },
+        "levels_break|-3": {
+          "signals": 50518,
+          "trades": 36366,
+          "no_5m_bar": 138,
+          "rollover_hour": 1740,
+          "position_open": 12274
+        },
+        "levels_bounce|-1.5": {
+          "signals": 74648,
+          "trades": 37986,
+          "no_5m_bar": 202,
+          "rollover_hour": 2825,
+          "position_open": 33635
+        },
+        "levels_break|-1.5": {
+          "signals": 54741,
+          "trades": 39953,
+          "no_5m_bar": 178,
+          "rollover_hour": 1885,
+          "position_open": 12725
+        },
+        "levels_bounce|1.5": {
+          "signals": 75582,
+          "trades": 38177,
+          "no_5m_bar": 211,
+          "rollover_hour": 2909,
+          "position_open": 34285
+        },
+        "levels_break|1.5": {
+          "signals": 54917,
+          "trades": 40050,
+          "no_5m_bar": 167,
+          "rollover_hour": 1972,
+          "position_open": 12728
+        },
+        "levels_bounce|3": {
+          "signals": 73789,
+          "trades": 37438,
+          "no_5m_bar": 211,
+          "rollover_hour": 2762,
+          "position_open": 33378
+        },
+        "levels_break|3": {
+          "signals": 53021,
+          "trades": 38429,
+          "no_5m_bar": 143,
+          "rollover_hour": 1929,
+          "position_open": 12520
+        },
+        "round_bounce|0": {
+          "signals": 66229,
+          "trades": 36346,
+          "no_5m_bar": 178,
+          "rollover_hour": 2435,
+          "position_open": 27270
+        },
+        "round_break|0": {
+          "signals": 46741,
+          "trades": 38717,
+          "no_5m_bar": 140,
+          "rollover_hour": 1646,
+          "position_open": 6238
+        },
+        "round_bounce|10": {
+          "signals": 66580,
+          "trades": 36742,
+          "no_5m_bar": 189,
+          "rollover_hour": 2347,
+          "position_open": 27302
+        },
+        "round_break|10": {
+          "signals": 47421,
+          "trades": 39213,
+          "no_5m_bar": 121,
+          "rollover_hour": 1680,
+          "position_open": 6407
+        },
+        "round_bounce|20": {
+          "signals": 67633,
+          "trades": 37293,
+          "no_5m_bar": 185,
+          "rollover_hour": 2433,
+          "position_open": 27722
+        },
+        "round_break|20": {
+          "signals": 47817,
+          "trades": 39653,
+          "no_5m_bar": 114,
+          "rollover_hour": 1609,
+          "position_open": 6441
+        },
+        "round_bounce|30": {
+          "signals": 67630,
+          "trades": 37094,
+          "no_5m_bar": 177,
+          "rollover_hour": 2377,
+          "position_open": 27982
+        },
+        "round_break|30": {
+          "signals": 47536,
+          "trades": 39270,
+          "no_5m_bar": 137,
+          "rollover_hour": 1612,
+          "position_open": 6517
+        },
+        "round_bounce|40": {
+          "signals": 66702,
+          "trades": 36832,
+          "no_5m_bar": 181,
+          "rollover_hour": 2405,
+          "position_open": 27284
+        },
+        "round_break|40": {
+          "signals": 47286,
+          "trades": 39125,
+          "no_5m_bar": 130,
+          "rollover_hour": 1526,
+          "position_open": 6505
+        },
+        "trendline_bounce|0": {
+          "signals": 14499,
+          "trades": 7898,
+          "no_5m_bar": 49,
+          "rollover_hour": 632,
+          "position_open": 5920
+        },
+        "trendline_break|0": {
+          "signals": 6707,
+          "trades": 6396,
+          "no_5m_bar": 32,
+          "rollover_hour": 252,
+          "position_open": 27
+        },
+        "trendline_bounce|-3": {
+          "signals": 6599,
+          "trades": 3866,
+          "no_5m_bar": 17,
+          "rollover_hour": 221,
+          "position_open": 2495
+        },
+        "trendline_break|-3": {
+          "signals": 4129,
+          "trades": 3948,
+          "no_5m_bar": 9,
+          "rollover_hour": 128,
+          "position_open": 44
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10766,
+          "trades": 6050,
+          "no_5m_bar": 28,
+          "rollover_hour": 452,
+          "position_open": 4236
+        },
+        "trendline_break|-1.5": {
+          "signals": 5801,
+          "trades": 5562,
+          "no_5m_bar": 19,
+          "rollover_hour": 191,
+          "position_open": 29
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11421,
+          "trades": 6407,
+          "no_5m_bar": 34,
+          "rollover_hour": 434,
+          "position_open": 4546
+        },
+        "trendline_break|1.5": {
+          "signals": 5994,
+          "trades": 5696,
+          "no_5m_bar": 27,
+          "rollover_hour": 232,
+          "position_open": 39
+        },
+        "trendline_bounce|3": {
+          "signals": 7450,
+          "trades": 4187,
+          "no_5m_bar": 17,
+          "rollover_hour": 264,
+          "position_open": 2982
+        },
+        "trendline_break|3": {
+          "signals": 4366,
+          "trades": 4165,
+          "no_5m_bar": 9,
+          "rollover_hour": 146,
+          "position_open": 46
+        }
+      }
+    },
+    "AUDNZD": {
+      "bars_15m": 465715,
+      "bars_5m": 1396059,
+      "ohlc_repaired": {
+        "15m": 8,
+        "5m": 41
+      },
+      "swings": 25693,
+      "mean_active_levels": 5.74335591509829,
+      "share_of_bars_with_level_in_reach": 0.3993708598606444,
+      "trendlines": {
+        "support": 5477,
+        "resistance": 5563
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 91255,
+          "trades": 40589,
+          "no_5m_bar": 378,
+          "rollover_hour": 4681,
+          "position_open": 45607
+        },
+        "levels_break|0": {
+          "signals": 59940,
+          "trades": 42831,
+          "no_5m_bar": 338,
+          "rollover_hour": 3092,
+          "position_open": 13679
+        },
+        "levels_bounce|-3": {
+          "signals": 84021,
+          "trades": 37831,
+          "no_5m_bar": 345,
+          "rollover_hour": 4433,
+          "position_open": 41412
+        },
+        "levels_break|-3": {
+          "signals": 56110,
+          "trades": 39108,
+          "no_5m_bar": 305,
+          "rollover_hour": 2884,
+          "position_open": 13813
+        },
+        "levels_bounce|-1.5": {
+          "signals": 90773,
+          "trades": 40641,
+          "no_5m_bar": 374,
+          "rollover_hour": 4719,
+          "position_open": 45039
+        },
+        "levels_break|-1.5": {
+          "signals": 60834,
+          "trades": 42950,
+          "no_5m_bar": 332,
+          "rollover_hour": 3129,
+          "position_open": 14423
+        },
+        "levels_bounce|1.5": {
+          "signals": 91134,
+          "trades": 40757,
+          "no_5m_bar": 371,
+          "rollover_hour": 4473,
+          "position_open": 45533
+        },
+        "levels_break|1.5": {
+          "signals": 60318,
+          "trades": 42771,
+          "no_5m_bar": 345,
+          "rollover_hour": 3058,
+          "position_open": 14144
+        },
+        "levels_bounce|3": {
+          "signals": 84427,
+          "trades": 38377,
+          "no_5m_bar": 336,
+          "rollover_hour": 4051,
+          "position_open": 41663
+        },
+        "levels_break|3": {
+          "signals": 55635,
+          "trades": 39178,
+          "no_5m_bar": 303,
+          "rollover_hour": 2724,
+          "position_open": 13430
+        },
+        "round_bounce|0": {
+          "signals": 60702,
+          "trades": 28439,
+          "no_5m_bar": 256,
+          "rollover_hour": 3130,
+          "position_open": 28877
+        },
+        "round_break|0": {
+          "signals": 35326,
+          "trades": 28850,
+          "no_5m_bar": 184,
+          "rollover_hour": 1786,
+          "position_open": 4506
+        },
+        "round_bounce|10": {
+          "signals": 60963,
+          "trades": 28578,
+          "no_5m_bar": 269,
+          "rollover_hour": 3141,
+          "position_open": 28975
+        },
+        "round_break|10": {
+          "signals": 35824,
+          "trades": 29360,
+          "no_5m_bar": 163,
+          "rollover_hour": 1709,
+          "position_open": 4592
+        },
+        "round_bounce|20": {
+          "signals": 63531,
+          "trades": 29665,
+          "no_5m_bar": 251,
+          "rollover_hour": 3304,
+          "position_open": 30311
+        },
+        "round_break|20": {
+          "signals": 37019,
+          "trades": 30232,
+          "no_5m_bar": 184,
+          "rollover_hour": 1916,
+          "position_open": 4687
+        },
+        "round_bounce|30": {
+          "signals": 63391,
+          "trades": 29740,
+          "no_5m_bar": 261,
+          "rollover_hour": 3220,
+          "position_open": 30170
+        },
+        "round_break|30": {
+          "signals": 37193,
+          "trades": 30339,
+          "no_5m_bar": 186,
+          "rollover_hour": 1866,
+          "position_open": 4802
+        },
+        "round_bounce|40": {
+          "signals": 62387,
+          "trades": 29263,
+          "no_5m_bar": 235,
+          "rollover_hour": 3165,
+          "position_open": 29724
+        },
+        "round_break|40": {
+          "signals": 36951,
+          "trades": 30317,
+          "no_5m_bar": 191,
+          "rollover_hour": 1829,
+          "position_open": 4614
+        },
+        "trendline_bounce|0": {
+          "signals": 17980,
+          "trades": 8658,
+          "no_5m_bar": 94,
+          "rollover_hour": 1026,
+          "position_open": 8202
+        },
+        "trendline_break|0": {
+          "signals": 6817,
+          "trades": 6362,
+          "no_5m_bar": 67,
+          "rollover_hour": 368,
+          "position_open": 20
+        },
+        "trendline_bounce|-3": {
+          "signals": 7212,
+          "trades": 3589,
+          "no_5m_bar": 30,
+          "rollover_hour": 569,
+          "position_open": 3024
+        },
+        "trendline_break|-3": {
+          "signals": 3777,
+          "trades": 3455,
+          "no_5m_bar": 18,
+          "rollover_hour": 266,
+          "position_open": 38
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 12544,
+          "trades": 6232,
+          "no_5m_bar": 74,
+          "rollover_hour": 881,
+          "position_open": 5357
+        },
+        "trendline_break|-1.5": {
+          "signals": 5866,
+          "trades": 5414,
+          "no_5m_bar": 36,
+          "rollover_hour": 376,
+          "position_open": 40
+        },
+        "trendline_bounce|1.5": {
+          "signals": 12463,
+          "trades": 6328,
+          "no_5m_bar": 57,
+          "rollover_hour": 621,
+          "position_open": 5457
+        },
+        "trendline_break|1.5": {
+          "signals": 5798,
+          "trades": 5409,
+          "no_5m_bar": 44,
+          "rollover_hour": 310,
+          "position_open": 35
+        },
+        "trendline_bounce|3": {
+          "signals": 7283,
+          "trades": 3740,
+          "no_5m_bar": 20,
+          "rollover_hour": 298,
+          "position_open": 3225
+        },
+        "trendline_break|3": {
+          "signals": 3718,
+          "trades": 3514,
+          "no_5m_bar": 17,
+          "rollover_hour": 153,
+          "position_open": 34
+        }
+      }
+    },
+    "AUDUSD": {
+      "bars_15m": 461037,
+      "bars_5m": 1382487,
+      "ohlc_repaired": {
+        "15m": 228,
+        "5m": 1261
+      },
+      "swings": 25138,
+      "mean_active_levels": 5.65116465706657,
+      "share_of_bars_with_level_in_reach": 0.32068142036322467,
+      "trendlines": {
+        "support": 5318,
+        "resistance": 5070
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 69189,
+          "trades": 36792,
+          "no_5m_bar": 146,
+          "rollover_hour": 2319,
+          "position_open": 29932
+        },
+        "levels_break|0": {
+          "signals": 53235,
+          "trades": 39616,
+          "no_5m_bar": 127,
+          "rollover_hour": 1603,
+          "position_open": 11889
+        },
+        "levels_bounce|-3": {
+          "signals": 67957,
+          "trades": 36376,
+          "no_5m_bar": 158,
+          "rollover_hour": 2229,
+          "position_open": 29194
+        },
+        "levels_break|-3": {
+          "signals": 51939,
+          "trades": 37679,
+          "no_5m_bar": 143,
+          "rollover_hour": 1609,
+          "position_open": 12508
+        },
+        "levels_bounce|-1.5": {
+          "signals": 70489,
+          "trades": 37527,
+          "no_5m_bar": 166,
+          "rollover_hour": 2442,
+          "position_open": 30354
+        },
+        "levels_break|-1.5": {
+          "signals": 54386,
+          "trades": 40098,
+          "no_5m_bar": 146,
+          "rollover_hour": 1642,
+          "position_open": 12500
+        },
+        "levels_bounce|1.5": {
+          "signals": 70398,
+          "trades": 37251,
+          "no_5m_bar": 166,
+          "rollover_hour": 2455,
+          "position_open": 30526
+        },
+        "levels_break|1.5": {
+          "signals": 53736,
+          "trades": 39387,
+          "no_5m_bar": 121,
+          "rollover_hour": 1664,
+          "position_open": 12564
+        },
+        "levels_bounce|3": {
+          "signals": 68420,
+          "trades": 36448,
+          "no_5m_bar": 165,
+          "rollover_hour": 2274,
+          "position_open": 29533
+        },
+        "levels_break|3": {
+          "signals": 52351,
+          "trades": 37921,
+          "no_5m_bar": 111,
+          "rollover_hour": 1638,
+          "position_open": 12681
+        },
+        "round_bounce|0": {
+          "signals": 48823,
+          "trades": 28439,
+          "no_5m_bar": 104,
+          "rollover_hour": 1549,
+          "position_open": 18731
+        },
+        "round_break|0": {
+          "signals": 36233,
+          "trades": 30995,
+          "no_5m_bar": 83,
+          "rollover_hour": 1115,
+          "position_open": 4040
+        },
+        "round_bounce|10": {
+          "signals": 50963,
+          "trades": 29514,
+          "no_5m_bar": 110,
+          "rollover_hour": 1650,
+          "position_open": 19689
+        },
+        "round_break|10": {
+          "signals": 37671,
+          "trades": 32303,
+          "no_5m_bar": 71,
+          "rollover_hour": 1138,
+          "position_open": 4159
+        },
+        "round_bounce|20": {
+          "signals": 52268,
+          "trades": 30161,
+          "no_5m_bar": 123,
+          "rollover_hour": 1564,
+          "position_open": 20420
+        },
+        "round_break|20": {
+          "signals": 37955,
+          "trades": 32410,
+          "no_5m_bar": 74,
+          "rollover_hour": 1131,
+          "position_open": 4340
+        },
+        "round_bounce|30": {
+          "signals": 51534,
+          "trades": 29801,
+          "no_5m_bar": 102,
+          "rollover_hour": 1708,
+          "position_open": 19923
+        },
+        "round_break|30": {
+          "signals": 37679,
+          "trades": 32192,
+          "no_5m_bar": 85,
+          "rollover_hour": 1153,
+          "position_open": 4249
+        },
+        "round_bounce|40": {
+          "signals": 50998,
+          "trades": 29507,
+          "no_5m_bar": 112,
+          "rollover_hour": 1555,
+          "position_open": 19824
+        },
+        "round_break|40": {
+          "signals": 37276,
+          "trades": 31836,
+          "no_5m_bar": 78,
+          "rollover_hour": 1113,
+          "position_open": 4249
+        },
+        "trendline_bounce|0": {
+          "signals": 12403,
+          "trades": 7213,
+          "no_5m_bar": 29,
+          "rollover_hour": 504,
+          "position_open": 4657
+        },
+        "trendline_break|0": {
+          "signals": 6441,
+          "trades": 6200,
+          "no_5m_bar": 21,
+          "rollover_hour": 195,
+          "position_open": 25
+        },
+        "trendline_bounce|-3": {
+          "signals": 6783,
+          "trades": 3996,
+          "no_5m_bar": 13,
+          "rollover_hour": 216,
+          "position_open": 2558
+        },
+        "trendline_break|-3": {
+          "signals": 4237,
+          "trades": 4060,
+          "no_5m_bar": 9,
+          "rollover_hour": 116,
+          "position_open": 52
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 9739,
+          "trades": 5734,
+          "no_5m_bar": 21,
+          "rollover_hour": 373,
+          "position_open": 3611
+        },
+        "trendline_break|-1.5": {
+          "signals": 5730,
+          "trades": 5509,
+          "no_5m_bar": 10,
+          "rollover_hour": 180,
+          "position_open": 31
+        },
+        "trendline_bounce|1.5": {
+          "signals": 10026,
+          "trades": 5883,
+          "no_5m_bar": 26,
+          "rollover_hour": 372,
+          "position_open": 3745
+        },
+        "trendline_break|1.5": {
+          "signals": 5707,
+          "trades": 5469,
+          "no_5m_bar": 14,
+          "rollover_hour": 196,
+          "position_open": 28
+        },
+        "trendline_bounce|3": {
+          "signals": 6966,
+          "trades": 4127,
+          "no_5m_bar": 17,
+          "rollover_hour": 191,
+          "position_open": 2631
+        },
+        "trendline_break|3": {
+          "signals": 4308,
+          "trades": 4130,
+          "no_5m_bar": 5,
+          "rollover_hour": 122,
+          "position_open": 51
+        }
+      }
+    },
+    "CADCHF": {
+      "bars_15m": 466448,
+      "bars_5m": 1398659,
+      "ohlc_repaired": {
+        "15m": 10,
+        "5m": 30
+      },
+      "swings": 25675,
+      "mean_active_levels": 5.659942801769972,
+      "share_of_bars_with_level_in_reach": 0.3582350015435804,
+      "trendlines": {
+        "support": 5357,
+        "resistance": 4901
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 80385,
+          "trades": 39371,
+          "no_5m_bar": 218,
+          "rollover_hour": 3704,
+          "position_open": 37092
+        },
+        "levels_break|0": {
+          "signals": 57421,
+          "trades": 41737,
+          "no_5m_bar": 235,
+          "rollover_hour": 2435,
+          "position_open": 13014
+        },
+        "levels_bounce|-3": {
+          "signals": 74238,
+          "trades": 36966,
+          "no_5m_bar": 217,
+          "rollover_hour": 3539,
+          "position_open": 33516
+        },
+        "levels_break|-3": {
+          "signals": 53459,
+          "trades": 37995,
+          "no_5m_bar": 234,
+          "rollover_hour": 2309,
+          "position_open": 12921
+        },
+        "levels_bounce|-1.5": {
+          "signals": 80009,
+          "trades": 39383,
+          "no_5m_bar": 208,
+          "rollover_hour": 3781,
+          "position_open": 36637
+        },
+        "levels_break|-1.5": {
+          "signals": 57709,
+          "trades": 41361,
+          "no_5m_bar": 261,
+          "rollover_hour": 2506,
+          "position_open": 13581
+        },
+        "levels_bounce|1.5": {
+          "signals": 80083,
+          "trades": 39644,
+          "no_5m_bar": 237,
+          "rollover_hour": 3597,
+          "position_open": 36605
+        },
+        "levels_break|1.5": {
+          "signals": 57825,
+          "trades": 41414,
+          "no_5m_bar": 247,
+          "rollover_hour": 2468,
+          "position_open": 13696
+        },
+        "levels_bounce|3": {
+          "signals": 76531,
+          "trades": 38104,
+          "no_5m_bar": 206,
+          "rollover_hour": 3329,
+          "position_open": 34892
+        },
+        "levels_break|3": {
+          "signals": 55657,
+          "trades": 39251,
+          "no_5m_bar": 229,
+          "rollover_hour": 2277,
+          "position_open": 13900
+        },
+        "round_bounce|0": {
+          "signals": 49277,
+          "trades": 26770,
+          "no_5m_bar": 162,
+          "rollover_hour": 2282,
+          "position_open": 20063
+        },
+        "round_break|0": {
+          "signals": 33836,
+          "trades": 28465,
+          "no_5m_bar": 144,
+          "rollover_hour": 1340,
+          "position_open": 3887
+        },
+        "round_bounce|10": {
+          "signals": 49497,
+          "trades": 26734,
+          "no_5m_bar": 167,
+          "rollover_hour": 2283,
+          "position_open": 20313
+        },
+        "round_break|10": {
+          "signals": 33644,
+          "trades": 28185,
+          "no_5m_bar": 142,
+          "rollover_hour": 1406,
+          "position_open": 3911
+        },
+        "round_bounce|20": {
+          "signals": 49200,
+          "trades": 26642,
+          "no_5m_bar": 160,
+          "rollover_hour": 2264,
+          "position_open": 20134
+        },
+        "round_break|20": {
+          "signals": 33491,
+          "trades": 28015,
+          "no_5m_bar": 157,
+          "rollover_hour": 1337,
+          "position_open": 3982
+        },
+        "round_bounce|30": {
+          "signals": 48519,
+          "trades": 26184,
+          "no_5m_bar": 136,
+          "rollover_hour": 2226,
+          "position_open": 19973
+        },
+        "round_break|30": {
+          "signals": 33040,
+          "trades": 27764,
+          "no_5m_bar": 157,
+          "rollover_hour": 1360,
+          "position_open": 3759
+        },
+        "round_bounce|40": {
+          "signals": 48826,
+          "trades": 26410,
+          "no_5m_bar": 140,
+          "rollover_hour": 2320,
+          "position_open": 19956
+        },
+        "round_break|40": {
+          "signals": 33153,
+          "trades": 27682,
+          "no_5m_bar": 160,
+          "rollover_hour": 1380,
+          "position_open": 3931
+        },
+        "trendline_bounce|0": {
+          "signals": 14470,
+          "trades": 7671,
+          "no_5m_bar": 38,
+          "rollover_hour": 568,
+          "position_open": 6193
+        },
+        "trendline_break|0": {
+          "signals": 6505,
+          "trades": 6188,
+          "no_5m_bar": 32,
+          "rollover_hour": 248,
+          "position_open": 37
+        },
+        "trendline_bounce|-3": {
+          "signals": 6401,
+          "trades": 3712,
+          "no_5m_bar": 13,
+          "rollover_hour": 326,
+          "position_open": 2350
+        },
+        "trendline_break|-3": {
+          "signals": 3827,
+          "trades": 3594,
+          "no_5m_bar": 7,
+          "rollover_hour": 174,
+          "position_open": 52
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10207,
+          "trades": 5664,
+          "no_5m_bar": 30,
+          "rollover_hour": 503,
+          "position_open": 4010
+        },
+        "trendline_break|-1.5": {
+          "signals": 5471,
+          "trades": 5200,
+          "no_5m_bar": 16,
+          "rollover_hour": 207,
+          "position_open": 48
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11253,
+          "trades": 6167,
+          "no_5m_bar": 23,
+          "rollover_hour": 372,
+          "position_open": 4691
+        },
+        "trendline_break|1.5": {
+          "signals": 5665,
+          "trades": 5393,
+          "no_5m_bar": 28,
+          "rollover_hour": 208,
+          "position_open": 36
+        },
+        "trendline_bounce|3": {
+          "signals": 6757,
+          "trades": 3940,
+          "no_5m_bar": 15,
+          "rollover_hour": 193,
+          "position_open": 2609
+        },
+        "trendline_break|3": {
+          "signals": 3940,
+          "trades": 3774,
+          "no_5m_bar": 16,
+          "rollover_hour": 104,
+          "position_open": 46
+        }
+      }
+    },
+    "CADJPY": {
+      "bars_15m": 466322,
+      "bars_5m": 1398683,
+      "ohlc_repaired": {
+        "15m": 3,
+        "5m": 21
+      },
+      "swings": 25318,
+      "mean_active_levels": 5.5563494752552955,
+      "share_of_bars_with_level_in_reach": 0.319519559446048,
+      "trendlines": {
+        "support": 5260,
+        "resistance": 4845
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 72579,
+          "trades": 35846,
+          "no_5m_bar": 160,
+          "rollover_hour": 2785,
+          "position_open": 33788
+        },
+        "levels_break|0": {
+          "signals": 50647,
+          "trades": 37515,
+          "no_5m_bar": 188,
+          "rollover_hour": 1797,
+          "position_open": 11147
+        },
+        "levels_bounce|-3": {
+          "signals": 64707,
+          "trades": 33700,
+          "no_5m_bar": 171,
+          "rollover_hour": 2500,
+          "position_open": 28336
+        },
+        "levels_break|-3": {
+          "signals": 47549,
+          "trades": 34478,
+          "no_5m_bar": 165,
+          "rollover_hour": 1703,
+          "position_open": 11203
+        },
+        "levels_bounce|-1.5": {
+          "signals": 68822,
+          "trades": 35493,
+          "no_5m_bar": 193,
+          "rollover_hour": 2816,
+          "position_open": 30320
+        },
+        "levels_break|-1.5": {
+          "signals": 50875,
+          "trades": 37272,
+          "no_5m_bar": 176,
+          "rollover_hour": 1771,
+          "position_open": 11656
+        },
+        "levels_bounce|1.5": {
+          "signals": 70921,
+          "trades": 35831,
+          "no_5m_bar": 175,
+          "rollover_hour": 2767,
+          "position_open": 32148
+        },
+        "levels_break|1.5": {
+          "signals": 51033,
+          "trades": 37344,
+          "no_5m_bar": 161,
+          "rollover_hour": 1825,
+          "position_open": 11703
+        },
+        "levels_bounce|3": {
+          "signals": 67657,
+          "trades": 34788,
+          "no_5m_bar": 164,
+          "rollover_hour": 2629,
+          "position_open": 30076
+        },
+        "levels_break|3": {
+          "signals": 49551,
+          "trades": 35910,
+          "no_5m_bar": 157,
+          "rollover_hour": 1698,
+          "position_open": 11786
+        },
+        "round_bounce|0": {
+          "signals": 58335,
+          "trades": 32672,
+          "no_5m_bar": 144,
+          "rollover_hour": 2165,
+          "position_open": 23354
+        },
+        "round_break|0": {
+          "signals": 41545,
+          "trades": 34763,
+          "no_5m_bar": 146,
+          "rollover_hour": 1374,
+          "position_open": 5262
+        },
+        "round_bounce|10": {
+          "signals": 58464,
+          "trades": 32302,
+          "no_5m_bar": 142,
+          "rollover_hour": 2289,
+          "position_open": 23731
+        },
+        "round_break|10": {
+          "signals": 41135,
+          "trades": 34246,
+          "no_5m_bar": 134,
+          "rollover_hour": 1471,
+          "position_open": 5284
+        },
+        "round_bounce|20": {
+          "signals": 58272,
+          "trades": 32485,
+          "no_5m_bar": 152,
+          "rollover_hour": 2166,
+          "position_open": 23469
+        },
+        "round_break|20": {
+          "signals": 41495,
+          "trades": 34619,
+          "no_5m_bar": 136,
+          "rollover_hour": 1450,
+          "position_open": 5290
+        },
+        "round_bounce|30": {
+          "signals": 58694,
+          "trades": 32698,
+          "no_5m_bar": 155,
+          "rollover_hour": 2208,
+          "position_open": 23633
+        },
+        "round_break|30": {
+          "signals": 41469,
+          "trades": 34619,
+          "no_5m_bar": 128,
+          "rollover_hour": 1476,
+          "position_open": 5246
+        },
+        "round_bounce|40": {
+          "signals": 58727,
+          "trades": 32567,
+          "no_5m_bar": 172,
+          "rollover_hour": 2255,
+          "position_open": 23733
+        },
+        "round_break|40": {
+          "signals": 41631,
+          "trades": 34891,
+          "no_5m_bar": 139,
+          "rollover_hour": 1433,
+          "position_open": 5168
+        },
+        "trendline_bounce|0": {
+          "signals": 13129,
+          "trades": 7207,
+          "no_5m_bar": 23,
+          "rollover_hour": 518,
+          "position_open": 5381
+        },
+        "trendline_break|0": {
+          "signals": 6306,
+          "trades": 6060,
+          "no_5m_bar": 20,
+          "rollover_hour": 196,
+          "position_open": 30
+        },
+        "trendline_bounce|-3": {
+          "signals": 6274,
+          "trades": 3755,
+          "no_5m_bar": 8,
+          "rollover_hour": 189,
+          "position_open": 2322
+        },
+        "trendline_break|-3": {
+          "signals": 3938,
+          "trades": 3779,
+          "no_5m_bar": 5,
+          "rollover_hour": 101,
+          "position_open": 53
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10174,
+          "trades": 5751,
+          "no_5m_bar": 18,
+          "rollover_hour": 356,
+          "position_open": 4049
+        },
+        "trendline_break|-1.5": {
+          "signals": 5411,
+          "trades": 5212,
+          "no_5m_bar": 13,
+          "rollover_hour": 142,
+          "position_open": 44
+        },
+        "trendline_bounce|1.5": {
+          "signals": 10377,
+          "trades": 5900,
+          "no_5m_bar": 17,
+          "rollover_hour": 379,
+          "position_open": 4081
+        },
+        "trendline_break|1.5": {
+          "signals": 5494,
+          "trades": 5272,
+          "no_5m_bar": 17,
+          "rollover_hour": 175,
+          "position_open": 30
+        },
+        "trendline_bounce|3": {
+          "signals": 6805,
+          "trades": 3915,
+          "no_5m_bar": 10,
+          "rollover_hour": 194,
+          "position_open": 2686
+        },
+        "trendline_break|3": {
+          "signals": 3967,
+          "trades": 3821,
+          "no_5m_bar": 6,
+          "rollover_hour": 92,
+          "position_open": 48
+        }
+      }
+    },
+    "CHFJPY": {
+      "bars_15m": 460333,
+      "bars_5m": 1379558,
+      "ohlc_repaired": {
+        "15m": 6,
+        "5m": 16
+      },
+      "swings": 25579,
+      "mean_active_levels": 5.753784760162752,
+      "share_of_bars_with_level_in_reach": 0.3587468202366548,
+      "trendlines": {
+        "support": 5584,
+        "resistance": 5132
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 79663,
+          "trades": 39111,
+          "no_5m_bar": 278,
+          "rollover_hour": 3123,
+          "position_open": 37151
+        },
+        "levels_break|0": {
+          "signals": 56924,
+          "trades": 41433,
+          "no_5m_bar": 251,
+          "rollover_hour": 2117,
+          "position_open": 13123
+        },
+        "levels_bounce|-3": {
+          "signals": 74139,
+          "trades": 36690,
+          "no_5m_bar": 287,
+          "rollover_hour": 2986,
+          "position_open": 34176
+        },
+        "levels_break|-3": {
+          "signals": 53176,
+          "trades": 37726,
+          "no_5m_bar": 257,
+          "rollover_hour": 2038,
+          "position_open": 13155
+        },
+        "levels_bounce|-1.5": {
+          "signals": 79717,
+          "trades": 39038,
+          "no_5m_bar": 308,
+          "rollover_hour": 3130,
+          "position_open": 37241
+        },
+        "levels_break|-1.5": {
+          "signals": 56961,
+          "trades": 40831,
+          "no_5m_bar": 259,
+          "rollover_hour": 2184,
+          "position_open": 13687
+        },
+        "levels_bounce|1.5": {
+          "signals": 80267,
+          "trades": 39508,
+          "no_5m_bar": 307,
+          "rollover_hour": 3190,
+          "position_open": 37262
+        },
+        "levels_break|1.5": {
+          "signals": 57519,
+          "trades": 41142,
+          "no_5m_bar": 252,
+          "rollover_hour": 2212,
+          "position_open": 13913
+        },
+        "levels_bounce|3": {
+          "signals": 76854,
+          "trades": 37868,
+          "no_5m_bar": 291,
+          "rollover_hour": 3093,
+          "position_open": 35602
+        },
+        "levels_break|3": {
+          "signals": 55187,
+          "trades": 39248,
+          "no_5m_bar": 279,
+          "rollover_hour": 2116,
+          "position_open": 13544
+        },
+        "round_bounce|0": {
+          "signals": 70294,
+          "trades": 37273,
+          "no_5m_bar": 301,
+          "rollover_hour": 2820,
+          "position_open": 29900
+        },
+        "round_break|0": {
+          "signals": 47008,
+          "trades": 39010,
+          "no_5m_bar": 218,
+          "rollover_hour": 1831,
+          "position_open": 5949
+        },
+        "round_bounce|10": {
+          "signals": 69768,
+          "trades": 37168,
+          "no_5m_bar": 257,
+          "rollover_hour": 2794,
+          "position_open": 29549
+        },
+        "round_break|10": {
+          "signals": 46858,
+          "trades": 38722,
+          "no_5m_bar": 225,
+          "rollover_hour": 1827,
+          "position_open": 6084
+        },
+        "round_bounce|20": {
+          "signals": 69706,
+          "trades": 37209,
+          "no_5m_bar": 291,
+          "rollover_hour": 2658,
+          "position_open": 29548
+        },
+        "round_break|20": {
+          "signals": 47378,
+          "trades": 39100,
+          "no_5m_bar": 220,
+          "rollover_hour": 1855,
+          "position_open": 6203
+        },
+        "round_bounce|30": {
+          "signals": 69786,
+          "trades": 37222,
+          "no_5m_bar": 299,
+          "rollover_hour": 2773,
+          "position_open": 29492
+        },
+        "round_break|30": {
+          "signals": 47481,
+          "trades": 39346,
+          "no_5m_bar": 246,
+          "rollover_hour": 1787,
+          "position_open": 6102
+        },
+        "round_bounce|40": {
+          "signals": 70346,
+          "trades": 37412,
+          "no_5m_bar": 285,
+          "rollover_hour": 2687,
+          "position_open": 29962
+        },
+        "round_break|40": {
+          "signals": 47179,
+          "trades": 39051,
+          "no_5m_bar": 207,
+          "rollover_hour": 1856,
+          "position_open": 6065
+        },
+        "trendline_bounce|0": {
+          "signals": 15121,
+          "trades": 8047,
+          "no_5m_bar": 69,
+          "rollover_hour": 723,
+          "position_open": 6282
+        },
+        "trendline_break|0": {
+          "signals": 6724,
+          "trades": 6348,
+          "no_5m_bar": 56,
+          "rollover_hour": 292,
+          "position_open": 28
+        },
+        "trendline_bounce|-3": {
+          "signals": 6576,
+          "trades": 3756,
+          "no_5m_bar": 24,
+          "rollover_hour": 254,
+          "position_open": 2542
+        },
+        "trendline_break|-3": {
+          "signals": 3962,
+          "trades": 3740,
+          "no_5m_bar": 15,
+          "rollover_hour": 159,
+          "position_open": 48
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 11089,
+          "trades": 6200,
+          "no_5m_bar": 42,
+          "rollover_hour": 546,
+          "position_open": 4301
+        },
+        "trendline_break|-1.5": {
+          "signals": 5754,
+          "trades": 5442,
+          "no_5m_bar": 23,
+          "rollover_hour": 246,
+          "position_open": 43
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11283,
+          "trades": 6138,
+          "no_5m_bar": 34,
+          "rollover_hour": 494,
+          "position_open": 4617
+        },
+        "trendline_break|1.5": {
+          "signals": 5770,
+          "trades": 5477,
+          "no_5m_bar": 43,
+          "rollover_hour": 218,
+          "position_open": 32
+        },
+        "trendline_bounce|3": {
+          "signals": 7237,
+          "trades": 4000,
+          "no_5m_bar": 24,
+          "rollover_hour": 191,
+          "position_open": 3022
+        },
+        "trendline_break|3": {
+          "signals": 3978,
+          "trades": 3791,
+          "no_5m_bar": 14,
+          "rollover_hour": 124,
+          "position_open": 49
+        }
+      }
+    },
+    "EURAUD": {
+      "bars_15m": 466513,
+      "bars_5m": 1398860,
+      "ohlc_repaired": {
+        "15m": 7,
+        "5m": 25
+      },
+      "swings": 25487,
+      "mean_active_levels": 5.6698312801572515,
+      "share_of_bars_with_level_in_reach": 0.35508978313573253,
+      "trendlines": {
+        "support": 5277,
+        "resistance": 5437
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 80138,
+          "trades": 39488,
+          "no_5m_bar": 222,
+          "rollover_hour": 3176,
+          "position_open": 37252
+        },
+        "levels_break|0": {
+          "signals": 56531,
+          "trades": 41254,
+          "no_5m_bar": 183,
+          "rollover_hour": 1966,
+          "position_open": 13128
+        },
+        "levels_bounce|-3": {
+          "signals": 77065,
+          "trades": 38493,
+          "no_5m_bar": 241,
+          "rollover_hour": 3086,
+          "position_open": 35245
+        },
+        "levels_break|-3": {
+          "signals": 54859,
+          "trades": 39164,
+          "no_5m_bar": 201,
+          "rollover_hour": 1971,
+          "position_open": 13523
+        },
+        "levels_bounce|-1.5": {
+          "signals": 81139,
+          "trades": 39903,
+          "no_5m_bar": 234,
+          "rollover_hour": 3242,
+          "position_open": 37760
+        },
+        "levels_break|-1.5": {
+          "signals": 57535,
+          "trades": 41668,
+          "no_5m_bar": 195,
+          "rollover_hour": 2061,
+          "position_open": 13611
+        },
+        "levels_bounce|1.5": {
+          "signals": 79720,
+          "trades": 39442,
+          "no_5m_bar": 257,
+          "rollover_hour": 3099,
+          "position_open": 36922
+        },
+        "levels_break|1.5": {
+          "signals": 56910,
+          "trades": 41190,
+          "no_5m_bar": 200,
+          "rollover_hour": 2022,
+          "position_open": 13498
+        },
+        "levels_bounce|3": {
+          "signals": 74903,
+          "trades": 37445,
+          "no_5m_bar": 231,
+          "rollover_hour": 2885,
+          "position_open": 34342
+        },
+        "levels_break|3": {
+          "signals": 52977,
+          "trades": 38041,
+          "no_5m_bar": 165,
+          "rollover_hour": 1826,
+          "position_open": 12945
+        },
+        "round_bounce|0": {
+          "signals": 89613,
+          "trades": 46137,
+          "no_5m_bar": 266,
+          "rollover_hour": 3594,
+          "position_open": 39616
+        },
+        "round_break|0": {
+          "signals": 62100,
+          "trades": 48926,
+          "no_5m_bar": 217,
+          "rollover_hour": 2208,
+          "position_open": 10749
+        },
+        "round_bounce|10": {
+          "signals": 89341,
+          "trades": 46160,
+          "no_5m_bar": 245,
+          "rollover_hour": 3554,
+          "position_open": 39382
+        },
+        "round_break|10": {
+          "signals": 62324,
+          "trades": 49189,
+          "no_5m_bar": 202,
+          "rollover_hour": 2229,
+          "position_open": 10704
+        },
+        "round_bounce|20": {
+          "signals": 90370,
+          "trades": 46566,
+          "no_5m_bar": 271,
+          "rollover_hour": 3586,
+          "position_open": 39947
+        },
+        "round_break|20": {
+          "signals": 62097,
+          "trades": 48737,
+          "no_5m_bar": 202,
+          "rollover_hour": 2209,
+          "position_open": 10949
+        },
+        "round_bounce|30": {
+          "signals": 90382,
+          "trades": 46627,
+          "no_5m_bar": 241,
+          "rollover_hour": 3576,
+          "position_open": 39938
+        },
+        "round_break|30": {
+          "signals": 62061,
+          "trades": 48916,
+          "no_5m_bar": 200,
+          "rollover_hour": 2196,
+          "position_open": 10749
+        },
+        "round_bounce|40": {
+          "signals": 90739,
+          "trades": 46640,
+          "no_5m_bar": 275,
+          "rollover_hour": 3493,
+          "position_open": 40331
+        },
+        "round_break|40": {
+          "signals": 62360,
+          "trades": 49086,
+          "no_5m_bar": 188,
+          "rollover_hour": 2194,
+          "position_open": 10892
+        },
+        "trendline_bounce|0": {
+          "signals": 14542,
+          "trades": 7924,
+          "no_5m_bar": 41,
+          "rollover_hour": 685,
+          "position_open": 5892
+        },
+        "trendline_break|0": {
+          "signals": 6642,
+          "trades": 6331,
+          "no_5m_bar": 33,
+          "rollover_hour": 254,
+          "position_open": 24
+        },
+        "trendline_bounce|-3": {
+          "signals": 7195,
+          "trades": 4077,
+          "no_5m_bar": 13,
+          "rollover_hour": 254,
+          "position_open": 2851
+        },
+        "trendline_break|-3": {
+          "signals": 4112,
+          "trades": 3916,
+          "no_5m_bar": 9,
+          "rollover_hour": 137,
+          "position_open": 50
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 11565,
+          "trades": 6298,
+          "no_5m_bar": 42,
+          "rollover_hour": 525,
+          "position_open": 4700
+        },
+        "trendline_break|-1.5": {
+          "signals": 5788,
+          "trades": 5509,
+          "no_5m_bar": 16,
+          "rollover_hour": 244,
+          "position_open": 19
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11178,
+          "trades": 6112,
+          "no_5m_bar": 32,
+          "rollover_hour": 423,
+          "position_open": 4611
+        },
+        "trendline_break|1.5": {
+          "signals": 5802,
+          "trades": 5557,
+          "no_5m_bar": 31,
+          "rollover_hour": 174,
+          "position_open": 40
+        },
+        "trendline_bounce|3": {
+          "signals": 7235,
+          "trades": 4074,
+          "no_5m_bar": 17,
+          "rollover_hour": 206,
+          "position_open": 2938
+        },
+        "trendline_break|3": {
+          "signals": 4062,
+          "trades": 3908,
+          "no_5m_bar": 13,
+          "rollover_hour": 100,
+          "position_open": 41
+        }
+      }
+    },
+    "EURCAD": {
+      "bars_15m": 466496,
+      "bars_5m": 1398737,
+      "ohlc_repaired": {
+        "15m": 0,
+        "5m": 17
+      },
+      "swings": 25382,
+      "mean_active_levels": 5.508328045685279,
+      "share_of_bars_with_level_in_reach": 0.33648520030182466,
+      "trendlines": {
+        "support": 5175,
+        "resistance": 4796
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 75890,
+          "trades": 37944,
+          "no_5m_bar": 243,
+          "rollover_hour": 2868,
+          "position_open": 34835
+        },
+        "levels_break|0": {
+          "signals": 54166,
+          "trades": 39915,
+          "no_5m_bar": 225,
+          "rollover_hour": 1815,
+          "position_open": 12211
+        },
+        "levels_bounce|-3": {
+          "signals": 71777,
+          "trades": 36186,
+          "no_5m_bar": 226,
+          "rollover_hour": 2841,
+          "position_open": 32524
+        },
+        "levels_break|-3": {
+          "signals": 51483,
+          "trades": 36917,
+          "no_5m_bar": 215,
+          "rollover_hour": 1764,
+          "position_open": 12587
+        },
+        "levels_bounce|-1.5": {
+          "signals": 76018,
+          "trades": 38282,
+          "no_5m_bar": 237,
+          "rollover_hour": 2848,
+          "position_open": 34651
+        },
+        "levels_break|-1.5": {
+          "signals": 54862,
+          "trades": 39881,
+          "no_5m_bar": 209,
+          "rollover_hour": 1878,
+          "position_open": 12894
+        },
+        "levels_bounce|1.5": {
+          "signals": 75717,
+          "trades": 38161,
+          "no_5m_bar": 241,
+          "rollover_hour": 2848,
+          "position_open": 34467
+        },
+        "levels_break|1.5": {
+          "signals": 55046,
+          "trades": 39851,
+          "no_5m_bar": 235,
+          "rollover_hour": 1947,
+          "position_open": 13013
+        },
+        "levels_bounce|3": {
+          "signals": 71835,
+          "trades": 36389,
+          "no_5m_bar": 243,
+          "rollover_hour": 2647,
+          "position_open": 32556
+        },
+        "levels_break|3": {
+          "signals": 51966,
+          "trades": 37323,
+          "no_5m_bar": 233,
+          "rollover_hour": 1710,
+          "position_open": 12700
+        },
+        "round_bounce|0": {
+          "signals": 75237,
+          "trades": 39403,
+          "no_5m_bar": 261,
+          "rollover_hour": 2951,
+          "position_open": 32622
+        },
+        "round_break|0": {
+          "signals": 51388,
+          "trades": 41560,
+          "no_5m_bar": 203,
+          "rollover_hour": 1828,
+          "position_open": 7797
+        },
+        "round_bounce|10": {
+          "signals": 75183,
+          "trades": 39283,
+          "no_5m_bar": 231,
+          "rollover_hour": 2890,
+          "position_open": 32779
+        },
+        "round_break|10": {
+          "signals": 51449,
+          "trades": 41600,
+          "no_5m_bar": 230,
+          "rollover_hour": 1816,
+          "position_open": 7803
+        },
+        "round_bounce|20": {
+          "signals": 75930,
+          "trades": 39690,
+          "no_5m_bar": 250,
+          "rollover_hour": 2908,
+          "position_open": 33082
+        },
+        "round_break|20": {
+          "signals": 51493,
+          "trades": 41708,
+          "no_5m_bar": 211,
+          "rollover_hour": 1772,
+          "position_open": 7802
+        },
+        "round_bounce|30": {
+          "signals": 75914,
+          "trades": 39803,
+          "no_5m_bar": 233,
+          "rollover_hour": 2885,
+          "position_open": 32993
+        },
+        "round_break|30": {
+          "signals": 51647,
+          "trades": 41846,
+          "no_5m_bar": 212,
+          "rollover_hour": 1777,
+          "position_open": 7812
+        },
+        "round_bounce|40": {
+          "signals": 75363,
+          "trades": 39647,
+          "no_5m_bar": 222,
+          "rollover_hour": 2969,
+          "position_open": 32525
+        },
+        "round_break|40": {
+          "signals": 51814,
+          "trades": 41794,
+          "no_5m_bar": 205,
+          "rollover_hour": 1830,
+          "position_open": 7985
+        },
+        "trendline_bounce|0": {
+          "signals": 13884,
+          "trades": 7538,
+          "no_5m_bar": 45,
+          "rollover_hour": 479,
+          "position_open": 5822
+        },
+        "trendline_break|0": {
+          "signals": 6320,
+          "trades": 6076,
+          "no_5m_bar": 30,
+          "rollover_hour": 174,
+          "position_open": 40
+        },
+        "trendline_bounce|-3": {
+          "signals": 6486,
+          "trades": 3825,
+          "no_5m_bar": 10,
+          "rollover_hour": 167,
+          "position_open": 2484
+        },
+        "trendline_break|-3": {
+          "signals": 3801,
+          "trades": 3650,
+          "no_5m_bar": 11,
+          "rollover_hour": 93,
+          "position_open": 47
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10436,
+          "trades": 5868,
+          "no_5m_bar": 28,
+          "rollover_hour": 392,
+          "position_open": 4148
+        },
+        "trendline_break|-1.5": {
+          "signals": 5389,
+          "trades": 5174,
+          "no_5m_bar": 17,
+          "rollover_hour": 158,
+          "position_open": 40
+        },
+        "trendline_bounce|1.5": {
+          "signals": 10361,
+          "trades": 5947,
+          "no_5m_bar": 28,
+          "rollover_hour": 292,
+          "position_open": 4094
+        },
+        "trendline_break|1.5": {
+          "signals": 5470,
+          "trades": 5298,
+          "no_5m_bar": 14,
+          "rollover_hour": 122,
+          "position_open": 36
+        },
+        "trendline_bounce|3": {
+          "signals": 6247,
+          "trades": 3672,
+          "no_5m_bar": 9,
+          "rollover_hour": 128,
+          "position_open": 2438
+        },
+        "trendline_break|3": {
+          "signals": 3869,
+          "trades": 3739,
+          "no_5m_bar": 8,
+          "rollover_hour": 72,
+          "position_open": 50
+        }
+      }
+    },
+    "EURCHF": {
+      "bars_15m": 466541,
+      "bars_5m": 1398766,
+      "ohlc_repaired": {
+        "15m": 5,
+        "5m": 26
+      },
+      "swings": 26307,
+      "mean_active_levels": 5.644595008798798,
+      "share_of_bars_with_level_in_reach": 0.3838526517497926,
+      "trendlines": {
+        "support": 5676,
+        "resistance": 5195
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 87387,
+          "trades": 40759,
+          "no_5m_bar": 285,
+          "rollover_hour": 3771,
+          "position_open": 42572
+        },
+        "levels_break|0": {
+          "signals": 60216,
+          "trades": 43693,
+          "no_5m_bar": 247,
+          "rollover_hour": 2279,
+          "position_open": 13997
+        },
+        "levels_bounce|-3": {
+          "signals": 82331,
+          "trades": 38973,
+          "no_5m_bar": 280,
+          "rollover_hour": 3690,
+          "position_open": 39388
+        },
+        "levels_break|-3": {
+          "signals": 57423,
+          "trades": 40573,
+          "no_5m_bar": 255,
+          "rollover_hour": 2259,
+          "position_open": 14336
+        },
+        "levels_bounce|-1.5": {
+          "signals": 88576,
+          "trades": 41057,
+          "no_5m_bar": 310,
+          "rollover_hour": 3853,
+          "position_open": 43356
+        },
+        "levels_break|-1.5": {
+          "signals": 61637,
+          "trades": 43983,
+          "no_5m_bar": 250,
+          "rollover_hour": 2330,
+          "position_open": 15074
+        },
+        "levels_bounce|1.5": {
+          "signals": 86935,
+          "trades": 40797,
+          "no_5m_bar": 283,
+          "rollover_hour": 3780,
+          "position_open": 42075
+        },
+        "levels_break|1.5": {
+          "signals": 60571,
+          "trades": 43466,
+          "no_5m_bar": 259,
+          "rollover_hour": 2314,
+          "position_open": 14532
+        },
+        "levels_bounce|3": {
+          "signals": 79088,
+          "trades": 38035,
+          "no_5m_bar": 258,
+          "rollover_hour": 3220,
+          "position_open": 37575
+        },
+        "levels_break|3": {
+          "signals": 55765,
+          "trades": 39615,
+          "no_5m_bar": 219,
+          "rollover_hour": 2065,
+          "position_open": 13866
+        },
+        "round_bounce|0": {
+          "signals": 40174,
+          "trades": 21378,
+          "no_5m_bar": 141,
+          "rollover_hour": 1722,
+          "position_open": 16933
+        },
+        "round_break|0": {
+          "signals": 26984,
+          "trades": 22834,
+          "no_5m_bar": 114,
+          "rollover_hour": 918,
+          "position_open": 3118
+        },
+        "round_bounce|10": {
+          "signals": 44267,
+          "trades": 23296,
+          "no_5m_bar": 144,
+          "rollover_hour": 1940,
+          "position_open": 18887
+        },
+        "round_break|10": {
+          "signals": 29016,
+          "trades": 24380,
+          "no_5m_bar": 111,
+          "rollover_hour": 1093,
+          "position_open": 3432
+        },
+        "round_bounce|20": {
+          "signals": 42559,
+          "trades": 22414,
+          "no_5m_bar": 143,
+          "rollover_hour": 1762,
+          "position_open": 18240
+        },
+        "round_break|20": {
+          "signals": 28405,
+          "trades": 23968,
+          "no_5m_bar": 112,
+          "rollover_hour": 1017,
+          "position_open": 3308
+        },
+        "round_bounce|30": {
+          "signals": 42008,
+          "trades": 22234,
+          "no_5m_bar": 125,
+          "rollover_hour": 1773,
+          "position_open": 17876
+        },
+        "round_break|30": {
+          "signals": 28240,
+          "trades": 23753,
+          "no_5m_bar": 104,
+          "rollover_hour": 1060,
+          "position_open": 3323
+        },
+        "round_bounce|40": {
+          "signals": 42420,
+          "trades": 22402,
+          "no_5m_bar": 139,
+          "rollover_hour": 1769,
+          "position_open": 18110
+        },
+        "round_break|40": {
+          "signals": 28504,
+          "trades": 23961,
+          "no_5m_bar": 106,
+          "rollover_hour": 1015,
+          "position_open": 3422
+        },
+        "trendline_bounce|0": {
+          "signals": 16291,
+          "trades": 8359,
+          "no_5m_bar": 49,
+          "rollover_hour": 746,
+          "position_open": 7137
+        },
+        "trendline_break|0": {
+          "signals": 6687,
+          "trades": 6360,
+          "no_5m_bar": 42,
+          "rollover_hour": 246,
+          "position_open": 39
+        },
+        "trendline_bounce|-3": {
+          "signals": 6372,
+          "trades": 3606,
+          "no_5m_bar": 21,
+          "rollover_hour": 284,
+          "position_open": 2461
+        },
+        "trendline_break|-3": {
+          "signals": 3679,
+          "trades": 3477,
+          "no_5m_bar": 9,
+          "rollover_hour": 149,
+          "position_open": 44
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 11362,
+          "trades": 6038,
+          "no_5m_bar": 47,
+          "rollover_hour": 602,
+          "position_open": 4675
+        },
+        "trendline_break|-1.5": {
+          "signals": 5512,
+          "trades": 5212,
+          "no_5m_bar": 30,
+          "rollover_hour": 241,
+          "position_open": 29
+        },
+        "trendline_bounce|1.5": {
+          "signals": 12025,
+          "trades": 6526,
+          "no_5m_bar": 39,
+          "rollover_hour": 487,
+          "position_open": 4973
+        },
+        "trendline_break|1.5": {
+          "signals": 5853,
+          "trades": 5594,
+          "no_5m_bar": 34,
+          "rollover_hour": 192,
+          "position_open": 33
+        },
+        "trendline_bounce|3": {
+          "signals": 7082,
+          "trades": 4046,
+          "no_5m_bar": 19,
+          "rollover_hour": 188,
+          "position_open": 2829
+        },
+        "trendline_break|3": {
+          "signals": 4079,
+          "trades": 3901,
+          "no_5m_bar": 19,
+          "rollover_hour": 115,
+          "position_open": 44
+        }
+      }
+    },
+    "EURGBP": {
+      "bars_15m": 464704,
+      "bars_5m": 1393732,
+      "ohlc_repaired": {
+        "15m": 8,
+        "5m": 41
+      },
+      "swings": 25481,
+      "mean_active_levels": 5.564339880870404,
+      "share_of_bars_with_level_in_reach": 0.3307137446632695,
+      "trendlines": {
+        "support": 5104,
+        "resistance": 4736
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 74050,
+          "trades": 36349,
+          "no_5m_bar": 208,
+          "rollover_hour": 3031,
+          "position_open": 34462
+        },
+        "levels_break|0": {
+          "signals": 53267,
+          "trades": 39198,
+          "no_5m_bar": 170,
+          "rollover_hour": 1824,
+          "position_open": 12075
+        },
+        "levels_bounce|-3": {
+          "signals": 70195,
+          "trades": 35122,
+          "no_5m_bar": 201,
+          "rollover_hour": 3099,
+          "position_open": 31773
+        },
+        "levels_break|-3": {
+          "signals": 50622,
+          "trades": 36334,
+          "no_5m_bar": 158,
+          "rollover_hour": 1802,
+          "position_open": 12328
+        },
+        "levels_bounce|-1.5": {
+          "signals": 74264,
+          "trades": 36811,
+          "no_5m_bar": 216,
+          "rollover_hour": 3104,
+          "position_open": 34133
+        },
+        "levels_break|-1.5": {
+          "signals": 53950,
+          "trades": 39006,
+          "no_5m_bar": 177,
+          "rollover_hour": 1863,
+          "position_open": 12904
+        },
+        "levels_bounce|1.5": {
+          "signals": 75342,
+          "trades": 37232,
+          "no_5m_bar": 216,
+          "rollover_hour": 3133,
+          "position_open": 34761
+        },
+        "levels_break|1.5": {
+          "signals": 54272,
+          "trades": 39233,
+          "no_5m_bar": 199,
+          "rollover_hour": 1900,
+          "position_open": 12940
+        },
+        "levels_bounce|3": {
+          "signals": 70629,
+          "trades": 35231,
+          "no_5m_bar": 197,
+          "rollover_hour": 2826,
+          "position_open": 32375
+        },
+        "levels_break|3": {
+          "signals": 51155,
+          "trades": 36725,
+          "no_5m_bar": 170,
+          "rollover_hour": 1705,
+          "position_open": 12555
+        },
+        "round_bounce|0": {
+          "signals": 37004,
+          "trades": 20415,
+          "no_5m_bar": 104,
+          "rollover_hour": 1438,
+          "position_open": 15047
+        },
+        "round_break|0": {
+          "signals": 24958,
+          "trades": 21426,
+          "no_5m_bar": 73,
+          "rollover_hour": 834,
+          "position_open": 2625
+        },
+        "round_bounce|10": {
+          "signals": 38546,
+          "trades": 21100,
+          "no_5m_bar": 82,
+          "rollover_hour": 1624,
+          "position_open": 15740
+        },
+        "round_break|10": {
+          "signals": 26308,
+          "trades": 22458,
+          "no_5m_bar": 83,
+          "rollover_hour": 843,
+          "position_open": 2924
+        },
+        "round_bounce|20": {
+          "signals": 39098,
+          "trades": 21404,
+          "no_5m_bar": 109,
+          "rollover_hour": 1614,
+          "position_open": 15971
+        },
+        "round_break|20": {
+          "signals": 26694,
+          "trades": 22799,
+          "no_5m_bar": 80,
+          "rollover_hour": 868,
+          "position_open": 2947
+        },
+        "round_bounce|30": {
+          "signals": 38935,
+          "trades": 21342,
+          "no_5m_bar": 129,
+          "rollover_hour": 1510,
+          "position_open": 15954
+        },
+        "round_break|30": {
+          "signals": 26413,
+          "trades": 22585,
+          "no_5m_bar": 86,
+          "rollover_hour": 915,
+          "position_open": 2827
+        },
+        "round_bounce|40": {
+          "signals": 38213,
+          "trades": 21153,
+          "no_5m_bar": 113,
+          "rollover_hour": 1509,
+          "position_open": 15438
+        },
+        "round_break|40": {
+          "signals": 26350,
+          "trades": 22515,
+          "no_5m_bar": 94,
+          "rollover_hour": 919,
+          "position_open": 2822
+        },
+        "trendline_bounce|0": {
+          "signals": 13474,
+          "trades": 7184,
+          "no_5m_bar": 44,
+          "rollover_hour": 678,
+          "position_open": 5568
+        },
+        "trendline_break|0": {
+          "signals": 6273,
+          "trades": 5967,
+          "no_5m_bar": 21,
+          "rollover_hour": 241,
+          "position_open": 44
+        },
+        "trendline_bounce|-3": {
+          "signals": 5981,
+          "trades": 3509,
+          "no_5m_bar": 8,
+          "rollover_hour": 238,
+          "position_open": 2226
+        },
+        "trendline_break|-3": {
+          "signals": 3689,
+          "trades": 3526,
+          "no_5m_bar": 4,
+          "rollover_hour": 122,
+          "position_open": 37
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10261,
+          "trades": 5605,
+          "no_5m_bar": 34,
+          "rollover_hour": 532,
+          "position_open": 4090
+        },
+        "trendline_break|-1.5": {
+          "signals": 5233,
+          "trades": 4992,
+          "no_5m_bar": 20,
+          "rollover_hour": 192,
+          "position_open": 29
+        },
+        "trendline_bounce|1.5": {
+          "signals": 10089,
+          "trades": 5634,
+          "no_5m_bar": 30,
+          "rollover_hour": 377,
+          "position_open": 4048
+        },
+        "trendline_break|1.5": {
+          "signals": 5458,
+          "trades": 5208,
+          "no_5m_bar": 21,
+          "rollover_hour": 176,
+          "position_open": 53
+        },
+        "trendline_bounce|3": {
+          "signals": 6205,
+          "trades": 3703,
+          "no_5m_bar": 14,
+          "rollover_hour": 137,
+          "position_open": 2351
+        },
+        "trendline_break|3": {
+          "signals": 3888,
+          "trades": 3725,
+          "no_5m_bar": 15,
+          "rollover_hour": 95,
+          "position_open": 53
+        }
+      }
+    },
+    "EURJPY": {
+      "bars_15m": 464590,
+      "bars_5m": 1393139,
+      "ohlc_repaired": {
+        "15m": 4,
+        "5m": 30
+      },
+      "swings": 25611,
+      "mean_active_levels": 5.671316644783572,
+      "share_of_bars_with_level_in_reach": 0.32820766697518244,
+      "trendlines": {
+        "support": 5427,
+        "resistance": 5053
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 73366,
+          "trades": 37001,
+          "no_5m_bar": 207,
+          "rollover_hour": 2489,
+          "position_open": 33669
+        },
+        "levels_break|0": {
+          "signals": 53103,
+          "trades": 39486,
+          "no_5m_bar": 146,
+          "rollover_hour": 1596,
+          "position_open": 11875
+        },
+        "levels_bounce|-3": {
+          "signals": 70499,
+          "trades": 36098,
+          "no_5m_bar": 202,
+          "rollover_hour": 2493,
+          "position_open": 31706
+        },
+        "levels_break|-3": {
+          "signals": 51762,
+          "trades": 37484,
+          "no_5m_bar": 152,
+          "rollover_hour": 1599,
+          "position_open": 12527
+        },
+        "levels_bounce|-1.5": {
+          "signals": 74190,
+          "trades": 37794,
+          "no_5m_bar": 207,
+          "rollover_hour": 2539,
+          "position_open": 33650
+        },
+        "levels_break|-1.5": {
+          "signals": 54545,
+          "trades": 39841,
+          "no_5m_bar": 144,
+          "rollover_hour": 1686,
+          "position_open": 12874
+        },
+        "levels_bounce|1.5": {
+          "signals": 73964,
+          "trades": 37386,
+          "no_5m_bar": 217,
+          "rollover_hour": 2608,
+          "position_open": 33753
+        },
+        "levels_break|1.5": {
+          "signals": 53774,
+          "trades": 39276,
+          "no_5m_bar": 140,
+          "rollover_hour": 1693,
+          "position_open": 12665
+        },
+        "levels_bounce|3": {
+          "signals": 70617,
+          "trades": 36124,
+          "no_5m_bar": 188,
+          "rollover_hour": 2536,
+          "position_open": 31769
+        },
+        "levels_break|3": {
+          "signals": 51068,
+          "trades": 36937,
+          "no_5m_bar": 142,
+          "rollover_hour": 1569,
+          "position_open": 12420
+        },
+        "round_bounce|0": {
+          "signals": 77896,
+          "trades": 41999,
+          "no_5m_bar": 223,
+          "rollover_hour": 2535,
+          "position_open": 33139
+        },
+        "round_break|0": {
+          "signals": 55263,
+          "trades": 44646,
+          "no_5m_bar": 143,
+          "rollover_hour": 1756,
+          "position_open": 8718
+        },
+        "round_bounce|10": {
+          "signals": 78531,
+          "trades": 42133,
+          "no_5m_bar": 198,
+          "rollover_hour": 2694,
+          "position_open": 33506
+        },
+        "round_break|10": {
+          "signals": 55649,
+          "trades": 44997,
+          "no_5m_bar": 145,
+          "rollover_hour": 1719,
+          "position_open": 8788
+        },
+        "round_bounce|20": {
+          "signals": 79197,
+          "trades": 42749,
+          "no_5m_bar": 226,
+          "rollover_hour": 2613,
+          "position_open": 33609
+        },
+        "round_break|20": {
+          "signals": 56370,
+          "trades": 45337,
+          "no_5m_bar": 140,
+          "rollover_hour": 1772,
+          "position_open": 9121
+        },
+        "round_bounce|30": {
+          "signals": 79806,
+          "trades": 42978,
+          "no_5m_bar": 236,
+          "rollover_hour": 2684,
+          "position_open": 33908
+        },
+        "round_break|30": {
+          "signals": 56705,
+          "trades": 45942,
+          "no_5m_bar": 145,
+          "rollover_hour": 1719,
+          "position_open": 8899
+        },
+        "round_bounce|40": {
+          "signals": 79101,
+          "trades": 42431,
+          "no_5m_bar": 219,
+          "rollover_hour": 2581,
+          "position_open": 33870
+        },
+        "round_break|40": {
+          "signals": 56324,
+          "trades": 45263,
+          "no_5m_bar": 159,
+          "rollover_hour": 1762,
+          "position_open": 9140
+        },
+        "trendline_bounce|0": {
+          "signals": 13553,
+          "trades": 7490,
+          "no_5m_bar": 61,
+          "rollover_hour": 577,
+          "position_open": 5425
+        },
+        "trendline_break|0": {
+          "signals": 6533,
+          "trades": 6234,
+          "no_5m_bar": 21,
+          "rollover_hour": 255,
+          "position_open": 23
+        },
+        "trendline_bounce|-3": {
+          "signals": 6871,
+          "trades": 3927,
+          "no_5m_bar": 14,
+          "rollover_hour": 195,
+          "position_open": 2735
+        },
+        "trendline_break|-3": {
+          "signals": 4017,
+          "trades": 3881,
+          "no_5m_bar": 5,
+          "rollover_hour": 96,
+          "position_open": 35
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10340,
+          "trades": 5868,
+          "no_5m_bar": 23,
+          "rollover_hour": 396,
+          "position_open": 4053
+        },
+        "trendline_break|-1.5": {
+          "signals": 5634,
+          "trades": 5426,
+          "no_5m_bar": 15,
+          "rollover_hour": 155,
+          "position_open": 38
+        },
+        "trendline_bounce|1.5": {
+          "signals": 10667,
+          "trades": 5977,
+          "no_5m_bar": 32,
+          "rollover_hour": 367,
+          "position_open": 4291
+        },
+        "trendline_break|1.5": {
+          "signals": 5699,
+          "trades": 5462,
+          "no_5m_bar": 18,
+          "rollover_hour": 192,
+          "position_open": 27
+        },
+        "trendline_bounce|3": {
+          "signals": 6959,
+          "trades": 4022,
+          "no_5m_bar": 9,
+          "rollover_hour": 201,
+          "position_open": 2727
+        },
+        "trendline_break|3": {
+          "signals": 4052,
+          "trades": 3870,
+          "no_5m_bar": 13,
+          "rollover_hour": 116,
+          "position_open": 53
+        }
+      }
+    },
+    "EURNZD": {
+      "bars_15m": 465980,
+      "bars_5m": 1396326,
+      "ohlc_repaired": {
+        "15m": 0,
+        "5m": 0
+      },
+      "swings": 25530,
+      "mean_active_levels": 5.658659169921456,
+      "share_of_bars_with_level_in_reach": 0.3623610455384351,
+      "trendlines": {
+        "support": 5471,
+        "resistance": 5417
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 81089,
+          "trades": 39898,
+          "no_5m_bar": 302,
+          "rollover_hour": 3361,
+          "position_open": 37528
+        },
+        "levels_break|0": {
+          "signals": 57989,
+          "trades": 42128,
+          "no_5m_bar": 313,
+          "rollover_hour": 2442,
+          "position_open": 13106
+        },
+        "levels_bounce|-3": {
+          "signals": 77088,
+          "trades": 37921,
+          "no_5m_bar": 335,
+          "rollover_hour": 3380,
+          "position_open": 35452
+        },
+        "levels_break|-3": {
+          "signals": 55198,
+          "trades": 39252,
+          "no_5m_bar": 275,
+          "rollover_hour": 2352,
+          "position_open": 13319
+        },
+        "levels_bounce|-1.5": {
+          "signals": 80971,
+          "trades": 39693,
+          "no_5m_bar": 335,
+          "rollover_hour": 3447,
+          "position_open": 37496
+        },
+        "levels_break|-1.5": {
+          "signals": 58664,
+          "trades": 42091,
+          "no_5m_bar": 289,
+          "rollover_hour": 2436,
+          "position_open": 13848
+        },
+        "levels_bounce|1.5": {
+          "signals": 79540,
+          "trades": 39134,
+          "no_5m_bar": 313,
+          "rollover_hour": 3396,
+          "position_open": 36697
+        },
+        "levels_break|1.5": {
+          "signals": 57349,
+          "trades": 41245,
+          "no_5m_bar": 293,
+          "rollover_hour": 2323,
+          "position_open": 13488
+        },
+        "levels_bounce|3": {
+          "signals": 75214,
+          "trades": 37586,
+          "no_5m_bar": 309,
+          "rollover_hour": 3139,
+          "position_open": 34180
+        },
+        "levels_break|3": {
+          "signals": 54072,
+          "trades": 38451,
+          "no_5m_bar": 285,
+          "rollover_hour": 2196,
+          "position_open": 13140
+        },
+        "round_bounce|0": {
+          "signals": 107531,
+          "trades": 53233,
+          "no_5m_bar": 435,
+          "rollover_hour": 4540,
+          "position_open": 49323
+        },
+        "round_break|0": {
+          "signals": 75969,
+          "trades": 57089,
+          "no_5m_bar": 335,
+          "rollover_hour": 3053,
+          "position_open": 15492
+        },
+        "round_bounce|10": {
+          "signals": 107932,
+          "trades": 53315,
+          "no_5m_bar": 414,
+          "rollover_hour": 4708,
+          "position_open": 49495
+        },
+        "round_break|10": {
+          "signals": 76199,
+          "trades": 57255,
+          "no_5m_bar": 377,
+          "rollover_hour": 3104,
+          "position_open": 15463
+        },
+        "round_bounce|20": {
+          "signals": 108422,
+          "trades": 53255,
+          "no_5m_bar": 423,
+          "rollover_hour": 4624,
+          "position_open": 50120
+        },
+        "round_break|20": {
+          "signals": 76541,
+          "trades": 57697,
+          "no_5m_bar": 361,
+          "rollover_hour": 3117,
+          "position_open": 15366
+        },
+        "round_bounce|30": {
+          "signals": 107923,
+          "trades": 53325,
+          "no_5m_bar": 404,
+          "rollover_hour": 4550,
+          "position_open": 49644
+        },
+        "round_break|30": {
+          "signals": 76170,
+          "trades": 57264,
+          "no_5m_bar": 368,
+          "rollover_hour": 3050,
+          "position_open": 15488
+        },
+        "round_bounce|40": {
+          "signals": 107548,
+          "trades": 53077,
+          "no_5m_bar": 389,
+          "rollover_hour": 4567,
+          "position_open": 49515
+        },
+        "round_break|40": {
+          "signals": 76092,
+          "trades": 57307,
+          "no_5m_bar": 338,
+          "rollover_hour": 3005,
+          "position_open": 15442
+        },
+        "trendline_bounce|0": {
+          "signals": 14940,
+          "trades": 8117,
+          "no_5m_bar": 70,
+          "rollover_hour": 724,
+          "position_open": 6029
+        },
+        "trendline_break|0": {
+          "signals": 6805,
+          "trades": 6448,
+          "no_5m_bar": 39,
+          "rollover_hour": 302,
+          "position_open": 16
+        },
+        "trendline_bounce|-3": {
+          "signals": 7312,
+          "trades": 3997,
+          "no_5m_bar": 24,
+          "rollover_hour": 334,
+          "position_open": 2957
+        },
+        "trendline_break|-3": {
+          "signals": 4173,
+          "trades": 3931,
+          "no_5m_bar": 12,
+          "rollover_hour": 179,
+          "position_open": 51
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 11625,
+          "trades": 6380,
+          "no_5m_bar": 60,
+          "rollover_hour": 580,
+          "position_open": 4605
+        },
+        "trendline_break|-1.5": {
+          "signals": 6039,
+          "trades": 5710,
+          "no_5m_bar": 37,
+          "rollover_hour": 264,
+          "position_open": 28
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11327,
+          "trades": 6353,
+          "no_5m_bar": 41,
+          "rollover_hour": 461,
+          "position_open": 4472
+        },
+        "trendline_break|1.5": {
+          "signals": 5887,
+          "trades": 5597,
+          "no_5m_bar": 41,
+          "rollover_hour": 221,
+          "position_open": 28
+        },
+        "trendline_bounce|3": {
+          "signals": 6607,
+          "trades": 3772,
+          "no_5m_bar": 15,
+          "rollover_hour": 221,
+          "position_open": 2599
+        },
+        "trendline_break|3": {
+          "signals": 4076,
+          "trades": 3882,
+          "no_5m_bar": 19,
+          "rollover_hour": 132,
+          "position_open": 43
+        }
+      }
+    },
+    "EURUSD": {
+      "bars_15m": 465464,
+      "bars_5m": 1375201,
+      "ohlc_repaired": {
+        "15m": 9,
+        "5m": 65
+      },
+      "swings": 25470,
+      "mean_active_levels": 5.567998814086589,
+      "share_of_bars_with_level_in_reach": 0.30296005706134094,
+      "trendlines": {
+        "support": 4970,
+        "resistance": 4967
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 67321,
+          "trades": 34631,
+          "no_5m_bar": 1171,
+          "rollover_hour": 1904,
+          "position_open": 29615
+        },
+        "levels_break|0": {
+          "signals": 49592,
+          "trades": 37079,
+          "no_5m_bar": 866,
+          "rollover_hour": 1093,
+          "position_open": 10554
+        },
+        "levels_bounce|-3": {
+          "signals": 66277,
+          "trades": 34583,
+          "no_5m_bar": 1122,
+          "rollover_hour": 2019,
+          "position_open": 28553
+        },
+        "levels_break|-3": {
+          "signals": 49087,
+          "trades": 35567,
+          "no_5m_bar": 796,
+          "rollover_hour": 1183,
+          "position_open": 11541
+        },
+        "levels_bounce|-1.5": {
+          "signals": 69129,
+          "trades": 35675,
+          "no_5m_bar": 1212,
+          "rollover_hour": 2026,
+          "position_open": 30216
+        },
+        "levels_break|-1.5": {
+          "signals": 50872,
+          "trades": 37128,
+          "no_5m_bar": 799,
+          "rollover_hour": 1223,
+          "position_open": 11722
+        },
+        "levels_bounce|1.5": {
+          "signals": 68801,
+          "trades": 35427,
+          "no_5m_bar": 1186,
+          "rollover_hour": 2007,
+          "position_open": 30181
+        },
+        "levels_break|1.5": {
+          "signals": 50958,
+          "trades": 37228,
+          "no_5m_bar": 865,
+          "rollover_hour": 1169,
+          "position_open": 11696
+        },
+        "levels_bounce|3": {
+          "signals": 66809,
+          "trades": 34502,
+          "no_5m_bar": 1153,
+          "rollover_hour": 2055,
+          "position_open": 29099
+        },
+        "levels_break|3": {
+          "signals": 49005,
+          "trades": 35275,
+          "no_5m_bar": 866,
+          "rollover_hour": 1109,
+          "position_open": 11755
+        },
+        "round_bounce|0": {
+          "signals": 58301,
+          "trades": 32160,
+          "no_5m_bar": 998,
+          "rollover_hour": 1599,
+          "position_open": 23544
+        },
+        "round_break|0": {
+          "signals": 40411,
+          "trades": 33678,
+          "no_5m_bar": 688,
+          "rollover_hour": 967,
+          "position_open": 5078
+        },
+        "round_bounce|10": {
+          "signals": 60797,
+          "trades": 33051,
+          "no_5m_bar": 1085,
+          "rollover_hour": 1696,
+          "position_open": 24965
+        },
+        "round_break|10": {
+          "signals": 41872,
+          "trades": 34589,
+          "no_5m_bar": 745,
+          "rollover_hour": 1025,
+          "position_open": 5513
+        },
+        "round_bounce|20": {
+          "signals": 62995,
+          "trades": 33869,
+          "no_5m_bar": 1103,
+          "rollover_hour": 1825,
+          "position_open": 26198
+        },
+        "round_break|20": {
+          "signals": 42582,
+          "trades": 35234,
+          "no_5m_bar": 700,
+          "rollover_hour": 1032,
+          "position_open": 5616
+        },
+        "round_bounce|30": {
+          "signals": 62377,
+          "trades": 33560,
+          "no_5m_bar": 1132,
+          "rollover_hour": 1854,
+          "position_open": 25831
+        },
+        "round_break|30": {
+          "signals": 42360,
+          "trades": 35031,
+          "no_5m_bar": 736,
+          "rollover_hour": 1081,
+          "position_open": 5512
+        },
+        "round_bounce|40": {
+          "signals": 61365,
+          "trades": 33369,
+          "no_5m_bar": 1051,
+          "rollover_hour": 1599,
+          "position_open": 25346
+        },
+        "round_break|40": {
+          "signals": 42123,
+          "trades": 34809,
+          "no_5m_bar": 762,
+          "rollover_hour": 1068,
+          "position_open": 5484
+        },
+        "trendline_bounce|0": {
+          "signals": 12459,
+          "trades": 6933,
+          "no_5m_bar": 190,
+          "rollover_hour": 463,
+          "position_open": 4873
+        },
+        "trendline_break|0": {
+          "signals": 6211,
+          "trades": 5923,
+          "no_5m_bar": 114,
+          "rollover_hour": 146,
+          "position_open": 28
+        },
+        "trendline_bounce|-3": {
+          "signals": 6518,
+          "trades": 3795,
+          "no_5m_bar": 112,
+          "rollover_hour": 118,
+          "position_open": 2493
+        },
+        "trendline_break|-3": {
+          "signals": 3981,
+          "trades": 3820,
+          "no_5m_bar": 60,
+          "rollover_hour": 64,
+          "position_open": 37
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 9671,
+          "trades": 5588,
+          "no_5m_bar": 147,
+          "rollover_hour": 265,
+          "position_open": 3671
+        },
+        "trendline_break|-1.5": {
+          "signals": 5439,
+          "trades": 5201,
+          "no_5m_bar": 93,
+          "rollover_hour": 104,
+          "position_open": 41
+        },
+        "trendline_bounce|1.5": {
+          "signals": 9653,
+          "trades": 5539,
+          "no_5m_bar": 158,
+          "rollover_hour": 286,
+          "position_open": 3670
+        },
+        "trendline_break|1.5": {
+          "signals": 5426,
+          "trades": 5199,
+          "no_5m_bar": 101,
+          "rollover_hour": 99,
+          "position_open": 27
+        },
+        "trendline_bounce|3": {
+          "signals": 6394,
+          "trades": 3774,
+          "no_5m_bar": 84,
+          "rollover_hour": 134,
+          "position_open": 2402
+        },
+        "trendline_break|3": {
+          "signals": 3896,
+          "trades": 3715,
+          "no_5m_bar": 60,
+          "rollover_hour": 74,
+          "position_open": 47
+        }
+      }
+    },
+    "GBPAUD": {
+      "bars_15m": 466255,
+      "bars_5m": 1397561,
+      "ohlc_repaired": {
+        "15m": 7,
+        "5m": 37
+      },
+      "swings": 25542,
+      "mean_active_levels": 5.722707531286527,
+      "share_of_bars_with_level_in_reach": 0.3619199794104085,
+      "trendlines": {
+        "support": 5392,
+        "resistance": 5362
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 81063,
+          "trades": 40022,
+          "no_5m_bar": 275,
+          "rollover_hour": 3338,
+          "position_open": 37428
+        },
+        "levels_break|0": {
+          "signals": 58632,
+          "trades": 42389,
+          "no_5m_bar": 236,
+          "rollover_hour": 2197,
+          "position_open": 13810
+        },
+        "levels_bounce|-3": {
+          "signals": 77054,
+          "trades": 38349,
+          "no_5m_bar": 282,
+          "rollover_hour": 3187,
+          "position_open": 35236
+        },
+        "levels_break|-3": {
+          "signals": 55983,
+          "trades": 39490,
+          "no_5m_bar": 252,
+          "rollover_hour": 2246,
+          "position_open": 13995
+        },
+        "levels_bounce|-1.5": {
+          "signals": 81467,
+          "trades": 40339,
+          "no_5m_bar": 290,
+          "rollover_hour": 3298,
+          "position_open": 37540
+        },
+        "levels_break|-1.5": {
+          "signals": 59494,
+          "trades": 42570,
+          "no_5m_bar": 256,
+          "rollover_hour": 2257,
+          "position_open": 14411
+        },
+        "levels_bounce|1.5": {
+          "signals": 80670,
+          "trades": 39916,
+          "no_5m_bar": 281,
+          "rollover_hour": 3266,
+          "position_open": 37207
+        },
+        "levels_break|1.5": {
+          "signals": 59147,
+          "trades": 42408,
+          "no_5m_bar": 232,
+          "rollover_hour": 2240,
+          "position_open": 14267
+        },
+        "levels_bounce|3": {
+          "signals": 76398,
+          "trades": 38258,
+          "no_5m_bar": 248,
+          "rollover_hour": 3121,
+          "position_open": 34771
+        },
+        "levels_break|3": {
+          "signals": 55644,
+          "trades": 39590,
+          "no_5m_bar": 241,
+          "rollover_hour": 2037,
+          "position_open": 13776
+        },
+        "round_bounce|0": {
+          "signals": 109779,
+          "trades": 54733,
+          "no_5m_bar": 374,
+          "rollover_hour": 4426,
+          "position_open": 50246
+        },
+        "round_break|0": {
+          "signals": 77952,
+          "trades": 58463,
+          "no_5m_bar": 305,
+          "rollover_hour": 2910,
+          "position_open": 16274
+        },
+        "round_bounce|10": {
+          "signals": 109873,
+          "trades": 54823,
+          "no_5m_bar": 380,
+          "rollover_hour": 4511,
+          "position_open": 50159
+        },
+        "round_break|10": {
+          "signals": 78253,
+          "trades": 58885,
+          "no_5m_bar": 273,
+          "rollover_hour": 2878,
+          "position_open": 16217
+        },
+        "round_bounce|20": {
+          "signals": 109642,
+          "trades": 55103,
+          "no_5m_bar": 366,
+          "rollover_hour": 4468,
+          "position_open": 49705
+        },
+        "round_break|20": {
+          "signals": 78259,
+          "trades": 58590,
+          "no_5m_bar": 303,
+          "rollover_hour": 2929,
+          "position_open": 16437
+        },
+        "round_bounce|30": {
+          "signals": 108981,
+          "trades": 54773,
+          "no_5m_bar": 352,
+          "rollover_hour": 4354,
+          "position_open": 49502
+        },
+        "round_break|30": {
+          "signals": 78512,
+          "trades": 58907,
+          "no_5m_bar": 311,
+          "rollover_hour": 2962,
+          "position_open": 16332
+        },
+        "round_bounce|40": {
+          "signals": 108844,
+          "trades": 54758,
+          "no_5m_bar": 393,
+          "rollover_hour": 4516,
+          "position_open": 49177
+        },
+        "round_break|40": {
+          "signals": 77823,
+          "trades": 58626,
+          "no_5m_bar": 274,
+          "rollover_hour": 2918,
+          "position_open": 16005
+        },
+        "trendline_bounce|0": {
+          "signals": 14188,
+          "trades": 7739,
+          "no_5m_bar": 61,
+          "rollover_hour": 687,
+          "position_open": 5701
+        },
+        "trendline_break|0": {
+          "signals": 6696,
+          "trades": 6382,
+          "no_5m_bar": 33,
+          "rollover_hour": 261,
+          "position_open": 20
+        },
+        "trendline_bounce|-3": {
+          "signals": 7028,
+          "trades": 4003,
+          "no_5m_bar": 15,
+          "rollover_hour": 263,
+          "position_open": 2747
+        },
+        "trendline_break|-3": {
+          "signals": 4185,
+          "trades": 3972,
+          "no_5m_bar": 10,
+          "rollover_hour": 157,
+          "position_open": 46
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 11118,
+          "trades": 6223,
+          "no_5m_bar": 38,
+          "rollover_hour": 474,
+          "position_open": 4383
+        },
+        "trendline_break|-1.5": {
+          "signals": 5959,
+          "trades": 5650,
+          "no_5m_bar": 18,
+          "rollover_hour": 256,
+          "position_open": 35
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11327,
+          "trades": 6231,
+          "no_5m_bar": 45,
+          "rollover_hour": 448,
+          "position_open": 4603
+        },
+        "trendline_break|1.5": {
+          "signals": 5775,
+          "trades": 5486,
+          "no_5m_bar": 30,
+          "rollover_hour": 219,
+          "position_open": 40
+        },
+        "trendline_bounce|3": {
+          "signals": 6906,
+          "trades": 3886,
+          "no_5m_bar": 18,
+          "rollover_hour": 222,
+          "position_open": 2780
+        },
+        "trendline_break|3": {
+          "signals": 4105,
+          "trades": 3927,
+          "no_5m_bar": 20,
+          "rollover_hour": 120,
+          "position_open": 38
+        }
+      }
+    },
+    "GBPCAD": {
+      "bars_15m": 466291,
+      "bars_5m": 1397354,
+      "ohlc_repaired": {
+        "15m": 7,
+        "5m": 31
+      },
+      "swings": 25567,
+      "mean_active_levels": 5.622926455796916,
+      "share_of_bars_with_level_in_reach": 0.3434529081624994,
+      "trendlines": {
+        "support": 5313,
+        "resistance": 4799
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 76710,
+          "trades": 38582,
+          "no_5m_bar": 292,
+          "rollover_hour": 3000,
+          "position_open": 34836
+        },
+        "levels_break|0": {
+          "signals": 56727,
+          "trades": 41277,
+          "no_5m_bar": 271,
+          "rollover_hour": 1994,
+          "position_open": 13185
+        },
+        "levels_bounce|-3": {
+          "signals": 72154,
+          "trades": 36545,
+          "no_5m_bar": 313,
+          "rollover_hour": 2981,
+          "position_open": 32315
+        },
+        "levels_break|-3": {
+          "signals": 53761,
+          "trades": 38105,
+          "no_5m_bar": 255,
+          "rollover_hour": 1970,
+          "position_open": 13431
+        },
+        "levels_bounce|-1.5": {
+          "signals": 76359,
+          "trades": 38356,
+          "no_5m_bar": 290,
+          "rollover_hour": 3106,
+          "position_open": 34607
+        },
+        "levels_break|-1.5": {
+          "signals": 57316,
+          "trades": 41041,
+          "no_5m_bar": 303,
+          "rollover_hour": 2045,
+          "position_open": 13927
+        },
+        "levels_bounce|1.5": {
+          "signals": 78372,
+          "trades": 39007,
+          "no_5m_bar": 356,
+          "rollover_hour": 3109,
+          "position_open": 35900
+        },
+        "levels_break|1.5": {
+          "signals": 57518,
+          "trades": 41096,
+          "no_5m_bar": 296,
+          "rollover_hour": 2090,
+          "position_open": 14036
+        },
+        "levels_bounce|3": {
+          "signals": 74189,
+          "trades": 37519,
+          "no_5m_bar": 314,
+          "rollover_hour": 2922,
+          "position_open": 33434
+        },
+        "levels_break|3": {
+          "signals": 54894,
+          "trades": 38801,
+          "no_5m_bar": 261,
+          "rollover_hour": 1984,
+          "position_open": 13848
+        },
+        "round_bounce|0": {
+          "signals": 90131,
+          "trades": 46967,
+          "no_5m_bar": 350,
+          "rollover_hour": 3743,
+          "position_open": 39071
+        },
+        "round_break|0": {
+          "signals": 64383,
+          "trades": 50281,
+          "no_5m_bar": 277,
+          "rollover_hour": 2375,
+          "position_open": 11450
+        },
+        "round_bounce|10": {
+          "signals": 90500,
+          "trades": 47088,
+          "no_5m_bar": 363,
+          "rollover_hour": 3674,
+          "position_open": 39375
+        },
+        "round_break|10": {
+          "signals": 64353,
+          "trades": 50043,
+          "no_5m_bar": 295,
+          "rollover_hour": 2336,
+          "position_open": 11679
+        },
+        "round_bounce|20": {
+          "signals": 89769,
+          "trades": 46798,
+          "no_5m_bar": 349,
+          "rollover_hour": 3673,
+          "position_open": 38949
+        },
+        "round_break|20": {
+          "signals": 64464,
+          "trades": 50143,
+          "no_5m_bar": 331,
+          "rollover_hour": 2289,
+          "position_open": 11701
+        },
+        "round_bounce|30": {
+          "signals": 89945,
+          "trades": 46811,
+          "no_5m_bar": 381,
+          "rollover_hour": 3611,
+          "position_open": 39142
+        },
+        "round_break|30": {
+          "signals": 64252,
+          "trades": 50004,
+          "no_5m_bar": 325,
+          "rollover_hour": 2362,
+          "position_open": 11561
+        },
+        "round_bounce|40": {
+          "signals": 90281,
+          "trades": 47122,
+          "no_5m_bar": 391,
+          "rollover_hour": 3645,
+          "position_open": 39123
+        },
+        "round_break|40": {
+          "signals": 64583,
+          "trades": 50279,
+          "no_5m_bar": 298,
+          "rollover_hour": 2372,
+          "position_open": 11634
+        },
+        "trendline_bounce|0": {
+          "signals": 13529,
+          "trades": 7482,
+          "no_5m_bar": 56,
+          "rollover_hour": 581,
+          "position_open": 5410
+        },
+        "trendline_break|0": {
+          "signals": 6449,
+          "trades": 6160,
+          "no_5m_bar": 42,
+          "rollover_hour": 203,
+          "position_open": 44
+        },
+        "trendline_bounce|-3": {
+          "signals": 6325,
+          "trades": 3742,
+          "no_5m_bar": 20,
+          "rollover_hour": 187,
+          "position_open": 2376
+        },
+        "trendline_break|-3": {
+          "signals": 3784,
+          "trades": 3625,
+          "no_5m_bar": 11,
+          "rollover_hour": 101,
+          "position_open": 47
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 9862,
+          "trades": 5671,
+          "no_5m_bar": 42,
+          "rollover_hour": 364,
+          "position_open": 3785
+        },
+        "trendline_break|-1.5": {
+          "signals": 5376,
+          "trades": 5149,
+          "no_5m_bar": 24,
+          "rollover_hour": 157,
+          "position_open": 46
+        },
+        "trendline_bounce|1.5": {
+          "signals": 10067,
+          "trades": 5824,
+          "no_5m_bar": 29,
+          "rollover_hour": 300,
+          "position_open": 3914
+        },
+        "trendline_break|1.5": {
+          "signals": 5666,
+          "trades": 5446,
+          "no_5m_bar": 26,
+          "rollover_hour": 155,
+          "position_open": 39
+        },
+        "trendline_bounce|3": {
+          "signals": 6376,
+          "trades": 3777,
+          "no_5m_bar": 15,
+          "rollover_hour": 155,
+          "position_open": 2429
+        },
+        "trendline_break|3": {
+          "signals": 3994,
+          "trades": 3865,
+          "no_5m_bar": 13,
+          "rollover_hour": 70,
+          "position_open": 46
+        }
+      }
+    },
+    "GBPCHF": {
+      "bars_15m": 464312,
+      "bars_5m": 1391671,
+      "ohlc_repaired": {
+        "15m": 0,
+        "5m": 0
+      },
+      "swings": 25496,
+      "mean_active_levels": 5.583667878495494,
+      "share_of_bars_with_level_in_reach": 0.34403806061441444,
+      "trendlines": {
+        "support": 5306,
+        "resistance": 4842
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 77045,
+          "trades": 37599,
+          "no_5m_bar": 267,
+          "rollover_hour": 3222,
+          "position_open": 35957
+        },
+        "levels_break|0": {
+          "signals": 54727,
+          "trades": 39862,
+          "no_5m_bar": 276,
+          "rollover_hour": 2154,
+          "position_open": 12435
+        },
+        "levels_bounce|-3": {
+          "signals": 73221,
+          "trades": 36001,
+          "no_5m_bar": 284,
+          "rollover_hour": 3215,
+          "position_open": 33721
+        },
+        "levels_break|-3": {
+          "signals": 52116,
+          "trades": 36795,
+          "no_5m_bar": 273,
+          "rollover_hour": 2201,
+          "position_open": 12847
+        },
+        "levels_bounce|-1.5": {
+          "signals": 77333,
+          "trades": 37893,
+          "no_5m_bar": 290,
+          "rollover_hour": 3260,
+          "position_open": 35890
+        },
+        "levels_break|-1.5": {
+          "signals": 55059,
+          "trades": 39598,
+          "no_5m_bar": 256,
+          "rollover_hour": 2143,
+          "position_open": 13062
+        },
+        "levels_bounce|1.5": {
+          "signals": 77120,
+          "trades": 37870,
+          "no_5m_bar": 269,
+          "rollover_hour": 3125,
+          "position_open": 35856
+        },
+        "levels_break|1.5": {
+          "signals": 55240,
+          "trades": 39671,
+          "no_5m_bar": 289,
+          "rollover_hour": 2142,
+          "position_open": 13138
+        },
+        "levels_bounce|3": {
+          "signals": 74604,
+          "trades": 36737,
+          "no_5m_bar": 279,
+          "rollover_hour": 2950,
+          "position_open": 34638
+        },
+        "levels_break|3": {
+          "signals": 52874,
+          "trades": 37658,
+          "no_5m_bar": 240,
+          "rollover_hour": 2030,
+          "position_open": 12946
+        },
+        "round_bounce|0": {
+          "signals": 76687,
+          "trades": 39160,
+          "no_5m_bar": 259,
+          "rollover_hour": 3124,
+          "position_open": 34144
+        },
+        "round_break|0": {
+          "signals": 51943,
+          "trades": 41182,
+          "no_5m_bar": 236,
+          "rollover_hour": 1829,
+          "position_open": 8696
+        },
+        "round_bounce|10": {
+          "signals": 76423,
+          "trades": 38868,
+          "no_5m_bar": 255,
+          "rollover_hour": 3216,
+          "position_open": 34084
+        },
+        "round_break|10": {
+          "signals": 52131,
+          "trades": 41326,
+          "no_5m_bar": 218,
+          "rollover_hour": 1900,
+          "position_open": 8687
+        },
+        "round_bounce|20": {
+          "signals": 76089,
+          "trades": 38861,
+          "no_5m_bar": 270,
+          "rollover_hour": 3224,
+          "position_open": 33734
+        },
+        "round_break|20": {
+          "signals": 51947,
+          "trades": 40809,
+          "no_5m_bar": 225,
+          "rollover_hour": 1965,
+          "position_open": 8948
+        },
+        "round_bounce|30": {
+          "signals": 77290,
+          "trades": 39196,
+          "no_5m_bar": 294,
+          "rollover_hour": 3283,
+          "position_open": 34517
+        },
+        "round_break|30": {
+          "signals": 52720,
+          "trades": 41699,
+          "no_5m_bar": 236,
+          "rollover_hour": 1917,
+          "position_open": 8868
+        },
+        "round_bounce|40": {
+          "signals": 75979,
+          "trades": 39091,
+          "no_5m_bar": 259,
+          "rollover_hour": 3021,
+          "position_open": 33608
+        },
+        "round_break|40": {
+          "signals": 52396,
+          "trades": 41505,
+          "no_5m_bar": 232,
+          "rollover_hour": 1861,
+          "position_open": 8798
+        },
+        "trendline_bounce|0": {
+          "signals": 14212,
+          "trades": 7621,
+          "no_5m_bar": 45,
+          "rollover_hour": 655,
+          "position_open": 5891
+        },
+        "trendline_break|0": {
+          "signals": 6367,
+          "trades": 6022,
+          "no_5m_bar": 32,
+          "rollover_hour": 276,
+          "position_open": 37
+        },
+        "trendline_bounce|-3": {
+          "signals": 6247,
+          "trades": 3627,
+          "no_5m_bar": 23,
+          "rollover_hour": 291,
+          "position_open": 2306
+        },
+        "trendline_break|-3": {
+          "signals": 3770,
+          "trades": 3530,
+          "no_5m_bar": 14,
+          "rollover_hour": 177,
+          "position_open": 49
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10240,
+          "trades": 5652,
+          "no_5m_bar": 38,
+          "rollover_hour": 545,
+          "position_open": 4005
+        },
+        "trendline_break|-1.5": {
+          "signals": 5427,
+          "trades": 5116,
+          "no_5m_bar": 28,
+          "rollover_hour": 250,
+          "position_open": 33
+        },
+        "trendline_bounce|1.5": {
+          "signals": 10630,
+          "trades": 5862,
+          "no_5m_bar": 28,
+          "rollover_hour": 366,
+          "position_open": 4374
+        },
+        "trendline_break|1.5": {
+          "signals": 5529,
+          "trades": 5255,
+          "no_5m_bar": 27,
+          "rollover_hour": 204,
+          "position_open": 43
+        },
+        "trendline_bounce|3": {
+          "signals": 6427,
+          "trades": 3777,
+          "no_5m_bar": 19,
+          "rollover_hour": 140,
+          "position_open": 2491
+        },
+        "trendline_break|3": {
+          "signals": 3926,
+          "trades": 3767,
+          "no_5m_bar": 14,
+          "rollover_hour": 89,
+          "position_open": 56
+        }
+      }
+    },
+    "GBPJPY": {
+      "bars_15m": 465077,
+      "bars_5m": 1393596,
+      "ohlc_repaired": {
+        "15m": 0,
+        "5m": 0
+      },
+      "swings": 25776,
+      "mean_active_levels": 5.670011632482363,
+      "share_of_bars_with_level_in_reach": 0.3358949163256837,
+      "trendlines": {
+        "support": 5541,
+        "resistance": 5220
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 74889,
+          "trades": 37672,
+          "no_5m_bar": 268,
+          "rollover_hour": 2748,
+          "position_open": 34201
+        },
+        "levels_break|0": {
+          "signals": 54047,
+          "trades": 40079,
+          "no_5m_bar": 203,
+          "rollover_hour": 1718,
+          "position_open": 12047
+        },
+        "levels_bounce|-3": {
+          "signals": 71163,
+          "trades": 36162,
+          "no_5m_bar": 271,
+          "rollover_hour": 2679,
+          "position_open": 32051
+        },
+        "levels_break|-3": {
+          "signals": 51579,
+          "trades": 36953,
+          "no_5m_bar": 207,
+          "rollover_hour": 1733,
+          "position_open": 12686
+        },
+        "levels_bounce|-1.5": {
+          "signals": 75053,
+          "trades": 37875,
+          "no_5m_bar": 293,
+          "rollover_hour": 2783,
+          "position_open": 34102
+        },
+        "levels_break|-1.5": {
+          "signals": 55101,
+          "trades": 40050,
+          "no_5m_bar": 202,
+          "rollover_hour": 1846,
+          "position_open": 13003
+        },
+        "levels_bounce|1.5": {
+          "signals": 75481,
+          "trades": 38059,
+          "no_5m_bar": 255,
+          "rollover_hour": 2815,
+          "position_open": 34352
+        },
+        "levels_break|1.5": {
+          "signals": 54763,
+          "trades": 39888,
+          "no_5m_bar": 204,
+          "rollover_hour": 1842,
+          "position_open": 12829
+        },
+        "levels_bounce|3": {
+          "signals": 72229,
+          "trades": 36332,
+          "no_5m_bar": 266,
+          "rollover_hour": 2742,
+          "position_open": 32889
+        },
+        "levels_break|3": {
+          "signals": 52051,
+          "trades": 37431,
+          "no_5m_bar": 208,
+          "rollover_hour": 1761,
+          "position_open": 12651
+        },
+        "round_bounce|0": {
+          "signals": 101193,
+          "trades": 51911,
+          "no_5m_bar": 365,
+          "rollover_hour": 3522,
+          "position_open": 45395
+        },
+        "round_break|0": {
+          "signals": 71955,
+          "trades": 54961,
+          "no_5m_bar": 241,
+          "rollover_hour": 2314,
+          "position_open": 14439
+        },
+        "round_bounce|10": {
+          "signals": 100984,
+          "trades": 51839,
+          "no_5m_bar": 373,
+          "rollover_hour": 3604,
+          "position_open": 45168
+        },
+        "round_break|10": {
+          "signals": 72784,
+          "trades": 55680,
+          "no_5m_bar": 243,
+          "rollover_hour": 2294,
+          "position_open": 14567
+        },
+        "round_bounce|20": {
+          "signals": 101293,
+          "trades": 52094,
+          "no_5m_bar": 376,
+          "rollover_hour": 3551,
+          "position_open": 45272
+        },
+        "round_break|20": {
+          "signals": 73106,
+          "trades": 56028,
+          "no_5m_bar": 260,
+          "rollover_hour": 2365,
+          "position_open": 14453
+        },
+        "round_bounce|30": {
+          "signals": 101252,
+          "trades": 51873,
+          "no_5m_bar": 374,
+          "rollover_hour": 3534,
+          "position_open": 45471
+        },
+        "round_break|30": {
+          "signals": 72753,
+          "trades": 55564,
+          "no_5m_bar": 247,
+          "rollover_hour": 2379,
+          "position_open": 14563
+        },
+        "round_bounce|40": {
+          "signals": 101058,
+          "trades": 51868,
+          "no_5m_bar": 351,
+          "rollover_hour": 3619,
+          "position_open": 45220
+        },
+        "round_break|40": {
+          "signals": 72547,
+          "trades": 55873,
+          "no_5m_bar": 244,
+          "rollover_hour": 2367,
+          "position_open": 14063
+        },
+        "trendline_bounce|0": {
+          "signals": 14186,
+          "trades": 7636,
+          "no_5m_bar": 67,
+          "rollover_hour": 670,
+          "position_open": 5813
+        },
+        "trendline_break|0": {
+          "signals": 6698,
+          "trades": 6385,
+          "no_5m_bar": 36,
+          "rollover_hour": 254,
+          "position_open": 23
+        },
+        "trendline_bounce|-3": {
+          "signals": 6864,
+          "trades": 3908,
+          "no_5m_bar": 15,
+          "rollover_hour": 172,
+          "position_open": 2769
+        },
+        "trendline_break|-3": {
+          "signals": 4107,
+          "trades": 3933,
+          "no_5m_bar": 10,
+          "rollover_hour": 110,
+          "position_open": 54
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10513,
+          "trades": 5898,
+          "no_5m_bar": 34,
+          "rollover_hour": 450,
+          "position_open": 4131
+        },
+        "trendline_break|-1.5": {
+          "signals": 5808,
+          "trades": 5552,
+          "no_5m_bar": 20,
+          "rollover_hour": 202,
+          "position_open": 34
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11227,
+          "trades": 6127,
+          "no_5m_bar": 54,
+          "rollover_hour": 408,
+          "position_open": 4638
+        },
+        "trendline_break|1.5": {
+          "signals": 5862,
+          "trades": 5570,
+          "no_5m_bar": 28,
+          "rollover_hour": 231,
+          "position_open": 33
+        },
+        "trendline_bounce|3": {
+          "signals": 7065,
+          "trades": 3987,
+          "no_5m_bar": 19,
+          "rollover_hour": 183,
+          "position_open": 2876
+        },
+        "trendline_break|3": {
+          "signals": 4088,
+          "trades": 3901,
+          "no_5m_bar": 20,
+          "rollover_hour": 106,
+          "position_open": 61
+        }
+      }
+    },
+    "GBPNZD": {
+      "bars_15m": 465421,
+      "bars_5m": 1393840,
+      "ohlc_repaired": {
+        "15m": 2,
+        "5m": 19
+      },
+      "swings": 25552,
+      "mean_active_levels": 5.738713981534997,
+      "share_of_bars_with_level_in_reach": 0.38027076560791195,
+      "trendlines": {
+        "support": 5520,
+        "resistance": 5418
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 84888,
+          "trades": 41550,
+          "no_5m_bar": 422,
+          "rollover_hour": 3426,
+          "position_open": 39490
+        },
+        "levels_break|0": {
+          "signals": 61425,
+          "trades": 44111,
+          "no_5m_bar": 347,
+          "rollover_hour": 2435,
+          "position_open": 14532
+        },
+        "levels_bounce|-3": {
+          "signals": 79902,
+          "trades": 39199,
+          "no_5m_bar": 427,
+          "rollover_hour": 3410,
+          "position_open": 36866
+        },
+        "levels_break|-3": {
+          "signals": 57784,
+          "trades": 40889,
+          "no_5m_bar": 352,
+          "rollover_hour": 2310,
+          "position_open": 14233
+        },
+        "levels_bounce|-1.5": {
+          "signals": 85034,
+          "trades": 41306,
+          "no_5m_bar": 456,
+          "rollover_hour": 3432,
+          "position_open": 39840
+        },
+        "levels_break|-1.5": {
+          "signals": 61997,
+          "trades": 43970,
+          "no_5m_bar": 398,
+          "rollover_hour": 2499,
+          "position_open": 15130
+        },
+        "levels_bounce|1.5": {
+          "signals": 83978,
+          "trades": 41101,
+          "no_5m_bar": 428,
+          "rollover_hour": 3414,
+          "position_open": 39035
+        },
+        "levels_break|1.5": {
+          "signals": 61265,
+          "trades": 43403,
+          "no_5m_bar": 353,
+          "rollover_hour": 2506,
+          "position_open": 15003
+        },
+        "levels_bounce|3": {
+          "signals": 79095,
+          "trades": 39019,
+          "no_5m_bar": 402,
+          "rollover_hour": 3087,
+          "position_open": 36587
+        },
+        "levels_break|3": {
+          "signals": 57299,
+          "trades": 40247,
+          "no_5m_bar": 334,
+          "rollover_hour": 2233,
+          "position_open": 14485
+        },
+        "round_bounce|0": {
+          "signals": 130199,
+          "trades": 61041,
+          "no_5m_bar": 597,
+          "rollover_hour": 5402,
+          "position_open": 63159
+        },
+        "round_break|0": {
+          "signals": 94521,
+          "trades": 66949,
+          "no_5m_bar": 514,
+          "rollover_hour": 3657,
+          "position_open": 23401
+        },
+        "round_bounce|10": {
+          "signals": 129627,
+          "trades": 61180,
+          "no_5m_bar": 579,
+          "rollover_hour": 5203,
+          "position_open": 62665
+        },
+        "round_break|10": {
+          "signals": 94588,
+          "trades": 67125,
+          "no_5m_bar": 520,
+          "rollover_hour": 3746,
+          "position_open": 23197
+        },
+        "round_bounce|20": {
+          "signals": 129642,
+          "trades": 61323,
+          "no_5m_bar": 620,
+          "rollover_hour": 5348,
+          "position_open": 62351
+        },
+        "round_break|20": {
+          "signals": 94619,
+          "trades": 66839,
+          "no_5m_bar": 491,
+          "rollover_hour": 3675,
+          "position_open": 23614
+        },
+        "round_bounce|30": {
+          "signals": 129548,
+          "trades": 61306,
+          "no_5m_bar": 635,
+          "rollover_hour": 5371,
+          "position_open": 62236
+        },
+        "round_break|30": {
+          "signals": 94732,
+          "trades": 67084,
+          "no_5m_bar": 480,
+          "rollover_hour": 3660,
+          "position_open": 23508
+        },
+        "round_bounce|40": {
+          "signals": 129710,
+          "trades": 61402,
+          "no_5m_bar": 656,
+          "rollover_hour": 5369,
+          "position_open": 62283
+        },
+        "round_break|40": {
+          "signals": 94603,
+          "trades": 67040,
+          "no_5m_bar": 448,
+          "rollover_hour": 3686,
+          "position_open": 23429
+        },
+        "trendline_bounce|0": {
+          "signals": 14902,
+          "trades": 8160,
+          "no_5m_bar": 98,
+          "rollover_hour": 657,
+          "position_open": 5987
+        },
+        "trendline_break|0": {
+          "signals": 6844,
+          "trades": 6466,
+          "no_5m_bar": 59,
+          "rollover_hour": 295,
+          "position_open": 24
+        },
+        "trendline_bounce|-3": {
+          "signals": 6949,
+          "trades": 3885,
+          "no_5m_bar": 33,
+          "rollover_hour": 305,
+          "position_open": 2726
+        },
+        "trendline_break|-3": {
+          "signals": 4074,
+          "trades": 3830,
+          "no_5m_bar": 18,
+          "rollover_hour": 182,
+          "position_open": 44
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 11676,
+          "trades": 6349,
+          "no_5m_bar": 66,
+          "rollover_hour": 566,
+          "position_open": 4695
+        },
+        "trendline_break|-1.5": {
+          "signals": 5963,
+          "trades": 5619,
+          "no_5m_bar": 36,
+          "rollover_hour": 276,
+          "position_open": 32
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11632,
+          "trades": 6352,
+          "no_5m_bar": 69,
+          "rollover_hour": 466,
+          "position_open": 4745
+        },
+        "trendline_break|1.5": {
+          "signals": 5936,
+          "trades": 5617,
+          "no_5m_bar": 40,
+          "rollover_hour": 243,
+          "position_open": 36
+        },
+        "trendline_bounce|3": {
+          "signals": 7240,
+          "trades": 4070,
+          "no_5m_bar": 31,
+          "rollover_hour": 219,
+          "position_open": 2920
+        },
+        "trendline_break|3": {
+          "signals": 4119,
+          "trades": 3913,
+          "no_5m_bar": 22,
+          "rollover_hour": 134,
+          "position_open": 50
+        }
+      }
+    },
+    "GBPUSD": {
+      "bars_15m": 466604,
+      "bars_5m": 1298448,
+      "ohlc_repaired": {
+        "15m": 11,
+        "5m": 56
+      },
+      "swings": 25486,
+      "mean_active_levels": 5.520254862795861,
+      "share_of_bars_with_level_in_reach": 0.30283709526707875,
+      "trendlines": {
+        "support": 5016,
+        "resistance": 4877
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 66954,
+          "trades": 32471,
+          "no_5m_bar": 5148,
+          "rollover_hour": 2021,
+          "position_open": 27314
+        },
+        "levels_break|0": {
+          "signals": 50824,
+          "trades": 35381,
+          "no_5m_bar": 3872,
+          "rollover_hour": 1193,
+          "position_open": 10378
+        },
+        "levels_bounce|-3": {
+          "signals": 65307,
+          "trades": 32050,
+          "no_5m_bar": 5040,
+          "rollover_hour": 2063,
+          "position_open": 26154
+        },
+        "levels_break|-3": {
+          "signals": 49667,
+          "trades": 33404,
+          "no_5m_bar": 3821,
+          "rollover_hour": 1177,
+          "position_open": 11265
+        },
+        "levels_bounce|-1.5": {
+          "signals": 68410,
+          "trades": 33427,
+          "no_5m_bar": 5318,
+          "rollover_hour": 2108,
+          "position_open": 27557
+        },
+        "levels_break|-1.5": {
+          "signals": 51750,
+          "trades": 35256,
+          "no_5m_bar": 4059,
+          "rollover_hour": 1208,
+          "position_open": 11227
+        },
+        "levels_bounce|1.5": {
+          "signals": 68353,
+          "trades": 33485,
+          "no_5m_bar": 5137,
+          "rollover_hour": 2060,
+          "position_open": 27671
+        },
+        "levels_break|1.5": {
+          "signals": 52253,
+          "trades": 35636,
+          "no_5m_bar": 3834,
+          "rollover_hour": 1274,
+          "position_open": 11509
+        },
+        "levels_bounce|3": {
+          "signals": 65612,
+          "trades": 32068,
+          "no_5m_bar": 5059,
+          "rollover_hour": 2065,
+          "position_open": 26420
+        },
+        "levels_break|3": {
+          "signals": 50015,
+          "trades": 33699,
+          "no_5m_bar": 3886,
+          "rollover_hour": 1147,
+          "position_open": 11283
+        },
+        "round_bounce|0": {
+          "signals": 68940,
+          "trades": 34963,
+          "no_5m_bar": 5961,
+          "rollover_hour": 1995,
+          "position_open": 26021
+        },
+        "round_break|0": {
+          "signals": 50608,
+          "trades": 38007,
+          "no_5m_bar": 4401,
+          "rollover_hour": 1247,
+          "position_open": 6953
+        },
+        "round_bounce|10": {
+          "signals": 70493,
+          "trades": 35698,
+          "no_5m_bar": 5966,
+          "rollover_hour": 2060,
+          "position_open": 26769
+        },
+        "round_break|10": {
+          "signals": 51336,
+          "trades": 38547,
+          "no_5m_bar": 4334,
+          "rollover_hour": 1221,
+          "position_open": 7234
+        },
+        "round_bounce|20": {
+          "signals": 71848,
+          "trades": 36462,
+          "no_5m_bar": 6087,
+          "rollover_hour": 2182,
+          "position_open": 27117
+        },
+        "round_break|20": {
+          "signals": 52104,
+          "trades": 39107,
+          "no_5m_bar": 4428,
+          "rollover_hour": 1282,
+          "position_open": 7287
+        },
+        "round_bounce|30": {
+          "signals": 73448,
+          "trades": 37158,
+          "no_5m_bar": 6275,
+          "rollover_hour": 2158,
+          "position_open": 27857
+        },
+        "round_break|30": {
+          "signals": 53293,
+          "trades": 39916,
+          "no_5m_bar": 4487,
+          "rollover_hour": 1343,
+          "position_open": 7547
+        },
+        "round_bounce|40": {
+          "signals": 71662,
+          "trades": 36630,
+          "no_5m_bar": 6139,
+          "rollover_hour": 2153,
+          "position_open": 26740
+        },
+        "round_break|40": {
+          "signals": 52407,
+          "trades": 39323,
+          "no_5m_bar": 4456,
+          "rollover_hour": 1319,
+          "position_open": 7309
+        },
+        "trendline_bounce|0": {
+          "signals": 11899,
+          "trades": 6328,
+          "no_5m_bar": 907,
+          "rollover_hour": 470,
+          "position_open": 4194
+        },
+        "trendline_break|0": {
+          "signals": 6181,
+          "trades": 5512,
+          "no_5m_bar": 476,
+          "rollover_hour": 158,
+          "position_open": 35
+        },
+        "trendline_bounce|-3": {
+          "signals": 6441,
+          "trades": 3541,
+          "no_5m_bar": 489,
+          "rollover_hour": 151,
+          "position_open": 2260
+        },
+        "trendline_break|-3": {
+          "signals": 3940,
+          "trades": 3518,
+          "no_5m_bar": 311,
+          "rollover_hour": 74,
+          "position_open": 37
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 9430,
+          "trades": 5171,
+          "no_5m_bar": 694,
+          "rollover_hour": 299,
+          "position_open": 3266
+        },
+        "trendline_break|-1.5": {
+          "signals": 5391,
+          "trades": 4843,
+          "no_5m_bar": 406,
+          "rollover_hour": 113,
+          "position_open": 29
+        },
+        "trendline_bounce|1.5": {
+          "signals": 9723,
+          "trades": 5264,
+          "no_5m_bar": 732,
+          "rollover_hour": 317,
+          "position_open": 3410
+        },
+        "trendline_break|1.5": {
+          "signals": 5422,
+          "trades": 4813,
+          "no_5m_bar": 427,
+          "rollover_hour": 144,
+          "position_open": 38
+        },
+        "trendline_bounce|3": {
+          "signals": 6276,
+          "trades": 3549,
+          "no_5m_bar": 481,
+          "rollover_hour": 130,
+          "position_open": 2116
+        },
+        "trendline_break|3": {
+          "signals": 4084,
+          "trades": 3628,
+          "no_5m_bar": 330,
+          "rollover_hour": 67,
+          "position_open": 59
+        }
+      }
+    },
+    "NZDCAD": {
+      "bars_15m": 466372,
+      "bars_5m": 1398368,
+      "ohlc_repaired": {
+        "15m": 0,
+        "5m": 15
+      },
+      "swings": 25877,
+      "mean_active_levels": 5.7518676078323745,
+      "share_of_bars_with_level_in_reach": 0.3840453543523196,
+      "trendlines": {
+        "support": 5667,
+        "resistance": 5342
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 86662,
+          "trades": 41246,
+          "no_5m_bar": 284,
+          "rollover_hour": 4124,
+          "position_open": 41008
+        },
+        "levels_break|0": {
+          "signals": 60809,
+          "trades": 43924,
+          "no_5m_bar": 254,
+          "rollover_hour": 2896,
+          "position_open": 13735
+        },
+        "levels_bounce|-3": {
+          "signals": 79881,
+          "trades": 38383,
+          "no_5m_bar": 262,
+          "rollover_hour": 4048,
+          "position_open": 37188
+        },
+        "levels_break|-3": {
+          "signals": 56762,
+          "trades": 39990,
+          "no_5m_bar": 238,
+          "rollover_hour": 2819,
+          "position_open": 13715
+        },
+        "levels_bounce|-1.5": {
+          "signals": 85791,
+          "trades": 40881,
+          "no_5m_bar": 278,
+          "rollover_hour": 4032,
+          "position_open": 40600
+        },
+        "levels_break|-1.5": {
+          "signals": 60892,
+          "trades": 43571,
+          "no_5m_bar": 245,
+          "rollover_hour": 2873,
+          "position_open": 14203
+        },
+        "levels_bounce|1.5": {
+          "signals": 86740,
+          "trades": 41648,
+          "no_5m_bar": 293,
+          "rollover_hour": 3996,
+          "position_open": 40803
+        },
+        "levels_break|1.5": {
+          "signals": 61229,
+          "trades": 43694,
+          "no_5m_bar": 258,
+          "rollover_hour": 2918,
+          "position_open": 14359
+        },
+        "levels_bounce|3": {
+          "signals": 81927,
+          "trades": 39688,
+          "no_5m_bar": 255,
+          "rollover_hour": 3740,
+          "position_open": 38244
+        },
+        "levels_break|3": {
+          "signals": 57788,
+          "trades": 40892,
+          "no_5m_bar": 238,
+          "rollover_hour": 2673,
+          "position_open": 13985
+        },
+        "round_bounce|0": {
+          "signals": 56162,
+          "trades": 29593,
+          "no_5m_bar": 201,
+          "rollover_hour": 2871,
+          "position_open": 23497
+        },
+        "round_break|0": {
+          "signals": 36599,
+          "trades": 30537,
+          "no_5m_bar": 168,
+          "rollover_hour": 1767,
+          "position_open": 4127
+        },
+        "round_bounce|10": {
+          "signals": 55458,
+          "trades": 29292,
+          "no_5m_bar": 199,
+          "rollover_hour": 2726,
+          "position_open": 23241
+        },
+        "round_break|10": {
+          "signals": 36507,
+          "trades": 30515,
+          "no_5m_bar": 147,
+          "rollover_hour": 1766,
+          "position_open": 4079
+        },
+        "round_bounce|20": {
+          "signals": 56584,
+          "trades": 29721,
+          "no_5m_bar": 202,
+          "rollover_hour": 2800,
+          "position_open": 23861
+        },
+        "round_break|20": {
+          "signals": 36714,
+          "trades": 30733,
+          "no_5m_bar": 143,
+          "rollover_hour": 1874,
+          "position_open": 3964
+        },
+        "round_bounce|30": {
+          "signals": 56501,
+          "trades": 29869,
+          "no_5m_bar": 233,
+          "rollover_hour": 2715,
+          "position_open": 23684
+        },
+        "round_break|30": {
+          "signals": 36910,
+          "trades": 30983,
+          "no_5m_bar": 150,
+          "rollover_hour": 1794,
+          "position_open": 3983
+        },
+        "round_bounce|40": {
+          "signals": 56082,
+          "trades": 29574,
+          "no_5m_bar": 224,
+          "rollover_hour": 2747,
+          "position_open": 23537
+        },
+        "round_break|40": {
+          "signals": 36698,
+          "trades": 30595,
+          "no_5m_bar": 169,
+          "rollover_hour": 1817,
+          "position_open": 4117
+        },
+        "trendline_bounce|0": {
+          "signals": 15817,
+          "trades": 8323,
+          "no_5m_bar": 62,
+          "rollover_hour": 742,
+          "position_open": 6690
+        },
+        "trendline_break|0": {
+          "signals": 6855,
+          "trades": 6475,
+          "no_5m_bar": 32,
+          "rollover_hour": 325,
+          "position_open": 23
+        },
+        "trendline_bounce|-3": {
+          "signals": 6881,
+          "trades": 3722,
+          "no_5m_bar": 25,
+          "rollover_hour": 363,
+          "position_open": 2771
+        },
+        "trendline_break|-3": {
+          "signals": 3972,
+          "trades": 3697,
+          "no_5m_bar": 14,
+          "rollover_hour": 216,
+          "position_open": 45
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 11918,
+          "trades": 6389,
+          "no_5m_bar": 48,
+          "rollover_hour": 708,
+          "position_open": 4773
+        },
+        "trendline_break|-1.5": {
+          "signals": 5859,
+          "trades": 5496,
+          "no_5m_bar": 35,
+          "rollover_hour": 306,
+          "position_open": 22
+        },
+        "trendline_bounce|1.5": {
+          "signals": 12248,
+          "trades": 6640,
+          "no_5m_bar": 37,
+          "rollover_hour": 457,
+          "position_open": 5114
+        },
+        "trendline_break|1.5": {
+          "signals": 5895,
+          "trades": 5598,
+          "no_5m_bar": 23,
+          "rollover_hour": 238,
+          "position_open": 36
+        },
+        "trendline_bounce|3": {
+          "signals": 7181,
+          "trades": 3920,
+          "no_5m_bar": 14,
+          "rollover_hour": 233,
+          "position_open": 3014
+        },
+        "trendline_break|3": {
+          "signals": 4104,
+          "trades": 3893,
+          "no_5m_bar": 12,
+          "rollover_hour": 153,
+          "position_open": 46
+        }
+      }
+    },
+    "NZDCHF": {
+      "bars_15m": 466337,
+      "bars_5m": 1398247,
+      "ohlc_repaired": {
+        "15m": 9,
+        "5m": 41
+      },
+      "swings": 25739,
+      "mean_active_levels": 5.728734799083067,
+      "share_of_bars_with_level_in_reach": 0.37873898060844413,
+      "trendlines": {
+        "support": 5585,
+        "resistance": 5300
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 85358,
+          "trades": 40695,
+          "no_5m_bar": 294,
+          "rollover_hour": 4166,
+          "position_open": 40203
+        },
+        "levels_break|0": {
+          "signals": 60133,
+          "trades": 42835,
+          "no_5m_bar": 310,
+          "rollover_hour": 3110,
+          "position_open": 13878
+        },
+        "levels_bounce|-3": {
+          "signals": 78412,
+          "trades": 37984,
+          "no_5m_bar": 275,
+          "rollover_hour": 4024,
+          "position_open": 36129
+        },
+        "levels_break|-3": {
+          "signals": 55697,
+          "trades": 39035,
+          "no_5m_bar": 307,
+          "rollover_hour": 2954,
+          "position_open": 13401
+        },
+        "levels_bounce|-1.5": {
+          "signals": 84595,
+          "trades": 40612,
+          "no_5m_bar": 301,
+          "rollover_hour": 4160,
+          "position_open": 39522
+        },
+        "levels_break|-1.5": {
+          "signals": 60144,
+          "trades": 42523,
+          "no_5m_bar": 302,
+          "rollover_hour": 3067,
+          "position_open": 14252
+        },
+        "levels_bounce|1.5": {
+          "signals": 85003,
+          "trades": 41072,
+          "no_5m_bar": 295,
+          "rollover_hour": 4152,
+          "position_open": 39484
+        },
+        "levels_break|1.5": {
+          "signals": 60294,
+          "trades": 42687,
+          "no_5m_bar": 310,
+          "rollover_hour": 3030,
+          "position_open": 14267
+        },
+        "levels_bounce|3": {
+          "signals": 81526,
+          "trades": 39678,
+          "no_5m_bar": 255,
+          "rollover_hour": 3623,
+          "position_open": 37970
+        },
+        "levels_break|3": {
+          "signals": 57555,
+          "trades": 40654,
+          "no_5m_bar": 266,
+          "rollover_hour": 2703,
+          "position_open": 13932
+        },
+        "round_bounce|0": {
+          "signals": 51516,
+          "trades": 27230,
+          "no_5m_bar": 202,
+          "rollover_hour": 2660,
+          "position_open": 21424
+        },
+        "round_break|0": {
+          "signals": 33890,
+          "trades": 28248,
+          "no_5m_bar": 150,
+          "rollover_hour": 1715,
+          "position_open": 3777
+        },
+        "round_bounce|10": {
+          "signals": 51455,
+          "trades": 27345,
+          "no_5m_bar": 178,
+          "rollover_hour": 2516,
+          "position_open": 21416
+        },
+        "round_break|10": {
+          "signals": 33960,
+          "trades": 28383,
+          "no_5m_bar": 157,
+          "rollover_hour": 1641,
+          "position_open": 3779
+        },
+        "round_bounce|20": {
+          "signals": 51051,
+          "trades": 27096,
+          "no_5m_bar": 199,
+          "rollover_hour": 2600,
+          "position_open": 21156
+        },
+        "round_break|20": {
+          "signals": 33580,
+          "trades": 27993,
+          "no_5m_bar": 167,
+          "rollover_hour": 1541,
+          "position_open": 3879
+        },
+        "round_bounce|30": {
+          "signals": 50947,
+          "trades": 26883,
+          "no_5m_bar": 201,
+          "rollover_hour": 2590,
+          "position_open": 21273
+        },
+        "round_break|30": {
+          "signals": 33610,
+          "trades": 28004,
+          "no_5m_bar": 154,
+          "rollover_hour": 1635,
+          "position_open": 3817
+        },
+        "round_bounce|40": {
+          "signals": 51640,
+          "trades": 27173,
+          "no_5m_bar": 195,
+          "rollover_hour": 2519,
+          "position_open": 21753
+        },
+        "round_break|40": {
+          "signals": 33811,
+          "trades": 28175,
+          "no_5m_bar": 140,
+          "rollover_hour": 1666,
+          "position_open": 3830
+        },
+        "trendline_bounce|0": {
+          "signals": 15603,
+          "trades": 8197,
+          "no_5m_bar": 56,
+          "rollover_hour": 772,
+          "position_open": 6578
+        },
+        "trendline_break|0": {
+          "signals": 6811,
+          "trades": 6352,
+          "no_5m_bar": 45,
+          "rollover_hour": 392,
+          "position_open": 22
+        },
+        "trendline_bounce|-3": {
+          "signals": 6971,
+          "trades": 3730,
+          "no_5m_bar": 23,
+          "rollover_hour": 536,
+          "position_open": 2682
+        },
+        "trendline_break|-3": {
+          "signals": 4056,
+          "trades": 3709,
+          "no_5m_bar": 9,
+          "rollover_hour": 297,
+          "position_open": 41
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 11632,
+          "trades": 6269,
+          "no_5m_bar": 59,
+          "rollover_hour": 744,
+          "position_open": 4560
+        },
+        "trendline_break|-1.5": {
+          "signals": 5834,
+          "trades": 5358,
+          "no_5m_bar": 30,
+          "rollover_hour": 404,
+          "position_open": 42
+        },
+        "trendline_bounce|1.5": {
+          "signals": 12032,
+          "trades": 6528,
+          "no_5m_bar": 50,
+          "rollover_hour": 434,
+          "position_open": 5020
+        },
+        "trendline_break|1.5": {
+          "signals": 5925,
+          "trades": 5570,
+          "no_5m_bar": 42,
+          "rollover_hour": 277,
+          "position_open": 36
+        },
+        "trendline_bounce|3": {
+          "signals": 6985,
+          "trades": 3993,
+          "no_5m_bar": 13,
+          "rollover_hour": 203,
+          "position_open": 2776
+        },
+        "trendline_break|3": {
+          "signals": 4031,
+          "trades": 3808,
+          "no_5m_bar": 21,
+          "rollover_hour": 147,
+          "position_open": 55
+        }
+      }
+    },
+    "NZDJPY": {
+      "bars_15m": 466439,
+      "bars_5m": 1398881,
+      "ohlc_repaired": {
+        "15m": 9,
+        "5m": 41
+      },
+      "swings": 25654,
+      "mean_active_levels": 5.676692986649916,
+      "share_of_bars_with_level_in_reach": 0.345412797814934,
+      "trendlines": {
+        "support": 5722,
+        "resistance": 5193
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 76861,
+          "trades": 38415,
+          "no_5m_bar": 244,
+          "rollover_hour": 3316,
+          "position_open": 34886
+        },
+        "levels_break|0": {
+          "signals": 56172,
+          "trades": 41150,
+          "no_5m_bar": 210,
+          "rollover_hour": 2337,
+          "position_open": 12475
+        },
+        "levels_bounce|-3": {
+          "signals": 71844,
+          "trades": 36611,
+          "no_5m_bar": 205,
+          "rollover_hour": 3152,
+          "position_open": 31876
+        },
+        "levels_break|-3": {
+          "signals": 52859,
+          "trades": 37655,
+          "no_5m_bar": 189,
+          "rollover_hour": 2197,
+          "position_open": 12818
+        },
+        "levels_bounce|-1.5": {
+          "signals": 76069,
+          "trades": 38377,
+          "no_5m_bar": 232,
+          "rollover_hour": 3279,
+          "position_open": 34181
+        },
+        "levels_break|-1.5": {
+          "signals": 56246,
+          "trades": 40811,
+          "no_5m_bar": 221,
+          "rollover_hour": 2340,
+          "position_open": 12874
+        },
+        "levels_bounce|1.5": {
+          "signals": 77850,
+          "trades": 38821,
+          "no_5m_bar": 230,
+          "rollover_hour": 3366,
+          "position_open": 35433
+        },
+        "levels_break|1.5": {
+          "signals": 57181,
+          "trades": 41372,
+          "no_5m_bar": 247,
+          "rollover_hour": 2404,
+          "position_open": 13158
+        },
+        "levels_bounce|3": {
+          "signals": 74689,
+          "trades": 37794,
+          "no_5m_bar": 196,
+          "rollover_hour": 3128,
+          "position_open": 33571
+        },
+        "levels_break|3": {
+          "signals": 54903,
+          "trades": 39186,
+          "no_5m_bar": 216,
+          "rollover_hour": 2265,
+          "position_open": 13236
+        },
+        "round_bounce|0": {
+          "signals": 59903,
+          "trades": 33264,
+          "no_5m_bar": 163,
+          "rollover_hour": 2611,
+          "position_open": 23865
+        },
+        "round_break|0": {
+          "signals": 42298,
+          "trades": 35244,
+          "no_5m_bar": 186,
+          "rollover_hour": 1733,
+          "position_open": 5135
+        },
+        "round_bounce|10": {
+          "signals": 60088,
+          "trades": 33510,
+          "no_5m_bar": 187,
+          "rollover_hour": 2582,
+          "position_open": 23809
+        },
+        "round_break|10": {
+          "signals": 42690,
+          "trades": 35858,
+          "no_5m_bar": 152,
+          "rollover_hour": 1773,
+          "position_open": 4907
+        },
+        "round_bounce|20": {
+          "signals": 61035,
+          "trades": 33868,
+          "no_5m_bar": 176,
+          "rollover_hour": 2543,
+          "position_open": 24448
+        },
+        "round_break|20": {
+          "signals": 43112,
+          "trades": 36138,
+          "no_5m_bar": 159,
+          "rollover_hour": 1787,
+          "position_open": 5028
+        },
+        "round_bounce|30": {
+          "signals": 60638,
+          "trades": 33750,
+          "no_5m_bar": 173,
+          "rollover_hour": 2564,
+          "position_open": 24151
+        },
+        "round_break|30": {
+          "signals": 42990,
+          "trades": 35859,
+          "no_5m_bar": 154,
+          "rollover_hour": 1780,
+          "position_open": 5197
+        },
+        "round_bounce|40": {
+          "signals": 60183,
+          "trades": 33636,
+          "no_5m_bar": 178,
+          "rollover_hour": 2542,
+          "position_open": 23827
+        },
+        "round_break|40": {
+          "signals": 42704,
+          "trades": 35748,
+          "no_5m_bar": 129,
+          "rollover_hour": 1719,
+          "position_open": 5108
+        },
+        "trendline_bounce|0": {
+          "signals": 14303,
+          "trades": 7796,
+          "no_5m_bar": 62,
+          "rollover_hour": 747,
+          "position_open": 5698
+        },
+        "trendline_break|0": {
+          "signals": 6791,
+          "trades": 6423,
+          "no_5m_bar": 39,
+          "rollover_hour": 312,
+          "position_open": 17
+        },
+        "trendline_bounce|-3": {
+          "signals": 6815,
+          "trades": 3822,
+          "no_5m_bar": 20,
+          "rollover_hour": 381,
+          "position_open": 2592
+        },
+        "trendline_break|-3": {
+          "signals": 4106,
+          "trades": 3844,
+          "no_5m_bar": 18,
+          "rollover_hour": 202,
+          "position_open": 42
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10898,
+          "trades": 6074,
+          "no_5m_bar": 32,
+          "rollover_hour": 564,
+          "position_open": 4228
+        },
+        "trendline_break|-1.5": {
+          "signals": 5858,
+          "trades": 5544,
+          "no_5m_bar": 25,
+          "rollover_hour": 259,
+          "position_open": 30
+        },
+        "trendline_bounce|1.5": {
+          "signals": 11559,
+          "trades": 6338,
+          "no_5m_bar": 34,
+          "rollover_hour": 511,
+          "position_open": 4676
+        },
+        "trendline_break|1.5": {
+          "signals": 5966,
+          "trades": 5638,
+          "no_5m_bar": 37,
+          "rollover_hour": 260,
+          "position_open": 31
+        },
+        "trendline_bounce|3": {
+          "signals": 7186,
+          "trades": 4107,
+          "no_5m_bar": 17,
+          "rollover_hour": 257,
+          "position_open": 2805
+        },
+        "trendline_break|3": {
+          "signals": 4221,
+          "trades": 4020,
+          "no_5m_bar": 12,
+          "rollover_hour": 150,
+          "position_open": 39
+        }
+      }
+    },
+    "NZDUSD": {
+      "bars_15m": 463721,
+      "bars_5m": 1149669,
+      "ohlc_repaired": {
+        "15m": 8,
+        "5m": 50
+      },
+      "swings": 25305,
+      "mean_active_levels": 5.695377177225098,
+      "share_of_bars_with_level_in_reach": 0.32403751393618146,
+      "trendlines": {
+        "support": 5293,
+        "resistance": 5186
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 70199,
+          "trades": 30543,
+          "no_5m_bar": 12673,
+          "rollover_hour": 2315,
+          "position_open": 24668
+        },
+        "levels_break|0": {
+          "signals": 53770,
+          "trades": 33255,
+          "no_5m_bar": 9344,
+          "rollover_hour": 1551,
+          "position_open": 9620
+        },
+        "levels_bounce|-3": {
+          "signals": 69026,
+          "trades": 30117,
+          "no_5m_bar": 12387,
+          "rollover_hour": 2222,
+          "position_open": 24300
+        },
+        "levels_break|-3": {
+          "signals": 52602,
+          "trades": 31573,
+          "no_5m_bar": 9034,
+          "rollover_hour": 1641,
+          "position_open": 10354
+        },
+        "levels_bounce|-1.5": {
+          "signals": 72039,
+          "trades": 31027,
+          "no_5m_bar": 13345,
+          "rollover_hour": 2301,
+          "position_open": 25366
+        },
+        "levels_break|-1.5": {
+          "signals": 54760,
+          "trades": 33035,
+          "no_5m_bar": 9762,
+          "rollover_hour": 1617,
+          "position_open": 10346
+        },
+        "levels_bounce|1.5": {
+          "signals": 71165,
+          "trades": 30613,
+          "no_5m_bar": 13079,
+          "rollover_hour": 2365,
+          "position_open": 25108
+        },
+        "levels_break|1.5": {
+          "signals": 54020,
+          "trades": 32995,
+          "no_5m_bar": 9352,
+          "rollover_hour": 1635,
+          "position_open": 10038
+        },
+        "levels_bounce|3": {
+          "signals": 68639,
+          "trades": 29683,
+          "no_5m_bar": 12702,
+          "rollover_hour": 2245,
+          "position_open": 24009
+        },
+        "levels_break|3": {
+          "signals": 51445,
+          "trades": 30936,
+          "no_5m_bar": 8974,
+          "rollover_hour": 1583,
+          "position_open": 9952
+        },
+        "round_bounce|0": {
+          "signals": 47038,
+          "trades": 21058,
+          "no_5m_bar": 11023,
+          "rollover_hour": 1458,
+          "position_open": 13499
+        },
+        "round_break|0": {
+          "signals": 34101,
+          "trades": 22791,
+          "no_5m_bar": 7724,
+          "rollover_hour": 1023,
+          "position_open": 2563
+        },
+        "round_bounce|10": {
+          "signals": 48366,
+          "trades": 21259,
+          "no_5m_bar": 11722,
+          "rollover_hour": 1455,
+          "position_open": 13930
+        },
+        "round_break|10": {
+          "signals": 34791,
+          "trades": 23050,
+          "no_5m_bar": 8060,
+          "rollover_hour": 975,
+          "position_open": 2706
+        },
+        "round_bounce|20": {
+          "signals": 49315,
+          "trades": 21693,
+          "no_5m_bar": 11818,
+          "rollover_hour": 1530,
+          "position_open": 14274
+        },
+        "round_break|20": {
+          "signals": 35197,
+          "trades": 23327,
+          "no_5m_bar": 8200,
+          "rollover_hour": 983,
+          "position_open": 2687
+        },
+        "round_bounce|30": {
+          "signals": 49326,
+          "trades": 21762,
+          "no_5m_bar": 11757,
+          "rollover_hour": 1420,
+          "position_open": 14387
+        },
+        "round_break|30": {
+          "signals": 35084,
+          "trades": 23324,
+          "no_5m_bar": 8086,
+          "rollover_hour": 1000,
+          "position_open": 2674
+        },
+        "round_bounce|40": {
+          "signals": 49452,
+          "trades": 21732,
+          "no_5m_bar": 11692,
+          "rollover_hour": 1512,
+          "position_open": 14516
+        },
+        "round_break|40": {
+          "signals": 35351,
+          "trades": 23408,
+          "no_5m_bar": 8183,
+          "rollover_hour": 1032,
+          "position_open": 2728
+        },
+        "trendline_bounce|0": {
+          "signals": 13232,
+          "trades": 6146,
+          "no_5m_bar": 2496,
+          "rollover_hour": 523,
+          "position_open": 4067
+        },
+        "trendline_break|0": {
+          "signals": 6575,
+          "trades": 5195,
+          "no_5m_bar": 1150,
+          "rollover_hour": 213,
+          "position_open": 17
+        },
+        "trendline_bounce|-3": {
+          "signals": 6863,
+          "trades": 3291,
+          "no_5m_bar": 1279,
+          "rollover_hour": 232,
+          "position_open": 2061
+        },
+        "trendline_break|-3": {
+          "signals": 4150,
+          "trades": 3300,
+          "no_5m_bar": 683,
+          "rollover_hour": 127,
+          "position_open": 40
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10222,
+          "trades": 4885,
+          "no_5m_bar": 1868,
+          "rollover_hour": 399,
+          "position_open": 3070
+        },
+        "trendline_break|-1.5": {
+          "signals": 5784,
+          "trades": 4572,
+          "no_5m_bar": 997,
+          "rollover_hour": 194,
+          "position_open": 21
+        },
+        "trendline_bounce|1.5": {
+          "signals": 10193,
+          "trades": 4837,
+          "no_5m_bar": 1927,
+          "rollover_hour": 296,
+          "position_open": 3133
+        },
+        "trendline_break|1.5": {
+          "signals": 5799,
+          "trades": 4591,
+          "no_5m_bar": 1027,
+          "rollover_hour": 154,
+          "position_open": 27
+        },
+        "trendline_bounce|3": {
+          "signals": 6804,
+          "trades": 3289,
+          "no_5m_bar": 1237,
+          "rollover_hour": 176,
+          "position_open": 2102
+        },
+        "trendline_break|3": {
+          "signals": 4237,
+          "trades": 3327,
+          "no_5m_bar": 767,
+          "rollover_hour": 104,
+          "position_open": 39
+        }
+      }
+    },
+    "USDCAD": {
+      "bars_15m": 466011,
+      "bars_5m": 1208397,
+      "ohlc_repaired": {
+        "15m": 0,
+        "5m": 0
+      },
+      "swings": 25326,
+      "mean_active_levels": 5.469658441538933,
+      "share_of_bars_with_level_in_reach": 0.3185568580999161,
+      "trendlines": {
+        "support": 4949,
+        "resistance": 4943
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 69647,
+          "trades": 31499,
+          "no_5m_bar": 10012,
+          "rollover_hour": 2124,
+          "position_open": 26012
+        },
+        "levels_break|0": {
+          "signals": 53717,
+          "trades": 34517,
+          "no_5m_bar": 7759,
+          "rollover_hour": 1354,
+          "position_open": 10087
+        },
+        "levels_bounce|-3": {
+          "signals": 64491,
+          "trades": 29541,
+          "no_5m_bar": 9685,
+          "rollover_hour": 2088,
+          "position_open": 23177
+        },
+        "levels_break|-3": {
+          "signals": 49557,
+          "trades": 30954,
+          "no_5m_bar": 7275,
+          "rollover_hour": 1293,
+          "position_open": 10035
+        },
+        "levels_bounce|-1.5": {
+          "signals": 68663,
+          "trades": 31422,
+          "no_5m_bar": 9914,
+          "rollover_hour": 2138,
+          "position_open": 25189
+        },
+        "levels_break|-1.5": {
+          "signals": 53283,
+          "trades": 33809,
+          "no_5m_bar": 7659,
+          "rollover_hour": 1268,
+          "position_open": 10547
+        },
+        "levels_bounce|1.5": {
+          "signals": 70793,
+          "trades": 32443,
+          "no_5m_bar": 10059,
+          "rollover_hour": 2179,
+          "position_open": 26112
+        },
+        "levels_break|1.5": {
+          "signals": 55424,
+          "trades": 35133,
+          "no_5m_bar": 7947,
+          "rollover_hour": 1451,
+          "position_open": 10893
+        },
+        "levels_bounce|3": {
+          "signals": 68083,
+          "trades": 31344,
+          "no_5m_bar": 9701,
+          "rollover_hour": 2043,
+          "position_open": 24995
+        },
+        "levels_break|3": {
+          "signals": 52404,
+          "trades": 32928,
+          "no_5m_bar": 7506,
+          "rollover_hour": 1307,
+          "position_open": 10663
+        },
+        "round_bounce|0": {
+          "signals": 52635,
+          "trades": 25250,
+          "no_5m_bar": 8761,
+          "rollover_hour": 1556,
+          "position_open": 17068
+        },
+        "round_break|0": {
+          "signals": 38526,
+          "trades": 27379,
+          "no_5m_bar": 6355,
+          "rollover_hour": 936,
+          "position_open": 3856
+        },
+        "round_bounce|10": {
+          "signals": 54074,
+          "trades": 25926,
+          "no_5m_bar": 9417,
+          "rollover_hour": 1557,
+          "position_open": 17174
+        },
+        "round_break|10": {
+          "signals": 39761,
+          "trades": 28182,
+          "no_5m_bar": 6717,
+          "rollover_hour": 996,
+          "position_open": 3866
+        },
+        "round_bounce|20": {
+          "signals": 55778,
+          "trades": 26603,
+          "no_5m_bar": 9307,
+          "rollover_hour": 1653,
+          "position_open": 18215
+        },
+        "round_break|20": {
+          "signals": 40611,
+          "trades": 28802,
+          "no_5m_bar": 6866,
+          "rollover_hour": 1015,
+          "position_open": 3928
+        },
+        "round_bounce|30": {
+          "signals": 56780,
+          "trades": 27036,
+          "no_5m_bar": 9565,
+          "rollover_hour": 1788,
+          "position_open": 18391
+        },
+        "round_break|30": {
+          "signals": 41441,
+          "trades": 29510,
+          "no_5m_bar": 6844,
+          "rollover_hour": 1096,
+          "position_open": 3991
+        },
+        "round_bounce|40": {
+          "signals": 55810,
+          "trades": 26608,
+          "no_5m_bar": 9316,
+          "rollover_hour": 1724,
+          "position_open": 18162
+        },
+        "round_break|40": {
+          "signals": 41079,
+          "trades": 29100,
+          "no_5m_bar": 6889,
+          "rollover_hour": 1046,
+          "position_open": 4044
+        },
+        "trendline_bounce|0": {
+          "signals": 11973,
+          "trades": 6083,
+          "no_5m_bar": 1768,
+          "rollover_hour": 312,
+          "position_open": 3810
+        },
+        "trendline_break|0": {
+          "signals": 6237,
+          "trades": 5229,
+          "no_5m_bar": 860,
+          "rollover_hour": 122,
+          "position_open": 26
+        },
+        "trendline_bounce|-3": {
+          "signals": 6214,
+          "trades": 3273,
+          "no_5m_bar": 831,
+          "rollover_hour": 139,
+          "position_open": 1971
+        },
+        "trendline_break|-3": {
+          "signals": 4039,
+          "trades": 3388,
+          "no_5m_bar": 557,
+          "rollover_hour": 62,
+          "position_open": 32
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 9716,
+          "trades": 5054,
+          "no_5m_bar": 1359,
+          "rollover_hour": 230,
+          "position_open": 3073
+        },
+        "trendline_break|-1.5": {
+          "signals": 5428,
+          "trades": 4565,
+          "no_5m_bar": 753,
+          "rollover_hour": 88,
+          "position_open": 22
+        },
+        "trendline_bounce|1.5": {
+          "signals": 9396,
+          "trades": 4927,
+          "no_5m_bar": 1316,
+          "rollover_hour": 219,
+          "position_open": 2934
+        },
+        "trendline_break|1.5": {
+          "signals": 5509,
+          "trades": 4647,
+          "no_5m_bar": 746,
+          "rollover_hour": 84,
+          "position_open": 32
+        },
+        "trendline_bounce|3": {
+          "signals": 6419,
+          "trades": 3409,
+          "no_5m_bar": 885,
+          "rollover_hour": 96,
+          "position_open": 2029
+        },
+        "trendline_break|3": {
+          "signals": 4080,
+          "trades": 3445,
+          "no_5m_bar": 537,
+          "rollover_hour": 53,
+          "position_open": 45
+        }
+      }
+    },
+    "USDCHF": {
+      "bars_15m": 466130,
+      "bars_5m": 1319201,
+      "ohlc_repaired": {
+        "15m": 0,
+        "5m": 0
+      },
+      "swings": 25801,
+      "mean_active_levels": 5.616079205371892,
+      "share_of_bars_with_level_in_reach": 0.31604917083217127,
+      "trendlines": {
+        "support": 5219,
+        "resistance": 4938
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 69621,
+          "trades": 34247,
+          "no_5m_bar": 3853,
+          "rollover_hour": 2523,
+          "position_open": 28998
+        },
+        "levels_break|0": {
+          "signals": 52752,
+          "trades": 37088,
+          "no_5m_bar": 3044,
+          "rollover_hour": 1600,
+          "position_open": 11020
+        },
+        "levels_bounce|-3": {
+          "signals": 65403,
+          "trades": 32606,
+          "no_5m_bar": 3628,
+          "rollover_hour": 2454,
+          "position_open": 26715
+        },
+        "levels_break|-3": {
+          "signals": 49913,
+          "trades": 34216,
+          "no_5m_bar": 2777,
+          "rollover_hour": 1482,
+          "position_open": 11438
+        },
+        "levels_bounce|-1.5": {
+          "signals": 69716,
+          "trades": 34305,
+          "no_5m_bar": 3907,
+          "rollover_hour": 2514,
+          "position_open": 28990
+        },
+        "levels_break|-1.5": {
+          "signals": 53268,
+          "trades": 36742,
+          "no_5m_bar": 3072,
+          "rollover_hour": 1532,
+          "position_open": 11922
+        },
+        "levels_bounce|1.5": {
+          "signals": 70627,
+          "trades": 34749,
+          "no_5m_bar": 4030,
+          "rollover_hour": 2584,
+          "position_open": 29264
+        },
+        "levels_break|1.5": {
+          "signals": 54066,
+          "trades": 37185,
+          "no_5m_bar": 3108,
+          "rollover_hour": 1626,
+          "position_open": 12147
+        },
+        "levels_bounce|3": {
+          "signals": 68662,
+          "trades": 34066,
+          "no_5m_bar": 3916,
+          "rollover_hour": 2435,
+          "position_open": 28245
+        },
+        "levels_break|3": {
+          "signals": 52341,
+          "trades": 35769,
+          "no_5m_bar": 3097,
+          "rollover_hour": 1554,
+          "position_open": 11921
+        },
+        "round_bounce|0": {
+          "signals": 48292,
+          "trades": 25633,
+          "no_5m_bar": 2948,
+          "rollover_hour": 1760,
+          "position_open": 17951
+        },
+        "round_break|0": {
+          "signals": 34600,
+          "trades": 27722,
+          "no_5m_bar": 2089,
+          "rollover_hour": 1001,
+          "position_open": 3788
+        },
+        "round_bounce|10": {
+          "signals": 48614,
+          "trades": 25819,
+          "no_5m_bar": 3006,
+          "rollover_hour": 1711,
+          "position_open": 18078
+        },
+        "round_break|10": {
+          "signals": 35135,
+          "trades": 28044,
+          "no_5m_bar": 2212,
+          "rollover_hour": 1039,
+          "position_open": 3840
+        },
+        "round_bounce|20": {
+          "signals": 49560,
+          "trades": 26184,
+          "no_5m_bar": 3015,
+          "rollover_hour": 1710,
+          "position_open": 18651
+        },
+        "round_break|20": {
+          "signals": 35185,
+          "trades": 28130,
+          "no_5m_bar": 2238,
+          "rollover_hour": 1027,
+          "position_open": 3790
+        },
+        "round_bounce|30": {
+          "signals": 48937,
+          "trades": 26249,
+          "no_5m_bar": 2924,
+          "rollover_hour": 1681,
+          "position_open": 18083
+        },
+        "round_break|30": {
+          "signals": 35400,
+          "trades": 28523,
+          "no_5m_bar": 2148,
+          "rollover_hour": 1005,
+          "position_open": 3724
+        },
+        "round_bounce|40": {
+          "signals": 49287,
+          "trades": 26058,
+          "no_5m_bar": 3052,
+          "rollover_hour": 1682,
+          "position_open": 18495
+        },
+        "round_break|40": {
+          "signals": 35254,
+          "trades": 28293,
+          "no_5m_bar": 2084,
+          "rollover_hour": 1016,
+          "position_open": 3861
+        },
+        "trendline_bounce|0": {
+          "signals": 12529,
+          "trades": 6692,
+          "no_5m_bar": 743,
+          "rollover_hour": 467,
+          "position_open": 4627
+        },
+        "trendline_break|0": {
+          "signals": 6316,
+          "trades": 5715,
+          "no_5m_bar": 377,
+          "rollover_hour": 183,
+          "position_open": 41
+        },
+        "trendline_bounce|-3": {
+          "signals": 6300,
+          "trades": 3562,
+          "no_5m_bar": 361,
+          "rollover_hour": 187,
+          "position_open": 2190
+        },
+        "trendline_break|-3": {
+          "signals": 4024,
+          "trades": 3627,
+          "no_5m_bar": 254,
+          "rollover_hour": 104,
+          "position_open": 39
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 9781,
+          "trades": 5403,
+          "no_5m_bar": 561,
+          "rollover_hour": 390,
+          "position_open": 3427
+        },
+        "trendline_break|-1.5": {
+          "signals": 5502,
+          "trades": 5012,
+          "no_5m_bar": 324,
+          "rollover_hour": 130,
+          "position_open": 36
+        },
+        "trendline_bounce|1.5": {
+          "signals": 9818,
+          "trades": 5470,
+          "no_5m_bar": 582,
+          "rollover_hour": 339,
+          "position_open": 3427
+        },
+        "trendline_break|1.5": {
+          "signals": 5562,
+          "trades": 5052,
+          "no_5m_bar": 333,
+          "rollover_hour": 139,
+          "position_open": 38
+        },
+        "trendline_bounce|3": {
+          "signals": 6586,
+          "trades": 3771,
+          "no_5m_bar": 330,
+          "rollover_hour": 133,
+          "position_open": 2352
+        },
+        "trendline_break|3": {
+          "signals": 4071,
+          "trades": 3701,
+          "no_5m_bar": 232,
+          "rollover_hour": 88,
+          "position_open": 50
+        }
+      }
+    },
+    "USDJPY": {
+      "bars_15m": 466630,
+      "bars_5m": 1356725,
+      "ohlc_repaired": {
+        "15m": 10,
+        "5m": 38
+      },
+      "swings": 25937,
+      "mean_active_levels": 5.6305038253005595,
+      "share_of_bars_with_level_in_reach": 0.3105694018815764,
+      "trendlines": {
+        "support": 5606,
+        "resistance": 5299
+      },
+      "streams": {
+        "levels_bounce|0": {
+          "signals": 69229,
+          "trades": 34594,
+          "no_5m_bar": 2331,
+          "rollover_hour": 2258,
+          "position_open": 30046
+        },
+        "levels_break|0": {
+          "signals": 51078,
+          "trades": 37317,
+          "no_5m_bar": 1728,
+          "rollover_hour": 1472,
+          "position_open": 10561
+        },
+        "levels_bounce|-3": {
+          "signals": 69757,
+          "trades": 35008,
+          "no_5m_bar": 2496,
+          "rollover_hour": 2343,
+          "position_open": 29910
+        },
+        "levels_break|-3": {
+          "signals": 51709,
+          "trades": 36037,
+          "no_5m_bar": 1897,
+          "rollover_hour": 1512,
+          "position_open": 12263
+        },
+        "levels_bounce|-1.5": {
+          "signals": 72033,
+          "trades": 36057,
+          "no_5m_bar": 2639,
+          "rollover_hour": 2340,
+          "position_open": 30997
+        },
+        "levels_break|-1.5": {
+          "signals": 53268,
+          "trades": 37820,
+          "no_5m_bar": 1854,
+          "rollover_hour": 1562,
+          "position_open": 12032
+        },
+        "levels_bounce|1.5": {
+          "signals": 70332,
+          "trades": 35398,
+          "no_5m_bar": 2440,
+          "rollover_hour": 2332,
+          "position_open": 30162
+        },
+        "levels_break|1.5": {
+          "signals": 51691,
+          "trades": 36978,
+          "no_5m_bar": 1787,
+          "rollover_hour": 1564,
+          "position_open": 11362
+        },
+        "levels_bounce|3": {
+          "signals": 67219,
+          "trades": 34112,
+          "no_5m_bar": 2213,
+          "rollover_hour": 2285,
+          "position_open": 28609
+        },
+        "levels_break|3": {
+          "signals": 49468,
+          "trades": 35063,
+          "no_5m_bar": 1624,
+          "rollover_hour": 1512,
+          "position_open": 11269
+        },
+        "round_bounce|0": {
+          "signals": 54371,
+          "trades": 30067,
+          "no_5m_bar": 1800,
+          "rollover_hour": 1680,
+          "position_open": 20824
+        },
+        "round_break|0": {
+          "signals": 38964,
+          "trades": 32097,
+          "no_5m_bar": 1310,
+          "rollover_hour": 1159,
+          "position_open": 4398
+        },
+        "round_bounce|10": {
+          "signals": 56400,
+          "trades": 31221,
+          "no_5m_bar": 1905,
+          "rollover_hour": 1781,
+          "position_open": 21493
+        },
+        "round_break|10": {
+          "signals": 40432,
+          "trades": 32964,
+          "no_5m_bar": 1377,
+          "rollover_hour": 1184,
+          "position_open": 4907
+        },
+        "round_bounce|20": {
+          "signals": 58502,
+          "trades": 32162,
+          "no_5m_bar": 1911,
+          "rollover_hour": 1764,
+          "position_open": 22665
+        },
+        "round_break|20": {
+          "signals": 41454,
+          "trades": 33918,
+          "no_5m_bar": 1339,
+          "rollover_hour": 1238,
+          "position_open": 4959
+        },
+        "round_bounce|30": {
+          "signals": 59056,
+          "trades": 32360,
+          "no_5m_bar": 2030,
+          "rollover_hour": 1832,
+          "position_open": 22834
+        },
+        "round_break|30": {
+          "signals": 41759,
+          "trades": 34202,
+          "no_5m_bar": 1361,
+          "rollover_hour": 1236,
+          "position_open": 4960
+        },
+        "round_bounce|40": {
+          "signals": 58326,
+          "trades": 32106,
+          "no_5m_bar": 1912,
+          "rollover_hour": 1768,
+          "position_open": 22540
+        },
+        "round_break|40": {
+          "signals": 41896,
+          "trades": 34365,
+          "no_5m_bar": 1297,
+          "rollover_hour": 1188,
+          "position_open": 5046
+        },
+        "trendline_bounce|0": {
+          "signals": 13794,
+          "trades": 7379,
+          "no_5m_bar": 528,
+          "rollover_hour": 542,
+          "position_open": 5345
+        },
+        "trendline_break|0": {
+          "signals": 6672,
+          "trades": 6237,
+          "no_5m_bar": 229,
+          "rollover_hour": 187,
+          "position_open": 19
+        },
+        "trendline_bounce|-3": {
+          "signals": 6983,
+          "trades": 4009,
+          "no_5m_bar": 183,
+          "rollover_hour": 190,
+          "position_open": 2601
+        },
+        "trendline_break|-3": {
+          "signals": 4248,
+          "trades": 3991,
+          "no_5m_bar": 125,
+          "rollover_hour": 89,
+          "position_open": 43
+        },
+        "trendline_bounce|-1.5": {
+          "signals": 10805,
+          "trades": 6030,
+          "no_5m_bar": 337,
+          "rollover_hour": 350,
+          "position_open": 4088
+        },
+        "trendline_break|-1.5": {
+          "signals": 5893,
+          "trades": 5483,
+          "no_5m_bar": 187,
+          "rollover_hour": 189,
+          "position_open": 34
+        },
+        "trendline_bounce|1.5": {
+          "signals": 10716,
+          "trades": 5828,
+          "no_5m_bar": 453,
+          "rollover_hour": 377,
+          "position_open": 4058
+        },
+        "trendline_break|1.5": {
+          "signals": 5852,
+          "trades": 5435,
+          "no_5m_bar": 221,
+          "rollover_hour": 166,
+          "position_open": 30
+        },
+        "trendline_bounce|3": {
+          "signals": 6827,
+          "trades": 3857,
+          "no_5m_bar": 213,
+          "rollover_hour": 177,
+          "position_open": 2580
+        },
+        "trendline_break|3": {
+          "signals": 4208,
+          "trades": 3897,
+          "no_5m_bar": 150,
+          "rollover_hour": 107,
+          "position_open": 54
+        }
+      }
+    }
+  }
+}

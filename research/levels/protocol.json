@@ -1,0 +1,75 @@
+{
+  "name": "Lines drawn from candles: do automatic support/resistance levels, round numbers and trendlines give a 15M day-trading edge after costs?",
+  "frozen_on": "2026-09-28",
+  "question": "Day traders draw horizontal support/resistance levels at earlier swing highs/lows, mark round numbers and draw trendlines, then buy or sell when price bounces off or breaks a line. Drawn by fixed rules instead of by eye, does any of these give positive expectancy after measured costs, and does it do better than the same rules applied to lines at arbitrary nearby prices?",
+  "prior_evidence": "Osler (2000, FRBNY Economic Policy Review): intraday trends stopped at support/resistance levels published by six firms more often than at arbitrary levels; the effect was small and profitability was not measured. Osler (2003, Journal of Finance): take-profit orders cluster at round numbers (reversals there) and stop orders just beyond them (moves accelerate after crossing). Both used 1996-1998 data, so every year tested here is after publication. This project's 15M/5M breakout-style signals (rolling swing break, W/M neckline) had no edge; a bounce rule, round numbers and trendlines were never tested.",
+  "symbols": "All 28 pairs in data/historical_15m except EURZAR (its archive has about 3.5k 15M bars)",
+  "period": ["2008-01-01", "end of archive (2026-09-11)"],
+  "data": {
+    "chart": "data/historical_15m (native Dukascopy 15M bars, UTC bar-open timestamps). Lines, signals and ATR are computed only from 15M bars closed at the decision time.",
+    "execution": "data/historical_5m (native 5M bars) for entry and the stop/target path",
+    "cleaning": "research_meta_label.load_bars: High/Low widened to contain Open/Close; non-positive or non-finite prices stop the run"
+  },
+  "definitions": {
+    "atr": "forex_indicators.compute_atr(15M, 14), value at the signal bar (known at its close)",
+    "buffer_b": "0.25 x ATR at the signal bar",
+    "swing_points": "A 15M bar i is a swing high if its High is strictly above the highs of the 12 bars before it and at least the highs of the 12 bars after it; swing low mirrored with Low. It becomes usable from bar i + 13 (the bar after the 12th confirming bar closed).",
+    "horizontal_levels": "At each bar, take the usable swing highs and lows whose bar lies in the last 480 15M bars (about 5 trading days). Sort their prices and join neighbours that are within 0.5 x ATR (ATR at the bar where the set of usable swings last changed). Every group with at least 2 swing points is a level at the group's mean price. Levels have no role: a broken resistance can later act as support.",
+    "round_numbers": "Every multiple of 50 pips (e.g. 1.1000, 1.1050; 150.00, 150.50)",
+    "trendlines": "Rising support line through the two most recent usable swing lows when the later one is higher; falling resistance line through the two most recent usable swing highs when the later one is lower. Bar index is the x-axis (no weekend gaps, as on a chart). The two anchors must be at most 480 bars apart, and no 15M close from the first anchor to the confirming bar may be beyond the line by more than b. The line is active from the bar the second anchor becomes usable until whichever comes first: it is broken (the break signal bar is its last bar), the next swing of the same kind becomes usable (a new line is drawn or none), or 480 bars after the second anchor."
+  },
+  "signals": {
+    "evaluated_at": "Close of 15M bar t, with C = close of t, P = close of t-1, H/L = high/low of t, y = line value at t, y_prev = line value at t-1",
+    "bounce_long": "P > y_prev + b and L <= y + b and C > y (price came from above, touched the line and closed above it)",
+    "bounce_short": "P < y_prev - b and H >= y - b and C < y",
+    "break_long": "P <= y_prev + b and C > y + b",
+    "break_short": "P >= y_prev - b and C < y - b",
+    "roles": "Horizontal levels and round numbers use all four rules. A rising support trendline uses bounce_long and break_short; a falling resistance trendline uses bounce_short and break_long.",
+    "several_lines": "If lines give signals in both directions on the same bar for the same hypothesis, the bar is skipped; otherwise the line closest to C is used"
+  },
+  "trade": {
+    "entry": "Open of the 5M bar starting 15 minutes after the 15M signal bar opened (the next 15M open). Skipped if that 5M bar is missing or its New York hour is 17 (the 5 pm ET rollover, when spreads widen 2-7 times).",
+    "stop": "Bounce: beyond the line and the signal bar's extreme by b (long: min(L, y) - b; short: max(H, y) + b). Break: on the other side of the broken line by b (long: y - b; short: y + b). Stop distance from entry is at least 0.5 x ATR.",
+    "target": "1.5 x stop distance before costs",
+    "max_holding": "4 hours of clock time; timeout exits at the close of the last 5M bar opening inside the window",
+    "path": "research_meta_label.simulate conventions: stop first if both levels are inside one bar; an adverse gap fills at the bar open; a favourable gap fills at the target",
+    "positions": "One position per pair and hypothesis stream; signals before the previous trade's exit are ignored"
+  },
+  "costs": {
+    "primary": "Round trip = Dukascopy median spread at the entry's New York hour (data/ml/spread_profile.json) + 0.7 pip ECN commission",
+    "stress": "2 x primary",
+    "limit_stated_in_advance": "Spreads were measured in 2026 and are applied to all years; spreads were wider in 2008-2012, so early years are flattered"
+  },
+  "hypotheses": {
+    "count": 6,
+    "list": ["levels_bounce", "levels_break", "round_bounce", "round_break", "trendline_bounce", "trendline_break"]
+  },
+  "placebo": {
+    "purpose": "Separates information in the line's price from the mechanics of the entry/stop/target rule",
+    "levels_and_trendlines": "Four copies of every line shifted by -3, -1.5, +1.5 and +3 x ATR (ATR where the level set changed, or where the trendline became usable), traded with the same rules. A placebo trendline has the same start and maximum end as its real line, needs no clean-anchor check, and ends at its own first break_short (support) or break_long (resistance) signal.",
+    "round_numbers": "Grids shifted by 10, 20, 30 and 40 pips (levels ending in ..10/..60, ..20/..70, ..30/..80, ..40/..90)",
+    "comparison": "Real trades against the four placebo streams pooled"
+  },
+  "statistics": {
+    "unit": "UTC calendar day of entry, across pairs",
+    "estimate": "Trade-weighted mean net R",
+    "bootstrap": "Stationary bootstrap of days (mean block 5 days, 2000 resamples, seed 42); each resample takes the same days for real and placebo trades",
+    "p_values": "One-sided: share of resampled estimates at or below zero",
+    "multiple_testing": "Bonferroni over the 6 hypotheses: alpha = 0.05 / 6"
+  },
+  "success_criteria_per_hypothesis": [
+    "Mean net R > 0 with one-sided p <= 0.05/6",
+    "Mean net R above the placebo mean net R, with one-sided p <= 0.05/6 for the difference",
+    "Mean net R at stress cost > 0",
+    "Mean net R > 0 in each of 2008-2013, 2014-2019 and 2020-2026",
+    "Mean net R > 0 in at least 15 of the 28 pairs",
+    "At least 1000 trades"
+  ],
+  "informational_only": [
+    "Gross R (before costs) real minus placebo with bootstrap 95% CI: do the lines carry any information before costs (closest to Osler's question)?",
+    "Win and stop-out rates, stop size in pips, cost as a share of risk, exit reasons, results by year and by pair"
+  ],
+  "use": "A hypothesis that meets all six criteria may be shown in the app: its lines on the chart and its signal as a candidate, labeled with this evidence and still subject to the app's live gates. If none passes, no line-based buy/sell signal is added. Drawing lines on the chart as context only is a separate decision for the user.",
+  "stages": "build writes trades per pair to research/levels/trades (git-ignored) and prints counts only; evaluate computes outcomes once and refuses to run again",
+  "parameter_search": "None. Every number above (12-bar swings, 480-bar window, 0.5/0.25/0.5 ATR, 1.5R, 4 hours, 50-pip grid) is fixed before any outcome is computed."
+}
