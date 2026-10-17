@@ -36,6 +36,10 @@ import streamlit as st
 import yfinance as yf
 from plotly.subplots import make_subplots
 
+from forex_dashboard_ui import (
+    apply_dashboard_theme, render_brand, render_dashboard_header, render_market_tiles, market_candles,
+)
+
 from forex_config import (
     ALERT_PAIR_GROUPS,
     BACKTEST_PERIODS,
@@ -235,33 +239,33 @@ LOGGER = logging.getLogger("forex_analyzer")
 # UI CONFIG
 # =============================================================================
 
-st.set_page_config(page_title="Forex Analyzer Pro", layout="wide")
+st.set_page_config(page_title="SEFA | Forex Analyzer", page_icon="📈", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown(
     """
     <style>
         :root {
-            --fa-bg: #F4F6FC;
-            --fa-surface: #FFFFFF;
-            --fa-surface-alt: #F1F3FA;
-            --fa-border: #E4E7F2;
-            --fa-text: #1B1E2B;
-            --fa-text-muted: #676E85;
-            --fa-accent: #4F5BD5;
-            --fa-accent-strong: #3C46B0;
-            --fa-accent-soft: #EDEFFD;
-            --fa-success-bg: #E9F8EF;
-            --fa-success-border: #BCE8CE;
-            --fa-success-text: #147A47;
-            --fa-danger-bg: #FDECEC;
-            --fa-danger-border: #F5C2C2;
-            --fa-danger-text: #C0392B;
-            --fa-warn-bg: #FFF6E0;
-            --fa-warn-border: #FBE1A0;
-            --fa-warn-text: #92660A;
-            --fa-neutral-bg: #F1F2F8;
-            --fa-neutral-border: #E1E3EE;
-            --fa-neutral-text: #363B4A;
+            --fa-bg: #040E17;
+            --fa-surface: #081925;
+            --fa-surface-alt: #0B2130;
+            --fa-border: #17313F;
+            --fa-text: #E8F1F8;
+            --fa-text-muted: #8BA4B7;
+            --fa-accent: #00C9B1;
+            --fa-accent-strong: #35D8F3;
+            --fa-accent-soft: #083345;
+            --fa-success-bg: #082D29;
+            --fa-success-border: #145346;
+            --fa-success-text: #44E3B2;
+            --fa-danger-bg: #301C29;
+            --fa-danger-border: #653044;
+            --fa-danger-text: #FF8299;
+            --fa-warn-bg: #2A271C;
+            --fa-warn-border: #5B4B2A;
+            --fa-warn-text: #E5C477;
+            --fa-neutral-bg: #102530;
+            --fa-neutral-border: #25414F;
+            --fa-neutral-text: #AEC6D5;
             --fa-radius-lg: 18px;
             --fa-radius-md: 14px;
             --fa-radius-sm: 10px;
@@ -591,6 +595,9 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+apply_dashboard_theme()
+
 
 def estimate_pip_value_per_lot_usd(symbol: str, reference_price: Optional[float] = None) -> Optional[float]:
     """Standart 1 lot (paritede 100k, altında 100 ons) için yaklaşık USD pip değeri üretir."""
@@ -5498,7 +5505,7 @@ def plot_intraday_change(symbol: str, lookback_minutes: int) -> tuple[go.Figure,
     pct = 100 * (window / reference_price - 1.0)
     local_index = window.index.tz_convert(TR_TZ)
     end_pct = float(pct.iloc[-1])
-    line_color = "#198754" if end_pct >= 0 else "#dc3545"
+    line_color = "#00d4a5" if end_pct >= 0 else "#f36b80"
 
     fig.add_trace(go.Scatter(
         x=local_index,
@@ -6278,14 +6285,19 @@ def signal_context_lines(context: dict) -> str:
 def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dict) -> None:
     st.markdown(f"#### 📈 {symbol.replace('=X', '')} · son 24 saat")
     change_table = intraday_change_snapshot(symbol)
-    if not change_table.empty:
-        for col, (_, change_row) in zip(st.columns(len(change_table)), change_table.iterrows()):
-            pct_value = change_row["Değişim %"]
-            col.metric(str(change_row["Pencere"]).replace("Son ", ""), "-" if pd.isna(pct_value) else f"{float(pct_value):+.2f}%")
+    render_market_tiles(symbol, change_table)
 
     chart_col, card_col = st.columns([2.1, 1.0])
     with chart_col:
-        fig = go.Figure(intraday_fig).update_layout(height=280, title_text="", margin=dict(l=20, r=10, t=10, b=20))
+        view = st.radio("Grafik görünümü", ["Mum grafiği", "Değişim %"], horizontal=True, key="summary_chart_view")
+        if view == "Mum grafiği":
+            candle_tf = st.radio("Mum aralığı", ["5M", "15M", "1H", "4H"], index=1, horizontal=True, key="summary_candle_tf")
+            interval = {"5M": "5min", "15M": "15min", "1H": "1h", "4H": "4h"}[candle_tf]
+            frame = fetch_intraday_history(symbol, "2d")
+            fig = market_candles(to_tz_index(frame), symbol, interval)
+            st.caption("Kaynağın son iki günlük verisi · Son mum henüz kapanmamış olabilir.")
+        else:
+            fig = go.Figure(intraday_fig).update_layout(height=340, title_text="", margin=dict(l=20, r=10, t=10, b=20))
         st.plotly_chart(fig, use_container_width=True, key="summary_intraday_chart")
     with card_col:
         css = {"long": "opportunity-long", "short": "opportunity-short"}.get(str(opportunity.get("state")), "opportunity-neutral")
@@ -6815,7 +6827,7 @@ def render_summary_page(
     taranırsa taransın iki yerde de görünür.
     """
     button_col, time_col = st.columns([3, 1], vertical_alignment="center")
-    if button_col.button("🔄 Hepsini Tara", type="primary", use_container_width=True, key="summary_scan_all"):
+    if button_col.button("Piyasaları Tara →", type="primary", use_container_width=True, key="summary_scan_all"):
         with st.spinner("ML, fırsatlar ve pariteler sırayla taranıyor (birkaç dakika sürebilir)..."):
             scan_all()
         st.session_state["summary_scanned_at"] = pd.Timestamp.now(tz=TR_TZ)
@@ -6844,10 +6856,10 @@ def render_summary_page(
 # =============================================================================
 
 with st.sidebar:
-    st.header("Forex Asistanı")
+    render_brand()
     advanced_view = st.toggle("Gelişmiş görünüm", value=False)
 
-st.title("Forex Asistanı")
+render_dashboard_header()
 advanced_settings = st.expander("Ayarlar ve araştırma araçları", expanded=False)
 
 with st.sidebar:
@@ -7837,7 +7849,7 @@ overall_reading_now = build_overall_reading(
 )
 
 tab_summary, tab_calendar, tab_signal, tab_lot, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
-    ["📋 Özet", "📅 Takvim", "📊 Sinyal", "🧮 Lot Hesaplayıcı", "🔥 Fırsat Akışı", "📈 Grafik & Yön", "🎯 Pozisyon Takip", "🧪 Gelişmiş Analiz"]
+    ["⌂ Anasayfa", "📅 Takvim", "📊 Sinyaller", "🧮 Lot Hesaplayıcı", "◈ Piyasa Tarama", "📈 Teknik Analiz", "🎯 Pozisyonlar", "🧪 Stratejiler"]
 )
 
 with tab_calendar:
