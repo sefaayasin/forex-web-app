@@ -6283,45 +6283,32 @@ def signal_context_lines(context: dict) -> str:
     )
 
 
-def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dict, scan_all=None) -> dict:
-    quotes = {}
+def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dict) -> None:
     provider = st.session_state.get("data_provider", "Yahoo Finance")
+    quotes = {}
     for quote_symbol in QUOTE_SYMBOLS:
-        # An uploaded CSV belongs to its selected symbol, never to all four cards.
         if provider == "Broker CSV" and quote_symbol != st.session_state.get("broker_csv_symbol", symbol):
             continue
         quotes[quote_symbol] = quote_snapshot(fetch_intraday_history(quote_symbol, "2d"))
     render_quote_strip(quotes, provider)
 
-    st.markdown('<div id="sefa-analysis"></div>', unsafe_allow_html=True)
-    chart_col, card_col = st.columns([2.15, 1.0], gap="small")
-    with chart_col, st.container(border=True, key="sefa-chart-panel"):
-        quote = quote_snapshot(fetch_intraday_history(symbol, "2d"))
-        price_text = f'{quote["price"]:.{price_decimals(symbol)}f}' if quote else "—"
-        st.markdown(f'<div class="sefa-chart-title"><strong>{escape(symbol.replace("=X", ""))}</strong>'
-                    f'<b>{price_text}</b><span>Veri kaynağı · {escape(provider)}</span></div>', unsafe_allow_html=True)
-        mode_col, interval_col = st.columns([1.3, 1.0])
-        with mode_col:
-            view = st.radio("Grafik görünümü", ["Mum grafiği", "Değişim %"], horizontal=True, key="summary_chart_view", label_visibility="collapsed")
+    st.markdown(f"#### 📈 {symbol.replace('=X', '')} · son 24 saat")
+    change_table = intraday_change_snapshot(symbol)
+    render_market_tiles(symbol, change_table)
+
+    chart_col, card_col = st.columns([2.1, 1.0])
+    with chart_col:
+        view = st.radio("Grafik görünümü", ["Mum grafiği", "Değişim %"], horizontal=True, key="summary_chart_view")
         if view == "Mum grafiği":
-            with interval_col:
-                candle_tf = st.radio("Mum aralığı", ["5M", "15M", "1H", "4H"], index=1, horizontal=True, key="summary_candle_tf", label_visibility="collapsed")
+            candle_tf = st.radio("Mum aralığı", ["5M", "15M", "1H", "4H"], index=1, horizontal=True, key="summary_candle_tf")
             interval = {"5M": "5min", "15M": "15min", "1H": "1h", "4H": "4h"}[candle_tf]
-            fig = market_candles(to_tz_index(fetch_intraday_history(symbol, "2d")), symbol, interval)
+            frame = fetch_intraday_history(symbol, "2d")
+            fig = market_candles(to_tz_index(frame), symbol, interval)
+            st.caption("Kaynağın son iki günlük verisi · Son mum henüz kapanmamış olabilir.")
         else:
             fig = go.Figure(intraday_fig).update_layout(height=340, title_text="", margin=dict(l=20, r=10, t=10, b=20))
-        st.plotly_chart(fig, use_container_width=True, key="summary_intraday_chart", theme=None)
-        st.caption("Kaynağın son iki günlük verisi · Son mum henüz kapanmamış olabilir.")
-    with card_col, st.container(border=True, key="sefa-signals-panel"):
-        render_recent_signals(alert_history_dataframe(limit=5))
-        if scan_all is not None and st.button("Piyasaları Tara →", type="primary", use_container_width=True, key="summary_scan_all"):
-            with st.spinner("ML, fırsatlar ve pariteler taranıyor..."):
-                scan_all()
-            st.session_state["summary_scanned_at"] = pd.Timestamp.now(tz=TR_TZ)
-        scanned_at = st.session_state.get("summary_scanned_at")
-        st.caption(f"Son tarama: {scanned_at:%H:%M}" if scanned_at is not None else "Analizleri yenilemek için piyasaları tarayın.")
-
-    with st.expander("Seçili parite · analiz özeti", expanded=False):
+        st.plotly_chart(fig, use_container_width=True, key="summary_intraday_chart")
+    with card_col:
         css = {"long": "opportunity-long", "short": "opportunity-short"}.get(str(opportunity.get("state")), "opportunity-neutral")
         readiness = {"READY": "Tetik hazır", "WATCH": "Yalnızca izle", "NEUTRAL": "Nötr"}.get(
             str(opportunity.get("readiness", "NEUTRAL")), str(opportunity.get("readiness", "-"))
@@ -6348,7 +6335,6 @@ def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dic
                 "28 paritede 15M yönüne girilen 10 milyon anda taze, geç, dönüş var ve dönüş yok anlarının "
                 "sonucu aynıydı: kazanma oranı ≈ %48, maliyetten sonra ≈ −3 pip. (research/freshness)"
             )
-    return quotes
 
 
 def pair_news(symbol: str, news_events: Optional[pd.DataFrame], ahead_hours: int, after_minutes: int = 0) -> tuple[Optional[int], str]:
@@ -6849,26 +6835,29 @@ def render_summary_page(
     Tarama sonuçları detay sekmeleriyle aynı oturum anahtarlarını kullanır; hangisinde
     taranırsa taransın iki yerde de görünür.
     """
-    quotes = render_summary_market(symbol, intraday_fig, opportunity, scan_all=scan_all)
-    try:
-        calendar_events = cached_calendar()[0]
-    except Exception:
-        calendar_events = None
-    render_desk_overview(quotes, calendar_events, account_size=lot_kwargs["account_size"],
-                         risk_pct=float(st.session_state.get("desk_risk_pct", 0.5)))
-    st.markdown('<div id="sefa-risk-tools"></div>', unsafe_allow_html=True)
-    if st.toggle("İşlem planı ve risk araçları", value=False, key="summary_show_risk"):
-        render_summary_overall(symbol, overall)
-        if plan_kwargs:
-            render_summary_trade_plan(symbol=symbol, **plan_kwargs)
-        render_summary_lot(symbol=symbol, **lot_kwargs)
-    with st.expander("Tarama sonuçları ve ML araştırması", expanded=False):
-        render_summary_opportunities(st.session_state.get("scanner_df"))
-        pairs_col, ml_col = st.columns(2, gap="large")
-        with pairs_col:
-            render_summary_pairs(st.session_state.get("alert_board_df"))
-        with ml_col:
-            render_summary_ml(st.session_state.get("ml_prediction_df"))
+    button_col, time_col = st.columns([3, 1], vertical_alignment="center")
+    if button_col.button("Piyasaları Tara →", type="primary", use_container_width=True, key="summary_scan_all"):
+        with st.spinner("ML, fırsatlar ve pariteler sırayla taranıyor (birkaç dakika sürebilir)..."):
+            scan_all()
+        st.session_state["summary_scanned_at"] = pd.Timestamp.now(tz=TR_TZ)
+    scanned_at = st.session_state.get("summary_scanned_at")
+    time_col.caption(f"Son tarama: {scanned_at:%H:%M}" if scanned_at is not None else "Henüz taranmadı")
+    st.caption("Aşağıdaki bir pariteye tıklayınca bu sayfa o pariteye geçer.")
+
+    render_summary_market(symbol, intraday_fig, opportunity)
+    render_summary_overall(symbol, overall)
+    if plan_kwargs:
+        render_summary_trade_plan(symbol=symbol, **plan_kwargs)
+    st.divider()
+    render_summary_opportunities(st.session_state.get("scanner_df"))
+    st.divider()
+    pairs_col, ml_col = st.columns(2, gap="large")
+    with pairs_col:
+        render_summary_pairs(st.session_state.get("alert_board_df"))
+    with ml_col:
+        render_summary_ml(st.session_state.get("ml_prediction_df"))
+    st.divider()
+    render_summary_lot(symbol=symbol, **lot_kwargs)
 
 
 # =============================================================================
@@ -7640,9 +7629,8 @@ broker_quote = fetch_mt5_quote(symbol) if data_provider == "MetaTrader 5" else N
 if broker_quote:
     price = float(broker_quote["mid"])
 
-with st.sidebar.expander("Veri ve fiyat bilgileri", expanded=False):
-    m1, m2 = st.columns(2)
-    m3, m4 = st.columns(2)
+with tab_summary:
+    m1, m2, m3, m4 = st.columns(4)
     with m1:
         st.metric("Sembol", symbol)
     with m2:

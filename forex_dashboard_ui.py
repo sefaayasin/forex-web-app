@@ -61,13 +61,13 @@ def render_dashboard_header() -> None:
         f'<style>.sefa-hero {{ background-image: linear-gradient(90deg, #03131f 0%, #03131fbb 29%, #03131f00 72%), url("{_hero_background()}"); }}</style>'
         '<section class="sefa-hero"><div class="sefa-hero-copy">'
         '<div class="sefa-eyebrow"><span></span> SEFA PİYASA ÇALIŞMA ALANI</div>'
-        '<h1>Piyasaları <em>Daha İyi Anlayın</em></h1>'
+        '<h1><span>Piyasaları</span><em>Daha İyi Anlayın</em></h1>'
         '<p>Piyasa verileri, teknik analiz ve risk araçları tek bir yerde.</p>'
         '<div class="sefa-hero-actions"><a class="sefa-cta" href="#sefa-analysis" target="_self">Analize Başla <span>→</span></a>'
         '<a class="sefa-cta sefa-cta-secondary" href="#sefa-markets" target="_self">Piyasaları İncele</a></div>'
         '<div class="sefa-hero-features"><span>◉ Çoklu Zaman Dilimi</span><span>◇ Teknik Analiz Araçları</span>'
         '<span>♧ Strateji Testleri</span><span>▤ Ekonomik Takvim</span></div>'
-        '</div><div class="sefa-hero-aside">KÜRESEL<br>PİYASALAR<br>TEK BİR<br>PLATFORMDA<span></span></div></section>',
+        '</div></section>',
         unsafe_allow_html=True,
     )
 
@@ -119,7 +119,7 @@ def market_candles(frame, symbol: str, interval: str) -> go.Figure:
 QUOTE_SYMBOLS = ("EURUSD=X", "GBPUSD=X", "USDJPY=X", "XAUUSD=X")
 QUOTE_NAMES = {"EURUSD=X": "Euro / ABD Doları", "GBPUSD=X": "İngiliz Sterlini / ABD Doları",
                "USDJPY=X": "ABD Doları / Japon Yeni", "XAUUSD=X": "Altın / ABD Doları"}
-QUOTE_FLAGS = {"EURUSD=X": "🇪🇺🇺🇸", "GBPUSD=X": "🇬🇧🇺🇸", "USDJPY=X": "🇺🇸🇯🇵", "XAUUSD=X": "◆"}
+QUOTE_FLAGS = {"EURUSD=X": "EU", "GBPUSD=X": "GB", "USDJPY=X": "JP", "XAUUSD=X": "AU"}
 
 
 def quote_snapshot(frame: pd.DataFrame) -> dict:
