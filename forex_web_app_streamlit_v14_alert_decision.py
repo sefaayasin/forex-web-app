@@ -38,6 +38,7 @@ from plotly.subplots import make_subplots
 
 from forex_dashboard_ui import (
     apply_dashboard_theme, render_brand, render_dashboard_header, render_market_tiles, market_candles,
+    QUOTE_SYMBOLS, quote_snapshot, render_quote_strip, render_recent_signals, render_desk_overview,
 )
 
 from forex_config import (
@@ -6282,24 +6283,45 @@ def signal_context_lines(context: dict) -> str:
     )
 
 
-def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dict) -> None:
-    st.markdown(f"#### 📈 {symbol.replace('=X', '')} · son 24 saat")
-    change_table = intraday_change_snapshot(symbol)
-    render_market_tiles(symbol, change_table)
+def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dict, scan_all=None) -> dict:
+    quotes = {}
+    provider = st.session_state.get("data_provider", "Yahoo Finance")
+    for quote_symbol in QUOTE_SYMBOLS:
+        # An uploaded CSV belongs to its selected symbol, never to all four cards.
+        if provider == "Broker CSV" and quote_symbol != st.session_state.get("broker_csv_symbol", symbol):
+            continue
+        quotes[quote_symbol] = quote_snapshot(fetch_intraday_history(quote_symbol, "2d"))
+    render_quote_strip(quotes, provider)
 
-    chart_col, card_col = st.columns([2.1, 1.0])
-    with chart_col:
-        view = st.radio("Grafik görünümü", ["Mum grafiği", "Değişim %"], horizontal=True, key="summary_chart_view")
+    st.markdown('<div id="sefa-analysis"></div>', unsafe_allow_html=True)
+    chart_col, card_col = st.columns([2.15, 1.0], gap="small")
+    with chart_col, st.container(border=True, key="sefa-chart-panel"):
+        quote = quote_snapshot(fetch_intraday_history(symbol, "2d"))
+        price_text = f'{quote["price"]:.{price_decimals(symbol)}f}' if quote else "—"
+        st.markdown(f'<div class="sefa-chart-title"><strong>{escape(symbol.replace("=X", ""))}</strong>'
+                    f'<b>{price_text}</b><span>Veri kaynağı · {escape(provider)}</span></div>', unsafe_allow_html=True)
+        mode_col, interval_col = st.columns([1.3, 1.0])
+        with mode_col:
+            view = st.radio("Grafik görünümü", ["Mum grafiği", "Değişim %"], horizontal=True, key="summary_chart_view", label_visibility="collapsed")
         if view == "Mum grafiği":
-            candle_tf = st.radio("Mum aralığı", ["5M", "15M", "1H", "4H"], index=1, horizontal=True, key="summary_candle_tf")
+            with interval_col:
+                candle_tf = st.radio("Mum aralığı", ["5M", "15M", "1H", "4H"], index=1, horizontal=True, key="summary_candle_tf", label_visibility="collapsed")
             interval = {"5M": "5min", "15M": "15min", "1H": "1h", "4H": "4h"}[candle_tf]
-            frame = fetch_intraday_history(symbol, "2d")
-            fig = market_candles(to_tz_index(frame), symbol, interval)
-            st.caption("Kaynağın son iki günlük verisi · Son mum henüz kapanmamış olabilir.")
+            fig = market_candles(to_tz_index(fetch_intraday_history(symbol, "2d")), symbol, interval)
         else:
             fig = go.Figure(intraday_fig).update_layout(height=340, title_text="", margin=dict(l=20, r=10, t=10, b=20))
-        st.plotly_chart(fig, use_container_width=True, key="summary_intraday_chart")
-    with card_col:
+        st.plotly_chart(fig, use_container_width=True, key="summary_intraday_chart", theme=None)
+        st.caption("Kaynağın son iki günlük verisi · Son mum henüz kapanmamış olabilir.")
+    with card_col, st.container(border=True, key="sefa-signals-panel"):
+        render_recent_signals(alert_history_dataframe(limit=5))
+        if scan_all is not None and st.button("Piyasaları Tara →", type="primary", use_container_width=True, key="summary_scan_all"):
+            with st.spinner("ML, fırsatlar ve pariteler taranıyor..."):
+                scan_all()
+            st.session_state["summary_scanned_at"] = pd.Timestamp.now(tz=TR_TZ)
+        scanned_at = st.session_state.get("summary_scanned_at")
+        st.caption(f"Son tarama: {scanned_at:%H:%M}" if scanned_at is not None else "Analizleri yenilemek için piyasaları tarayın.")
+
+    with st.expander("Seçili parite · analiz özeti", expanded=False):
         css = {"long": "opportunity-long", "short": "opportunity-short"}.get(str(opportunity.get("state")), "opportunity-neutral")
         readiness = {"READY": "Tetik hazır", "WATCH": "Yalnızca izle", "NEUTRAL": "Nötr"}.get(
             str(opportunity.get("readiness", "NEUTRAL")), str(opportunity.get("readiness", "-"))
@@ -6326,6 +6348,7 @@ def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dic
                 "28 paritede 15M yönüne girilen 10 milyon anda taze, geç, dönüş var ve dönüş yok anlarının "
                 "sonucu aynıydı: kazanma oranı ≈ %48, maliyetten sonra ≈ −3 pip. (research/freshness)"
             )
+    return quotes
 
 
 def pair_news(symbol: str, news_events: Optional[pd.DataFrame], ahead_hours: int, after_minutes: int = 0) -> tuple[Optional[int], str]:
@@ -6826,41 +6849,45 @@ def render_summary_page(
     Tarama sonuçları detay sekmeleriyle aynı oturum anahtarlarını kullanır; hangisinde
     taranırsa taransın iki yerde de görünür.
     """
-    button_col, time_col = st.columns([3, 1], vertical_alignment="center")
-    if button_col.button("Piyasaları Tara →", type="primary", use_container_width=True, key="summary_scan_all"):
-        with st.spinner("ML, fırsatlar ve pariteler sırayla taranıyor (birkaç dakika sürebilir)..."):
-            scan_all()
-        st.session_state["summary_scanned_at"] = pd.Timestamp.now(tz=TR_TZ)
-    scanned_at = st.session_state.get("summary_scanned_at")
-    time_col.caption(f"Son tarama: {scanned_at:%H:%M}" if scanned_at is not None else "Henüz taranmadı")
-    st.caption("Aşağıdaki bir pariteye tıklayınca bu sayfa o pariteye geçer.")
-
-    render_summary_market(symbol, intraday_fig, opportunity)
-    render_summary_overall(symbol, overall)
-    if plan_kwargs:
-        render_summary_trade_plan(symbol=symbol, **plan_kwargs)
-    st.divider()
-    render_summary_opportunities(st.session_state.get("scanner_df"))
-    st.divider()
-    pairs_col, ml_col = st.columns(2, gap="large")
-    with pairs_col:
-        render_summary_pairs(st.session_state.get("alert_board_df"))
-    with ml_col:
-        render_summary_ml(st.session_state.get("ml_prediction_df"))
-    st.divider()
-    render_summary_lot(symbol=symbol, **lot_kwargs)
+    quotes = render_summary_market(symbol, intraday_fig, opportunity, scan_all=scan_all)
+    try:
+        calendar_events = cached_calendar()[0]
+    except Exception:
+        calendar_events = None
+    render_desk_overview(quotes, calendar_events, account_size=lot_kwargs["account_size"],
+                         risk_pct=float(st.session_state.get("desk_risk_pct", 0.5)))
+    st.markdown('<div id="sefa-risk-tools"></div>', unsafe_allow_html=True)
+    if st.toggle("İşlem planı ve risk araçları", value=False, key="summary_show_risk"):
+        render_summary_overall(symbol, overall)
+        if plan_kwargs:
+            render_summary_trade_plan(symbol=symbol, **plan_kwargs)
+        render_summary_lot(symbol=symbol, **lot_kwargs)
+    with st.expander("Tarama sonuçları ve ML araştırması", expanded=False):
+        render_summary_opportunities(st.session_state.get("scanner_df"))
+        pairs_col, ml_col = st.columns(2, gap="large")
+        with pairs_col:
+            render_summary_pairs(st.session_state.get("alert_board_df"))
+        with ml_col:
+            render_summary_ml(st.session_state.get("ml_prediction_df"))
 
 
 # =============================================================================
 # UI
 # =============================================================================
 
+with st.container(key="sefa-navigation"):
+    tab_summary, tab_chart, tab_signal, tab_feed, tab_calendar, tab_advanced, tab_lot, tab_position, tab_settings = st.tabs(
+        ["Anasayfa", "Teknik Analiz", "Sinyaller", "Piyasa Tarama", "Ekonomik Takvim", "Strateji Testi", "Lot Hesaplayıcı", "Pozisyonlar", "Ayarlar"]
+    )
+with tab_summary:
+    render_dashboard_header()
+with tab_settings:
+    st.header("Ayarlar")
+    advanced_settings = st.expander("Ayarlar ve araştırma araçları", expanded=True)
+
 with st.sidebar:
     render_brand()
     advanced_view = st.toggle("Gelişmiş görünüm", value=False)
-
-render_dashboard_header()
-advanced_settings = st.expander("Ayarlar ve araştırma araçları", expanded=False)
 
 with st.sidebar:
 
@@ -6870,6 +6897,7 @@ with st.sidebar:
         "Parite",
         options=SYMBOL_LIST,
         index=SYMBOL_LIST.index(default_symbol) if default_symbol in SYMBOL_LIST else 0,
+        format_func=lambda item: item.replace("=X", ""),
     )
     with st.expander("Bağlantı ve grafik", expanded=False):
         manual_symbol = st.text_input("Elle gir", value="", placeholder="EURUSD, XAUUSD veya GOLD")
@@ -6917,6 +6945,7 @@ with st.sidebar:
     st.subheader("Temel Risk")
     account_size = st.number_input("Hesap büyüklüğü", min_value=100.0, value=1000.0, step=100.0)
     risk_pct = st.number_input("İşlem başına risk %", min_value=0.1, max_value=2.0, value=0.5, step=0.1)
+    st.session_state["desk_risk_pct"] = float(risk_pct)
     if risk_pct > 1.0:
         st.warning("%1 üzerindeki işlem riski kayıp serilerinde hesabı hızlı küçültebilir.")
 
@@ -7226,18 +7255,18 @@ with st.sidebar:
 selected_tf = decision_tf
 
 
-st.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
+st.sidebar.caption("Eğitim ve karar destek amaçlıdır; yatırım tavsiyesi değildir. Gerçek işlem öncesi demo test ve broker verisiyle doğrulama yapın.")
 
-st.caption("LONG: yükseliş yönü · SHORT: düşüş yönü. Teknik aday, onaylı işlem anlamına gelmez.")
+st.sidebar.caption("LONG: yükseliş yönü · SHORT: düşüş yönü. Teknik aday, onaylı işlem anlamına gelmez.")
 
 if advanced_view and strict_safety_mode:
-    st.info("Sert Güvenli Mod aktif: yalnızca güçlü yön + İyi backtest kalitesi olan işlemler için LONG/SHORT kartı gösterilir.")
+    st.sidebar.info("Sert Güvenli Mod aktif: yalnızca güçlü yön + İyi backtest kalitesi olan işlemler için LONG/SHORT kartı gösterilir.")
 elif advanced_view:
     mode_note = signal_mode_settings(signal_mode)["description"]
     if practical_signal_mode:
-        st.info(f"Pratik Sinyal Modu aktif ({signal_mode}): {mode_note} Gerçek işlem öncesi demo/broker doğrulaması önerilir.")
+        st.sidebar.info(f"Pratik Sinyal Modu aktif ({signal_mode}): {mode_note} Gerçek işlem öncesi demo/broker doğrulaması önerilir.")
     else:
-        st.info(f"Standart Mod aktif ({signal_mode}): {mode_note}")
+        st.sidebar.info(f"Standart Mod aktif ({signal_mode}): {mode_note}")
 
 
 current_journal = journal_dataframe()
@@ -7611,29 +7640,31 @@ broker_quote = fetch_mt5_quote(symbol) if data_provider == "MetaTrader 5" else N
 if broker_quote:
     price = float(broker_quote["mid"])
 
-m1, m2, m3, m4 = st.columns(4)
-with m1:
-    st.metric("Sembol", symbol)
-with m2:
-    dec = price_decimals(symbol)
-    st.metric("Güncel Fiyat", f"{price:.{dec}f}" if price is not None else "-")
-with m3:
-    if price_info and price_info.get("pct") is not None:
-        st.metric(change_window_label, f"{price_info['pct']:+.2f}%")
-    else:
-        st.metric(change_window_label, "-")
-with m4:
-    if broker_quote:
-        st.metric("Broker Spread", f"{float(broker_quote['spread_pips']):.1f} pip")
-    else:
-        st.metric("Pip Size", get_pip_size(symbol))
+with st.sidebar.expander("Veri ve fiyat bilgileri", expanded=False):
+    m1, m2 = st.columns(2)
+    m3, m4 = st.columns(2)
+    with m1:
+        st.metric("Sembol", symbol)
+    with m2:
+        dec = price_decimals(symbol)
+        st.metric("Güncel Fiyat", f"{price:.{dec}f}" if price is not None else "-")
+    with m3:
+        if price_info and price_info.get("pct") is not None:
+            st.metric(change_window_label, f"{price_info['pct']:+.2f}%")
+        else:
+            st.metric(change_window_label, "-")
+    with m4:
+        if broker_quote:
+            st.metric("Broker Spread", f"{float(broker_quote['spread_pips']):.1f} pip")
+        else:
+            st.metric("Pip Size", get_pip_size(symbol))
 
-intraday_fig, intraday_info = plot_intraday_change(symbol, 1440)
+    intraday_fig, intraday_info = plot_intraday_change(symbol, 1440)
 
-if beginner_mode:
-    st.caption(f"Grafik zamanı: {chart_tf} | İşlem karar zamanı: {selected_tf} (Yeni Başlayan Modu)")
-else:
-    st.caption(f"Grafik zamanı / İşlem karar zamanı: {selected_tf}")
+    if beginner_mode:
+        st.caption(f"Grafik zamanı: {chart_tf} | İşlem karar zamanı: {selected_tf} (Yeni Başlayan Modu)")
+    else:
+        st.caption(f"Grafik zamanı / İşlem karar zamanı: {selected_tf}")
 
 # Main analysis
 summary_df, detail_df = analyse_symbol(symbol)
@@ -7846,10 +7877,6 @@ intraday_opportunity = apply_opportunity_cooldown(
 overall_reading_now = build_overall_reading(
     symbol, summary_df, intraday_opportunity, research_prediction, volatility_prediction,
     news_events, preview_setup, float(spread_pips),
-)
-
-tab_summary, tab_calendar, tab_signal, tab_lot, tab_feed, tab_chart, tab_position, tab_advanced = st.tabs(
-    ["⌂ Anasayfa", "📅 Takvim", "📊 Sinyaller", "🧮 Lot Hesaplayıcı", "◈ Piyasa Tarama", "📈 Teknik Analiz", "🎯 Pozisyonlar", "🧪 Stratejiler"]
 )
 
 with tab_calendar:

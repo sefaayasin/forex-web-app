@@ -2,6 +2,11 @@
 
 from html import escape
 from pathlib import Path
+import base64
+import json
+import math
+
+import pandas as pd
 
 import plotly.graph_objects as go
 import plotly.io as pio
@@ -31,51 +36,38 @@ def apply_dashboard_theme() -> None:
     pio.templates.default = "sefa"
 
 
-def render_brand() -> None:
+def render_brand(location: str = "sidebar") -> None:
     st.markdown(
-        '<div class="sefa-brand"><svg viewBox="0 0 44 44" aria-hidden="true">'
+        f'<div class="sefa-brand sefa-brand-{escape(location)}"><svg viewBox="0 0 44 44" aria-hidden="true">'
         '<path d="M3 30h7v12H3zm12-9h7v21h-7zm12-9h7v30h-7z" fill="#00c9a7"/>'
         '<path d="M4 23 16 14l9 2L39 3m-9 0h9v9" fill="none" stroke="#00e2bf" '
         'stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
         '<div><strong>SEFA</strong><span>FOREX ANALYZER</span></div></div>'
-        '<div class="sefa-sidebar-label">İŞLEM MASASI</div>',
+        + ('<div class="sefa-sidebar-label">İŞLEM MASASI</div>' if location == "sidebar" else ''),
         unsafe_allow_html=True,
     )
 
 
+
+
+@st.cache_data(show_spinner=False)
+def _hero_background() -> str:
+    image = Path(__file__).with_name('assets') / 'sefa-market-globe.png'
+    return 'data:image/png;base64,' + base64.b64encode(image.read_bytes()).decode('ascii')
+
+
 def render_dashboard_header() -> None:
-    # Decorative vector artwork, deliberately separate from actual market charts.
-    globe = '''<svg class="sefa-globe" viewBox="0 0 600 280" aria-hidden="true">
-    <defs><radialGradient id="ocean"><stop stop-color="#07415b"/>
-    <stop offset=".8" stop-color="#052131"/><stop offset="1" stop-color="#008cae"/></radialGradient>
-    <linearGradient id="fade"><stop stop-color="#00d5ae" stop-opacity="0"/>
-    <stop offset="1" stop-color="#00d5ae" stop-opacity=".8"/></linearGradient>
-    <clipPath id="sphere"><circle cx="385" cy="215" r="180"/></clipPath></defs>
-    <circle cx="385" cy="215" r="182" fill="#00bafa" opacity=".12"/>
-    <circle cx="385" cy="215" r="180" fill="url(#ocean)"/>
-    <g clip-path="url(#sphere)" fill="none" stroke="#0bb4d0" stroke-opacity=".25">
-    <ellipse cx="385" cy="215" rx="75" ry="180"/><ellipse cx="385" cy="215" rx="140" ry="180"/>
-    <ellipse cx="385" cy="215" rx="180" ry="48"/><ellipse cx="385" cy="215" rx="180" ry="110"/>
-    <path d="M205 215h360M385 35v360M230 105l310 220M230 325l310-220"/>
-    <path d="m290 74 30-10 24 12 19-3 18 20-14 20-25 6-5 22-29 9-12-18-25-12z
-    m75 82 28-16 25 13 25 31-17 32-8 40-23 28-17-24 4-35-22-27z
-    m49-87 27-8 31 13 25-2 31 25-20 22-29-4-15 20-30-5-9-24-19-10z"
-    fill="#00c8c0" fill-opacity=".2" stroke-opacity=".5"/></g>
-    <path d="m50 260 38-17 25 7 32-35 28 12 37-40 27 16 34-50 27 20 35-41 28 13 31-35 28 12 34-46 27 15 40-47 40 12"
-    fill="none" stroke="url(#fade)" stroke-width="3"/>
-    <g stroke="#00d6b0" fill="#00d6b0">
-    <path d="M278 172v49m24-75v50m25-69v46m25-61v49m25-80v47m25-55v49m25-24v52m25-81v50m25-65v45m25-78v53m25-66v47"/>
-    <path d="M273 185h10v23h-10zm24-26h10v25h-10zm25-20h10v20h-10zm25-15h10v23h-10zm25-31h10v23h-10zm25-9h10v24h-10zm25 19h10v28h-10zm25-34h10v25h-10zm25-14h10v21h-10zm25-34h10v31h-10zm25-13h10v22h-10z"/></g></svg>'''
     st.markdown(
-        '<div class="sefa-topbar"><span>GENEL BAKIŞ <i>/</i> Piyasa çalışma alanı</span>'
-        '<span class="sefa-topbar-badge">Çoklu zaman dilimi analizi</span></div>'
+        f'<style>.sefa-hero {{ background-image: linear-gradient(90deg, #03131f 0%, #03131fbb 29%, #03131f00 72%), url("{_hero_background()}"); }}</style>'
         '<section class="sefa-hero"><div class="sefa-hero-copy">'
-        '<div class="sefa-eyebrow"><span></span> PİYASAYA DAHA GENİŞ BAKIN</div>'
-        '<h1>Piyasaları Daha İyi<br><em>Anlayın.</em></h1>'
-        '<p>Teknik analiz, yapay zekâ destekli araştırmalar ve risk araçları.<br>'
-        'Bir sonraki adımınız için her şey tek bir yerde.</p>'
-        '<div class="sefa-hero-tags"><span>4H / 1H ana yön</span><span>15M / 5M giriş takibi</span></div>'
-        f'</div>{globe}</section>',
+        '<div class="sefa-eyebrow"><span></span> SEFA PİYASA ÇALIŞMA ALANI</div>'
+        '<h1>Piyasaları <em>Daha İyi Anlayın</em></h1>'
+        '<p>Piyasa verileri, teknik analiz ve risk araçları tek bir yerde.</p>'
+        '<div class="sefa-hero-actions"><a class="sefa-cta" href="#sefa-analysis" target="_self">Analize Başla <span>→</span></a>'
+        '<a class="sefa-cta sefa-cta-secondary" href="#sefa-markets" target="_self">Piyasaları İncele</a></div>'
+        '<div class="sefa-hero-features"><span>◉ Çoklu Zaman Dilimi</span><span>◇ Teknik Analiz Araçları</span>'
+        '<span>♧ Strateji Testleri</span><span>▤ Ekonomik Takvim</span></div>'
+        '</div><div class="sefa-hero-aside">KÜRESEL<br>PİYASALAR<br>TEK BİR<br>PLATFORMDA<span></span></div></section>',
         unsafe_allow_html=True,
     )
 
@@ -122,3 +114,113 @@ def market_candles(frame, symbol: str, interval: str) -> go.Figure:
     fig.update_layout(height=340, showlegend=False, margin=dict(l=12, r=12, t=12, b=12),
                       xaxis_rangeslider_visible=False, xaxis2_rangeslider_visible=False)
     return fig
+
+
+QUOTE_SYMBOLS = ("EURUSD=X", "GBPUSD=X", "USDJPY=X", "XAUUSD=X")
+QUOTE_NAMES = {"EURUSD=X": "Euro / ABD Doları", "GBPUSD=X": "İngiliz Sterlini / ABD Doları",
+               "USDJPY=X": "ABD Doları / Japon Yeni", "XAUUSD=X": "Altın / ABD Doları"}
+QUOTE_FLAGS = {"EURUSD=X": "🇪🇺🇺🇸", "GBPUSD=X": "🇬🇧🇺🇸", "USDJPY=X": "🇺🇸🇯🇵", "XAUUSD=X": "◆"}
+
+
+def quote_snapshot(frame: pd.DataFrame) -> dict:
+    """A quote and change against the last available point at least 24h earlier."""
+    if frame.empty or "Close" not in frame:
+        return {}
+    close = pd.to_numeric(frame["Close"], errors="coerce").dropna().sort_index()
+    close = close[close.map(lambda v: math.isfinite(v) and v > 0)]
+    if close.empty:
+        return {}
+    cutoff = close.index[-1] - pd.Timedelta(hours=24)
+    previous = close[close.index <= cutoff]
+    change = (float(close.iloc[-1] / previous.iloc[-1]) - 1) * 100 if not previous.empty else None
+    window = close[close.index >= cutoff]
+    sampled = window.iloc[::max(1, len(window) // 35)].tail(40).tolist()
+    if sampled[-1] != float(close.iloc[-1]):
+        sampled.append(float(close.iloc[-1]))
+    return {"price": float(close.iloc[-1]), "change": change, "series": sampled,
+            "time": close.index[-1], "low": float(window.min()), "high": float(window.max())}
+
+
+def _sparkline(values: list, tone: str) -> str:
+    if len(values) < 2:
+        return '<div class="sefa-spark-empty">Veri bekleniyor</div>'
+    low, high = min(values), max(values)
+    extent = high - low or 1
+    points = ' '.join(f'{i * 112 / (len(values)-1):.1f},{40 - (v-low) * 34 / extent:.1f}' for i, v in enumerate(values))
+    return f'<svg class="sefa-spark {tone}" viewBox="0 0 116 46" aria-hidden="true"><polyline points="{points}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>'
+
+
+def render_quote_strip(quotes: dict, provider: str) -> None:
+    cards = []
+    for symbol in QUOTE_SYMBOLS:
+        quote = quotes.get(symbol, {})
+        value, change = quote.get("price"), quote.get("change")
+        tone = "neutral" if change is None else "up" if change >= 0 else "down"
+        decimals = 2 if symbol in ("USDJPY=X", "XAUUSD=X") else 4
+        price = f'{value:,.{decimals}f}' if value is not None else '—'
+        pct = f'{change:+.2f}%' if change is not None else '24s değişim yok'
+        when = quote.get("time")
+        timestamp = when.tz_convert("Europe/Istanbul").strftime("%d.%m %H:%M") if when is not None and when.tzinfo is not None else 'Kaynakta veri yok'
+        name = 'COMEX altın vadelisi' if symbol == 'XAUUSD=X' and provider == 'Yahoo Finance' else QUOTE_NAMES[symbol]
+        cards.append(
+            f'<article class="sefa-quote {tone}"><div class="sefa-quote-heading"><span class="sefa-flags">{QUOTE_FLAGS[symbol]}</span>'
+            f'<div><strong>{symbol.replace("=X", "")}</strong><small>{escape(name)}</small></div></div>'
+            f'<div class="sefa-quote-values"><div><b>{price}</b><span>{pct}</span></div>{_sparkline(quote.get("series", []), tone)}</div>'
+            f'<footer>Son veri · {timestamp}</footer></article>'
+        )
+    st.markdown('<div id="sefa-markets" class="sefa-quote-grid">' + ''.join(cards) + '</div>', unsafe_allow_html=True)
+
+
+def render_recent_signals(history: pd.DataFrame) -> None:
+    rows = []
+    for _, row in history.head(5).iterrows():
+        side = str(row.get('Yön', ''))
+        tone = 'up' if side == 'LONG' else 'down' if side == 'SHORT' else 'neutral'
+        label = 'AL' if side == 'LONG' else 'SAT' if side == 'SHORT' else 'BEKLE'
+        try:
+            payload = json.loads(str(row.get('Detay', '{}')))
+        except (ValueError, TypeError):
+            payload = {}
+        levels = payload.get('levels') or {}
+        entry = levels.get('entry')
+        price = f'{float(entry):.4f}' if isinstance(entry, (int, float)) and math.isfinite(entry) else '—'
+        when = pd.to_datetime(row.get('Zaman'), utc=True, errors='coerce')
+        time = when.tz_convert('Europe/Istanbul').strftime('%d.%m %H:%M') if pd.notna(when) else '—'
+        rows.append(f'<tr><td>{escape(str(row.get("Sembol", "")).replace("=X", ""))}</td>'
+                    f'<td><span class="sefa-badge {tone}">{label}</span></td><td>{price}</td><td>{time}</td></tr>')
+    empty = '<div class="sefa-empty"><span>◎</span><b>Henüz kayıtlı sinyal yok</b><p>Onaylanan sinyaller burada listelenir.<br>Piyasa taramasıyla analizleri yenileyebilirsiniz.</p></div>'
+    table = '<table class="sefa-table"><thead><tr><th>Sembol</th><th>Sinyal</th><th>Giriş</th><th>Saat</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table>'
+    st.markdown('<div class="sefa-signals"><div class="sefa-panel-heading"><h3>Son Sinyaller</h3><span>Kayıtlı alarmlar</span></div>'
+                + (table if rows else empty) + '</div>', unsafe_allow_html=True)
+
+
+def render_desk_overview(quotes: dict, events: pd.DataFrame | None, *, account_size: float, risk_pct: float) -> None:
+    upcoming_rows = []
+    if events is not None and not events.empty:
+        times = pd.to_datetime(events['time'], utc=True, errors='coerce')
+        upcoming = events.assign(_time=times).loc[times >= pd.Timestamp.now(tz='UTC')].sort_values('_time').head(5)
+        for _, row in upcoming.iterrows():
+            at = row['_time'].tz_convert('Europe/Istanbul')
+            impact = int(row.get('impact', 0))
+            upcoming_rows.append(f'<tr><td>{at:%d.%m}<br>{at:%H:%M}</td><td>{escape(str(row.get("currency", "")))}</td>'
+                                 f'<td><span class="sefa-impact">{"●" * max(0, min(3, impact))}</span></td>'
+                                 f'<td>{escape(str(row.get("event", "")))}</td><td>{escape(str(row.get("forecast", "")))}</td></tr>')
+    calendar = '<table class="sefa-table sefa-calendar-mini"><thead><tr><th>Saat</th><th>Para</th><th>Önem</th><th>Veri</th><th>Beklenti</th></tr></thead><tbody>' + ''.join(upcoming_rows) + '</tbody></table>' if upcoming_rows else '<div class="sefa-empty-small">Yaklaşan etkinlik bulunmuyor veya takvim verisi alınamadı.</div>'
+    market_rows = []
+    for symbol, quote in sorted(quotes.items(), key=lambda item: item[1].get('change') or 0, reverse=True):
+        change = quote.get('change')
+        if change is None:
+            continue
+        tone = 'up' if change >= 0 else 'down'
+        market_rows.append(f'<tr><td>{escape(symbol.replace("=X", ""))}</td><td class="{tone}">{change:+.2f}%</td>'
+                           f'<td><div class="sefa-mini-track"><span class="{tone}" style="width:{min(100, abs(change)*100):.1f}%"></span></div></td></tr>')
+    market = '<table class="sefa-table"><thead><tr><th>Sembol</th><th>24s değişim</th><th></th></tr></thead><tbody>' + ''.join(market_rows) + '</tbody></table>' if market_rows else '<div class="sefa-empty-small">Piyasa özeti için fiyat verisi bekleniyor.</div>'
+    st.markdown(
+        '<div class="sefa-overview-grid"><section class="sefa-panel"><div class="sefa-panel-heading"><h3>▣ Risk Yönetimi</h3></div>'
+        f'<div class="sefa-risk-values"><div><small>Hesap bakiyesi</small><b>${account_size:,.0f}</b></div><div><small>İşlem riski</small><b>%{risk_pct:g}</b></div></div>'
+        f'<div class="sefa-risk-total"><small>İşlem başına risk bütçesi</small><strong>${account_size*risk_pct/100:,.2f}</strong></div>'
+        '<a href="#sefa-risk-tools" target="_self" class="sefa-inline-link">Lot ve işlem planını incele →</a></section>'
+        '<section class="sefa-panel"><div class="sefa-panel-heading"><h3>▤ Ekonomik Takvim</h3><span>İstanbul saati</span></div>' + calendar + '</section>'
+        '<section class="sefa-panel"><div class="sefa-panel-heading"><h3>▥ Piyasa Özeti</h3></div>' + market + '</section></div>',
+        unsafe_allow_html=True,
+    )
