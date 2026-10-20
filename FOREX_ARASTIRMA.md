@@ -29,7 +29,7 @@
 | Trend (zaman serisi momentumu) döviz vadelilerinde 1–12 ay sürüyor | 1–12 ay | Moskowitz, Ooi & Pedersen (2012) | 2009–2026'da yılda −%1,1 (research/fx_factors) |
 | Değer (satın alma gücü paritesinden sapma); momentumla ters korelasyonlu | Yıllar | Asness, Moskowitz & Pedersen (2013) | Test edilmedi |
 | Planlı FOMC günlerinde "dolar sat, diğerlerini al" stratejisinin getirisi belirgin yüksek | Gün | Mueller, Tahbaz-Salehi & Vedolin (2017) | 2008–2013'te çok güçlü (+25 bp, p=0,001). Makale sonrası 2014–2026'da +4,8 bp, anlamlı değil (p=0,13). Ayrıntı: research/fomc_day/REPORT.md |
-| Fiyat destek/direnç seviyelerinde ve yuvarlak sayılarda daha sık duruyor; yuvarlak sayı geçilince hızlanıyor | Dakikalar–saatler | Osler (2000, 2003) | 2008–2026, 28 parite, 15M: otomatik çizilen seviye ve trend çizgileri rastgele çizgilerden farksız. Yuvarlak sayı kırılımında anlamlı ama çok küçük etki (+0,004 R, maliyetin 60'ta biri). Ayrıntı: research/levels/REPORT.md |
+| Fiyat destek/direnç seviyelerinde ve yuvarlak sayılarda daha sık duruyor; yuvarlak sayı geçilince hızlanıyor | Dakikalar–saatler | Osler (2000, 2003) | 2008–2026, 28 parite, 15M: otomatik çizilen seviye ve trend çizgileri rastgele çizgilerden farksız. Yuvarlak sayı kırılımında anlamlı ama çok küçük etki (+0,004 R, maliyetin 60'ta biri). Ayrıntı: research/levels/REPORT.md. Günlük pivot çizgilerinde de fiyat sahte çizgilerdeki kadar dönüyor (%48,2'ye karşı %48,1; research/pivot_stops/REPORT.md) |
 | Dolar Tokyo/ECB sabitlemesinden önce değer kazanıp Tokyo/Londra sabitlemesinden sonra geri veriyor; pencere başına ~2,5–3,5 bp | Saatler | Krohn, Mueller & Whelan (2024) | 2008–2019'da yön aynı. 2020–2026'da 0,6–0,8 pipe inmiş, ~1–1,5 pip maliyetin altında (research/fix_reversal) |
 | Ay içinde hisseleri iyi giden ülkenin parası, ay sonu Londra 16:00 sabitlemesinden önceki saatte değer kaybediyor (hisse korumaları) | 1 saat, ayda bir | Melvin & Prins (2015) | 2008–2012'de var (+1,4 pip net). 2014–2026'da −0,3 pip. Sonradan bulunan alt kural 2003–2007'de doğrulanmadı (research/month_end) |
 
@@ -108,6 +108,7 @@
 - **Neden kaybediyor:** 15M çizgi işlemlerinde stop medyan 7–10 pip; maliyet riskin %18–23'ü. Başabaş için kazanma oranının ~%50 olması gerekirdi.
 - **Uygulamaya:** Çizgi tabanlı AL/SAT sinyali eklenmedi.
 - Ayrıntı: research/levels/REPORT.md
+- **Ek (20 Ekim 2026), günlük pivot çizgileri (P, R1, R2, S1, S2):** Fiyat bir pivot çizgisine gelince 4 saat içinde %48,2 geri döndü, sahte çizgilerde %48,1 (442 bin gerçek, 1,8 milyon sahte dokunuş; fark +0,08 puan [−0,05, +0,22]). Geçmedi. Çizgiler anasayfa grafiğine bilgi olarak eklendi. Ayrıntı: research/pivot_stops/REPORT.md
 
 ### H. Özet kartında sinyal tazeliği ve dönüş uyarısı — yapıldı, geçmedi
 - **Soru:** Kart 100/100 gösterirken "taze" anda girmek "geç" anda girmekten daha mı iyi? Kart "dönüş sinyali var" derken girmek daha mı kötü? (Kullanıcı aynı 100/100'de önce kazandı, sonra tekrar girip kaybetti.)

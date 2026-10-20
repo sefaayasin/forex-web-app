@@ -1,5 +1,7 @@
 """Presentation helpers for the SEFA dashboard; no market or trading rules."""
 
+from __future__ import annotations
+
 from html import escape
 from pathlib import Path
 import base64
@@ -90,8 +92,14 @@ def render_market_tiles(symbol: str, changes) -> None:
     st.markdown(f'<div class="sefa-market-grid">{"".join(tiles)}</div>', unsafe_allow_html=True)
 
 
-def market_candles(frame, symbol: str, interval: str) -> go.Figure:
-    """Use the same source as the intraday view, including uploaded broker data."""
+LEVEL_COLORS = {"R": "#f36b80", "S": "#00d4a5", "P": "#e9b95b"}
+
+
+def market_candles(frame, symbol: str, interval: str, levels: dict | None = None) -> go.Figure:
+    """Use the same source as the intraday view, including uploaded broker data.
+
+    `levels` ({name: price}) are drawn as dotted lines when they are near the visible candles.
+    """
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
                         row_heights=[.8, .2], vertical_spacing=.02)
     if frame.empty:
@@ -110,6 +118,14 @@ def market_candles(frame, symbol: str, interval: str) -> go.Figure:
                       for opening, close in zip(candles.Open, candles.Close)]
             fig.add_trace(go.Bar(x=candles.index, y=candles.Volume, marker_color=colors,
                                  name="Kaynak hacmi"), row=2, col=1)
+        if levels:
+            low, high = float(candles.Low.min()), float(candles.High.max())
+            margin = (high - low) * 0.5
+            for name, price in levels.items():
+                if low - margin <= price <= high + margin:
+                    fig.add_hline(y=price, line_dash="dot", line_width=1, line_color=LEVEL_COLORS[name[0]],
+                                  annotation_text=name, annotation_position="top left",
+                                  annotation_font_color=LEVEL_COLORS[name[0]], row=1, col=1)
         fig.update_yaxes(side="right", row=1, col=1)
     fig.update_layout(height=340, showlegend=False, margin=dict(l=12, r=12, t=12, b=12),
                       xaxis_rangeslider_visible=False, xaxis2_rangeslider_visible=False)

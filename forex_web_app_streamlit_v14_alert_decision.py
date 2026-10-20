@@ -72,6 +72,7 @@ from forex_analysis import (
     market_structure_frame,
 )
 from forex_freshness import FRESHNESS_TEXT, late_reversal, reversal_level, reversal_warnings, signal_freshness
+from forex_pivots import LEVEL_NAMES, levels_for_day
 from forex_overall import SOURCE_NOTE as OVERALL_SOURCE_NOTE, overall_reading, view_sides_now
 from forex_trade_plan import build_trade_plan, load_plan_stats, trading_blockers
 from forex_indicators import (
@@ -874,6 +875,7 @@ def _mt5_timeframe(interval: str):
         "60m": mt5.TIMEFRAME_H1,
         "1h": mt5.TIMEFRAME_H1,
         "4h": mt5.TIMEFRAME_H4,
+        "1d": mt5.TIMEFRAME_D1,
     }
     return mt5, mapping.get(interval.lower())
 
@@ -6234,6 +6236,20 @@ def _closed_structure_frame(symbol: str, tf_name: str) -> pd.DataFrame:
     return frame
 
 
+def summary_pivots(symbol: str) -> Optional[dict]:
+    """Bugünün klasik pivot seviyeleri, kaynağın kendi günlük mumlarından (önceki hafta içi gün)."""
+    daily = fetch_ohlc(symbol, "1d", "15d")
+    if daily is None or daily.empty:
+        return None
+    return levels_for_day(daily, pd.Timestamp.now(tz="UTC"))
+
+
+def pivot_caption(symbol: str, levels: dict, price: float) -> str:
+    pip, decimals = get_pip_size(symbol), price_decimals(symbol)
+    parts = [f"{name} {levels[name]:.{decimals}f} ({(levels[name] - price) / pip:+.0f} pip)" for name in reversed(LEVEL_NAMES)]
+    return "Günlük pivot: " + " · ".join(parts)
+
+
 def summary_signal_context(symbol: str, side: str, typical_move_pips: float) -> dict:
     """Radar yönünün tazeliği ve 15M/5M ters dönüş uyarıları (bilgi; giriş kuralı değil)."""
     if side not in {"LONG", "SHORT"}:
@@ -6361,8 +6377,14 @@ def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dic
             candle_tf = st.radio("Mum aralığı", ["5M", "15M", "1H", "4H"], index=1, horizontal=True, key="summary_candle_tf")
             interval = {"5M": "5min", "15M": "15min", "1H": "1h", "4H": "4h"}[candle_tf]
             frame = fetch_intraday_history(symbol, "2d")
-            fig = market_candles(to_tz_index(frame), symbol, interval)
+            levels = summary_pivots(symbol)
+            fig = market_candles(to_tz_index(frame), symbol, interval,
+                                 levels={name: levels[name] for name in LEVEL_NAMES} if levels else None)
             st.caption("Kaynağın son iki günlük verisi · Son mum henüz kapanmamış olabilir.")
+            if levels and not frame.empty:
+                st.caption(pivot_caption(symbol, levels, float(frame["Close"].iloc[-1])))
+                st.caption("2008–2026, 28 parite: fiyat bir pivot çizgisine gelince %48 geri döndü, %52 devam etti; "
+                           "rastgele çizilmiş çizgilerde de aynı. Çizgi, fiyatın orada duracağı anlamına gelmez. (research/pivot_stops)")
         else:
             fig = go.Figure(intraday_fig).update_layout(height=340, title_text="", margin=dict(l=20, r=10, t=10, b=20))
         st.plotly_chart(fig, use_container_width=True, key="summary_intraday_chart")

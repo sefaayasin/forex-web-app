@@ -1,0 +1,37 @@
+{
+  "name": "Daily pivot levels: does price stop or turn back at them more often than at fake levels?",
+  "frozen_on": "2026-10-20",
+  "question": "The user holds a position in profit (for example GBPUSD +25 USD on the way to a 100 USD target) and wants to know whether price will keep going or turn back at the classic daily pivot lines (P, R1, R2, S1, S2). When price reaches one of these lines, does it turn back more often than when it reaches a line that is not a pivot?",
+  "prior_evidence": "research/levels (2008-2026, 28 pairs, 15M): automatically drawn support/resistance and trend lines turned price no more often than shifted fake lines (40.0% vs 40.0% at 1.5R); round numbers showed a statistically significant but tiny effect. research_indicator_zoo tested a pivot S1/R1 bounce entry rule on 10 pairs; it did not pass. Literature: Osler (2000) found published support/resistance levels stop intraday trends somewhat more often than arbitrary levels; the effect was small.",
+  "symbols": "All 28 pairs in data/historical_15m except EURZAR (same universe as research/freshness)",
+  "period": ["2008-01-01", "end of archive (2026-09-11)"],
+  "data": {
+    "levels": "data/historical_1d: native Dukascopy daily bars, UTC day boundaries. Saturday and Sunday bars are dropped, so Monday uses Friday's bar.",
+    "touches_and_outcomes": "data/historical_15m: native Dukascopy 15M bars, UTC bar-open timestamps",
+    "cleaning": "research_meta_label.load_bars"
+  },
+  "definitions": {
+    "levels": "forex_pivots.pivot_levels, the same function the app uses: P = (H + L + C) / 3 of the previous weekday's daily bar; R1 = 2P - L; S1 = 2P - H; R2 = P + (H - L); S2 = P - (H - L). Levels apply to every 15M bar of the UTC day after that weekday.",
+    "fake_levels": "Each real level shifted by -0.5, -0.25, +0.25 and +0.5 x the previous day's range (H - L). Fake levels are processed with exactly the same touch and outcome rules.",
+    "touch": "Upward touch of level L: previous 15M close < L and current bar High >= L. Downward touch: previous close > L and current Low <= L. Only the first touch of each level from each side per UTC day counts. Touches whose previous bar is more than 15 minutes earlier (gaps, weekend opens) are skipped. The first 20 bars of the archive are skipped (ATR warmup).",
+    "step": "k = ATR14 of the 15M bars at the bar before the touch (simple 14-bar mean of the true range).",
+    "outcome": "From the touch, which comes first within 16 bars (4 hours): price k beyond the level in the touch direction ('geçti'), or k back on the other side ('döndü'). On the touch bar itself only 'geçti' is checked, because a move to the other side on that bar may have happened before the touch. A later bar that reaches both counts as unresolved. Neither within 16 bars = unresolved.",
+    "reversal_rate": "döndü / (döndü + geçti), unresolved excluded; the unresolved share is reported."
+  },
+  "hypothesis": {
+    "H1_pivots_turn_price_more_than_fake_levels": "reversal rate at real levels (all five, both directions, pooled over pairs) - reversal rate at fake levels > 0"
+  },
+  "statistics": "Bootstrap over UTC calendar days as blocks (all pairs of a day stay together), 2000 resamples, seed 42, two-sided 95% interval for the difference.",
+  "success_criterion": "H1 passes if the 95% interval is above zero over the full period AND the point estimate is above zero in each of 2008-2015, 2016-2023 and 2024-2026.",
+  "what_follows": {
+    "pass": "The chart caption gives the measured reversal rate at pivots and at fake levels.",
+    "fail": "The lines stay on the chart as information only; the caption says price did not turn at them more often than at fake lines."
+  },
+  "information_only": [
+    "Reversal rate per level (P, R1, R2, S1, S2) and per touch direction",
+    "Reversal rate per sub-period and per pair",
+    "Unresolved share"
+  ],
+  "known_difference_from_live": "The app reads Yahoo's native daily bars, whose day boundary can be one hour off UTC (London time); the research uses Dukascopy UTC days.",
+  "parameter_search": "None. k = 1 ATR14, 16-bar horizon and the four shifts are fixed here and not changed after seeing results."
+}
