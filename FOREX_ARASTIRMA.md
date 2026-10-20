@@ -109,6 +109,7 @@
 - **Uygulamaya:** Çizgi tabanlı AL/SAT sinyali eklenmedi.
 - Ayrıntı: research/levels/REPORT.md
 - **Ek (20 Ekim 2026), günlük pivot çizgileri (P, R1, R2, S1, S2):** Fiyat bir pivot çizgisine gelince 4 saat içinde %48,2 geri döndü, sahte çizgilerde %48,1 (442 bin gerçek, 1,8 milyon sahte dokunuş; fark +0,08 puan [−0,05, +0,22]). Geçmedi. Çizgiler anasayfa grafiğine bilgi olarak eklendi. Ayrıntı: research/pivot_stops/REPORT.md
+- **Ek (20 Ekim 2026), pivot trader planı (fiyat P üstündeyse geri çekilmede al, hedef bir sonraki seviye, stop 1 ATR):** 491 bin plan, 182 bin dolan işlem. %14 hedef, %72 stop; maliyetten önce +0,19 pip, sonra −2,3 pip (−0,28 R). Sahte seviyelerle aynı, 28 paritenin hiçbirinde artı değil. Geçmedi. Kullanıcı istediği için anasayfaya "Pivot Trader" kutusu olarak eklendi, sonuç kutuda yazıyor. Ayrıntı: research/pivot_plan/REPORT.md
 
 ### H. Özet kartında sinyal tazeliği ve dönüş uyarısı — yapıldı, geçmedi
 - **Soru:** Kart 100/100 gösterirken "taze" anda girmek "geç" anda girmekten daha mı iyi? Kart "dönüş sinyali var" derken girmek daha mı kötü? (Kullanıcı aynı 100/100'de önce kazandı, sonra tekrar girip kaybetti.)

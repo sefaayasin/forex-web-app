@@ -33,6 +33,7 @@ research/levels/trades/
 research/calendar_sources/raw/
 research/freshness/rows/
 research/pivot_stops/rows/
+research/pivot_plan/rows/
 research/consensus/rows/
 research/consensus/build.log
 research/fix_reversal/trades.csv.gz

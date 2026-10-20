@@ -1,0 +1,44 @@
+{
+  "name": "Pivot trader plan: does the textbook pivot plan shown on Özet make money?",
+  "frozen_on": "2026-10-20",
+  "question": "The user wants one Özet box that reads the chart like a pivot trader and says LONG / SHORT / BEKLE with an entry, a stop and a target. The box uses fixed textbook rules (forex_pivot_plan.pivot_plan). If a user followed every plan it shows, what would have happened?",
+  "motivation": "The user shorted GBPJPY because the card said 'Geç + Dönüş var', did not know where to stop or take profit, and lost. They asked for a plan with levels.",
+  "prior_evidence": "research/pivot_stops: price turned back at pivot lines 48.2% of the time vs 48.1% at fake lines. research/levels: support/resistance bounce rules were break-even before costs and lost after costs. research_indicator_zoo: a pivot S1/R1 bounce entry did not pass.",
+  "symbols": "All 28 pairs in data/historical_15m except EURZAR",
+  "period": ["2008-01-01", "end of archive (2026-09-11)"],
+  "data": {
+    "levels": "data/historical_1d native Dukascopy daily bars, previous weekday (forex_pivots.levels_for_day rule)",
+    "bars": "data/historical_15m native Dukascopy 15M bars",
+    "cleaning": "research_meta_label.load_bars"
+  },
+  "plan_rules": {
+    "function": "forex_pivot_plan.pivot_plan(price, levels, atr), the same function the app box uses",
+    "ladder": "S3, S2, S1, P, R1, R2, R3 with R3 = 2*R1 - S1 and S3 = 2*S1 - R1 (classic H + 2(P - L), L - 2(H - P))",
+    "side": "price > P -> LONG; price < P -> SHORT",
+    "entry": "LONG: the highest ladder level below price (a pullback buy). SHORT: the lowest ladder level above price.",
+    "target": "LONG: the lowest ladder level above price. SHORT: the highest ladder level below price. No level beyond price (above R3 / below S3) -> BEKLE.",
+    "stop": "1 x ATR14 (15M, simple 14-bar mean of true range) beyond the entry level",
+    "reward_risk_filter": "If |target - entry| < |entry - stop| -> BEKLE",
+    "atr": "ATR at the decision bar"
+  },
+  "decision_moments": "The close of the 15M bars ending at 00:00, 04:00, 08:00, 12:00, 16:00 and 20:00 UTC, every weekday. Price = that bar's close.",
+  "execution": {
+    "fill": "Limit order at the entry, valid for 16 bars (4 hours) after the decision. Filled on the first bar whose Low <= entry (LONG) or High >= entry (SHORT).",
+    "exit": "Stop or target, whichever is hit first. On the fill bar only the stop is checked. A bar that reaches both counts as stop. If neither by the last bar of the same UTC day, exit at that bar's close.",
+    "one_plan_at_a_time": "A new decision moment of the same pair is skipped while an earlier plan is pending or open."
+  },
+  "cost": "Round trip: measured median spread for the pair at the New York hour of the fill (data/ml/spread_profile.json; 1.5 pip if missing) + 0.7 pip commission (forex_costs).",
+  "fake_levels": "The same plans with every ladder level shifted by -0.25 and +0.25 x the previous day's range, same rules.",
+  "hypotheses": {
+    "H1_plan_pays_after_costs": "mean net R per filled plan > 0",
+    "H2_real_levels_beat_fake": "mean gross R (before cost) of real plans - fake plans > 0"
+  },
+  "statistics": "Day-block bootstrap (UTC days, all pairs together), 2000 resamples, seed 42, two-sided 97.5% intervals (Bonferroni 0.05 / 2).",
+  "success_criterion": "A hypothesis passes if its interval is above zero over the full period AND the point estimate is above zero in each of 2008-2015, 2016-2023, 2024-2026.",
+  "what_follows": {
+    "pass": "The box gives the plan and its measured result.",
+    "fail": "The box still gives the plan, because the user asked for one, with one line saying what following it measured: target-hit rate and mean net pips."
+  },
+  "information_only": ["Fill rate", "Target / stop / end-of-day exit shares", "Mean net pips per filled plan", "By side", "Per pair"],
+  "parameter_search": "None. Stop 1 ATR, 4-hour fill window, the six decision times and the RR >= 1 filter are fixed here."
+}

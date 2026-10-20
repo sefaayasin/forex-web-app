@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from forex_pivot_plan import atr14
 from forex_pivots import LEVEL_NAMES, levels_for_day, pivot_levels
 from research_meta_label import load_bars
 
@@ -34,13 +35,6 @@ CHECK_SAMPLES = 200
 BOOTSTRAPS = 2000
 WORKERS = 4
 BACK, PASS, UNRESOLVED = 1, 0, -1
-
-
-def atr14(bars: pd.DataFrame) -> np.ndarray:
-    prev_close = bars["Close"].shift(1)
-    true_range = pd.concat([bars["High"] - bars["Low"], (bars["High"] - prev_close).abs(),
-                            (bars["Low"] - prev_close).abs()], axis=1).max(axis=1)
-    return true_range.rolling(14).mean().to_numpy(float)
 
 
 def day_levels(bars: pd.DataFrame, daily: pd.DataFrame) -> pd.DataFrame:

@@ -72,6 +72,7 @@ from forex_analysis import (
     market_structure_frame,
 )
 from forex_freshness import FRESHNESS_TEXT, late_reversal, reversal_level, reversal_warnings, signal_freshness
+from forex_pivot_plan import MEASURED_NOTE as PIVOT_PLAN_NOTE, atr14, ladder, pivot_plan
 from forex_pivots import LEVEL_NAMES, levels_for_day
 from forex_overall import SOURCE_NOTE as OVERALL_SOURCE_NOTE, overall_reading, view_sides_now
 from forex_trade_plan import build_trade_plan, load_plan_stats, trading_blockers
@@ -6545,6 +6546,65 @@ def build_overall_reading(
     )
 
 
+def render_summary_pivot_plan(symbol: str, price: Optional[float], reading: Optional[dict],
+                              news_events: Optional[pd.DataFrame]) -> None:
+    """Pivot Trader: günlük pivotlardan yön, giriş, stop, hedef; diğer görüşler ve uyarılar kısa satırlarda."""
+    st.markdown(f"#### 📐 Pivot Trader · {symbol.replace('=X', '')}")
+    levels = summary_pivots(symbol)
+    m15 = _closed_structure_frame(symbol, "15 Dakika")
+    if not levels or m15.empty or price is None:
+        st.caption("Pivot planı için veri yok.")
+        return
+    pip, decimals = get_pip_size(symbol), price_decimals(symbol)
+    plan = pivot_plan(float(price), levels, float(atr14(m15)[-1]))
+    side = plan["side"]
+    news_minutes, news_title = pair_news(symbol, news_events, ahead_hours=1, after_minutes=15)
+    if side != "WAIT" and news_minutes is not None:
+        title = f"BEKLE — haber {news_minutes} dk sonra" if news_minutes >= 0 else "BEKLE — haber az önce çıktı"
+    else:
+        title = {"LONG": "LONG düşün — geri çekilmede al", "SHORT": "SHORT düşün — yükselişte sat"}.get(side, "BEKLE")
+
+    def fmt(value: float) -> str:
+        return f"{value:.{decimals}f}"
+
+    lines = []
+    pivot = ladder(levels)["P"]
+    if side == "WAIT":
+        lines.append(escape(plan["reason"]))
+        if plan["entry_name"]:
+            lines.append(f"P ({fmt(pivot)}) {'altına inmeden SHORT' if price > pivot else 'üstüne çıkmadan LONG'} yok.")
+    else:
+        lines.append(
+            f"<b>Giriş:</b> {plan['entry_name']} {fmt(plan['entry'])} (fiyattan {abs(plan['entry'] - price) / pip:.0f} pip) · "
+            f"<b>Stop:</b> {fmt(plan['stop'])} ({abs(plan['entry'] - plan['stop']) / pip:.0f} pip) · "
+            f"<b>Hedef:</b> {plan['target_name']} {fmt(plan['target'])} ({abs(plan['target'] - plan['entry']) / pip:.0f} pip)"
+        )
+        long_side = side == "LONG"
+        lines.append(
+            f"<b>Plan bozulur:</b> 15M mum {fmt(plan['stop'])} {'altında' if long_side else 'üstünde'} kapanırsa. "
+            f"P ({fmt(pivot)}) {'altına inmeden SHORT' if long_side else 'üstüne çıkmadan LONG'} yok."
+        )
+    if reading:
+        lines.append("<b>Diğer görüşler:</b> " + " · ".join(f"{escape(name)}: {escape(view)}" for name, view in reading["views"]))
+    late = late_reversal(m15, _closed_structure_frame(symbol, "5 Dakika"), pip)
+    if late:
+        advice = ("tepeden yetişme, girişe geri gelmesini bekle" if late["side"] == side
+                  else "dönüş işareti tek başına ters yöne girme sebebi değil")
+        lines.append(f"⚠️ Geç + dönüş var (15M {late['side']} uzamış): {advice}.")
+    if news_minutes is not None:
+        lines.append(f"⛔ {escape(news_title)} ({news_minutes:+d} dk): pivot trader haberden önce işlem açmaz.")
+    css = {"LONG": "opportunity-long", "SHORT": "opportunity-short"}.get(side if title.startswith(side) else "", "opportunity-neutral")
+    st.markdown(
+        f"<div class='opportunity-card {css}' style='min-height:0;'>"
+        f"<div class='section-kicker'>Fiyat {fmt(price)} · günlük pivotlara göre</div>"
+        f"<div class='opportunity-title'>{escape(title)}</div>"
+        + "".join(f"<div class='opportunity-line'>{line}</div>" for line in lines)
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+    st.caption(PIVOT_PLAN_NOTE)
+
+
 def render_summary_overall(symbol: str, reading: Optional[dict]) -> None:
     """Genel Yorum: görüşler ne diyor, uyuşuyorlar mı, bu durum geçmişte ne verdi, ne yapmalı."""
     if not reading:
@@ -6926,6 +6986,7 @@ def render_summary_page(
 
     render_summary_market(symbol, intraday_fig, opportunity)
     render_summary_overall(symbol, overall)
+    render_summary_pivot_plan(symbol, lot_kwargs.get("price"), overall, (plan_kwargs or {}).get("news_events"))
     if plan_kwargs:
         render_summary_trade_plan(symbol=symbol, **plan_kwargs)
     st.divider()
