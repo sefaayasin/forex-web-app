@@ -72,7 +72,7 @@ from forex_analysis import (
     market_structure_frame,
 )
 from forex_freshness import FRESHNESS_TEXT, late_reversal, reversal_level, reversal_warnings, signal_freshness
-from forex_pivot_plan import MEASURED_NOTE as PIVOT_PLAN_NOTE, atr14, ladder, pivot_plan
+from forex_pivot_plan import MEASURED_NOTE as PIVOT_PLAN_NOTE, atr14, pivot_plan
 from forex_pivots import LEVEL_NAMES, levels_for_day
 from forex_overall import SOURCE_NOTE as OVERALL_SOURCE_NOTE, overall_reading, view_sides_now
 from forex_trade_plan import build_trade_plan, load_plan_stats, trading_blockers
@@ -6546,63 +6546,85 @@ def build_overall_reading(
     )
 
 
-def render_summary_pivot_plan(symbol: str, price: Optional[float], reading: Optional[dict],
-                              news_events: Optional[pd.DataFrame]) -> None:
-    """Pivot Trader: günlük pivotlardan yön, giriş, stop, hedef; diğer görüşler ve uyarılar kısa satırlarda."""
-    st.markdown(f"#### 📐 Pivot Trader · {symbol.replace('=X', '')}")
-    levels = summary_pivots(symbol)
-    m15 = _closed_structure_frame(symbol, "15 Dakika")
-    if not levels or m15.empty or price is None:
-        st.caption("Pivot planı için veri yok.")
+PIVOT_NEAR_ATR = 1.0  # fiyat girişe bu kadar ATR yakınsa plan "fırsat" listesine girer
+
+
+@st.cache_data(ttl=900, show_spinner=False)
+def scan_pivot_plans(symbols: tuple[str, ...], provider: str) -> pd.DataFrame:
+    """Her paritenin pivot planı (BEKLE olanlar hariç); `provider` önbellek anahtarı. 15 dakikada bir yenilenir."""
+    rows = []
+    for sym in symbols:
+        levels = summary_pivots(sym)
+        df = fetch_ohlc(sym, TIMEFRAMES["15 Dakika"]["interval"], TIMEFRAMES["15 Dakika"]["period"])
+        if not levels or df is None or len(df) < 30:
+            continue
+        atr = float(atr14(_utc_index_df(df.iloc[:-1]))[-1])
+        price = float(df["Close"].iloc[-1])
+        plan = pivot_plan(price, levels, atr)
+        if plan["side"] == "WAIT":
+            continue
+        row = {"symbol": sym, "price": price, "distance_atr": abs(price - plan["entry"]) / atr, "late_side": "", **plan}
+        if row["distance_atr"] <= PIVOT_NEAR_ATR:
+            m15 = _closed_structure_frame(sym, "15 Dakika")
+            late = late_reversal(m15, _closed_structure_frame(sym, "5 Dakika"), get_pip_size(sym)) if not m15.empty else None
+            row["late_side"] = late["side"] if late else ""
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def render_summary_pivot_opportunities(news_events: Optional[pd.DataFrame]) -> None:
+    """Pivot Trader: bütün paritelerde girişe yakın pivot planları; haber yaklaşanlar çıkarılır."""
+    st.markdown("#### 📐 Pivot Trader · fırsatlar")
+    with st.spinner("Pivot planları taranıyor..."):
+        plans = scan_pivot_plans(tuple(SYMBOL_LIST), st.session_state.get("data_provider", "Yahoo Finance"))
+    if plans.empty:
+        st.caption("Şu an hiçbir paritede pivot planı yok.")
         return
-    pip, decimals = get_pip_size(symbol), price_decimals(symbol)
-    plan = pivot_plan(float(price), levels, float(atr14(m15)[-1]))
-    side = plan["side"]
-    news_minutes, news_title = pair_news(symbol, news_events, ahead_hours=1, after_minutes=15)
-    if side != "WAIT" and news_minutes is not None:
-        title = f"BEKLE — haber {news_minutes} dk sonra" if news_minutes >= 0 else "BEKLE — haber az önce çıktı"
-    else:
-        title = {"LONG": "LONG düşün — geri çekilmede al", "SHORT": "SHORT düşün — yükselişte sat"}.get(side, "BEKLE")
+    near = plans[plans["distance_atr"] <= PIVOT_NEAR_ATR].sort_values("distance_atr")
+    news_blocked = [sym for sym in near["symbol"] if pair_news(sym, news_events, ahead_hours=1, after_minutes=15)[0] is not None]
+    near = near[~near["symbol"].isin(news_blocked)]
 
-    def fmt(value: float) -> str:
-        return f"{value:.{decimals}f}"
+    scanner_df = st.session_state.get("scanner_df")
+    feed_sides = ({sym: side for side, items in strong_bias_pairs(scanner_df).items() for sym, _ in items}
+                  if isinstance(scanner_df, pd.DataFrame) and not scanner_df.empty else None)
+    ml_df = st.session_state.get("ml_prediction_df")
+    ml_sides = (dict(zip(ml_df["Sembol"], ml_df["Tahmin"].fillna("-")))
+                if isinstance(ml_df, pd.DataFrame) and "Tahmin" in ml_df.columns else None)
 
-    lines = []
-    pivot = ladder(levels)["P"]
-    if side == "WAIT":
-        lines.append(escape(plan["reason"]))
-        if plan["entry_name"]:
-            lines.append(f"P ({fmt(pivot)}) {'altına inmeden SHORT' if price > pivot else 'üstüne çıkmadan LONG'} yok.")
-    else:
-        lines.append(
-            f"<b>Giriş:</b> {plan['entry_name']} {fmt(plan['entry'])} (fiyattan {abs(plan['entry'] - price) / pip:.0f} pip) · "
-            f"<b>Stop:</b> {fmt(plan['stop'])} ({abs(plan['entry'] - plan['stop']) / pip:.0f} pip) · "
-            f"<b>Hedef:</b> {plan['target_name']} {fmt(plan['target'])} ({abs(plan['target'] - plan['entry']) / pip:.0f} pip)"
-        )
-        long_side = side == "LONG"
-        lines.append(
-            f"<b>Plan bozulur:</b> 15M mum {fmt(plan['stop'])} {'altında' if long_side else 'üstünde'} kapanırsa. "
-            f"P ({fmt(pivot)}) {'altına inmeden SHORT' if long_side else 'üstüne çıkmadan LONG'} yok."
-        )
-    if reading:
-        lines.append("<b>Diğer görüşler:</b> " + " · ".join(f"{escape(name)}: {escape(view)}" for name, view in reading["views"]))
-    late = late_reversal(m15, _closed_structure_frame(symbol, "5 Dakika"), pip)
-    if late:
-        advice = ("tepeden yetişme, girişe geri gelmesini bekle" if late["side"] == side
-                  else "dönüş işareti tek başına ters yöne girme sebebi değil")
-        lines.append(f"⚠️ Geç + dönüş var (15M {late['side']} uzamış): {advice}.")
-    if news_minutes is not None:
-        lines.append(f"⛔ {escape(news_title)} ({news_minutes:+d} dk): pivot trader haberden önce işlem açmaz.")
-    css = {"LONG": "opportunity-long", "SHORT": "opportunity-short"}.get(side if title.startswith(side) else "", "opportunity-neutral")
-    st.markdown(
-        f"<div class='opportunity-card {css}' style='min-height:0;'>"
-        f"<div class='section-kicker'>Fiyat {fmt(price)} · günlük pivotlara göre</div>"
-        f"<div class='opportunity-title'>{escape(title)}</div>"
-        + "".join(f"<div class='opportunity-line'>{line}</div>" for line in lines)
-        + "</div>",
-        unsafe_allow_html=True,
-    )
-    st.caption(PIVOT_PLAN_NOTE)
+    def pips_to_entry(row) -> float:
+        return abs(row["price"] - row["entry"]) / get_pip_size(row["symbol"])
+
+    long_col, short_col = st.columns(2)
+    for col, side, title in ((long_col, "LONG", "🟢 LONG · girişe kalan pip"), (short_col, "SHORT", "🔴 SHORT · girişe kalan pip")):
+        with col:
+            render_chip_group(title, [(r["symbol"], pips_to_entry(r)) for _, r in near[near["side"] == side].iterrows()],
+                              side, "pivot")
+    for start in range(0, len(near), 3):
+        for col, (_, row) in zip(st.columns(3), near.iloc[start:start + 3].iterrows()):
+            sym, side = row["symbol"], row["side"]
+            pip, decimals = get_pip_size(sym), price_decimals(sym)
+            lines = [
+                f"<b>Giriş:</b> {row['entry_name']} {row['entry']:.{decimals}f} ({pips_to_entry(row):.0f} pip uzakta)",
+                f"<b>Stop:</b> {row['stop']:.{decimals}f} ({abs(row['entry'] - row['stop']) / pip:.0f} pip) · "
+                f"<b>Hedef:</b> {row['target_name']} {row['target']:.{decimals}f} ({abs(row['target'] - row['entry']) / pip:.0f} pip)",
+            ]
+            if row["late_side"]:
+                lines.append("⚠️ Geç + dönüş var: " + ("tepeden yetişme" if row["late_side"] == side else "15M ters yönde uzamış"))
+            views = [f"{name}: {sides.get(sym, '-')}" for name, sides in (("Fırsatlar", feed_sides), ("ML", ml_sides)) if sides is not None]
+            if views:
+                lines.append(" · ".join(views))
+            css = "opportunity-long" if side == "LONG" else "opportunity-short"
+            with col:
+                st.markdown(
+                    f"<div class='opportunity-card {css}' style='padding:12px; min-height:0;'>"
+                    f"<div class='section-kicker'>{escape(sym.replace('=X', ''))} · {side}</div>"
+                    + "".join(f"<div style='font-size:.85rem;'>{line}</div>" for line in lines)
+                    + "</div>",
+                    unsafe_allow_html=True,
+                )
+    blocked = f", haber yaklaşan {len(news_blocked)} parite çıkarıldı" if news_blocked else ""
+    st.caption(f"{len(plans)} paritede plan var; girişe 1 ATR'den yakın {len(near)} tanesi listede{blocked}. "
+               f"15 dakikada bir yenilenir. {PIVOT_PLAN_NOTE}")
 
 
 def render_summary_overall(symbol: str, reading: Optional[dict]) -> None:
@@ -6986,7 +7008,7 @@ def render_summary_page(
 
     render_summary_market(symbol, intraday_fig, opportunity)
     render_summary_overall(symbol, overall)
-    render_summary_pivot_plan(symbol, lot_kwargs.get("price"), overall, (plan_kwargs or {}).get("news_events"))
+    render_summary_pivot_opportunities((plan_kwargs or {}).get("news_events"))
     if plan_kwargs:
         render_summary_trade_plan(symbol=symbol, **plan_kwargs)
     st.divider()
