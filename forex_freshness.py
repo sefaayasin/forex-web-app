@@ -132,3 +132,32 @@ def reversal_level(warnings_15m: list[str], warnings_5m: list[str]) -> str:
     if warnings_15m or warnings_5m:
         return "WEAK"
     return "NONE"
+
+
+def typical_move_pips(bars: pd.DataFrame, pip: float, window: int = 16, lookback: int = 96) -> float:
+    """Son `lookback` mumdaki `window` mumluk High-Low aralığının medyanı, pip (build_intraday_opportunity ile aynı)."""
+    if bars is None or bars.empty or pip <= 0:
+        return np.nan
+    rolling_range = (bars["High"].rolling(window).max() - bars["Low"].rolling(window).min()).dropna().tail(lookback)
+    return float(rolling_range.median() / pip) if not rolling_range.empty else np.nan
+
+
+def late_reversal(m15: pd.DataFrame, m5: pd.DataFrame, pip: float) -> dict | None:
+    """Son 15M skoru bir yöndeyken tazelik "Geç" ve dönüş sinyali "Var" ise ayrıntılar; değilse None.
+
+    Yön, son kapanmış 15M mumunun skorundan gelir (research_freshness'in karar anı tanımı).
+    `m15` ve `m5`, Score sütunlu market_structure_frame çıktılarıdır.
+    """
+    if m15 is None or m15.empty or "Score" not in m15.columns:
+        return None
+    score = m15["Score"].dropna()
+    if score.empty or abs(float(score.iloc[-1])) < SIDE_THRESHOLD:
+        return None
+    side = "LONG" if float(score.iloc[-1]) > 0 else "SHORT"
+    freshness = signal_freshness(m15, m15["Score"], side, pip, typical_move_pips(m15, pip))
+    if freshness["state"] != "LATE":
+        return None
+    warnings = {"15M": reversal_warnings(m15, side), "5M": reversal_warnings(m5, side)}
+    if reversal_level(warnings["15M"], warnings["5M"]) != "STRONG":
+        return None
+    return {"side": side, "score": float(score.iloc[-1]), "freshness": freshness, "warnings": warnings}

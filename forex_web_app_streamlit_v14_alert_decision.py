@@ -71,7 +71,7 @@ from forex_analysis import (
     latest_valid_row,
     market_structure_frame,
 )
-from forex_freshness import FRESHNESS_TEXT, reversal_level, reversal_warnings, signal_freshness
+from forex_freshness import FRESHNESS_TEXT, late_reversal, reversal_level, reversal_warnings, signal_freshness
 from forex_overall import SOURCE_NOTE as OVERALL_SOURCE_NOTE, overall_reading, view_sides_now
 from forex_trade_plan import build_trade_plan, load_plan_stats, trading_blockers
 from forex_indicators import (
@@ -6283,6 +6283,64 @@ def signal_context_lines(context: dict) -> str:
     )
 
 
+def scan_late_reversal_pairs(symbols) -> pd.DataFrame:
+    """15M yönü "Geç" ve dönüş sinyali "Var" olan pariteler; sonucu oturuma kaydeder."""
+    symbols = list(symbols)
+    rows = []
+    progress = st.progress(0, text="Geç + dönüş var taranıyor...")
+    for i, sym in enumerate(symbols, start=1):
+        m15 = _closed_structure_frame(sym, "15 Dakika")
+        hit = late_reversal(m15, _closed_structure_frame(sym, "5 Dakika"), get_pip_size(sym)) if not m15.empty else None
+        if hit:
+            fresh = hit["freshness"]
+            rows.append({
+                "Sembol": sym,
+                "Yön": hit["side"],
+                "15M skor": round(hit["score"]),
+                "Başladı": "10 günden uzun" if fresh["started_before_data"] else f"{_duration_text(fresh['bars'] * 15)} önce",
+                "Gidilen pip": round(fresh["moved_pips"]),
+                "Tipik 4s pip": round(fresh["typical_move_pips"]) if pd.notna(fresh["typical_move_pips"]) else np.nan,
+                "EMA20'den ATR": round(fresh["stretch_atr"], 1) if pd.notna(fresh["stretch_atr"]) else np.nan,
+                "15M işaretler": ", ".join(hit["warnings"]["15M"]),
+                "5M işaretler": ", ".join(hit["warnings"]["5M"]),
+            })
+        progress.progress(i / max(len(symbols), 1), text=f"{sym} ({i}/{len(symbols)})")
+    progress.empty()
+    result = pd.DataFrame(rows)
+    st.session_state["late_reversal_df"] = result
+    st.session_state["late_reversal_at"] = pd.Timestamp.now(tz=TR_TZ)
+    return result
+
+
+def render_summary_late_reversal() -> None:
+    st.markdown("#### 🔴 Geç + Dönüş var · tüm pariteler")
+    info_col, button_col = st.columns([3, 1], vertical_alignment="center")
+    if button_col.button("Sadece bunu tara", use_container_width=True, key="late_reversal_scan"):
+        scan_late_reversal_pairs(SYMBOL_LIST)
+    found = st.session_state.get("late_reversal_df")
+    scanned_at = st.session_state.get("late_reversal_at")
+    if found is None:
+        info_col.caption("Henüz tarama yok.")
+        return
+    info_col.caption(f"Son tarama: {scanned_at:%H:%M} · {len(SYMBOL_LIST)} parite tarandı, {len(found)} tanesi listede.")
+    if not found.empty:
+        items = {side: [(r["Sembol"], abs(float(r["15M skor"]))) for _, r in found[found["Yön"] == side].iterrows()]
+                 for side in ("LONG", "SHORT")}
+        up_col, down_col = st.columns(2)
+        with up_col:
+            render_chip_group("⬆️ Yukarı gitmiş, aşağı dönüş işareti", items["LONG"], "LONG", "late")
+        with down_col:
+            render_chip_group("⬇️ Aşağı gitmiş, yukarı dönüş işareti", items["SHORT"], "SHORT", "late")
+        st.dataframe(found.assign(Sembol=found["Sembol"].str.replace("=X", "", regex=False)),
+                     hide_index=True, use_container_width=True)
+    st.caption(
+        "Yön son kapanmış 15M skorundan gelir; kart radar yönünü kullandığı için seçili paritenin kartı farklı "
+        "gösterebilir. Ölçüm (2008–2026, 28 parite, 815 bin \"Geç + Var\" anı): fiyat 4 saatte ortalama yalnızca "
+        "0,56 pip geri döndü (geri dönme oranı %52,5), işlem maliyeti ≈ 2,7 pip. Liste ters işlem sinyali değil, "
+        "hareketin uzadığı pariteleri gösterir."
+    )
+
+
 def render_summary_market(symbol: str, intraday_fig: go.Figure, opportunity: dict) -> None:
     provider = st.session_state.get("data_provider", "Yahoo Finance")
     quotes = {}
@@ -6850,6 +6908,8 @@ def render_summary_page(
         render_summary_trade_plan(symbol=symbol, **plan_kwargs)
     st.divider()
     render_summary_opportunities(st.session_state.get("scanner_df"))
+    st.divider()
+    render_summary_late_reversal()
     st.divider()
     pairs_col, ml_col = st.columns(2, gap="large")
     with pairs_col:
@@ -7903,6 +7963,7 @@ def scan_everything_for_summary() -> None:
             daily_status=current_daily_status,
             **_alert_filter_kwargs,
         )
+    scan_late_reversal_pairs(SYMBOL_LIST)
 
 
 with tab_summary:

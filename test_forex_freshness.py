@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from forex_freshness import reversal_level, reversal_warnings, signal_freshness
+from forex_freshness import late_reversal, reversal_level, reversal_warnings, signal_freshness, typical_move_pips
 
 
 def bars_and_score(closes, scores, ema20=None, atr=0.0010):
@@ -102,6 +102,63 @@ class ReversalLevelTests(unittest.TestCase):
         self.assertEqual(reversal_level(["a", "b"], []), "WEAK")
         self.assertEqual(reversal_level(["a"], ["c", "d"]), "WEAK")
         self.assertEqual(reversal_level([], []), "NONE")
+
+
+def late_frame(closes, scores, **last):
+    """15M market yapısı gibi bir frame: EMA20 = Close, son satıra `last` alanları yazılır."""
+    index = pd.date_range("2026-09-01", periods=len(closes), freq="15min", tz="UTC")
+    closes = np.asarray(closes, dtype=float)
+    frame = structure_frame([{} for _ in closes]).set_index(index)
+    frame = frame.assign(Close=closes, High=closes + 0.0005, Low=closes - 0.0005, EMA20=closes, ATR14=0.0010,
+                         Score=np.asarray(scores, dtype=float))
+    for column, value in last.items():
+        frame.loc[frame.index[-1], column] = value
+    return frame
+
+
+class TypicalMoveTests(unittest.TestCase):
+    def test_median_of_rolling_range(self):
+        frame = late_frame([1.1000 + 0.0001 * i for i in range(40)], [0] * 40)
+        # 16 mumluk pencere: 15 adımlık yükseliş (15 pip) + iki uçtaki 5'er pip fitil = 25 pip
+        self.assertAlmostEqual(typical_move_pips(frame, 0.0001), 25.0)
+
+    def test_too_short_is_nan(self):
+        self.assertTrue(np.isnan(typical_move_pips(late_frame([1.1] * 5, [0] * 5), 0.0001)))
+
+
+class LateReversalTests(unittest.TestCase):
+    def setUp(self):
+        # 40 düz mum (tipik hareket 10 pip), sonra 2 mumda +30 pip LONG yönünde: Geç
+        self.closes = [1.1000] * 40 + [1.1010, 1.1030]
+        self.scores = [0] * 40 + [60, 90]
+        self.warn5 = structure_frame([{"RSI14": 75.0}])
+
+    def test_late_with_strong_warnings_is_reported(self):
+        m15 = late_frame(self.closes, self.scores, RSI14=78.0, MACDMomentumState="BULLISH_WEAKENING")
+        hit = late_reversal(m15, self.warn5, 0.0001)
+        self.assertEqual(hit["side"], "LONG")
+        self.assertEqual(hit["freshness"]["state"], "LATE")
+        self.assertEqual(hit["warnings"]["15M"], ["MACD momentumu zayıflıyor", "RSI aşırı alım (78)"])
+        self.assertEqual(hit["warnings"]["5M"], ["RSI aşırı alım (75)"])
+
+    def test_one_15m_warning_is_not_enough(self):
+        m15 = late_frame(self.closes, self.scores, RSI14=78.0)
+        self.assertIsNone(late_reversal(m15, self.warn5, 0.0001))
+
+    def test_no_5m_warning_is_not_enough(self):
+        m15 = late_frame(self.closes, self.scores, RSI14=78.0, MACDMomentumState="BULLISH_WEAKENING")
+        self.assertIsNone(late_reversal(m15, structure_frame([{}]), 0.0001))
+
+    def test_fresh_move_is_not_reported(self):
+        m15 = late_frame([1.1000] * 41 + [1.1002], [0] * 41 + [90], RSI14=78.0, MACDMomentumState="BULLISH_WEAKENING")
+        self.assertIsNone(late_reversal(m15, self.warn5, 0.0001))
+
+    def test_short_side_and_weak_score(self):
+        closes = [1.1000] * 40 + [1.0990, 1.0970]
+        m15 = late_frame(closes, [0] * 40 + [-60, -90], RSI14=22.0, MACDMomentumState="BEARISH_WEAKENING")
+        self.assertEqual(late_reversal(m15, structure_frame([{"RSI14": 25.0}]), 0.0001)["side"], "SHORT")
+        m15.loc[m15.index[-1], "Score"] = -10.0
+        self.assertIsNone(late_reversal(m15, structure_frame([{"RSI14": 25.0}]), 0.0001))
 
 
 if __name__ == "__main__":
