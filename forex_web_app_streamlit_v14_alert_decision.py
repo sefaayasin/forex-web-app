@@ -73,6 +73,7 @@ from forex_analysis import (
 )
 from forex_freshness import FRESHNESS_TEXT, late_reversal, reversal_level, reversal_warnings, signal_freshness
 from forex_pivot_plan import MEASURED_NOTE as PIVOT_PLAN_NOTE, atr14, pivot_plan
+from forex_pivot_advisor import advise as advise_pivot, calendar_available, closed_bars, recent_bar
 from forex_pivots import LEVEL_NAMES, levels_for_day
 from forex_overall import SOURCE_NOTE as OVERALL_SOURCE_NOTE, overall_reading, view_sides_now
 from forex_trade_plan import build_trade_plan, load_plan_stats, trading_blockers
@@ -1402,57 +1403,9 @@ def signal_from_score(score: float, threshold: float) -> str:
 
 
 def score_series_for_backtest(df: pd.DataFrame) -> pd.Series:
-    """Backtest için vektörel yaklaşık skor üretir. evaluate_bias ile aynı felsefeyi kullanır."""
-    ind = add_indicators(df)
-    close = ind["Close"].astype(float)
-
-    score = pd.Series(0.0, index=ind.index)
-
-    # Trend
-    score += np.where(close > ind["EMA200"], 20, -20)
-    score += np.where(ind["EMA50"] > ind["EMA200"], 20, -20)
-    score += np.where((close > ind["EMA20"]) & (ind["EMA20"] > ind["EMA50"]), 15, 0)
-    score += np.where((close < ind["EMA20"]) & (ind["EMA20"] < ind["EMA50"]), -15, 0)
-
-    ema50_slope = ind["EMA50"] - ind["EMA50"].shift(8)
-    ema200_slope = ind["EMA200"] - ind["EMA200"].shift(20)
-    score += np.where((ema50_slope > 0) & (ema200_slope >= 0), 10, 0)
-    score += np.where((ema50_slope < 0) & (ema200_slope <= 0), -10, 0)
-
-    # Momentum
-    rsi = ind["RSI14"]
-    score += np.where((rsi >= 52) & (rsi <= 68), 20, 0)
-    score += np.where(rsi > 75, 5, 0)
-    score += np.where((rsi >= 32) & (rsi <= 48), -20, 0)
-    score += np.where(rsi < 25, -5, 0)
-
-    atr = ind["ATR14"].replace(0, np.nan)
-    macd_atr = ind["MACD"] / atr
-    hist_atr = ind["MACDHist"] / atr
-    hist_sign = np.sign(ind["MACDHist"].fillna(0))
-    hist_cross = ((hist_sign != hist_sign.shift(1)) & (hist_sign != 0) & (hist_sign.shift(1) != 0)).astype(int)
-    whipsaw = (hist_cross.rolling(12).sum() >= 4) & (macd_atr.abs() <= 0.20) & (hist_atr.abs() <= 0.08)
-    usable_macd = ~whipsaw.fillna(False)
-
-    score += np.where(usable_macd & (ind["MACD"] > 0) & (ind["MACDSignal"] > 0), 10, 0)
-    score += np.where(usable_macd & (ind["MACD"] < 0) & (ind["MACDSignal"] < 0), -10, 0)
-    score += np.where(usable_macd & (ind["MACD"] > ind["MACDSignal"]) & (ind["MACDHist"] > 0), 10, 0)
-    score += np.where(usable_macd & (ind["MACD"] < ind["MACDSignal"]) & (ind["MACDHist"] < 0), -10, 0)
-
-    hist_delta = ind["MACDHist"].diff()
-    score += np.where(usable_macd & (ind["MACDHist"] > 0) & (hist_delta > 0) & (hist_delta.shift(1) > 0), 6, 0)
-    score += np.where(usable_macd & (ind["MACDHist"] < 0) & (hist_delta < 0) & (hist_delta.shift(1) < 0), -6, 0)
-
-    # Bollinger
-    denom = (ind["BBUp"] - ind["BBLow"]).replace(0, np.nan)
-    band_pos = (close - ind["BBLow"]) / denom
-    score += np.where((close > ind["BBMid"]) & (band_pos >= 0.45) & (band_pos <= 0.90), 10, 0)
-    score += np.where((close < ind["BBMid"]) & (band_pos >= 0.10) & (band_pos <= 0.55), -10, 0)
-    score += np.where(band_pos > 0.95, 3, 0)
-    score += np.where(band_pos < 0.05, -3, 0)
-
-    score = score.clip(-100, 100)
-    return _utc_index_series(score.dropna())
+    """Canl? analizle ayn? nedensel teknik skoru kullan?r."""
+    from forex_analysis import bias_score_frame
+    return _utc_index_series(bias_score_frame(df)["score"].dropna())
 
 
 def _filter_period_for_tf(tf_name: str, fallback_period: str) -> str:
@@ -1460,11 +1413,19 @@ def _filter_period_for_tf(tf_name: str, fallback_period: str) -> str:
     Giriş zaman dilimi kısa olsa bile 4H/1H/15M filtre skorları daha uzun veriyle hesaplanır.
     Böylece EMA200 ve trend skorları 5M backtestte sadece birkaç günlük veriye sıkışmaz.
     """
-    return {
+    minimum = {
         "4 Saat": "120d",
         "1 Saat": "90d",
         "15 Dakika": "60d",
     }.get(tf_name, fallback_period)
+    # A one-year entry test needs one-year higher-timeframe context plus
+    # indicator warmup. Fixed 90/120-day requests silently blocked most of it.
+    requested = str(fallback_period).removesuffix("d")
+    baseline = str(minimum).removesuffix("d")
+    if str(fallback_period).endswith("d") and requested.isdigit() and baseline.isdigit():
+        warmup = {"4 Saat": 60, "1 Saat": 20, "15 Dakika": 10}.get(tf_name, 0)
+        return f"{max(int(baseline), int(requested) + warmup)}d"
+    return minimum
 
 
 def _fetch_score_for_tf(symbol: str, tf_name: str, period: str, shift_closed_bar: bool = True) -> pd.Series:
@@ -2417,6 +2378,7 @@ def make_backtest_key(
         str(session_filter),
         int(max_same_direction_trades),
         int(min_trades_required),
+        "technical-score-2026-10-08-v2",
     )
 
 
@@ -6546,85 +6508,111 @@ def build_overall_reading(
     )
 
 
-PIVOT_NEAR_ATR = 1.0  # fiyat girişe bu kadar ATR yakınsa plan "fırsat" listesine girer
+PIVOT_NEAR_ATR = 1.0  # yalnız izleme bölgesi; giriş izni değildir
 
 
-@st.cache_data(ttl=900, show_spinner=False)
-def scan_pivot_plans(symbols: tuple[str, ...], provider: str) -> pd.DataFrame:
-    """Her paritenin pivot planı (BEKLE olanlar hariç); `provider` önbellek anahtarı. 15 dakikada bir yenilenir."""
-    rows = []
-    for sym in symbols:
-        levels = summary_pivots(sym)
-        df = fetch_ohlc(sym, TIMEFRAMES["15 Dakika"]["interval"], TIMEFRAMES["15 Dakika"]["period"])
-        if not levels or df is None or len(df) < 30:
-            continue
-        atr = float(atr14(_utc_index_df(df.iloc[:-1]))[-1])
-        price = float(df["Close"].iloc[-1])
+def build_pivot_advisor_snapshot(symbol: str, provider: str) -> dict:
+    """Tek paritede aynı kaynak, kapanmış mumlar ve güncel ML; oturum taramasına bağımlı değil."""
+    now = pd.Timestamp.now(tz="UTC")
+    result = {"symbol": symbol, "provider": provider, "side": "WAIT", "as_of": now,
+              "pip": get_pip_size(symbol), "fresh": False, "pivot_fresh": False}
+    try:
+        levels = summary_pivots(symbol)
+        raw = fetch_ohlc(symbol, "15m", TIMEFRAMES["15 Dakika"]["period"])
+        bars = closed_bars(raw, now, 15)
+        if not levels or len(bars) < 220:
+            return {**result, "reason": "Pivot veya en az 220 kapanmış 15M mum alınamadı."}
+        price = float(raw["Close"].iloc[-1])
+        atr = float(atr14(bars)[-1])
         plan = pivot_plan(price, levels, atr)
+        previous_day = (now.normalize().tz_localize(None) - pd.offsets.BDay(1)).normalize()
+        result.update(plan, price=price, atr=atr,
+                      pivot_fresh=pd.Timestamp(levels["source_day"]).normalize() == previous_day,
+                      pivot_day=levels["source_day"], price_at=_utc_index_df(raw).index[-1],
+                      distance_atr=abs(price - plan["entry"]) / atr if atr > 0 else float("nan"))
         if plan["side"] == "WAIT":
-            continue
-        row = {"symbol": sym, "price": price, "distance_atr": abs(price - plan["entry"]) / atr, "late_side": "", **plan}
-        if row["distance_atr"] <= PIVOT_NEAR_ATR:
-            m15 = _closed_structure_frame(sym, "15 Dakika")
-            late = late_reversal(m15, _closed_structure_frame(sym, "5 Dakika"), get_pip_size(sym)) if not m15.empty else None
-            row["late_side"] = late["side"] if late else ""
-        rows.append(row)
-    return pd.DataFrame(rows)
+            return result
+        frames, scores = {}, {}
+        fresh = recent_bar(result["price_at"], now, 15, closed=False)
+        for label, tf, minutes in (("4H", "4 Saat", 240), ("1H", "1 Saat", 60),
+                                   ("15M", "15 Dakika", 15), ("5M", "5 Dakika", 5)):
+            prm = TIMEFRAMES[tf]
+            data = bars if label == "15M" else closed_bars(fetch_ohlc(symbol, prm["interval"], prm["period"]), now, minutes)
+            if len(data) < 220:
+                fresh = False
+                continue
+            frame = market_structure_frame(data)
+            values = score_series_for_backtest(data)
+            frame["Score"] = values.reindex(frame.index)
+            frames[label] = frame
+            scores[label] = float(values.iloc[-1]) if not values.empty else float("nan")
+            fresh = fresh and recent_bar(frame.index[-1], now, minutes)
+        warnings = None
+        if "15M" in frames and "5M" in frames:
+            warnings = [f"{label}: {warning}" for label in ("15M", "5M")
+                        for warning in reversal_warnings(frames[label], plan["side"])]
+        response = str(frames["15M"]["ResponseSide"].iloc[-1]) if "15M" in frames else "NONE"
+        ml, volatility = {}, None
+        if has_research_model(symbol, "direction") or has_research_model(symbol, "high_volatility"):
+            hourly = fetch_research_bars(symbol)
+            ratio = research_range_ratio(symbol)
+            ml = build_research_prediction(symbol, "direction", bars=hourly, now=now, range_ratio=ratio)
+            vol_prediction = build_research_prediction(symbol, "high_volatility", bars=hourly, now=now, range_ratio=ratio)
+            if recent_bar(vol_prediction.get("as_of"), now, 60):
+                volatility = reliable_volatility_view(vol_prediction)
+        result.update(scores=scores, fresh=fresh, response_side=response, reversal_warnings=warnings,
+                      ml=ml, volatility=volatility,
+                      signal_bar=frames["15M"].index[-1] if "15M" in frames else None)
+        if symbol == "XAUUSD=X" and provider == "Yahoo Finance":
+            result.update(fresh=False, error="Yahoo altın verisi spot XAUUSD yerine vadeli GC=F; spot işlem için kullanma.")
+        return result
+    except Exception as exc:
+        return {**result, "fresh": False, "error": f"Veri/analiz tamamlanamadı: {exc}"}
 
 
-def render_summary_pivot_opportunities(news_events: Optional[pd.DataFrame]) -> None:
-    """Pivot Trader: bütün paritelerde girişe yakın pivot planları; haber yaklaşanlar çıkarılır."""
-    st.markdown("#### 📐 Pivot Trader · fırsatlar")
-    with st.spinner("Pivot planları taranıyor..."):
-        plans = scan_pivot_plans(tuple(SYMBOL_LIST), st.session_state.get("data_provider", "Yahoo Finance"))
-    if plans.empty:
-        st.caption("Şu an hiçbir paritede pivot planı yok.")
-        return
-    near = plans[plans["distance_atr"] <= PIVOT_NEAR_ATR].sort_values("distance_atr")
-    news_blocked = [sym for sym in near["symbol"] if pair_news(sym, news_events, ahead_hours=1, after_minutes=15)[0] is not None]
-    near = near[~near["symbol"].isin(news_blocked)]
+@st.cache_data(ttl=60, show_spinner=False)
+def scan_pivot_advisor(symbol: str, provider: str) -> dict:
+    return build_pivot_advisor_snapshot(symbol, provider)
 
-    scanner_df = st.session_state.get("scanner_df")
-    feed_sides = ({sym: side for side, items in strong_bias_pairs(scanner_df).items() for sym, _ in items}
-                  if isinstance(scanner_df, pd.DataFrame) and not scanner_df.empty else None)
-    ml_df = st.session_state.get("ml_prediction_df")
-    ml_sides = (dict(zip(ml_df["Sembol"], ml_df["Tahmin"].fillna("-")))
-                if isinstance(ml_df, pd.DataFrame) and "Tahmin" in ml_df.columns else None)
 
-    def pips_to_entry(row) -> float:
-        return abs(row["price"] - row["entry"]) / get_pip_size(row["symbol"])
+def refresh_pivot_advisor() -> None:
+    """Yorumcunun fiyat, model girdisi ve takvim önbelleklerini birlikte yeniler."""
+    for cached in (_fetch_ohlc_yahoo, _fetch_ohlc_mt5, _fetch_intraday_history_yahoo,
+                   fetch_mt5_quote, fetch_last_price, fetch_price_change, scan_pivot_advisor, cached_calendar):
+        cached.clear()
 
-    long_col, short_col = st.columns(2)
-    for col, side, title in ((long_col, "LONG", "🟢 LONG · girişe kalan pip"), (short_col, "SHORT", "🔴 SHORT · girişe kalan pip")):
-        with col:
-            render_chip_group(title, [(r["symbol"], pips_to_entry(r)) for _, r in near[near["side"] == side].iterrows()],
-                              side, "pivot")
-    for start in range(0, len(near), 3):
-        for col, (_, row) in zip(st.columns(3), near.iloc[start:start + 3].iterrows()):
-            sym, side = row["symbol"], row["side"]
-            pip, decimals = get_pip_size(sym), price_decimals(sym)
-            lines = [
-                f"<b>Giriş:</b> {row['entry_name']} {row['entry']:.{decimals}f} ({pips_to_entry(row):.0f} pip uzakta)",
-                f"<b>Stop:</b> {row['stop']:.{decimals}f} ({abs(row['entry'] - row['stop']) / pip:.0f} pip) · "
-                f"<b>Hedef:</b> {row['target_name']} {row['target']:.{decimals}f} ({abs(row['target'] - row['entry']) / pip:.0f} pip)",
-            ]
-            if row["late_side"]:
-                lines.append("⚠️ Geç + dönüş var: " + ("tepeden yetişme" if row["late_side"] == side else "15M ters yönde uzamış"))
-            views = [f"{name}: {sides.get(sym, '-')}" for name, sides in (("Fırsatlar", feed_sides), ("ML", ml_sides)) if sides is not None]
-            if views:
-                lines.append(" · ".join(views))
-            css = "opportunity-long" if side == "LONG" else "opportunity-short"
-            with col:
-                st.markdown(
-                    f"<div class='opportunity-card {css}' style='padding:12px; min-height:0;'>"
-                    f"<div class='section-kicker'>{escape(sym.replace('=X', ''))} · {side}</div>"
-                    + "".join(f"<div style='font-size:.85rem;'>{line}</div>" for line in lines)
-                    + "</div>",
-                    unsafe_allow_html=True,
-                )
-    blocked = f", haber yaklaşan {len(news_blocked)} parite çıkarıldı" if news_blocked else ""
-    st.caption(f"{len(plans)} paritede plan var; girişe 1 ATR'den yakın {len(near)} tanesi listede{blocked}. "
-               f"15 dakikada bir yenilenir. {PIVOT_PLAN_NOTE}")
+
+def pivot_live_quote(symbol: str, provider: str) -> dict:
+    if provider == "Broker CSV":
+        return {}
+    if provider == "MetaTrader 5":
+        quote = fetch_mt5_quote(symbol)
+        return {**quote, "price": quote["bid"]} if quote else {}
+    bars = fetch_intraday_history(symbol, "2d")
+    if bars is None or bars.empty:
+        return {}
+    bars = _utc_index_df(bars)
+    return {"price": float(bars["Close"].iloc[-1]), "time": bars.index[-1]}
+
+
+def pivot_live_cost(symbol: str, quote: dict, now: pd.Timestamp) -> Optional[float]:
+    if quote.get("spread_pips") is not None:
+        return float(quote["spread_pips"]) + ECN_COMMISSION_PIPS
+    return estimated_round_trip_cost_pips(load_spread_profile(), symbol, current_ny_hour(now))
+
+
+@st.fragment(run_every="30s")
+def render_summary_pivot_opportunities(news_events: Optional[pd.DataFrame] = None, account_usd: float = 1000.) -> None:
+    from forex_pivot_panel import render_pivot_panel
+    render_pivot_panel(
+        scan=lambda sym, provider: (scan_pivot_advisor(sym, provider) if provider == "Yahoo Finance"
+                                    else build_pivot_advisor_snapshot(sym, provider)),
+        get_quote=pivot_live_quote, get_calendar=cached_calendar,
+        get_news=lambda sym, events: pair_news(sym, events, ahead_hours=1, after_minutes=15),
+        get_cost=pivot_live_cost, get_pip_value=estimate_pip_value_per_lot_usd,
+        refresh=refresh_pivot_advisor, provider=st.session_state.get("data_provider", "Yahoo Finance"),
+        account_usd=float(account_usd),
+    )
 
 
 def render_summary_overall(symbol: str, reading: Optional[dict]) -> None:
@@ -7008,7 +6996,8 @@ def render_summary_page(
 
     render_summary_market(symbol, intraday_fig, opportunity)
     render_summary_overall(symbol, overall)
-    render_summary_pivot_opportunities((plan_kwargs or {}).get("news_events"))
+    render_summary_pivot_opportunities((plan_kwargs or {}).get("news_events"),
+                                       account_usd=float(lot_kwargs.get("account_size", 1000.)))
     if plan_kwargs:
         render_summary_trade_plan(symbol=symbol, **plan_kwargs)
     st.divider()
@@ -7395,6 +7384,8 @@ with st.sidebar:
     )
 
     if st.button("Veriyi Yenile", use_container_width=True):
+        scan_pivot_advisor.clear()
+        cached_calendar.clear()
         _fetch_ohlc_yahoo.clear()
         _fetch_ohlc_mt5.clear()
         _fetch_intraday_history_yahoo.clear()

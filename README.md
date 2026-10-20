@@ -1,5 +1,13 @@
 # Forex Analyzer Pro
 
+Pivot Trader canlı alanı küçük net hedefle çalışır: koşullar uygunsa `LONG GİR` /
+`SHORT GİR`, eksikse `BEKLE`. Referans giriş, net 3 pip hedefi, stop, lot ve
+planlanan dolar kaybı birlikte gösterilir. Panel 30 saniyede bir yenilenir;
+eski fiyat veya kaçan giriş bölgesi yeni giriş önerisini engeller. İşlem başına
+zarar bütçesi panelden seçilir. GİR kararı zarar etmeme garantisi değildir.
+[Küçük hedef denemesi](research/pivot_advisor_small_profit/REPORT.md): 12/12
+geçmiş örnek, bağımsız doğrulama veya gelecekteki kazanma olasılığı değildir.
+
 Günlük kullanımda sol menüden parite ve işlem riskini seçin. `Planı Kontrol Et`
 normal backtest ile trend/yatay motor kanıtı testini birlikte çalıştırır; bu işlem
 tek backtestten uzun sürebilir. Otomatik plan kontrolü yalnız normal backtesti

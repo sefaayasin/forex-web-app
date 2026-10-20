@@ -1,0 +1,257 @@
+{
+  "net_1_pip": {
+    "mode": "pip",
+    "amount": 1,
+    "all": {
+      "n": 13,
+      "targets": 13,
+      "stops": 0,
+      "timeouts": 0,
+      "net_positive": 13,
+      "net_negative": 0,
+      "net_positive_rate": 1.0,
+      "mean_result": 0.9999999999995973,
+      "sum_result": 12.999999999994765,
+      "mean_stress_result": -0.7615384615388645,
+      "worst_result": 0.9999999999986584
+    },
+    "audit": {
+      "decisions": 19,
+      "overlaps": 5,
+      "incomplete": 1,
+      "invalid_open": 0
+    },
+    "by_side": {
+      "LONG": {
+        "n": 2,
+        "targets": 2,
+        "stops": 0,
+        "timeouts": 0,
+        "net_positive": 2,
+        "net_negative": 0,
+        "net_positive_rate": 1.0,
+        "mean_result": 0.9999999999991915,
+        "sum_result": 1.999999999998383,
+        "mean_stress_result": -0.8000000000008085,
+        "worst_result": 0.9999999999986584
+      },
+      "SHORT": {
+        "n": 11,
+        "targets": 11,
+        "stops": 0,
+        "timeouts": 0,
+        "net_positive": 11,
+        "net_negative": 0,
+        "net_positive_rate": 1.0,
+        "mean_result": 0.999999999999671,
+        "sum_result": 10.999999999996382,
+        "mean_stress_result": -0.7545454545457837,
+        "worst_result": 0.9999999999986584
+      }
+    }
+  },
+  "net_3_pip": {
+    "mode": "pip",
+    "amount": 3,
+    "all": {
+      "n": 12,
+      "targets": 12,
+      "stops": 0,
+      "timeouts": 0,
+      "net_positive": 12,
+      "net_negative": 0,
+      "net_positive_rate": 1.0,
+      "mean_result": 2.99999999999959,
+      "sum_result": 35.99999999999508,
+      "mean_stress_result": 1.2416666666662568,
+      "worst_result": 2.9999999999993046
+    },
+    "audit": {
+      "decisions": 19,
+      "overlaps": 6,
+      "incomplete": 1,
+      "invalid_open": 0
+    },
+    "by_side": {
+      "LONG": {
+        "n": 2,
+        "targets": 2,
+        "stops": 0,
+        "timeouts": 0,
+        "net_positive": 2,
+        "net_negative": 0,
+        "net_positive_rate": 1.0,
+        "mean_result": 2.999999999999593,
+        "sum_result": 5.999999999999186,
+        "mean_stress_result": 1.199999999999593,
+        "worst_result": 2.9999999999995044
+      },
+      "SHORT": {
+        "n": 10,
+        "targets": 10,
+        "stops": 0,
+        "timeouts": 0,
+        "net_positive": 10,
+        "net_negative": 0,
+        "net_positive_rate": 1.0,
+        "mean_result": 2.999999999999589,
+        "sum_result": 29.999999999995893,
+        "mean_stress_result": 1.2499999999995894,
+        "worst_result": 2.9999999999993046
+      }
+    }
+  },
+  "net_5_pip": {
+    "mode": "pip",
+    "amount": 5,
+    "all": {
+      "n": 11,
+      "targets": 10,
+      "stops": 1,
+      "timeouts": 0,
+      "net_positive": 10,
+      "net_negative": 1,
+      "net_positive_rate": 0.9090909090909091,
+      "mean_result": 3.78160173160174,
+      "sum_result": 41.59761904761914,
+      "mean_stress_result": 1.9997835497835583,
+      "worst_result": -8.402380952379328
+    },
+    "audit": {
+      "decisions": 19,
+      "overlaps": 7,
+      "incomplete": 1,
+      "invalid_open": 0
+    },
+    "by_side": {
+      "LONG": {
+        "n": 2,
+        "targets": 2,
+        "stops": 0,
+        "timeouts": 0,
+        "net_positive": 2,
+        "net_negative": 0,
+        "net_positive_rate": 1.0,
+        "mean_result": 5.00000000000055,
+        "sum_result": 10.0000000000011,
+        "mean_stress_result": 3.20000000000055,
+        "worst_result": 5.000000000000394
+      },
+      "SHORT": {
+        "n": 9,
+        "targets": 8,
+        "stops": 1,
+        "timeouts": 0,
+        "net_positive": 8,
+        "net_negative": 1,
+        "net_positive_rate": 0.8888888888888888,
+        "mean_result": 3.510846560846449,
+        "sum_result": 31.597619047618043,
+        "mean_stress_result": 1.7330687830686715,
+        "worst_result": -8.402380952379328
+      }
+    }
+  },
+  "net_10_usd_risk_100": {
+    "mode": "cash",
+    "amount": 10,
+    "all": {
+      "n": 12,
+      "targets": 12,
+      "stops": 0,
+      "timeouts": 0,
+      "net_positive": 12,
+      "net_negative": 0,
+      "net_positive_rate": 1.0,
+      "mean_result": 9.999999999999941,
+      "sum_result": 119.99999999999929,
+      "mean_stress_result": -2.5741082694232618,
+      "worst_result": 9.999999999994731
+    },
+    "audit": {
+      "decisions": 19,
+      "overlaps": 6,
+      "incomplete": 1,
+      "invalid_open": 0
+    },
+    "by_side": {
+      "LONG": {
+        "n": 2,
+        "targets": 2,
+        "stops": 0,
+        "timeouts": 0,
+        "net_positive": 2,
+        "net_negative": 0,
+        "net_positive_rate": 1.0,
+        "mean_result": 10.000000000003606,
+        "sum_result": 20.000000000007212,
+        "mean_stress_result": -4.04136283949439,
+        "worst_result": 10.000000000002043
+      },
+      "SHORT": {
+        "n": 10,
+        "targets": 10,
+        "stops": 0,
+        "timeouts": 0,
+        "net_positive": 10,
+        "net_negative": 0,
+        "net_positive_rate": 1.0,
+        "mean_result": 9.999999999999208,
+        "sum_result": 99.99999999999207,
+        "mean_stress_result": -2.280657355409036,
+        "worst_result": 9.999999999994731
+      }
+    }
+  },
+  "net_50_usd_risk_100": {
+    "mode": "cash",
+    "amount": 50,
+    "all": {
+      "n": 11,
+      "targets": 6,
+      "stops": 3,
+      "timeouts": 2,
+      "net_positive": 7,
+      "net_negative": 4,
+      "net_positive_rate": 0.6363636363636364,
+      "mean_result": -0.8182173225815229,
+      "sum_result": -9.000390548396751,
+      "mean_stress_result": -13.739308366668313,
+      "worst_result": -101.56337241765104
+    },
+    "audit": {
+      "decisions": 19,
+      "overlaps": 7,
+      "incomplete": 1,
+      "invalid_open": 0
+    },
+    "by_side": {
+      "LONG": {
+        "n": 2,
+        "targets": 0,
+        "stops": 1,
+        "timeouts": 1,
+        "net_positive": 1,
+        "net_negative": 1,
+        "net_positive_rate": 0.5,
+        "mean_result": -44.94078133213404,
+        "sum_result": -89.88156266426807,
+        "mean_stress_result": -58.98214417163204,
+        "worst_result": -101.56337241765104
+      },
+      "SHORT": {
+        "n": 9,
+        "targets": 6,
+        "stops": 2,
+        "timeouts": 1,
+        "net_positive": 6,
+        "net_negative": 3,
+        "net_positive_rate": 0.6666666666666666,
+        "mean_result": 8.98679690176348,
+        "sum_result": 80.88117211587132,
+        "mean_stress_result": -3.685344854454153,
+        "worst_result": -100.59693007390955
+      }
+    }
+  }
+}

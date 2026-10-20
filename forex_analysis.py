@@ -524,6 +524,42 @@ def latest_valid_row(df: pd.DataFrame) -> Optional[pd.Series]:
     return valid.iloc[-1]
 
 
+def bias_score_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """One causal scoring implementation shared by live analysis and backtests."""
+    ind = df if "EMA200" in df else add_indicators(df)
+    close = ind.Close
+    trend = pd.Series(0., index=ind.index)
+    trend += np.where(close > ind.EMA200, 20, -20)
+    trend += np.where(ind.EMA50 > ind.EMA200, 20, -20)
+    trend += np.where((close > ind.EMA20) & (ind.EMA20 > ind.EMA50), 15, 0)
+    trend += np.where((close < ind.EMA20) & (ind.EMA20 < ind.EMA50), -15, 0)
+    slope50, slope200 = ind.EMA50.diff(8), ind.EMA200.diff(20)
+    trend += np.where((slope50 > 0) & (slope200 >= 0), 10, 0)
+    trend += np.where((slope50 < 0) & (slope200 <= 0), -10, 0)
+    rsi = ind.RSI14
+    momentum = pd.Series(np.select([rsi.between(52, 68), rsi > 75,
+        rsi.between(32, 48), rsi < 25], [20, 5, -20, -5], default=0), index=ind.index, dtype=float)
+    atr = ind.ATR14.replace(0, np.nan)
+    sign = np.sign(ind.MACDHist)
+    cross = (sign.ne(sign.shift(1)) & sign.ne(0) & sign.shift(1).ne(0)
+             & sign.notna() & sign.shift(1).notna())
+    whipsaw = (cross.rolling(12).sum() >= 4) & (ind.MACD / atr).abs().le(.20) & (ind.MACDHist / atr).abs().le(.08)
+    usable = ~whipsaw.fillna(False)
+    momentum += np.where(usable & ind.MACD.gt(0) & ind.MACDSignal.gt(0), 10, 0)
+    momentum += np.where(usable & ind.MACD.lt(0) & ind.MACDSignal.lt(0), -10, 0)
+    momentum += np.where(usable & ind.MACD.gt(ind.MACDSignal) & ind.MACDHist.gt(0), 10, 0)
+    momentum += np.where(usable & ind.MACD.lt(ind.MACDSignal) & ind.MACDHist.lt(0), -10, 0)
+    delta = ind.MACDHist.diff()
+    momentum += np.where(usable & ind.MACDHist.gt(0) & delta.gt(0) & delta.shift(1).gt(0), 6, 0)
+    momentum += np.where(usable & ind.MACDHist.lt(0) & delta.lt(0) & delta.shift(1).lt(0), -6, 0)
+    pos = (close - ind.BBLow) / (ind.BBUp - ind.BBLow).replace(0, np.nan)
+    volatility = pd.Series(np.select([(close > ind.BBMid) & pos.between(.45, .90),
+        (close < ind.BBMid) & pos.between(.10, .55), pos > .95, pos < .05],
+        [10, -10, 3, -3], default=0), index=ind.index, dtype=float)
+    return pd.DataFrame({"trend": trend, "momentum": momentum, "volatility": volatility,
+        "score": (trend + momentum + volatility).clip(-100, 100)}, index=ind.index)
+
+
 def evaluate_bias(df: pd.DataFrame) -> BiasResult:
     """Tek bar değil, trend + momentum + volatilite yapısına göre bias üretir."""
     if df.empty or len(df) < 60:
@@ -548,8 +584,8 @@ def evaluate_bias(df: pd.DataFrame) -> BiasResult:
     atr = float(row["ATR14"])
 
     # EMA eğimleri
-    ema50_slope = float(ind["EMA50"].iloc[-1] - ind["EMA50"].iloc[-8]) if len(ind) > 8 else 0.0
-    ema200_slope = float(ind["EMA200"].iloc[-1] - ind["EMA200"].iloc[-20]) if len(ind) > 20 else 0.0
+    ema50_slope = float(ind["EMA50"].iloc[-1] - ind["EMA50"].iloc[-9]) if len(ind) > 8 else 0.0
+    ema200_slope = float(ind["EMA200"].iloc[-1] - ind["EMA200"].iloc[-21]) if len(ind) > 20 else 0.0
     hist_delta = float(ind["MACDHist"].iloc[-1] - ind["MACDHist"].iloc[-4]) if len(ind) > 4 else 0.0
 
     trend_score = 0.0
@@ -601,7 +637,8 @@ def evaluate_bias(df: pd.DataFrame) -> BiasResult:
 
     recent_hist = ind["MACDHist"].dropna().tail(13)
     recent_sign = np.sign(recent_hist)
-    cross_count = int(((recent_sign != recent_sign.shift(1)) & (recent_sign != 0) & (recent_sign.shift(1) != 0)).sum())
+    cross_count = int(((recent_sign != recent_sign.shift(1)) & (recent_sign != 0)
+                       & (recent_sign.shift(1) != 0) & recent_sign.shift(1).notna()).sum())
     macd_atr = macd / atr if atr > 0 else 0.0
     hist_atr = hist / atr if atr > 0 else 0.0
     macd_whipsaw = cross_count >= 4 and abs(macd_atr) <= 0.20 and abs(hist_atr) <= 0.08
@@ -650,8 +687,9 @@ def evaluate_bias(df: pd.DataFrame) -> BiasResult:
             volatility_score -= 3
             reasons.append("Fiyat alt banda çok yakın, satışta takip riski var")
 
-    raw_score = trend_score + momentum_score + volatility_score
-    score = float(np.clip(raw_score, -100, 100))
+    shared = bias_score_frame(ind).loc[row.name]
+    trend_score, momentum_score, volatility_score = (float(shared[c]) for c in ("trend", "momentum", "volatility"))
+    score = float(shared["score"])
     label = label_from_score(score)
     explanation = "; ".join(reasons[:5])
     return BiasResult(label, score, trend_score, momentum_score, volatility_score, explanation)

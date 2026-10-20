@@ -10,16 +10,36 @@ import numpy as np
 import pandas as pd
 
 
+def wilder_average(values: pd.Series, period: int = 14) -> pd.Series:
+    """Seed with the first full SMA, then use Wilder's 1/period recurrence."""
+    if not isinstance(period, int) or period < 1:
+        raise ValueError("Period must be a positive integer")
+    values = values.astype(float)
+    seed = values.rolling(period, min_periods=period).mean()
+    positions = np.flatnonzero(seed.notna().to_numpy())
+    if not len(positions):
+        return pd.Series(np.nan, index=values.index)
+    first = int(positions[0])
+    initialized = values.copy()
+    initialized.iloc[:first] = np.nan
+    initialized.iloc[first] = seed.iloc[first]
+    return initialized.ewm(alpha=1 / period, adjust=False).mean().mask(values.isna())
+
+
 def compute_rsi(close: pd.Series, period: int = 14) -> pd.Series:
     """Wilder RSI based on exponentially smoothed gains and losses."""
     close = close.astype(float)
     delta = close.diff()
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
-    avg_gain = gain.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
-    avg_loss = loss.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    avg_gain = wilder_average(gain, period)
+    avg_loss = wilder_average(loss, period)
     rs = avg_gain / avg_loss.replace(0, np.nan)
-    return 100 - (100 / (1 + rs))
+    rsi = 100 - (100 / (1 + rs))
+    # A run without losses is overbought, not missing data. A flat window
+    # carries no directional momentum; retain NaN during the warmup.
+    rsi = rsi.mask((avg_loss == 0) & (avg_gain > 0), 100.0)
+    return rsi.mask((avg_loss == 0) & (avg_gain == 0), 50.0)
 
 
 def compute_macd(
@@ -58,7 +78,7 @@ def compute_atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
         ],
         axis=1,
     ).max(axis=1)
-    return true_range.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    return wilder_average(true_range, period)
 
 
 def compute_ichimoku(df: pd.DataFrame) -> pd.DataFrame:
