@@ -1,0 +1,25 @@
+{
+  "name": "Do the opportunity feed's 15M + 5M LONG/SHORT cards predict the next move?",
+  "frozen_on": "2026-09-27",
+  "question": "After the app's Fırsat Akışı shows a LONG or SHORT card, does the pair then move in that direction by more than the trading cost?",
+  "what_is_tested": "The app's own scan code, compiled from forex_web_app_streamlit_v14_alert_decision.py by feed_replay.py: analyse_symbol, global_bias, build_market_model_status (default filters on, entry model 'Düzeltme + Tepki') and scanner_opportunity_from_row in 'Dengeli Sinyal' mode with backtest quality off (the default), so a card is 'LONG/SHORT ÖN İZLEME' only when the structure gate passes. Only data fetching is replaced: at each moment the replay returns what the app would have downloaded (forming bar last, dropped by analyse_symbol; 4h rebuilt from hourly like the app).",
+  "decision_times": "Every 15 minutes (on 15-minute boundaries) while the market is open, for both entry timeframes (15 Dakika and 5 Dakika)",
+  "backtest": {
+    "data": "Dukascopy archives: data/historical_5m, data/historical_15m, data/historical_1h_from_15m",
+    "period": ["2025-09-11", "2026-09-11"],
+    "pairs": "All 28 pairs of the app except EURZAR"
+  },
+  "live_data_replay": {
+    "data": "Yahoo Finance, the app's live source: 5m and 15m for the last 60 days, 60m for 180 days, downloaded on 2026-09-27",
+    "period": "From five days after the first available Yahoo 5m bar to 2026-09-25 (the last trading day)",
+    "pairs": "Same 28 pairs",
+    "note": "This is the closest thing to a forward test that can be run today: the exact live pipeline on the live data source, including two weeks after the local archive ends. A real forward test needs calls recorded as they happen."
+  },
+  "calls": "A new call is a LONG or SHORT card for a pair and entry timeframe that was not showing with the same side at the previous 15-minute scan. Repeated scans of the same card are not counted again.",
+  "outcome": "Signed move in pips from the open of the 5-minute bar starting at the decision time to the last 5-minute open at or before decision time + horizon; horizons 15 minutes, 1 hour, 4 hours, 24 hours. Positive = the market moved the way the card said.",
+  "costs": "Net move = signed move minus the measured round-trip cost for that pair and New York hour (data/ml/spread_profile.json median + 0.7 pip commission)",
+  "statistics": "Per entry timeframe and horizon: hit rate (signed move > 0), mean signed and net pips, with 95% bootstrap intervals resampling calendar days (2000 resamples, seed 42) so same-day calls stay together",
+  "success_criterion": "LONG/SHORT cards count as useful if, for at least one entry timeframe, the mean net move is above zero with the 95% interval above zero at both the 1-hour and the 4-hour horizon in the backtest. The live-data replay is reported alongside and must not contradict it (mean net move at 1 and 4 hours not below zero).",
+  "information_only": "The same measures for moments where the direction rule passed but the structure gate blocked the card, to show whether the gate adds value; results by call score.",
+  "parameter_search": "None: the app's defaults are tested as they are"
+}

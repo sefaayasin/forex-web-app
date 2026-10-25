@@ -1,0 +1,37 @@
+{
+  "source": "research\\pivot_advisor\\all_decisions.csv",
+  "decisions_sha256": "b8c697fa5746087a2a24fc376a7920e058bceef630331f05b4050766bac3cac3",
+  "code_sha256": "8671913c22c07c392fc4e6296f37f18d012e1a691dfe0baaa63ad98264e860e7",
+  "scenarios": [
+    [
+      "net_1_pip",
+      "pip",
+      1
+    ],
+    [
+      "net_3_pip",
+      "pip",
+      3
+    ],
+    [
+      "net_5_pip",
+      "pip",
+      5
+    ],
+    [
+      "net_10_usd_risk_100",
+      "cash",
+      10
+    ],
+    [
+      "net_50_usd_risk_100",
+      "cash",
+      50
+    ]
+  ],
+  "stop": "original pivot stop",
+  "horizon_hours": 4,
+  "selection": "none; follow-up on inspected data, not validation",
+  "cash_policy": "illustrative $100 planned stop, continuous pip value, no lot/margin simulation",
+  "fills": "next 5M open; target calculated from actual fill; stop first if ambiguous"
+}

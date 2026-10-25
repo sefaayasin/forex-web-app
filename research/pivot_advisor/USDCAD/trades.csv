@@ -1,0 +1,2 @@
+pair,time,side,signal_price,entry,stop,target,alignment,cost_pips,ml_up,news_known,direction_1h_pips,direction_4h_pips,kind,exit_time,exit_price,actual_entry,gross_pips,ambiguous,entry_gap_pips,net_pips,stress_net_pips,risk_pips,net_r
+USDCAD,2025-03-24 17:30:00+00:00,SHORT,1.43142,1.43142,1.4328157142857145,1.4284900000000003,75,1.7,0.4850039641285715,True,-6.099999999999994,-0.9999999999998899,time,2025-03-24 21:30:00+00:00,1.43154,1.43142,-1.2000000000012,False,-0.0,-2.9000000000012003,-5.1000000000012005,13.95714285714611,-0.18521897810222798

@@ -1,0 +1,96 @@
+{
+  "date": "2026-10-25",
+  "written_before_results": true,
+  "source": "arda_forex/forex-bot-main (a friend's MT5 project); rules copied from USDJPY_Sinyal.mq5 v1.000-1.500 and research/v29_sim.py; nothing is re-tuned here",
+  "server_time": "XM-style broker time = New York local time + 7h; H4 and D1 candles are rebuilt from 15M on that clock (D1 closes at 17:00 New York)",
+  "costs": "measured Dukascopy median spread at the entry New York hour + 0.7 pip ECN commission, paid once (data/ml/spread_profile.json); gold: Dukascopy median ASK-BID by New York hour from the 10th-15th of each month, no commission",
+  "periods_fx": {
+    "development": [
+      "2009-01-01",
+      "2018-01-01"
+    ],
+    "validation": [
+      "2018-01-01",
+      "2023-01-01"
+    ],
+    "audit": [
+      "2023-01-01",
+      "2025-01-01"
+    ],
+    "replication_only": [
+      "2025-01-01",
+      "2027-01-01"
+    ]
+  },
+  "hypotheses": {
+    "H1_usdjpy_h4_pullback": {
+      "rule": "H4 EMA20>EMA50 gives direction d; last closed server-day D1 structure (pivot 3, close beyond last confirmed pivot high/low) equals d; H4 bar touches EMA20 (low<=EMA20 for long), closes beyond EMA20 on the d side and in colour d; >=5 H4 bars since previous signal. Stop = extreme of signal bar and previous 5 bars -/+ 0.3 H4 ATR(14, Wilder). Target = close + 2 x (close - stop). Time exit at close of H4 bar k+100.",
+      "execution": "decision at H4 close; fill at next 5M open; stop and target levels as in the indicator; stop wins when both touched in one 5M bar; overlapping trades allowed (the indicator scores each signal independently)",
+      "metric": "net R per trade = (exit - fill) x side / (close - stop distance) - cost / risk",
+      "pass": "2009-2024 combined: >=60 trades, mean net R > 0, day-level stationary bootstrap 95% lower bound > 0, and mean net R > 0 separately in development, validation and audit",
+      "replication_check": "2025-2026 is Arda's selection window; reported, not used for the decision"
+    },
+    "H1b_same_rule_28_pairs": {
+      "rule": "H1 unchanged on all 28 pairs",
+      "pass": "pooled 2009-2024 passes the H1 gate and >=60% of pairs have positive mean net R; secondary, informs whether H1 is pair-specific luck"
+    },
+    "H2_gold_m15": {
+      "rule": "Arda's own run() from research/v29_sim.py executed unchanged through a data adapter (Dukascopy 1M -> server-time M15/M30/H1/H4, spread column from the measured gold profile)",
+      "configs": {
+        "G1_scalp_all_v3000": "sigScalp=True, sigTrend=False, sigDonus=False, onlyBest=False, scBrk=True, brkBody=0.5, brkBeyond=0.1, exitEma=100, trailStop=True, trailAfterTP=False (current indicator trade signal)",
+        "G2_strong_trend_v2900": "sigScalp=False, sigTrend=True, sigDonus=False, onlyBest=True, trEmaGate=False, brkBody=0.5, brkBeyond=0.1, exitEma=100, trailStop=True, trailAfterTP=False",
+        "G3_trend_all_v2900": "as G2 with onlyBest=False"
+      },
+      "test_window": "2020-01-01 .. 2024-12-31 (never seen by Arda)",
+      "pass": "per config: >=60 trades, mean net R > 0, day-level bootstrap 95% lower bound > 0, mean net R > 0 in 2020-2022 and in 2023-2024, and in at least 4 of 5 calendar years. Long and short reported separately.",
+      "replication_check": "if 2025-01..2026-10 data is available, PF is compared with Arda's notes to confirm the adapter"
+    },
+    "H3_direction_ladder": {
+      "rule": "structure direction (pivot 3, Arda's struct_dir) on server-time D1, H4, H1 and M30, each from its last closed bar; all four equal and non-zero gives direction",
+      "sample": "28 pairs, every H1 close",
+      "metric": "pips from decision close to close 4 hours later in the ladder direction, minus cost",
+      "pass": "mean net pips > 0 with day-level bootstrap 95% lower bound > 0 in each of development, validation and audit(2023-2026). Gross result and 1-hour horizon reported."
+    },
+    "H4_shock_alert": {
+      "rule": "closed M15 bar with |close-open| >= 3 x mean true range of the 14 bars before it",
+      "sample": "28 pairs",
+      "alert_value_pass": "median of (next 4h high-low) / (median 4h high-low for the same pair and UTC start hour over the previous 60 days) >= 1.5 in each period",
+      "direction_report": "net pips 1h and 4h after the next open in the body direction; called directional only if the bootstrap interval excludes zero with the same sign in all three periods"
+    },
+    "H5_news_history_line": {
+      "rule": "high-impact ForexFactory events 2010-2026 with actualBetterWorse; pair map as research_news_drift (USD events on EURUSD, USDJPY, GBPUSD, AUDUSD). Outcome = sign of the pair move from the release 5M open to the close 60 minutes later, expressed for the event currency. History = earlier occurrences of the same series and better/worse side only (>=8).",
+      "prediction": "when history shows >=65% one way, predict that way for the next occurrence",
+      "pass": "hit rate of these predictions > 50% with a 95% bootstrap lower bound > 50% in each period, and higher than the naive 'better news = currency up' rule on the same events"
+    },
+    "H6_lot_guard": {
+      "rule": "skip when the minimum 0.01 lot already loses more than 3 x the planned risk ($1000 x 1.5%) at the stop",
+      "test": "none needed (risk arithmetic); report how many H1/H2 trades it would skip"
+    },
+    "H7_partial_exit": {
+      "rule": "at +1R close half and move the stop to entry; the rest keeps the 2R target/stop/time exit",
+      "sample": "H1 and H1b trades",
+      "report": "mean net R, worst calendar month and max drawdown in R versus the full-position baseline; offered as a plan option only if worst month and drawdown improve by >=30% while mean net R stays > 0"
+    }
+  },
+  "periods_h3_h4_h5": {
+    "development": [
+      "2009-01-01",
+      "2018-01-01"
+    ],
+    "validation": [
+      "2018-01-01",
+      "2023-01-01"
+    ],
+    "audit": [
+      "2023-01-01",
+      "2027-01-01"
+    ],
+    "note": "H3-H5 are display ideas, not rules fitted by Arda on 2025-26 prices, so the audit runs to the end of the data; H5 development starts 2010 (calendar archive)"
+  },
+  "data_change_before_results": {
+    "date": "2026-10-25",
+    "reason": "Dukascopy datafeed throttled to ~1 file/min (1,600 files ~ 1 day) and the jetta API answers with a bot challenge, which we do not bypass",
+    "gold_bars": "HistData.com free M1 BID, 2020-01 .. 2026-10, clock EST without DST (UTC-5)",
+    "gold_spread": "Dukascopy BID/ASK minute candles on the 15th of each month 2020-2024 (60 days), median by New York hour"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-09",
+  "target_net_usd": 30,
+  "planned_stop_usd": 100,
+  "entry_ny_hours_sunday": [
+    18,
+    20
+  ],
+  "min_gap_daily_atr": [
+    0.1,
+    0.25
+  ],
+  "stops_daily_atr": [
+    0.5,
+    1.0
+  ],
+  "hold_hours": 24,
+  "periods": {
+    "development": [
+      "2009-01-01",
+      "2018-01-01"
+    ],
+    "validation": [
+      "2018-01-01",
+      "2023-01-01"
+    ],
+    "audit": [
+      "2023-01-01",
+      "2027-01-01"
+    ]
+  },
+  "gates": {
+    "development": ">=100 trades and stress mean > 0",
+    "validation": ">=50 trades and mean > 0"
+  },
+  "script_sha256": "6a5967b8ead1dd03c91e16bc9063aa26d7dff864bf79f36c0a2983ff82258662"
+}

@@ -23,7 +23,7 @@ def plan(**overrides):
 class TradePlanTests(unittest.TestCase):
     def test_long_plan_levels_lot_and_measured_outcome(self):
         p = plan()
-        self.assertEqual((p["action"], p["side"]), ("LONG", "LONG"))
+        self.assertEqual((p["action"], p["side"]), ("BEKLE", "LONG"))
         self.assertAlmostEqual(p["stop_pips"], 9.0)
         self.assertAlmostEqual(p["lot"], 50 / (10.0 * 10))  # loss / ((stop + cost) * pip value)
         self.assertAlmostEqual(p["target_pips"], 11.0)  # 50 $ net at 0.5 lot = 10 pip, + 1 pip cost
@@ -54,6 +54,7 @@ class TradePlanTests(unittest.TestCase):
     def test_nearest_measured_ratio(self):
         self.assertEqual(measured_outcome(STATS, "EURUSD", 0.6)["ratio"], 0.5)
         self.assertFalse(measured_outcome(STATS, "EURUSD", 2.0)["exact"])
+        self.assertFalse(measured_outcome(STATS, "EURUSD", 0.6)["exact"])
 
     def test_blockers_for_rollover_weekend_news_and_cost(self):
         self.assertEqual(trading_blockers(WEDNESDAY_NOON_NY), [])
@@ -71,6 +72,40 @@ class TradePlanTests(unittest.TestCase):
         self.assertEqual(len(stats["pairs"]), 28)
         for pair_stats in stats["pairs"].values():
             self.assertEqual(sorted(map(float, pair_stats["ratios"])), stats["ratios"])
+
+    def test_losing_or_unmeasured_plan_cannot_become_an_entry(self):
+        self.assertEqual(plan(target_usd=30, loss_usd=100)["action"], "BEKLE")
+        self.assertEqual(plan(stats={})["action"], "BEKLE")
+        self.assertTrue(plan()["blockers"])
+
+    def test_positive_descriptive_average_does_not_grant_permission(self):
+        stats = {"pairs": {"EURUSD": {"ratios": {"1.0": {
+            "ml": {"net_r": .1}, "opposite": {"net_r": 0.}}}}}}
+        p = plan(stats=stats, target_usd=40)
+        self.assertEqual(p["action"], "BEKLE")
+
+    def test_lot_is_rounded_down_and_cash_budget_not_exceeded(self):
+        p = plan(loss_usd=100, target_usd=30, atr=.000713)
+        self.assertLessEqual(p["planned_loss_usd"], 100)
+        self.assertAlmostEqual(p["lot"] * 100, round(p["lot"] * 100))
+        self.assertAlmostEqual((p["target_pips"] - 1) * p["lot"] * 10, 30)
+
+    def test_invalid_inputs_cannot_produce_levels(self):
+        for override in ({"probability_up": 1.1}, {"probability_up": float("inf")},
+                         {"price": float("nan")}, {"cost_pips": -1}, {"pip": 0}):
+            self.assertEqual(plan(**override)["action"], "BEKLE")
+
+    def test_partial_exit_at_one_r_when_target_is_farther(self):
+        p = plan()  # stop 9, target 11 pips, lot 0.5
+        partial = p["partial_exit"]
+        self.assertAlmostEqual(partial["price"], 1.1600 + 0.0009)
+        self.assertEqual((partial["close_lot"], partial["keep_lot"]), (0.25, 0.25))
+        self.assertAlmostEqual(partial["locked_usd"], 0.25 * (9 - 1) * 10)
+        self.assertLess(plan(probability_up=0.4)["partial_exit"]["price"], 1.1600)
+
+    def test_no_partial_exit_for_near_target_or_unsplittable_lot(self):
+        self.assertIsNone(plan(target_usd=20)["partial_exit"])  # target 5 pips < 1R
+        self.assertIsNone(plan(loss_usd=1.5, account_usd=1000)["partial_exit"])  # 0.01 lot cannot be halved
 
 
 if __name__ == "__main__":

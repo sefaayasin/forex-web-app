@@ -1,0 +1,4934 @@
+{
+  "selected": {
+    "delay_minutes": 30,
+    "surprise_multiplier": 1.0,
+    "direction": 1,
+    "risk_usd": 20.0,
+    "stop_atr": 3.0,
+    "hours": 1,
+    "development": [
+      {
+        "trades": 18,
+        "target_rate": 0.05555555555555555,
+        "win_rate": 0.4444444444444444,
+        "mean_usd": -0.13843802270070446,
+        "stress_mean_usd": -1.8239272694091702,
+        "fixed_risk_drawdown_usd": 47.96474230637932,
+        "worst_loss_usd": -14.15444582213966,
+        "fixed_budget_account_balance": 997.5081155913871,
+        "affordable_trades": 18,
+        "account_exhausted": false
+      },
+      {
+        "trades": 35,
+        "target_rate": 0.0,
+        "win_rate": 0.42857142857142855,
+        "mean_usd": -0.7674674123106342,
+        "stress_mean_usd": -2.3544266758950534,
+        "fixed_risk_drawdown_usd": 87.04815143147889,
+        "worst_loss_usd": -19.999999999999922,
+        "fixed_budget_account_balance": 973.1386405691279,
+        "affordable_trades": 35,
+        "account_exhausted": false
+      }
+    ]
+  },
+  "trials": [
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.16666666666666666,
+          "win_rate": 0.2777777777777778,
+          "mean_usd": -2.1529746742570612,
+          "stress_mean_usd": -5.39940966268175,
+          "fixed_risk_drawdown_usd": 115.33493114564729,
+          "worst_loss_usd": -20.000000000000874,
+          "fixed_budget_account_balance": 961.2464558633731,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.14285714285714285,
+          "win_rate": 0.42857142857142855,
+          "mean_usd": -2.5281870380261995,
+          "stress_mean_usd": -5.599935585856838,
+          "fixed_risk_drawdown_usd": 263.73744756582346,
+          "worst_loss_usd": -20.000000000000888,
+          "fixed_budget_account_balance": 911.5134536690831,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.4444444444444444,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": 2.2222222222223666,
+          "stress_mean_usd": -1.0242127662023224,
+          "fixed_risk_drawdown_usd": 110.00000000000148,
+          "worst_loss_usd": -20.00000000000112,
+          "fixed_budget_account_balance": 1040.0000000000023,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.28125,
+          "win_rate": 0.3125,
+          "mean_usd": -3.026179186383751,
+          "stress_mean_usd": -6.092654389871745,
+          "fixed_risk_drawdown_usd": 258.9402329536075,
+          "worst_loss_usd": -20.000000000000888,
+          "fixed_budget_account_balance": 903.1622660357204,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.0,
+          "win_rate": 0.2777777777777778,
+          "mean_usd": -2.602386068008611,
+          "stress_mean_usd": -4.3730457727270915,
+          "fixed_risk_drawdown_usd": 86.572162156861,
+          "worst_loss_usd": -20.000000000000234,
+          "fixed_budget_account_balance": 953.1570507758448,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.02857142857142857,
+          "win_rate": 0.45714285714285713,
+          "mean_usd": -1.1259012435879505,
+          "stress_mean_usd": -2.7956105762840213,
+          "fixed_risk_drawdown_usd": 161.94486075671728,
+          "worst_loss_usd": -20.0000000000005,
+          "fixed_budget_account_balance": 960.5934564744219,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.16666666666666666,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -1.49685934166321,
+          "stress_mean_usd": -3.267519046381688,
+          "fixed_risk_drawdown_usd": 125.48036524436817,
+          "worst_loss_usd": -20.00000000000027,
+          "fixed_budget_account_balance": 973.0565318500622,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.125,
+          "win_rate": 0.25,
+          "mean_usd": -5.456216365019927,
+          "stress_mean_usd": -7.12312922134185,
+          "fixed_risk_drawdown_usd": 262.39662523297983,
+          "worst_loss_usd": -20.000000000000647,
+          "fixed_budget_account_balance": 825.4010763193625,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3333333333333333,
+          "win_rate": 0.3888888888888889,
+          "mean_usd": -6.585352035261525,
+          "stress_mean_usd": -14.701439506323247,
+          "fixed_risk_drawdown_usd": 212.83457936607772,
+          "worst_loss_usd": -50.00000000000219,
+          "fixed_budget_account_balance": 881.4636633652925,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.34285714285714286,
+          "win_rate": 0.42857142857142855,
+          "mean_usd": -14.533479469225117,
+          "stress_mean_usd": -22.21285083880171,
+          "fixed_risk_drawdown_usd": 708.6717814228855,
+          "worst_loss_usd": -50.00000000000222,
+          "fixed_budget_account_balance": 491.32821857712094,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5555555555555556,
+          "win_rate": 0.5555555555555556,
+          "mean_usd": -5.5555555555561105,
+          "stress_mean_usd": -13.671643026617833,
+          "fixed_risk_drawdown_usd": 250.00000000000682,
+          "worst_loss_usd": -50.00000000000219,
+          "fixed_budget_account_balance": 899.9999999999903,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 34,
+          "target_rate": 0.4117647058823529,
+          "win_rate": 0.4117647058823529,
+          "mean_usd": -15.960190635579496,
+          "stress_mean_usd": -23.674304293410994,
+          "fixed_risk_drawdown_usd": 742.6464816097091,
+          "worst_loss_usd": -50.00000000000222,
+          "fixed_budget_account_balance": 457.3535183902972,
+          "affordable_trades": 34,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.16666666666666666,
+          "win_rate": 0.2777777777777778,
+          "mean_usd": -8.54935693321052,
+          "stress_mean_usd": -12.976006195006718,
+          "fixed_risk_drawdown_usd": 236.90825962944535,
+          "worst_loss_usd": -50.00000000000059,
+          "fixed_budget_account_balance": 846.1115752022108,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.22857142857142856,
+          "win_rate": 0.45714285714285713,
+          "mean_usd": -6.884235003076861,
+          "stress_mean_usd": -11.058508334817038,
+          "fixed_risk_drawdown_usd": 427.3166010895158,
+          "worst_loss_usd": -50.00000000000126,
+          "fixed_budget_account_balance": 759.0517748923095,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.4444444444444444,
+          "win_rate": 0.5,
+          "mean_usd": -8.671314184532834,
+          "stress_mean_usd": -13.09796344632903,
+          "fixed_risk_drawdown_usd": 306.0836553215917,
+          "worst_loss_usd": -50.000000000000675,
+          "fixed_budget_account_balance": 843.9163446784089,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 33,
+          "target_rate": 0.36363636363636365,
+          "win_rate": 0.42424242424242425,
+          "mean_usd": -13.353761037901586,
+          "stress_mean_usd": -17.524231827821183,
+          "fixed_risk_drawdown_usd": 643.0862525881224,
+          "worst_loss_usd": -50.00000000000162,
+          "fixed_budget_account_balance": 559.3258857492477,
+          "affordable_trades": 33,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5555555555555556,
+          "win_rate": 0.5555555555555556,
+          "mean_usd": -11.127584340900608,
+          "stress_mean_usd": -27.35975928302405,
+          "fixed_risk_drawdown_usd": 350.2965181362024,
+          "worst_loss_usd": -100.00000000000438,
+          "fixed_budget_account_balance": 799.7034818637892,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.5714285714285714,
+          "win_rate": 0.5714285714285714,
+          "mean_usd": -23.206024834687717,
+          "stress_mean_usd": -38.564767573840925,
+          "fixed_risk_drawdown_usd": 912.2108692140783,
+          "worst_loss_usd": -100.00000000000443,
+          "fixed_budget_account_balance": 87.7891307859216,
+          "affordable_trades": 23,
+          "account_exhausted": true
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.6666666666666666,
+          "win_rate": 0.6666666666666666,
+          "mean_usd": -13.33333333333503,
+          "stress_mean_usd": -29.56550827545847,
+          "fixed_risk_drawdown_usd": 390.00000000002206,
+          "worst_loss_usd": -100.00000000000438,
+          "fixed_budget_account_balance": 759.9999999999695,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.6,
+          "win_rate": 0.6,
+          "mean_usd": -21.99999999999986,
+          "stress_mean_usd": -37.35874273915306,
+          "fixed_risk_drawdown_usd": 870.0000000000031,
+          "worst_loss_usd": -100.00000000000443,
+          "fixed_budget_account_balance": 230.00000000000497,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3333333333333333,
+          "win_rate": 0.3888888888888889,
+          "mean_usd": -13.423102025598833,
+          "stress_mean_usd": -22.276400549191234,
+          "fixed_risk_drawdown_usd": 336.6289101708662,
+          "worst_loss_usd": -100.00000000000118,
+          "fixed_budget_account_balance": 758.3841635392208,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.37142857142857144,
+          "win_rate": 0.4857142857142857,
+          "mean_usd": -17.55457721424699,
+          "stress_mean_usd": -25.90312387772734,
+          "fixed_risk_drawdown_usd": 823.0556732162639,
+          "worst_loss_usd": -100.00000000000252,
+          "fixed_budget_account_balance": 385.5897975013556,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.6111111111111112,
+          "win_rate": 0.6111111111111112,
+          "mean_usd": -15.333904117658562,
+          "stress_mean_usd": -24.187202641250963,
+          "fixed_risk_drawdown_usd": 426.01027411785486,
+          "worst_loss_usd": -100.00000000000135,
+          "fixed_budget_account_balance": 723.9897258821459,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 34,
+          "target_rate": 0.47058823529411764,
+          "win_rate": 0.5,
+          "mean_usd": -29.462146630280024,
+          "stress_mean_usd": -37.85183476194192,
+          "fixed_risk_drawdown_usd": 1181.0964684490912,
+          "worst_loss_usd": -100.00000000000324,
+          "fixed_budget_account_balance": 48.903531550908994,
+          "affordable_trades": 20,
+          "account_exhausted": true
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.2222222222222222,
+          "win_rate": 0.3888888888888889,
+          "mean_usd": 0.5531925443572143,
+          "stress_mean_usd": -2.693242444067473,
+          "fixed_risk_drawdown_usd": 55.01836877587589,
+          "worst_loss_usd": -20.00000000000112,
+          "fixed_budget_account_balance": 1009.95746579843,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.17142857142857143,
+          "win_rate": 0.4857142857142857,
+          "mean_usd": 0.07799268418614196,
+          "stress_mean_usd": -2.993755863644497,
+          "fixed_risk_drawdown_usd": 181.46027162623295,
+          "worst_loss_usd": -20.000000000001044,
+          "fixed_budget_account_balance": 1002.7297439465157,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3333333333333333,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": 0.8697435137189304,
+          "stress_mean_usd": -2.3766914747057575,
+          "fixed_risk_drawdown_usd": 81.3825335827298,
+          "worst_loss_usd": -20.00000000000112,
+          "fixed_budget_account_balance": 1015.6553832469407,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 34,
+          "target_rate": 0.4411764705882353,
+          "win_rate": 0.5,
+          "mean_usd": 4.664375100665577,
+          "stress_mean_usd": 1.578729637532977,
+          "fixed_risk_drawdown_usd": 158.8653328202891,
+          "worst_loss_usd": -20.000000000001044,
+          "fixed_budget_account_balance": 1158.58875342263,
+          "affordable_trades": 34,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.1111111111111111,
+          "win_rate": 0.3888888888888889,
+          "mean_usd": 0.3990579503725237,
+          "stress_mean_usd": -1.371601754345956,
+          "fixed_risk_drawdown_usd": 37.66355606807204,
+          "worst_loss_usd": -20.000000000000515,
+          "fixed_budget_account_balance": 1007.1830431067054,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.02857142857142857,
+          "win_rate": 0.4857142857142857,
+          "mean_usd": -1.6222932872769107,
+          "stress_mean_usd": -3.2920026199729806,
+          "fixed_risk_drawdown_usd": 145.0479004729487,
+          "worst_loss_usd": -20.000000000000608,
+          "fixed_budget_account_balance": 943.2197349453082,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.1111111111111111,
+          "win_rate": 0.5555555555555556,
+          "mean_usd": -2.3210144690904766,
+          "stress_mean_usd": -4.091674173808955,
+          "fixed_risk_drawdown_usd": 72.30295644244131,
+          "worst_loss_usd": -20.000000000000515,
+          "fixed_budget_account_balance": 958.2217395563712,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 31,
+          "target_rate": 0.12903225806451613,
+          "win_rate": 0.4838709677419355,
+          "mean_usd": 0.48757882282043863,
+          "stress_mean_usd": -1.205168910426562,
+          "fixed_risk_drawdown_usd": 129.58251489730344,
+          "worst_loss_usd": -20.000000000000608,
+          "fixed_budget_account_balance": 1015.1149435074333,
+          "affordable_trades": 31,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3888888888888889,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -5.1043364382603436,
+          "stress_mean_usd": -13.220423909322067,
+          "fixed_risk_drawdown_usd": 137.54592193968975,
+          "worst_loss_usd": -50.0000000000028,
+          "fixed_budget_account_balance": 908.1219441113137,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.4857142857142857,
+          "win_rate": 0.5714285714285714,
+          "mean_usd": -2.465730465444679,
+          "stress_mean_usd": -10.14510183502128,
+          "fixed_risk_drawdown_usd": 439.9999999999994,
+          "worst_loss_usd": -50.00000000000261,
+          "fixed_budget_account_balance": 913.6994337094362,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -9.999999999999128,
+          "stress_mean_usd": -18.11608747106085,
+          "fixed_risk_drawdown_usd": 199.9999999999992,
+          "worst_loss_usd": -50.0000000000028,
+          "fixed_budget_account_balance": 820.0000000000156,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 34,
+          "target_rate": 0.5882352941176471,
+          "win_rate": 0.5882352941176471,
+          "mean_usd": -1.5394688540830792,
+          "stress_mean_usd": -9.253582511914585,
+          "fixed_risk_drawdown_usd": 439.9999999999994,
+          "worst_loss_usd": -50.00000000000261,
+          "fixed_budget_account_balance": 947.658058961175,
+          "affordable_trades": 34,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.2777777777777778,
+          "win_rate": 0.3888888888888889,
+          "mean_usd": -2.949409780130472,
+          "stress_mean_usd": -7.3760590419266725,
+          "fixed_risk_drawdown_usd": 94.15889017018011,
+          "worst_loss_usd": -50.000000000001286,
+          "fixed_budget_account_balance": 946.9106239576515,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.2571428571428571,
+          "win_rate": 0.4857142857142857,
+          "mean_usd": -4.212173560288567,
+          "stress_mean_usd": -8.386446892028742,
+          "fixed_risk_drawdown_usd": 328.13014658343263,
+          "worst_loss_usd": -50.00000000000152,
+          "fixed_budget_account_balance": 852.5739253899001,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5555555555555556,
+          "win_rate": 0.5555555555555556,
+          "mean_usd": -3.635568249499551,
+          "stress_mean_usd": -8.06221751129575,
+          "fixed_risk_drawdown_usd": 155.44022849098783,
+          "worst_loss_usd": -50.000000000001286,
+          "fixed_budget_account_balance": 934.559771509008,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.53125,
+          "win_rate": 0.5625,
+          "mean_usd": -1.2861891090654836,
+          "stress_mean_usd": -5.453471249870297,
+          "fixed_risk_drawdown_usd": 344.83409873852736,
+          "worst_loss_usd": -50.00000000000152,
+          "fixed_budget_account_balance": 958.8419485099042,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5555555555555556,
+          "win_rate": 0.5555555555555556,
+          "mean_usd": -15.893731053709494,
+          "stress_mean_usd": -32.12590599583294,
+          "fixed_risk_drawdown_usd": 286.08715896677097,
+          "worst_loss_usd": -100.0000000000056,
+          "fixed_budget_account_balance": 713.9128410332291,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.6,
+          "win_rate": 0.6,
+          "mean_usd": -15.674988074233445,
+          "stress_mean_usd": -31.033730813386637,
+          "fixed_risk_drawdown_usd": 818.3632939888801,
+          "worst_loss_usd": -100.00000000000522,
+          "fixed_budget_account_balance": 451.3754174018293,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.6111111111111112,
+          "win_rate": 0.6111111111111112,
+          "mean_usd": -20.555555555554925,
+          "stress_mean_usd": -36.78773049767837,
+          "fixed_risk_drawdown_usd": 369.99999999998863,
+          "worst_loss_usd": -100.0000000000056,
+          "fixed_budget_account_balance": 630.0000000000115,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.6571428571428571,
+          "win_rate": 0.6571428571428571,
+          "mean_usd": -14.571428571428381,
+          "stress_mean_usd": -29.93017131058157,
+          "fixed_risk_drawdown_usd": 839.999999999987,
+          "worst_loss_usd": -100.00000000000522,
+          "fixed_budget_account_balance": 490.00000000000637,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3888888888888889,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -11.357476899392628,
+          "stress_mean_usd": -20.21077542298503,
+          "fixed_risk_drawdown_usd": 204.43458418906732,
+          "worst_loss_usd": -100.00000000000257,
+          "fixed_budget_account_balance": 795.5654158109326,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.5142857142857142,
+          "win_rate": 0.5714285714285714,
+          "mean_usd": -11.16314013644242,
+          "stress_mean_usd": -19.511686799922774,
+          "fixed_risk_drawdown_usd": 716.2602931668666,
+          "worst_loss_usd": -100.00000000000304,
+          "fixed_budget_account_balance": 609.2900952245151,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.6666666666666666,
+          "win_rate": 0.6666666666666666,
+          "mean_usd": -13.333333333333217,
+          "stress_mean_usd": -22.186631856925615,
+          "fixed_risk_drawdown_usd": 239.99999999999784,
+          "worst_loss_usd": -100.00000000000257,
+          "fixed_budget_account_balance": 760.0000000000022,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.625,
+          "win_rate": 0.65625,
+          "mean_usd": -11.302238162514126,
+          "stress_mean_usd": -19.636802444123752,
+          "fixed_risk_drawdown_usd": 749.6681974770588,
+          "worst_loss_usd": -100.00000000000304,
+          "fixed_budget_account_balance": 638.3283787995474,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.625,
+          "mean_usd": 7.147685545493828,
+          "stress_mean_usd": 3.6642298965279148,
+          "fixed_risk_drawdown_usd": 20.000000000000874,
+          "worst_loss_usd": -20.000000000000874,
+          "fixed_budget_account_balance": 1057.1814843639506,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.05263157894736842,
+          "win_rate": 0.3684210526315789,
+          "mean_usd": -6.339389302938913,
+          "stress_mean_usd": -9.402104733399423,
+          "fixed_risk_drawdown_usd": 152.8143652198664,
+          "worst_loss_usd": -20.000000000000586,
+          "fixed_budget_account_balance": 879.5516032441607,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.5,
+          "win_rate": 0.625,
+          "mean_usd": 8.001947802344755,
+          "stress_mean_usd": 4.518492153378842,
+          "fixed_risk_drawdown_usd": 35.9844175812414,
+          "worst_loss_usd": -20.000000000000874,
+          "fixed_budget_account_balance": 1064.015582418758,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.15789473684210525,
+          "win_rate": 0.21052631578947367,
+          "mean_usd": -8.387958798927963,
+          "stress_mean_usd": -11.450674229388477,
+          "fixed_risk_drawdown_usd": 183.4200186886369,
+          "worst_loss_usd": -20.000000000000586,
+          "fixed_budget_account_balance": 840.6287828203691,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.625,
+          "mean_usd": 1.5690036355443002,
+          "stress_mean_usd": -0.3422597189156802,
+          "fixed_risk_drawdown_usd": 19.99999999999986,
+          "worst_loss_usd": -19.99999999999986,
+          "fixed_budget_account_balance": 1012.5520290843544,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.0,
+          "win_rate": 0.42105263157894735,
+          "mean_usd": -3.481546388336898,
+          "stress_mean_usd": -5.144604848879292,
+          "fixed_risk_drawdown_usd": 85.7964876718821,
+          "worst_loss_usd": -20.0000000000005,
+          "fixed_budget_account_balance": 933.850618621599,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.5,
+          "mean_usd": -0.12780072214386018,
+          "stress_mean_usd": -2.03906407660384,
+          "fixed_risk_drawdown_usd": 49.26813429727588,
+          "worst_loss_usd": -20.00000000000027,
+          "fixed_budget_account_balance": 998.9775942228492,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.10526315789473684,
+          "win_rate": 0.15789473684210525,
+          "mean_usd": -8.336716590628773,
+          "stress_mean_usd": -9.99977505117117,
+          "fixed_risk_drawdown_usd": 178.39761522194658,
+          "worst_loss_usd": -20.000000000000647,
+          "fixed_budget_account_balance": 841.6023847780533,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.5,
+          "win_rate": 0.625,
+          "mean_usd": -2.043489372523288,
+          "stress_mean_usd": -10.752128494938066,
+          "fixed_risk_drawdown_usd": 90.00000000000408,
+          "worst_loss_usd": -50.00000000000219,
+          "fixed_budget_account_balance": 983.6520850198137,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.2631578947368421,
+          "win_rate": 0.42105263157894735,
+          "mean_usd": -18.83863587416762,
+          "stress_mean_usd": -26.495424450318897,
+          "fixed_risk_drawdown_usd": 377.93408160918347,
+          "worst_loss_usd": -50.000000000001464,
+          "fixed_budget_account_balance": 642.065918390815,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.625,
+          "win_rate": 0.625,
+          "mean_usd": -8.135714324453147e-13,
+          "stress_mean_usd": -8.708639122415594,
+          "fixed_risk_drawdown_usd": 90.00000000000406,
+          "worst_loss_usd": -50.00000000000219,
+          "fixed_budget_account_balance": 999.9999999999936,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.3684210526315789,
+          "win_rate": 0.3684210526315789,
+          "mean_usd": -18.56034113735329,
+          "stress_mean_usd": -26.217129713504573,
+          "fixed_risk_drawdown_usd": 372.6464816097112,
+          "worst_loss_usd": -50.000000000001464,
+          "fixed_budget_account_balance": 647.3535183902874,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.5,
+          "win_rate": 0.625,
+          "mean_usd": 1.2934685667361858,
+          "stress_mean_usd": -3.4846898194137665,
+          "fixed_risk_drawdown_usd": 69.99999999999989,
+          "worst_loss_usd": -49.99999999999965,
+          "fixed_budget_account_balance": 1010.3477485338894,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.15789473684210525,
+          "win_rate": 0.42105263157894735,
+          "mean_usd": -10.483650544341812,
+          "stress_mean_usd": -14.641296695697795,
+          "fixed_risk_drawdown_usd": 236.94566837742795,
+          "worst_loss_usd": -50.00000000000126,
+          "fixed_budget_account_balance": 800.8106396575054,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.625,
+          "win_rate": 0.625,
+          "mean_usd": -2.859934511434403e-13,
+          "stress_mean_usd": -4.7781583861502375,
+          "fixed_risk_drawdown_usd": 89.99999999999983,
+          "worst_loss_usd": -50.000000000000675,
+          "fixed_budget_account_balance": 999.9999999999976,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.2631578947368421,
+          "win_rate": 0.2631578947368421,
+          "mean_usd": -20.9012177952931,
+          "stress_mean_usd": -25.058863946649083,
+          "fixed_risk_drawdown_usd": 407.1231381105666,
+          "worst_loss_usd": -50.00000000000162,
+          "fixed_budget_account_balance": 602.8768618894313,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.625,
+          "win_rate": 0.625,
+          "mean_usd": -18.7500000000002,
+          "stress_mean_usd": -36.16727824482975,
+          "fixed_risk_drawdown_usd": 240.0000000000078,
+          "worst_loss_usd": -100.00000000000438,
+          "fixed_budget_account_balance": 849.9999999999983,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5263157894736842,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -28.33725437036441,
+          "stress_mean_usd": -43.65083152266697,
+          "fixed_risk_drawdown_usd": 550.0000000000051,
+          "worst_loss_usd": -100.00000000000202,
+          "fixed_budget_account_balance": 461.59216696307607,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.625,
+          "win_rate": 0.625,
+          "mean_usd": -18.7500000000002,
+          "stress_mean_usd": -36.16727824482975,
+          "fixed_risk_drawdown_usd": 240.0000000000078,
+          "worst_loss_usd": -100.00000000000438,
+          "fixed_budget_account_balance": 849.9999999999983,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5789473684210527,
+          "win_rate": 0.5789473684210527,
+          "mean_usd": -24.736842105263463,
+          "stress_mean_usd": -40.05041925756601,
+          "fixed_risk_drawdown_usd": 550.0000000000051,
+          "worst_loss_usd": -100.00000000000202,
+          "fixed_budget_account_balance": 529.9999999999941,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.5,
+          "win_rate": 0.625,
+          "mean_usd": -12.41306286652657,
+          "stress_mean_usd": -21.96937963882647,
+          "fixed_risk_drawdown_usd": 174.38919680988081,
+          "worst_loss_usd": -99.9999999999993,
+          "fixed_budget_account_balance": 900.6954970677875,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.2631578947368421,
+          "win_rate": 0.47368421052631576,
+          "mean_usd": -22.587692521529913,
+          "stress_mean_usd": -30.902984824241877,
+          "fixed_risk_drawdown_usd": 457.81162862668975,
+          "worst_loss_usd": -100.00000000000252,
+          "fixed_budget_account_balance": 570.8338420909317,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.625,
+          "win_rate": 0.625,
+          "mean_usd": -18.749999999999716,
+          "stress_mean_usd": -28.30631677229961,
+          "fixed_risk_drawdown_usd": 239.9999999999927,
+          "worst_loss_usd": -100.00000000000135,
+          "fixed_budget_account_balance": 850.0000000000023,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.42105263157894735,
+          "win_rate": 0.42105263157894735,
+          "mean_usd": -34.58113319929003,
+          "stress_mean_usd": -42.896425502001996,
+          "fixed_risk_drawdown_usd": 657.0415307865105,
+          "worst_loss_usd": -100.00000000000324,
+          "fixed_budget_account_balance": 342.9584692134894,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.375,
+          "mean_usd": -3.167029370448957,
+          "stress_mean_usd": -6.65048501941487,
+          "fixed_risk_drawdown_usd": 39.99999999999959,
+          "worst_loss_usd": -20.000000000000945,
+          "fixed_budget_account_balance": 974.6637650364084,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.15789473684210525,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": 1.2908467239197476,
+          "stress_mean_usd": -1.7718687065407632,
+          "fixed_risk_drawdown_usd": 70.22876145453765,
+          "worst_loss_usd": -20.00000000000052,
+          "fixed_budget_account_balance": 1024.5260877544754,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -1.2500000000001394,
+          "stress_mean_usd": -4.733455648966053,
+          "fixed_risk_drawdown_usd": 39.99999999999959,
+          "worst_loss_usd": -20.000000000000945,
+          "fixed_budget_account_balance": 989.9999999999991,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.47368421052631576,
+          "win_rate": 0.5789473684210527,
+          "mean_usd": 7.770627676861125,
+          "stress_mean_usd": 4.707912246400615,
+          "fixed_risk_drawdown_usd": 68.86533282028856,
+          "worst_loss_usd": -20.00000000000052,
+          "fixed_budget_account_balance": 1147.6419258603617,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.125,
+          "win_rate": 0.375,
+          "mean_usd": -4.990568779517895,
+          "stress_mean_usd": -6.9018321339778765,
+          "fixed_risk_drawdown_usd": 39.9999999999996,
+          "worst_loss_usd": -20.000000000000515,
+          "fixed_budget_account_balance": 960.0754497638567,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.05263157894736842,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": 0.5138236882509645,
+          "stress_mean_usd": -1.1492347722914287,
+          "fixed_risk_drawdown_usd": 37.96707640445918,
+          "worst_loss_usd": -20.00000000000034,
+          "fixed_budget_account_balance": 1009.762650076768,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.125,
+          "win_rate": 0.375,
+          "mean_usd": -4.51096938436753,
+          "stress_mean_usd": -6.4222327388275104,
+          "fixed_risk_drawdown_usd": 39.99999999999961,
+          "worst_loss_usd": -20.000000000000515,
+          "fixed_budget_account_balance": 963.9122449250597,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.10526315789473684,
+          "win_rate": 0.631578947368421,
+          "mean_usd": 3.5045313607221273,
+          "stress_mean_usd": 1.8414729001797339,
+          "fixed_risk_drawdown_usd": 39.999999999999616,
+          "worst_loss_usd": -20.00000000000034,
+          "fixed_budget_account_balance": 1066.5860958537198,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -17.830786283097943,
+          "stress_mean_usd": -26.539425405512723,
+          "fixed_risk_drawdown_usd": 142.64629026478354,
+          "worst_loss_usd": -50.000000000002366,
+          "fixed_budget_account_balance": 857.3537097352165,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5789473684210527,
+          "win_rate": 0.631578947368421,
+          "mean_usd": 2.4778496219026267,
+          "stress_mean_usd": -5.17893895424865,
+          "fixed_risk_drawdown_usd": 170.00000000000222,
+          "worst_loss_usd": -50.0000000000013,
+          "fixed_budget_account_balance": 1047.0791428161497,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -19.99999999999932,
+          "stress_mean_usd": -28.708639122414105,
+          "fixed_risk_drawdown_usd": 159.9999999999946,
+          "worst_loss_usd": -50.000000000002366,
+          "fixed_budget_account_balance": 840.0000000000053,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.631578947368421,
+          "win_rate": 0.631578947368421,
+          "mean_usd": 3.0346346821665553,
+          "stress_mean_usd": -4.622153893984725,
+          "fixed_risk_drawdown_usd": 170.00000000000222,
+          "worst_loss_usd": -50.0000000000013,
+          "fixed_budget_account_balance": 1057.6580589611642,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -14.40017274037919,
+          "stress_mean_usd": -19.178331126529145,
+          "fixed_risk_drawdown_usd": 127.16533489538392,
+          "worst_loss_usd": -50.000000000001286,
+          "fixed_budget_account_balance": 884.7986180769665,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.3157894736842105,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": 1.6598364762218112,
+          "stress_mean_usd": -2.4978096751341736,
+          "fixed_risk_drawdown_usd": 94.29089752984031,
+          "worst_loss_usd": -50.00000000000085,
+          "fixed_budget_account_balance": 1031.536893048214,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -15.41136430823732,
+          "stress_mean_usd": -20.189522694387275,
+          "fixed_risk_drawdown_usd": 123.29091446589857,
+          "worst_loss_usd": -50.000000000001286,
+          "fixed_budget_account_balance": 876.7090855341015,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.6842105263157895,
+          "win_rate": 0.6842105263157895,
+          "mean_usd": 8.063779723122444,
+          "stress_mean_usd": 3.9061335717664583,
+          "fixed_risk_drawdown_usd": 99.99999999999903,
+          "worst_loss_usd": -50.00000000000085,
+          "fixed_budget_account_balance": 1153.2118147393264,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -46.91157256619627,
+          "stress_mean_usd": -64.32885081102583,
+          "fixed_risk_drawdown_usd": 375.2925805295702,
+          "worst_loss_usd": -100.00000000000473,
+          "fixed_budget_account_balance": 624.7074194704297,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.6842105263157895,
+          "win_rate": 0.6842105263157895,
+          "mean_usd": -4.435405374080088,
+          "stress_mean_usd": -19.748982526382644,
+          "fixed_risk_drawdown_usd": 270.00000000000273,
+          "worst_loss_usd": -100.00000000000253,
+          "fixed_budget_account_balance": 915.7272978924784,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -51.249999999999034,
+          "stress_mean_usd": -68.6672782448286,
+          "fixed_risk_drawdown_usd": 409.99999999999227,
+          "worst_loss_usd": -100.00000000000473,
+          "fixed_budget_account_balance": 590.0000000000077,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.7368421052631579,
+          "win_rate": 0.7368421052631579,
+          "mean_usd": -4.2105263157898305,
+          "stress_mean_usd": -19.52410346809238,
+          "fixed_risk_drawdown_usd": 289.99999999999204,
+          "worst_loss_usd": -100.00000000000253,
+          "fixed_budget_account_balance": 919.9999999999932,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -40.05034548075838,
+          "stress_mean_usd": -49.60666225305829,
+          "fixed_risk_drawdown_usd": 320.40276384606705,
+          "worst_loss_usd": -100.00000000000257,
+          "fixed_budget_account_balance": 679.5972361539328,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.631578947368421,
+          "win_rate": 0.631578947368421,
+          "mean_usd": 0.1542389627620475,
+          "stress_mean_usd": -8.161053339949923,
+          "fixed_risk_drawdown_usd": 188.58179505968062,
+          "worst_loss_usd": -100.0000000000017,
+          "fixed_budget_account_balance": 1002.9305402924789,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 5,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -42.07272861647464,
+          "stress_mean_usd": -51.62904538877455,
+          "fixed_risk_drawdown_usd": 336.5818289317971,
+          "worst_loss_usd": -100.00000000000257,
+          "fixed_budget_account_balance": 663.4181710682027,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.7894736842105263,
+          "win_rate": 0.7894736842105263,
+          "mean_usd": 4.155542062955542,
+          "stress_mean_usd": -4.159750239756427,
+          "fixed_risk_drawdown_usd": 199.99999999999804,
+          "worst_loss_usd": -100.0000000000017,
+          "fixed_budget_account_balance": 1078.9552991961552,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.05555555555555555,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -2.8187652482398824,
+          "stress_mean_usd": -5.92018281752829,
+          "fixed_risk_drawdown_usd": 108.74540784977067,
+          "worst_loss_usd": -20.00000000000081,
+          "fixed_budget_account_balance": 949.2622255316821,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.14285714285714285,
+          "win_rate": 0.42857142857142855,
+          "mean_usd": -0.14495733827460414,
+          "stress_mean_usd": -3.0763266328343075,
+          "fixed_risk_drawdown_usd": 122.47054768257652,
+          "worst_loss_usd": -20.000000000000895,
+          "fixed_budget_account_balance": 994.926493160389,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3333333333333333,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -0.30191565824833333,
+          "stress_mean_usd": -3.4033332275367423,
+          "fixed_risk_drawdown_usd": 125.4344818484712,
+          "worst_loss_usd": -20.000000000000856,
+          "fixed_budget_account_balance": 994.5655181515299,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.25,
+          "win_rate": 0.34375,
+          "mean_usd": -2.571271592862119,
+          "stress_mean_usd": -5.4944142647405805,
+          "fixed_risk_drawdown_usd": 201.05760798784223,
+          "worst_loss_usd": -20.536920311477193,
+          "fixed_budget_account_balance": 917.7193090284125,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.05555555555555555,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -0.13843802270070446,
+          "stress_mean_usd": -1.8239272694091702,
+          "fixed_risk_drawdown_usd": 47.96474230637932,
+          "worst_loss_usd": -14.15444582213966,
+          "fixed_budget_account_balance": 997.5081155913871,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.0,
+          "win_rate": 0.42857142857142855,
+          "mean_usd": -0.7674674123106342,
+          "stress_mean_usd": -2.3544266758950534,
+          "fixed_risk_drawdown_usd": 87.04815143147889,
+          "worst_loss_usd": -19.999999999999922,
+          "fixed_budget_account_balance": 973.1386405691279,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.16666666666666666,
+          "win_rate": 0.5,
+          "mean_usd": -0.04221810102419078,
+          "stress_mean_usd": -1.7277073477326563,
+          "fixed_risk_drawdown_usd": 98.10178286701003,
+          "worst_loss_usd": -20.000000000000476,
+          "fixed_budget_account_balance": 999.2400741815644,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 31,
+          "target_rate": 0.0967741935483871,
+          "win_rate": 0.3870967741935484,
+          "mean_usd": -3.272990517846163,
+          "stress_mean_usd": -4.878050956462215,
+          "fixed_risk_drawdown_usd": 211.95261998306466,
+          "worst_loss_usd": -20.000000000000572,
+          "fixed_budget_account_balance": 898.5372939467686,
+          "affordable_trades": 31,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3888888888888889,
+          "win_rate": 0.5,
+          "mean_usd": -7.309185236898687,
+          "stress_mean_usd": -15.062729160119703,
+          "fixed_risk_drawdown_usd": 281.565334264173,
+          "worst_loss_usd": -50.00000000000202,
+          "fixed_budget_account_balance": 868.4346657358241,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.4857142857142857,
+          "win_rate": 0.5428571428571428,
+          "mean_usd": -2.492632316162734,
+          "stress_mean_usd": -9.821055552561997,
+          "fixed_risk_drawdown_usd": 270.8862439739429,
+          "worst_loss_usd": -50.000000000002245,
+          "fixed_budget_account_balance": 912.7578689343043,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -10.000000000000123,
+          "stress_mean_usd": -17.75354392322114,
+          "fixed_risk_drawdown_usd": 329.99999999999886,
+          "worst_loss_usd": -50.000000000002146,
+          "fixed_budget_account_balance": 819.9999999999978,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 34,
+          "target_rate": 0.5294117647058824,
+          "win_rate": 0.5294117647058824,
+          "mean_usd": -5.182054743709333,
+          "stress_mean_usd": -12.535162665755717,
+          "fixed_risk_drawdown_usd": 316.1898612861046,
+          "worst_loss_usd": -51.34230077869299,
+          "fixed_budget_account_balance": 823.8101387138823,
+          "affordable_trades": 34,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.16666666666666666,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -2.5595417451098808,
+          "stress_mean_usd": -6.773264861881046,
+          "fixed_risk_drawdown_usd": 119.27218996396155,
+          "worst_loss_usd": -35.38611455534915,
+          "fixed_budget_account_balance": 953.9282485880219,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.2571428571428571,
+          "win_rate": 0.42857142857142855,
+          "mean_usd": -1.2870920863193354,
+          "stress_mean_usd": -5.254490245280386,
+          "fixed_risk_drawdown_usd": 191.46320572276315,
+          "worst_loss_usd": -49.9999999999998,
+          "fixed_budget_account_balance": 954.9517769788233,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3888888888888889,
+          "win_rate": 0.5,
+          "mean_usd": -5.674251170588388,
+          "stress_mean_usd": -9.887974287359556,
+          "fixed_risk_drawdown_usd": 222.1365210705919,
+          "worst_loss_usd": -50.00000000000119,
+          "fixed_budget_account_balance": 897.863478929409,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 33,
+          "target_rate": 0.48484848484848486,
+          "win_rate": 0.5454545454545454,
+          "mean_usd": -2.829574356770988,
+          "stress_mean_usd": -6.8653164698510745,
+          "fixed_risk_drawdown_usd": 298.86475811038525,
+          "worst_loss_usd": -50.000000000001435,
+          "fixed_budget_account_balance": 906.6240462265574,
+          "affordable_trades": 33,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.6666666666666666,
+          "win_rate": 0.6666666666666666,
+          "mean_usd": -7.299419837090805,
+          "stress_mean_usd": -22.80650768353285,
+          "fixed_risk_drawdown_usd": 303.7867028111043,
+          "worst_loss_usd": -100.0000000000034,
+          "fixed_budget_account_balance": 868.6104429323653,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.7714285714285715,
+          "win_rate": 0.7714285714285715,
+          "mean_usd": 3.9055716801734874,
+          "stress_mean_usd": -10.751274792625033,
+          "fixed_risk_drawdown_usd": 225.055895963363,
+          "worst_loss_usd": -100.00000000000449,
+          "fixed_budget_account_balance": 1136.6950088060714,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.7222222222222222,
+          "win_rate": 0.7222222222222222,
+          "mean_usd": -6.111111111110391,
+          "stress_mean_usd": -21.618198957552437,
+          "fixed_risk_drawdown_usd": 269.9999999999892,
+          "worst_loss_usd": -100.00000000000429,
+          "fixed_budget_account_balance": 890.0000000000127,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.7714285714285715,
+          "win_rate": 0.7714285714285715,
+          "mean_usd": 2.9797582319261973,
+          "stress_mean_usd": -11.677088240872326,
+          "fixed_risk_drawdown_usd": 205.7084618825968,
+          "worst_loss_usd": -102.68460155738597,
+          "fixed_budget_account_balance": 1104.2915381174162,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3888888888888889,
+          "win_rate": 0.5,
+          "mean_usd": -5.899370999806387,
+          "stress_mean_usd": -14.326817233348716,
+          "fixed_risk_drawdown_usd": 256.1886779965169,
+          "worst_loss_usd": -70.7722291106983,
+          "fixed_budget_account_balance": 893.8113220034851,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.4857142857142857,
+          "win_rate": 0.5428571428571428,
+          "mean_usd": -4.155491833120602,
+          "stress_mean_usd": -12.090288151042701,
+          "fixed_risk_drawdown_usd": 370.3410723425448,
+          "worst_loss_usd": -99.9999999999996,
+          "fixed_budget_account_balance": 854.5577858407788,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5555555555555556,
+          "win_rate": 0.6111111111111112,
+          "mean_usd": -12.86842613539965,
+          "stress_mean_usd": -21.295872368941982,
+          "fixed_risk_drawdown_usd": 381.63167043719557,
+          "worst_loss_usd": -100.00000000000237,
+          "fixed_budget_account_balance": 768.3683295628063,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 33,
+          "target_rate": 0.6363636363636364,
+          "win_rate": 0.6666666666666666,
+          "mean_usd": -8.342339967132677,
+          "stress_mean_usd": -16.413824193292854,
+          "fixed_risk_drawdown_usd": 485.29721891536826,
+          "worst_loss_usd": -100.00000000000186,
+          "fixed_budget_account_balance": 724.7027810846221,
+          "affordable_trades": 33,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.0,
+          "win_rate": 0.3888888888888889,
+          "mean_usd": -3.5131850807473395,
+          "stress_mean_usd": -6.614602650035749,
+          "fixed_risk_drawdown_usd": 71.84548229150477,
+          "worst_loss_usd": -20.00000000000089,
+          "fixed_budget_account_balance": 936.7626685465477,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.05714285714285714,
+          "win_rate": 0.4,
+          "mean_usd": -3.646401594891095,
+          "stress_mean_usd": -6.577770889450799,
+          "fixed_risk_drawdown_usd": 183.94871884860436,
+          "worst_loss_usd": -20.000000000001187,
+          "fixed_budget_account_balance": 872.3759441788114,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.2777777777777778,
+          "win_rate": 0.3888888888888889,
+          "mean_usd": -2.9274285538034337,
+          "stress_mean_usd": -6.028846123091843,
+          "fixed_risk_drawdown_usd": 111.9938824650134,
+          "worst_loss_usd": -20.00000000000089,
+          "fixed_budget_account_balance": 947.3062860315381,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 33,
+          "target_rate": 0.2727272727272727,
+          "win_rate": 0.2727272727272727,
+          "mean_usd": -5.0012651666786265,
+          "stress_mean_usd": -7.980335234281278,
+          "fixed_risk_drawdown_usd": 165.0417505003947,
+          "worst_loss_usd": -20.000000000001187,
+          "fixed_budget_account_balance": 834.9582494996051,
+          "affordable_trades": 33,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.0,
+          "win_rate": 0.3888888888888889,
+          "mean_usd": -2.448988065495209,
+          "stress_mean_usd": -4.134477312203676,
+          "fixed_risk_drawdown_usd": 45.09159116135515,
+          "worst_loss_usd": -20.00000000000036,
+          "fixed_budget_account_balance": 955.9182148210864,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.0,
+          "win_rate": 0.4,
+          "mean_usd": -2.938678752892666,
+          "stress_mean_usd": -4.525638016477086,
+          "fixed_risk_drawdown_usd": 128.68725218360535,
+          "worst_loss_usd": -20.000000000000632,
+          "fixed_budget_account_balance": 897.1462436487566,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.0,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -3.6284957193938974,
+          "stress_mean_usd": -5.313984966102361,
+          "fixed_risk_drawdown_usd": 76.25755563270084,
+          "worst_loss_usd": -20.00000000000051,
+          "fixed_budget_account_balance": 934.6870770509097,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 31,
+          "target_rate": 0.03225806451612903,
+          "win_rate": 0.4838709677419355,
+          "mean_usd": -1.412269276509704,
+          "stress_mean_usd": -3.0173297151257548,
+          "fixed_risk_drawdown_usd": 73.04284961977537,
+          "worst_loss_usd": -20.000000000000632,
+          "fixed_budget_account_balance": 956.2196524281989,
+          "affordable_trades": 31,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3888888888888889,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -7.773157627535394,
+          "stress_mean_usd": -15.52670155075642,
+          "fixed_risk_drawdown_usd": 151.3288671868931,
+          "worst_loss_usd": -50.00000000000223,
+          "fixed_budget_account_balance": 860.083162704363,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.34285714285714286,
+          "win_rate": 0.42857142857142855,
+          "mean_usd": -10.541975189538931,
+          "stress_mean_usd": -17.870398425938195,
+          "fixed_risk_drawdown_usd": 469.9532195767352,
+          "worst_loss_usd": -50.00000000000296,
+          "fixed_budget_account_balance": 631.0308683661373,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -9.999999999999874,
+          "stress_mean_usd": -17.753543923220896,
+          "fixed_risk_drawdown_usd": 200.00000000000423,
+          "worst_loss_usd": -50.00000000000223,
+          "fixed_budget_account_balance": 820.0000000000022,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 34,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -8.569986704903007,
+          "stress_mean_usd": -15.923094626949394,
+          "fixed_risk_drawdown_usd": 399.99999999999466,
+          "worst_loss_usd": -50.00000000000296,
+          "fixed_budget_account_balance": 708.6204520332973,
+          "affordable_trades": 34,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.2222222222222222,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -2.7401199747000025,
+          "stress_mean_usd": -6.953843091471167,
+          "fixed_risk_drawdown_usd": 85.16017427133427,
+          "worst_loss_usd": -50.0000000000009,
+          "fixed_budget_account_balance": 950.6778404553999,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.08571428571428572,
+          "win_rate": 0.4,
+          "mean_usd": -7.619651589317661,
+          "stress_mean_usd": -11.587049748278709,
+          "fixed_risk_drawdown_usd": 339.38301878961147,
+          "worst_loss_usd": -50.00000000000158,
+          "fixed_budget_account_balance": 733.3121943738819,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.4444444444444444,
+          "win_rate": 0.5,
+          "mean_usd": -6.38623486325295,
+          "stress_mean_usd": -10.599957980024113,
+          "fixed_risk_drawdown_usd": 165.28365414376768,
+          "worst_loss_usd": -50.00000000000128,
+          "fixed_budget_account_balance": 885.0477724614469,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.46875,
+          "win_rate": 0.5625,
+          "mean_usd": -1.7182758054156035,
+          "stress_mean_usd": -5.674585250608801,
+          "fixed_risk_drawdown_usd": 190.38232659091267,
+          "worst_loss_usd": -50.00000000000158,
+          "fixed_budget_account_balance": 945.0151742267008,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.6111111111111112,
+          "win_rate": 0.6111111111111112,
+          "mean_usd": -11.933437872099098,
+          "stress_mean_usd": -27.44052571854114,
+          "fixed_risk_drawdown_usd": 214.8018816977837,
+          "worst_loss_usd": -100.00000000000446,
+          "fixed_budget_account_balance": 785.1981183022161,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.5428571428571428,
+          "win_rate": 0.5428571428571428,
+          "mean_usd": -22.949087010457035,
+          "stress_mean_usd": -37.605933483255555,
+          "fixed_risk_drawdown_usd": 927.7185090175655,
+          "worst_loss_usd": -100.00000000000593,
+          "fixed_budget_account_balance": 196.78195463400394,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.7777777777777778,
+          "win_rate": 0.7777777777777778,
+          "mean_usd": 1.1111111111110707,
+          "stress_mean_usd": -14.395976735330976,
+          "fixed_risk_drawdown_usd": 200.0000000000061,
+          "worst_loss_usd": -100.00000000000446,
+          "fixed_budget_account_balance": 1019.9999999999993,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.5714285714285714,
+          "win_rate": 0.5714285714285714,
+          "mean_usd": -25.714285714285086,
+          "stress_mean_usd": -40.37113218708362,
+          "fixed_risk_drawdown_usd": 969.9999999999816,
+          "worst_loss_usd": -100.00000000000593,
+          "fixed_budget_account_balance": 100.00000000002197,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.4444444444444444,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -10.346463773764729,
+          "stress_mean_usd": -18.77391000730706,
+          "fixed_risk_drawdown_usd": 186.2363479277651,
+          "worst_loss_usd": -100.0000000000018,
+          "fixed_budget_account_balance": 813.7636520722349,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.42857142857142855,
+          "win_rate": 0.4857142857142857,
+          "mean_usd": -14.813027960479825,
+          "stress_mean_usd": -22.747824278401925,
+          "fixed_risk_drawdown_usd": 592.7079579274405,
+          "worst_loss_usd": -100.00000000000315,
+          "fixed_budget_account_balance": 481.5440213832061,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5555555555555556,
+          "win_rate": 0.5555555555555556,
+          "mean_usd": -20.967321023901334,
+          "stress_mean_usd": -29.394767257443657,
+          "fixed_risk_drawdown_usd": 377.411778430224,
+          "worst_loss_usd": -100.00000000000256,
+          "fixed_budget_account_balance": 622.5882215697761,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.625,
+          "win_rate": 0.625,
+          "mean_usd": -11.732970694592053,
+          "stress_mean_usd": -19.64558958497845,
+          "fixed_risk_drawdown_usd": 442.12440996047343,
+          "worst_loss_usd": -100.00000000000315,
+          "fixed_budget_account_balance": 624.5449377730542,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.625,
+          "mean_usd": 2.615041507320694,
+          "stress_mean_usd": -0.6488001502465539,
+          "fixed_risk_drawdown_usd": 20.00000000000081,
+          "worst_loss_usd": -20.00000000000081,
+          "fixed_budget_account_balance": 1020.9203320585656,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.05263157894736842,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": 0.17803691782839393,
+          "stress_mean_usd": -2.7497627735966117,
+          "fixed_risk_drawdown_usd": 62.532185397290675,
+          "worst_loss_usd": -20.000000000000895,
+          "fixed_budget_account_balance": 1003.3827014387396,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.5,
+          "mean_usd": 0.6255320376018633,
+          "stress_mean_usd": -2.638309619965385,
+          "fixed_risk_drawdown_usd": 34.995743699184814,
+          "worst_loss_usd": -20.00000000000081,
+          "fixed_budget_account_balance": 1005.0042563008149,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.21052631578947367,
+          "win_rate": 0.3157894736842105,
+          "mean_usd": -3.4032989014775965,
+          "stress_mean_usd": -6.331098592902603,
+          "fixed_risk_drawdown_usd": 112.97507337878913,
+          "worst_loss_usd": -20.000000000000895,
+          "fixed_budget_account_balance": 935.3373208719255,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.625,
+          "mean_usd": 2.211206334875661,
+          "stress_mean_usd": 0.43087460888755524,
+          "fixed_risk_drawdown_usd": 14.15444582213966,
+          "worst_loss_usd": -14.15444582213966,
+          "fixed_budget_account_balance": 1017.6896506790054,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.0,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -1.222830032954174,
+          "stress_mean_usd": -2.806844243790078,
+          "fixed_risk_drawdown_usd": 52.27346167393537,
+          "worst_loss_usd": -19.999999999999922,
+          "fixed_budget_account_balance": 976.7662293738706,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.5,
+          "mean_usd": 0.35434234812093957,
+          "stress_mean_usd": -1.425989377867164,
+          "fixed_risk_drawdown_usd": 37.16526121503186,
+          "worst_loss_usd": -20.00000000000023,
+          "fixed_budget_account_balance": 1002.8347387849675,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.10526315789473684,
+          "win_rate": 0.2631578947368421,
+          "mean_usd": -5.6692081166424115,
+          "stress_mean_usd": -7.2532223274783165,
+          "fixed_risk_drawdown_usd": 143.44299754068481,
+          "worst_loss_usd": -20.000000000000572,
+          "fixed_budget_account_balance": 892.2850457837942,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.625,
+          "win_rate": 0.75,
+          "mean_usd": 8.22414446694265,
+          "stress_mean_usd": 0.06454032302452894,
+          "fixed_risk_drawdown_usd": 50.00000000000202,
+          "worst_loss_usd": -50.00000000000202,
+          "fixed_budget_account_balance": 1065.7931557355414,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.42105263157894735,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -5.290530119977887,
+          "stress_mean_usd": -12.6100293485404,
+          "fixed_risk_drawdown_usd": 150.98940736278712,
+          "worst_loss_usd": -50.000000000002245,
+          "fixed_budget_account_balance": 899.4799277204202,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.75,
+          "win_rate": 0.75,
+          "mean_usd": 9.999999999998717,
+          "stress_mean_usd": 1.8403958560805975,
+          "fixed_risk_drawdown_usd": 50.00000000000202,
+          "worst_loss_usd": -50.00000000000202,
+          "fixed_budget_account_balance": 1079.9999999999898,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5263157894736842,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -3.41302950039043,
+          "stress_mean_usd": -10.732528728952945,
+          "fixed_risk_drawdown_usd": 170.00000000000205,
+          "worst_loss_usd": -50.000000000002245,
+          "fixed_budget_account_balance": 935.1524394925817,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.625,
+          "mean_usd": 6.172760788383348,
+          "stress_mean_usd": 1.7219314734130837,
+          "fixed_risk_drawdown_usd": 35.38611455534915,
+          "worst_loss_usd": -35.38611455534915,
+          "fixed_budget_account_balance": 1049.3820863070669,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.2631578947368421,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -1.4743128459820953,
+          "stress_mean_usd": -5.434348373071856,
+          "fixed_risk_drawdown_usd": 126.301812284871,
+          "worst_loss_usd": -49.9999999999998,
+          "fixed_budget_account_balance": 971.9880559263403,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.5,
+          "mean_usd": -7.932508650724964,
+          "stress_mean_usd": -12.383337965695228,
+          "fixed_risk_drawdown_usd": 93.46006920580012,
+          "worst_loss_usd": -50.000000000000576,
+          "fixed_budget_account_balance": 936.5399307942004,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.42105263157894735,
+          "win_rate": 0.42105263157894735,
+          "mean_usd": -10.103439960118658,
+          "stress_mean_usd": -14.063475487208416,
+          "fixed_risk_drawdown_usd": 263.9633646535658,
+          "worst_loss_usd": -50.000000000001435,
+          "fixed_budget_account_balance": 808.0346407577456,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.875,
+          "win_rate": 0.875,
+          "mean_usd": 13.75000000000195,
+          "stress_mean_usd": -2.569208287834286,
+          "fixed_risk_drawdown_usd": 100.00000000000341,
+          "worst_loss_usd": -100.0000000000034,
+          "fixed_budget_account_balance": 1110.0000000000155,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.7368421052631579,
+          "win_rate": 0.7368421052631579,
+          "mean_usd": -2.766981463431783,
+          "stress_mean_usd": -17.40597992055681,
+          "fixed_risk_drawdown_usd": 210.0000000000079,
+          "worst_loss_usd": -100.00000000000449,
+          "fixed_budget_account_balance": 947.4273521947964,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.875,
+          "win_rate": 0.875,
+          "mean_usd": 13.75000000000195,
+          "stress_mean_usd": -2.569208287834286,
+          "fixed_risk_drawdown_usd": 100.00000000000341,
+          "worst_loss_usd": -100.0000000000034,
+          "fixed_budget_account_balance": 1110.0000000000155,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.7368421052631579,
+          "win_rate": 0.7368421052631579,
+          "mean_usd": 0.893481035515309,
+          "stress_mean_usd": -13.745517421609712,
+          "fixed_risk_drawdown_usd": 210.0000000000079,
+          "worst_loss_usd": -100.00000000000449,
+          "fixed_budget_account_balance": 1016.9761396747908,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.625,
+          "win_rate": 0.75,
+          "mean_usd": 11.057604954155622,
+          "stress_mean_usd": 2.1559463242150914,
+          "fixed_risk_drawdown_usd": 70.7722291106983,
+          "worst_loss_usd": -70.7722291106983,
+          "fixed_budget_account_balance": 1088.4608396332449,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.42105263157894735,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -11.114238701101101,
+          "stress_mean_usd": -19.03430975528062,
+          "fixed_risk_drawdown_usd": 293.0727343194338,
+          "worst_loss_usd": -99.9999999999996,
+          "fixed_budget_account_balance": 788.8294646790789,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.75,
+          "win_rate": 0.75,
+          "mean_usd": -2.4999999999995204,
+          "stress_mean_usd": -11.401658629940046,
+          "fixed_risk_drawdown_usd": 109.99999999999898,
+          "worst_loss_usd": -99.99999999999909,
+          "fixed_budget_account_balance": 980.0000000000039,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5263157894736842,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -21.89494679880953,
+          "stress_mean_usd": -29.81501785298905,
+          "fixed_risk_drawdown_usd": 476.00398917737874,
+          "worst_loss_usd": -100.00000000000186,
+          "fixed_budget_account_balance": 583.9960108226192,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.125,
+          "mean_usd": -11.286783534185618,
+          "stress_mean_usd": -14.550625191752868,
+          "fixed_risk_drawdown_usd": 90.29426827348496,
+          "worst_loss_usd": -20.00000000000089,
+          "fixed_budget_account_balance": 909.705731726515,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.10526315789473684,
+          "win_rate": 0.3684210526315789,
+          "mean_usd": -3.072286704764317,
+          "stress_mean_usd": -6.000086396189322,
+          "fixed_risk_drawdown_usd": 66.50767279551582,
+          "worst_loss_usd": -20.000000000000455,
+          "fixed_budget_account_balance": 941.6265526094778,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.375,
+          "mean_usd": -4.487789543712241,
+          "stress_mean_usd": -7.751631201279489,
+          "fixed_risk_drawdown_usd": 50.00000000000035,
+          "worst_loss_usd": -20.00000000000089,
+          "fixed_budget_account_balance": 964.0976836503021,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.3684210526315789,
+          "win_rate": 0.3684210526315789,
+          "mean_usd": 0.2744619135799658,
+          "stress_mean_usd": -2.653337777845039,
+          "fixed_risk_drawdown_usd": 84.23340445530357,
+          "worst_loss_usd": -20.000000000000455,
+          "fixed_budget_account_balance": 1005.2147763580193,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.125,
+          "mean_usd": -5.771869786851871,
+          "stress_mean_usd": -7.552201512839977,
+          "fixed_risk_drawdown_usd": 46.17495829481497,
+          "worst_loss_usd": -15.392796569831619,
+          "fixed_budget_account_balance": 953.8250417051852,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.0,
+          "win_rate": 0.3684210526315789,
+          "mean_usd": -2.2715349064139683,
+          "stress_mean_usd": -3.8555491172498737,
+          "fixed_risk_drawdown_usd": 47.522012592609556,
+          "worst_loss_usd": -20.000000000000114,
+          "fixed_budget_account_balance": 956.8408367781346,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.5,
+          "mean_usd": -0.4384782027213243,
+          "stress_mean_usd": -2.218809928709429,
+          "fixed_risk_drawdown_usd": 21.393907603046046,
+          "worst_loss_usd": -20.00000000000051,
+          "fixed_budget_account_balance": 996.4921743782294,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.05263157894736842,
+          "win_rate": 0.5789473684210527,
+          "mean_usd": 2.79886064201755,
+          "stress_mean_usd": 1.2148464311816471,
+          "fixed_risk_drawdown_usd": 41.52922703694327,
+          "worst_loss_usd": -20.000000000000323,
+          "fixed_budget_account_balance": 1053.178352198333,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.25,
+          "mean_usd": -26.48558030566946,
+          "stress_mean_usd": -34.64518444958758,
+          "fixed_risk_drawdown_usd": 211.88464244535567,
+          "worst_loss_usd": -50.00000000000223,
+          "fixed_budget_account_balance": 788.1153575546442,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.3157894736842105,
+          "win_rate": 0.42105263157894735,
+          "mean_usd": -12.712636361345332,
+          "stress_mean_usd": -20.032135589907856,
+          "fixed_risk_drawdown_usd": 291.87565437804665,
+          "worst_loss_usd": -50.00000000000113,
+          "fixed_budget_account_balance": 758.4599091344388,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.375,
+          "mean_usd": -22.469473859280484,
+          "stress_mean_usd": -30.629078003198607,
+          "fixed_risk_drawdown_usd": 179.75579087424387,
+          "worst_loss_usd": -50.00000000000223,
+          "fixed_budget_account_balance": 820.244209125756,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.47368421052631576,
+          "win_rate": 0.47368421052631576,
+          "mean_usd": -9.54629199824727,
+          "stress_mean_usd": -16.865791226809783,
+          "fixed_risk_drawdown_usd": 249.99999999999494,
+          "worst_loss_usd": -50.00000000000113,
+          "fixed_budget_account_balance": 818.6204520333018,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.25,
+          "mean_usd": -10.034141260279101,
+          "stress_mean_usd": -14.484970575249365,
+          "fixed_risk_drawdown_usd": 86.51234068866249,
+          "worst_loss_usd": -38.48199142457905,
+          "fixed_budget_account_balance": 919.7268699177671,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.15789473684210525,
+          "win_rate": 0.3684210526315789,
+          "mean_usd": -7.68144921159864,
+          "stress_mean_usd": -11.6414847386884,
+          "fixed_risk_drawdown_usd": 156.85465844723447,
+          "worst_loss_usd": -50.00000000000029,
+          "fixed_budget_account_balance": 854.0524649796256,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.5,
+          "mean_usd": -5.401041296109815,
+          "stress_mean_usd": -9.85187061108008,
+          "fixed_risk_drawdown_usd": 73.2083303688799,
+          "worst_loss_usd": -50.00000000000128,
+          "fixed_budget_account_balance": 956.7916696311214,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.47368421052631576,
+          "win_rate": 0.5789473684210527,
+          "mean_usd": 1.1969750436599835,
+          "stress_mean_usd": -2.7630604834297783,
+          "fixed_risk_drawdown_usd": 115.59661499729404,
+          "worst_loss_usd": -50.00000000000081,
+          "fixed_budget_account_balance": 1022.7425258295399,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -49.358135302196835,
+          "stress_mean_usd": -65.67734359003308,
+          "fixed_risk_drawdown_usd": 394.86508241757474,
+          "worst_loss_usd": -100.00000000000446,
+          "fixed_budget_account_balance": 605.1349175824254,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5263157894736842,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -24.183096725954545,
+          "stress_mean_usd": -38.82209518307957,
+          "fixed_risk_drawdown_usd": 519.478837793131,
+          "worst_loss_usd": -100.00000000000226,
+          "fixed_budget_account_balance": 540.5211622068638,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -34.99999999999996,
+          "stress_mean_usd": -51.319208287836204,
+          "fixed_risk_drawdown_usd": 279.99999999999966,
+          "worst_loss_usd": -100.00000000000446,
+          "fixed_budget_account_balance": 720.0000000000003,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5789473684210527,
+          "win_rate": 0.5789473684210527,
+          "mean_usd": -24.736842105262202,
+          "stress_mean_usd": -39.375840562387225,
+          "fixed_risk_drawdown_usd": 529.9999999999765,
+          "worst_loss_usd": -100.00000000000226,
+          "fixed_budget_account_balance": 530.0000000000183,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.25,
+          "mean_usd": -27.568282520558434,
+          "stress_mean_usd": -36.46994115049896,
+          "fixed_risk_drawdown_usd": 220.54626016446747,
+          "worst_loss_usd": -76.9639828491581,
+          "fixed_budget_account_balance": 779.4537398355325,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.3684210526315789,
+          "win_rate": 0.42105263157894735,
+          "mean_usd": -17.71092809840852,
+          "stress_mean_usd": -25.630999152588046,
+          "fixed_risk_drawdown_usd": 388.3218807234805,
+          "worst_loss_usd": -100.00000000000058,
+          "fixed_budget_account_balance": 663.4923661302381,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 30,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.5,
+          "mean_usd": -22.052082592220266,
+          "stress_mean_usd": -30.953741222160794,
+          "fixed_risk_drawdown_usd": 206.41666073776165,
+          "worst_loss_usd": -100.00000000000256,
+          "fixed_budget_account_balance": 823.5833392622378,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.631578947368421,
+          "win_rate": 0.631578947368421,
+          "mean_usd": -8.346341996466169,
+          "stress_mean_usd": -16.26641305064569,
+          "fixed_risk_drawdown_usd": 261.41756745156016,
+          "worst_loss_usd": -100.00000000000162,
+          "fixed_budget_account_balance": 841.4195020671427,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.1111111111111111,
+          "win_rate": 0.3333333333333333,
+          "mean_usd": -2.3322734950970934,
+          "stress_mean_usd": -5.366157527794953,
+          "fixed_risk_drawdown_usd": 114.7266814015008,
+          "worst_loss_usd": -20.000000000000504,
+          "fixed_budget_account_balance": 958.0190770882522,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.08571428571428572,
+          "win_rate": 0.37142857142857144,
+          "mean_usd": -5.588485631636681,
+          "stress_mean_usd": -8.421961563348868,
+          "fixed_risk_drawdown_usd": 280.084370520349,
+          "worst_loss_usd": -20.000000000001027,
+          "fixed_budget_account_balance": 804.4030028927164,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3888888888888889,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": 2.221850070391006,
+          "stress_mean_usd": -0.8120339623068514,
+          "fixed_risk_drawdown_usd": 80.00669873296188,
+          "worst_loss_usd": -20.00000000000084,
+          "fixed_budget_account_balance": 1039.9933012670383,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 33,
+          "target_rate": 0.15151515151515152,
+          "win_rate": 0.30303030303030304,
+          "mean_usd": -6.866262159098025,
+          "stress_mean_usd": -9.724152425101533,
+          "fixed_risk_drawdown_usd": 360.41383360479676,
+          "worst_loss_usd": -20.000000000001027,
+          "fixed_budget_account_balance": 773.4133487497652,
+          "affordable_trades": 33,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.05555555555555555,
+          "win_rate": 0.3333333333333333,
+          "mean_usd": -0.9920026877450123,
+          "stress_mean_usd": -2.6381694072840443,
+          "fixed_risk_drawdown_usd": 71.50268328623288,
+          "worst_loss_usd": -19.999999999999826,
+          "fixed_budget_account_balance": 982.1439516205897,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.0,
+          "win_rate": 0.37142857142857144,
+          "mean_usd": -3.383199441719657,
+          "stress_mean_usd": -4.91291690835393,
+          "fixed_risk_drawdown_usd": 154.65229477310822,
+          "worst_loss_usd": -20.00000000000048,
+          "fixed_budget_account_balance": 881.5880195398123,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.16666666666666666,
+          "win_rate": 0.5,
+          "mean_usd": 1.0937361038794848,
+          "stress_mean_usd": -0.5524306156595481,
+          "fixed_risk_drawdown_usd": 74.98204900813106,
+          "worst_loss_usd": -20.000000000000114,
+          "fixed_budget_account_balance": 1019.6872498698305,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 31,
+          "target_rate": 0.03225806451612903,
+          "win_rate": 0.41935483870967744,
+          "mean_usd": -3.165846179667031,
+          "stress_mean_usd": -4.709148930071151,
+          "fixed_risk_drawdown_usd": 210.209974193709,
+          "worst_loss_usd": -20.00000000000048,
+          "fixed_budget_account_balance": 901.8587684303218,
+          "affordable_trades": 31,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -3.2220346656891468,
+          "stress_mean_usd": -10.806744747433795,
+          "fixed_risk_drawdown_usd": 197.37158937773046,
+          "worst_loss_usd": -50.000000000001265,
+          "fixed_budget_account_balance": 942.0033760175959,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.37142857142857144,
+          "win_rate": 0.42857142857142855,
+          "mean_usd": -11.867153972960553,
+          "stress_mean_usd": -18.95084380224103,
+          "fixed_risk_drawdown_usd": 605.3503890536251,
+          "worst_loss_usd": -50.000000000002565,
+          "fixed_budget_account_balance": 584.6496109463808,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.6111111111111112,
+          "win_rate": 0.6111111111111112,
+          "mean_usd": -1.1111111111105287,
+          "stress_mean_usd": -8.695821192855178,
+          "fixed_risk_drawdown_usd": 200.00000000000006,
+          "worst_loss_usd": -50.000000000002096,
+          "fixed_budget_account_balance": 980.0000000000108,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 34,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -9.070662088768467,
+          "stress_mean_usd": -16.238055587643245,
+          "fixed_risk_drawdown_usd": 588.4025110181374,
+          "worst_loss_usd": -50.000000000002565,
+          "fixed_budget_account_balance": 691.5974889818723,
+          "affordable_trades": 34,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.16666666666666666,
+          "win_rate": 0.3333333333333333,
+          "mean_usd": -6.044508639873515,
+          "stress_mean_usd": -10.159925438721096,
+          "fixed_risk_drawdown_usd": 187.13568426337042,
+          "worst_loss_usd": -49.99999999999957,
+          "fixed_budget_account_balance": 891.1988444822764,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.14285714285714285,
+          "win_rate": 0.37142857142857144,
+          "mean_usd": -7.925635379731542,
+          "stress_mean_usd": -11.749929046317222,
+          "fixed_risk_drawdown_usd": 388.46051920465874,
+          "worst_loss_usd": -50.0000000000012,
+          "fixed_budget_account_balance": 722.602761709396,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -2.006415448516056,
+          "stress_mean_usd": -6.121832247363637,
+          "fixed_risk_drawdown_usd": 168.20665494608863,
+          "worst_loss_usd": -50.00000000000029,
+          "fixed_budget_account_balance": 963.8845219267109,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.375,
+          "win_rate": 0.4375,
+          "mean_usd": -7.61392098939252,
+          "stress_mean_usd": -11.485917166444324,
+          "fixed_risk_drawdown_usd": 453.64547166055854,
+          "worst_loss_usd": -50.0000000000012,
+          "fixed_budget_account_balance": 756.3545283394393,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.7222222222222222,
+          "win_rate": 0.7222222222222222,
+          "mean_usd": -3.18519582686815,
+          "stress_mean_usd": -18.354615990357445,
+          "fixed_risk_drawdown_usd": 270.0000000000005,
+          "worst_loss_usd": -100.00000000000253,
+          "fixed_budget_account_balance": 942.6664751163735,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.6285714285714286,
+          "win_rate": 0.6285714285714286,
+          "mean_usd": -14.045228568638382,
+          "stress_mean_usd": -28.21260822719933,
+          "fixed_risk_drawdown_usd": 791.5829999023433,
+          "worst_loss_usd": -100.00000000000513,
+          "fixed_budget_account_balance": 508.4170000976567,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.7222222222222222,
+          "win_rate": 0.7222222222222222,
+          "mean_usd": -6.111111111110442,
+          "stress_mean_usd": -21.28053127459974,
+          "fixed_risk_drawdown_usd": 289.9999999999907,
+          "worst_loss_usd": -100.00000000000253,
+          "fixed_budget_account_balance": 890.0000000000123,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.6571428571428571,
+          "win_rate": 0.6571428571428571,
+          "mean_usd": -14.571428571427965,
+          "stress_mean_usd": -28.73880822998891,
+          "fixed_risk_drawdown_usd": 809.9999999999787,
+          "worst_loss_usd": -100.00000000000513,
+          "fixed_budget_account_balance": 490.00000000002115,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -5.13852963127327,
+          "stress_mean_usd": -13.369363228968433,
+          "fixed_risk_drawdown_usd": 282.309633054288,
+          "worst_loss_usd": -99.99999999999913,
+          "fixed_budget_account_balance": 907.5064666370806,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.37142857142857144,
+          "win_rate": 0.42857142857142855,
+          "mean_usd": -13.453198081476042,
+          "stress_mean_usd": -21.101785414647402,
+          "fixed_risk_drawdown_usd": 650.8619328516579,
+          "worst_loss_usd": -100.0000000000024,
+          "fixed_budget_account_balance": 529.1380671483385,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.6666666666666666,
+          "win_rate": 0.6666666666666666,
+          "mean_usd": -5.903997605155169,
+          "stress_mean_usd": -14.13483120285033,
+          "fixed_risk_drawdown_usd": 346.2719568927906,
+          "worst_loss_usd": -100.00000000000058,
+          "fixed_budget_account_balance": 893.7280431072068,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.5625,
+          "win_rate": 0.5625,
+          "mean_usd": -11.172459699215906,
+          "stress_mean_usd": -18.916452053319517,
+          "fixed_risk_drawdown_usd": 657.5187103749073,
+          "worst_loss_usd": -100.0000000000024,
+          "fixed_budget_account_balance": 642.4812896250913,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.1111111111111111,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -2.879809931033716,
+          "stress_mean_usd": -5.913693963731575,
+          "fixed_risk_drawdown_usd": 108.29581478000958,
+          "worst_loss_usd": -20.000000000000696,
+          "fixed_budget_account_balance": 948.1634212413928,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.05714285714285714,
+          "win_rate": 0.6,
+          "mean_usd": -1.1015195947057694,
+          "stress_mean_usd": -3.9349955264179592,
+          "fixed_risk_drawdown_usd": 100.59819232269925,
+          "worst_loss_usd": -20.00000000000056,
+          "fixed_budget_account_balance": 961.4468141852985,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.2222222222222222,
+          "win_rate": 0.3888888888888889,
+          "mean_usd": -3.1516348745025904,
+          "stress_mean_usd": -6.185518907200449,
+          "fixed_risk_drawdown_usd": 133.72947485890677,
+          "worst_loss_usd": -20.000000000000888,
+          "fixed_budget_account_balance": 943.270572258953,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 32,
+          "target_rate": 0.1875,
+          "win_rate": 0.46875,
+          "mean_usd": -1.9782265371650065,
+          "stress_mean_usd": -4.8451986695806175,
+          "fixed_risk_drawdown_usd": 99.99999999999966,
+          "worst_loss_usd": -20.000000000001027,
+          "fixed_budget_account_balance": 936.6967508107195,
+          "affordable_trades": 32,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.0,
+          "win_rate": 0.5,
+          "mean_usd": -2.2795992613852754,
+          "stress_mean_usd": -3.9257659809243077,
+          "fixed_risk_drawdown_usd": 59.46544986898974,
+          "worst_loss_usd": -20.000000000000583,
+          "fixed_budget_account_balance": 958.967213295065,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.0,
+          "win_rate": 0.6285714285714286,
+          "mean_usd": -0.18267454299539507,
+          "stress_mean_usd": -1.7123920096296668,
+          "fixed_risk_drawdown_usd": 52.7398840709503,
+          "worst_loss_usd": -20.000000000000316,
+          "fixed_budget_account_balance": 993.6063909951612,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.0,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -4.731562347967647,
+          "stress_mean_usd": -6.377729067506679,
+          "fixed_risk_drawdown_usd": 97.96614489106345,
+          "worst_loss_usd": -20.000000000000604,
+          "fixed_budget_account_balance": 914.8318777365823,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 31,
+          "target_rate": 0.06451612903225806,
+          "win_rate": 0.5806451612903226,
+          "mean_usd": 1.0559990035028,
+          "stress_mean_usd": -0.48730374690131933,
+          "fixed_risk_drawdown_usd": 66.65369397729579,
+          "worst_loss_usd": -20.000000000000554,
+          "fixed_budget_account_balance": 1032.7359691085874,
+          "affordable_trades": 31,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3888888888888889,
+          "win_rate": 0.5,
+          "mean_usd": -8.77575866896856,
+          "stress_mean_usd": -16.36046875071321,
+          "fixed_risk_drawdown_usd": 220.96381085724923,
+          "worst_loss_usd": -50.00000000000174,
+          "fixed_budget_account_balance": 842.036343958566,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.4,
+          "win_rate": 0.6,
+          "mean_usd": -4.652772472732905,
+          "stress_mean_usd": -11.736462302013377,
+          "fixed_risk_drawdown_usd": 262.8765343810703,
+          "worst_loss_usd": -50.0000000000014,
+          "fixed_budget_account_balance": 837.1529634543482,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -10.000000000000385,
+          "stress_mean_usd": -17.584710081745033,
+          "fixed_risk_drawdown_usd": 250.00000000000193,
+          "worst_loss_usd": -50.00000000000222,
+          "fixed_budget_account_balance": 819.9999999999931,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 34,
+          "target_rate": 0.5,
+          "win_rate": 0.5294117647058824,
+          "mean_usd": -7.646603945509405,
+          "stress_mean_usd": -14.813997444384183,
+          "fixed_risk_drawdown_usd": 259.9845341473198,
+          "worst_loss_usd": -50.0000000000014,
+          "fixed_budget_account_balance": 740.0154658526802,
+          "affordable_trades": 34,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.2222222222222222,
+          "win_rate": 0.5,
+          "mean_usd": -4.478832600554216,
+          "stress_mean_usd": -8.5942493994018,
+          "fixed_risk_drawdown_usd": 154.66894745328625,
+          "worst_loss_usd": -50.00000000000146,
+          "fixed_budget_account_balance": 919.381013190024,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.22857142857142856,
+          "win_rate": 0.6285714285714286,
+          "mean_usd": 0.7978399161592448,
+          "stress_mean_usd": -3.0264537504264357,
+          "fixed_risk_drawdown_usd": 131.84971017737573,
+          "worst_loss_usd": -50.00000000000079,
+          "fixed_budget_account_balance": 1027.924397065574,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.3333333333333333,
+          "win_rate": 0.4444444444444444,
+          "mean_usd": -10.253674326170216,
+          "stress_mean_usd": -14.369091125017796,
+          "fixed_risk_drawdown_usd": 234.07707702200534,
+          "worst_loss_usd": -50.000000000001506,
+          "fixed_budget_account_balance": 815.4338621289361,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 33,
+          "target_rate": 0.48484848484848486,
+          "win_rate": 0.5757575757575758,
+          "mean_usd": 3.1649835241584765,
+          "stress_mean_usd": -0.6937957002575168,
+          "fixed_risk_drawdown_usd": 120.00000000000298,
+          "worst_loss_usd": -50.000000000001386,
+          "fixed_budget_account_balance": 1104.4444562972299,
+          "affordable_trades": 33,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5555555555555556,
+          "win_rate": 0.5555555555555556,
+          "mean_usd": -22.018526506326833,
+          "stress_mean_usd": -37.18794666981613,
+          "fixed_risk_drawdown_usd": 416.33347711387086,
+          "worst_loss_usd": -100.00000000000348,
+          "fixed_budget_account_balance": 603.666522886117,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.6571428571428571,
+          "win_rate": 0.6857142857142857,
+          "mean_usd": -9.635030006196624,
+          "stress_mean_usd": -23.802409664757565,
+          "fixed_risk_drawdown_usd": 539.9999999999934,
+          "worst_loss_usd": -100.0000000000028,
+          "fixed_budget_account_balance": 662.7739497831183,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.6111111111111112,
+          "win_rate": 0.6111111111111112,
+          "mean_usd": -20.55555555555617,
+          "stress_mean_usd": -35.724975719045474,
+          "fixed_risk_drawdown_usd": 389.999999999999,
+          "worst_loss_usd": -100.00000000000443,
+          "fixed_budget_account_balance": 629.9999999999891,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.6857142857142857,
+          "win_rate": 0.6857142857142857,
+          "mean_usd": -9.284077712032106,
+          "stress_mean_usd": -23.451457370593047,
+          "fixed_risk_drawdown_usd": 539.9999999999934,
+          "worst_loss_usd": -100.0000000000028,
+          "fixed_budget_account_balance": 675.0572800788764,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.4444444444444444,
+          "win_rate": 0.5555555555555556,
+          "mean_usd": -10.946268378156754,
+          "stress_mean_usd": -19.177101975851922,
+          "fixed_risk_drawdown_usd": 255.13275209344238,
+          "worst_loss_usd": -100.00000000000291,
+          "fixed_budget_account_balance": 802.9671691931785,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 35,
+          "target_rate": 0.45714285714285713,
+          "win_rate": 0.6285714285714286,
+          "mean_usd": -4.184659196819287,
+          "stress_mean_usd": -11.833246529990648,
+          "fixed_risk_drawdown_usd": 263.6994203547515,
+          "worst_loss_usd": -100.00000000000158,
+          "fixed_budget_account_balance": 853.5369281113251,
+          "affordable_trades": 35,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 1.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 18,
+          "target_rate": 0.5555555555555556,
+          "win_rate": 0.5555555555555556,
+          "mean_usd": -19.609114205245167,
+          "stress_mean_usd": -27.839947802940326,
+          "fixed_risk_drawdown_usd": 372.96405569441237,
+          "worst_loss_usd": -100.00000000000301,
+          "fixed_budget_account_balance": 647.0359443055872,
+          "affordable_trades": 18,
+          "account_exhausted": false
+        },
+        {
+          "trades": 33,
+          "target_rate": 0.6060606060606061,
+          "win_rate": 0.6363636363636364,
+          "mean_usd": -2.5218811640835637,
+          "stress_mean_usd": -10.239439612915556,
+          "fixed_risk_drawdown_usd": 270.00000000000705,
+          "worst_loss_usd": -100.00000000000277,
+          "fixed_budget_account_balance": 916.7779215852424,
+          "affordable_trades": 33,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.375,
+          "mean_usd": -1.404516170798845,
+          "stress_mean_usd": -4.574724920607021,
+          "fixed_risk_drawdown_usd": 49.13491614081892,
+          "worst_loss_usd": -20.000000000000504,
+          "fixed_budget_account_balance": 988.7638706336093,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.10526315789473684,
+          "win_rate": 0.47368421052631576,
+          "mean_usd": -4.443947919280725,
+          "stress_mean_usd": -7.289012940512744,
+          "fixed_risk_drawdown_usd": 139.77153972195296,
+          "worst_loss_usd": -20.000000000000988,
+          "fixed_budget_account_balance": 915.5649895336663,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.25,
+          "mean_usd": -3.7760889281213954,
+          "stress_mean_usd": -6.94629767792957,
+          "fixed_risk_drawdown_usd": 70.20871142497134,
+          "worst_loss_usd": -20.00000000000084,
+          "fixed_budget_account_balance": 969.791288575029,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.10526315789473684,
+          "win_rate": 0.3157894736842105,
+          "mean_usd": -7.769177785481247,
+          "stress_mean_usd": -10.614242806713264,
+          "fixed_risk_drawdown_usd": 188.46182260367704,
+          "worst_loss_usd": -20.000000000000988,
+          "fixed_budget_account_balance": 852.3856220758563,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.375,
+          "mean_usd": -1.8327089647959993,
+          "stress_mean_usd": -3.557739630800679,
+          "fixed_risk_drawdown_usd": 35.67183939968699,
+          "worst_loss_usd": -19.999999999999506,
+          "fixed_budget_account_balance": 985.3383282816319,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.0,
+          "win_rate": 0.47368421052631576,
+          "mean_usd": -3.390951129886191,
+          "stress_mean_usd": -4.926580388600969,
+          "fixed_risk_drawdown_usd": 98.6825425737473,
+          "worst_loss_usd": -20.00000000000048,
+          "fixed_budget_account_balance": 935.5719285321625,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.25,
+          "mean_usd": -0.16121388005745851,
+          "stress_mean_usd": -1.8862445460621373,
+          "fixed_risk_drawdown_usd": 41.28971104046075,
+          "worst_loss_usd": -19.999999999999535,
+          "fixed_budget_account_balance": 998.7102889595402,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.05263157894736842,
+          "win_rate": 0.3684210526315789,
+          "mean_usd": -5.0235108613646835,
+          "stress_mean_usd": -6.559140120079459,
+          "fixed_risk_drawdown_usd": 141.94802161483028,
+          "worst_loss_usd": -20.00000000000048,
+          "fixed_budget_account_balance": 904.5532936340715,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.5,
+          "mean_usd": -0.38666274825201263,
+          "stress_mean_usd": -8.31218462277245,
+          "fixed_risk_drawdown_usd": 93.70482693591816,
+          "worst_loss_usd": -50.000000000001265,
+          "fixed_budget_account_balance": 996.9066980139838,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.42105263157894735,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -8.500424242970626,
+          "stress_mean_usd": -15.613086796050673,
+          "fixed_risk_drawdown_usd": 304.66781289070417,
+          "worst_loss_usd": -50.000000000002466,
+          "fixed_budget_account_balance": 838.4919393835584,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.625,
+          "win_rate": 0.625,
+          "mean_usd": -2.3092638912203256e-13,
+          "stress_mean_usd": -7.925521874520671,
+          "fixed_risk_drawdown_usd": 120.00000000000233,
+          "worst_loss_usd": -50.000000000002096,
+          "fixed_budget_account_balance": 999.9999999999985,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5263157894736842,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -7.894736842104644,
+          "stress_mean_usd": -15.00739939518469,
+          "fixed_risk_drawdown_usd": 329.99999999999613,
+          "worst_loss_usd": -50.000000000002466,
+          "fixed_budget_account_balance": 850.0000000000119,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.125,
+          "win_rate": 0.375,
+          "mean_usd": -5.92952972716584,
+          "stress_mean_usd": -10.242106392177536,
+          "fixed_risk_drawdown_usd": 89.17959849921746,
+          "worst_loss_usd": -49.999999999998764,
+          "fixed_budget_account_balance": 952.5637621826731,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.10526315789473684,
+          "win_rate": 0.47368421052631576,
+          "mean_usd": -10.15405788405089,
+          "stress_mean_usd": -13.99313103083783,
+          "fixed_risk_drawdown_usd": 246.70635643436827,
+          "worst_loss_usd": -50.0000000000012,
+          "fixed_budget_account_balance": 807.0729002030331,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.25,
+          "mean_usd": -11.653034700143966,
+          "stress_mean_usd": -15.965611365155667,
+          "fixed_risk_drawdown_usd": 123.22427760115225,
+          "worst_loss_usd": -49.99999999999884,
+          "fixed_budget_account_balance": 906.7757223988482,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.2631578947368421,
+          "win_rate": 0.3684210526315789,
+          "mean_usd": -16.15315830134291,
+          "stress_mean_usd": -19.992231448129846,
+          "fixed_risk_drawdown_usd": 366.9100077255135,
+          "worst_loss_usd": -50.0000000000012,
+          "fixed_budget_account_balance": 693.089992274485,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.75,
+          "win_rate": 0.75,
+          "mean_usd": 6.9706426779194235,
+          "stress_mean_usd": -8.880401071121447,
+          "fixed_risk_drawdown_usd": 100.00000000000253,
+          "worst_loss_usd": -100.00000000000253,
+          "fixed_budget_account_balance": 1055.7651414233558,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5789473684210527,
+          "win_rate": 0.5789473684210527,
+          "mean_usd": -20.990164163374313,
+          "stress_mean_usd": -35.215489269534416,
+          "fixed_risk_drawdown_usd": 549.9999999999873,
+          "worst_loss_usd": -100.00000000000493,
+          "fixed_budget_account_balance": 601.1868808958878,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.75,
+          "win_rate": 0.75,
+          "mean_usd": -2.5000000000021494,
+          "stress_mean_usd": -18.351043749043022,
+          "fixed_risk_drawdown_usd": 170.00000000000682,
+          "worst_loss_usd": -100.00000000000348,
+          "fixed_budget_account_balance": 979.9999999999831,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.631578947368421,
+          "win_rate": 0.631578947368421,
+          "mean_usd": -17.894736842103864,
+          "stress_mean_usd": -32.12006194826396,
+          "fixed_risk_drawdown_usd": 549.9999999999873,
+          "worst_loss_usd": -100.00000000000493,
+          "fixed_budget_account_balance": 660.0000000000265,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -5.088487723527702,
+          "stress_mean_usd": -13.713641053551097,
+          "fixed_risk_drawdown_usd": 147.52556566070717,
+          "worst_loss_usd": -99.99999999999753,
+          "fixed_budget_account_balance": 959.2920982117781,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.42105263157894735,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -16.318168540534646,
+          "stress_mean_usd": -23.996314834108535,
+          "fixed_risk_drawdown_usd": 452.49914281454795,
+          "worst_loss_usd": -100.0000000000024,
+          "fixed_budget_account_balance": 689.9547977298415,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": 1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.625,
+          "win_rate": 0.625,
+          "mean_usd": -10.801663736521897,
+          "stress_mean_usd": -19.426817066545293,
+          "fixed_risk_drawdown_usd": 206.41330989217522,
+          "worst_loss_usd": -99.99999999999768,
+          "fixed_budget_account_balance": 913.5866901078248,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5789473684210527,
+          "win_rate": 0.5789473684210527,
+          "mean_usd": -19.186398658483803,
+          "stress_mean_usd": -26.86454495205769,
+          "fixed_risk_drawdown_usd": 544.5415745111867,
+          "worst_loss_usd": -100.0000000000024,
+          "fixed_budget_account_balance": 635.4584254888077,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.125,
+          "win_rate": 0.25,
+          "mean_usd": -4.741823043582716,
+          "stress_mean_usd": -7.9120317933908915,
+          "fixed_risk_drawdown_usd": 55.51898903654574,
+          "worst_loss_usd": -20.000000000000547,
+          "fixed_budget_account_balance": 962.0654156513382,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.10526315789473684,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": 0.2937085777061079,
+          "stress_mean_usd": -2.5513564435259126,
+          "fixed_risk_drawdown_usd": 63.636023889278405,
+          "worst_loss_usd": -20.00000000000056,
+          "fixed_budget_account_balance": 1005.5804629764165,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.375,
+          "mean_usd": -4.1249941102677585,
+          "stress_mean_usd": -7.295202860075932,
+          "fixed_risk_drawdown_usd": 80.00000000000041,
+          "worst_loss_usd": -20.000000000000547,
+          "fixed_budget_account_balance": 967.0000471178578,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.3157894736842105,
+          "win_rate": 0.47368421052631576,
+          "mean_usd": 1.9608382673311724,
+          "stress_mean_usd": -0.8842267539008454,
+          "fixed_risk_drawdown_usd": 41.36939761204145,
+          "worst_loss_usd": -20.00000000000056,
+          "fixed_budget_account_balance": 1037.2559270792926,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.375,
+          "mean_usd": -2.198193419377903,
+          "stress_mean_usd": -3.9232240853825826,
+          "fixed_risk_drawdown_usd": 22.022857238747974,
+          "worst_loss_usd": -20.000000000000583,
+          "fixed_budget_account_balance": 982.4144526449768,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.0,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": 0.1779457137436027,
+          "stress_mean_usd": -1.3576835449711742,
+          "fixed_risk_drawdown_usd": 29.865398037579386,
+          "worst_loss_usd": -20.000000000000192,
+          "fixed_budget_account_balance": 1003.3809685611284,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 20.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.0,
+          "win_rate": 0.625,
+          "mean_usd": -1.680443962709531,
+          "stress_mean_usd": -3.4054746287142104,
+          "fixed_risk_drawdown_usd": 20.000000000000604,
+          "worst_loss_usd": -20.000000000000604,
+          "fixed_budget_account_balance": 986.5564482983239,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.10526315789473684,
+          "win_rate": 0.5789473684210527,
+          "mean_usd": 4.096438034162024,
+          "stress_mean_usd": 2.560808775447248,
+          "fixed_risk_drawdown_usd": 23.363581236090695,
+          "worst_loss_usd": -20.000000000000192,
+          "fixed_budget_account_balance": 1077.8323226490786,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.125,
+          "win_rate": 0.25,
+          "mean_usd": -17.479557608956995,
+          "stress_mean_usd": -25.405079483477426,
+          "fixed_risk_drawdown_usd": 139.8364608716559,
+          "worst_loss_usd": -50.000000000001364,
+          "fixed_budget_account_balance": 860.1635391283442,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.42105263157894735,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -7.145403073829601,
+          "stress_mean_usd": -14.25806562690965,
+          "fixed_risk_drawdown_usd": 159.09005972319602,
+          "worst_loss_usd": -50.0000000000014,
+          "fixed_budget_account_balance": 864.2373415972374,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -20.00000000000062,
+          "stress_mean_usd": -27.92552187452106,
+          "fixed_risk_drawdown_usd": 200.00000000000102,
+          "worst_loss_usd": -50.000000000001364,
+          "fixed_budget_account_balance": 839.9999999999951,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.5263157894736842,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -6.445861050557159,
+          "stress_mean_usd": -13.558523603637205,
+          "fixed_risk_drawdown_usd": 139.99999999999514,
+          "worst_loss_usd": -50.0000000000014,
+          "fixed_budget_account_balance": 877.5286400394141,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.125,
+          "win_rate": 0.375,
+          "mean_usd": -5.400529809351686,
+          "stress_mean_usd": -9.713106474363386,
+          "fixed_risk_drawdown_usd": 55.05714309686992,
+          "worst_loss_usd": -50.00000000000146,
+          "fixed_budget_account_balance": 956.7957615251864,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.21052631578947367,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -0.35786661815020687,
+          "stress_mean_usd": -4.19693976493715,
+          "fixed_risk_drawdown_usd": 74.66349509394846,
+          "worst_loss_usd": -50.000000000000476,
+          "fixed_budget_account_balance": 993.2005342551461,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 50.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.625,
+          "mean_usd": -0.4274971433999424,
+          "stress_mean_usd": -4.740073808411643,
+          "fixed_risk_drawdown_usd": 50.000000000001506,
+          "worst_loss_usd": -50.000000000001506,
+          "fixed_budget_account_balance": 996.5800228528004,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.47368421052631576,
+          "win_rate": 0.5789473684210527,
+          "mean_usd": 4.079680335176938,
+          "stress_mean_usd": 0.2406071883899965,
+          "fixed_risk_drawdown_usd": 58.40895309022673,
+          "worst_loss_usd": -50.000000000000476,
+          "fixed_budget_account_balance": 1077.5139263683618,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.375,
+          "win_rate": 0.375,
+          "mean_usd": -35.94936814784287,
+          "stress_mean_usd": -51.80041189688374,
+          "fixed_risk_drawdown_usd": 317.5949451827403,
+          "worst_loss_usd": -100.00000000000273,
+          "fixed_budget_account_balance": 712.4050548172571,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.631578947368421,
+          "win_rate": 0.631578947368421,
+          "mean_usd": -14.475794037798018,
+          "stress_mean_usd": -28.701119143958113,
+          "fixed_risk_drawdown_usd": 365.0400867181719,
+          "worst_loss_usd": -100.0000000000028,
+          "fixed_budget_account_balance": 724.9599132818378,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 1.5,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.5,
+          "win_rate": 0.5,
+          "mean_usd": -35.00000000000153,
+          "stress_mean_usd": -50.851043749042404,
+          "fixed_risk_drawdown_usd": 310.00000000000955,
+          "worst_loss_usd": -100.00000000000273,
+          "fixed_budget_account_balance": 719.9999999999878,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.631578947368421,
+          "win_rate": 0.631578947368421,
+          "mean_usd": -14.996985259007273,
+          "stress_mean_usd": -29.22231036516737,
+          "fixed_risk_drawdown_usd": 374.9427199211477,
+          "worst_loss_usd": -100.0000000000028,
+          "fixed_budget_account_balance": 715.0572800788618,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 1,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.25,
+          "win_rate": 0.375,
+          "mean_usd": -14.776420847445763,
+          "stress_mean_usd": -23.40157417746916,
+          "fixed_risk_drawdown_usd": 118.2113667795661,
+          "worst_loss_usd": -100.00000000000291,
+          "fixed_budget_account_balance": 881.7886332204339,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.42105263157894735,
+          "win_rate": 0.5263157894736842,
+          "mean_usd": -7.920352982115367,
+          "stress_mean_usd": -15.598499275689255,
+          "fixed_risk_drawdown_usd": 151.39578266994414,
+          "worst_loss_usd": -100.00000000000095,
+          "fixed_budget_account_balance": 849.5132933398082,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    },
+    {
+      "delay_minutes": 60,
+      "surprise_multiplier": 2.0,
+      "direction": -1,
+      "risk_usd": 100.0,
+      "stop_atr": 3.0,
+      "hours": 4,
+      "development": [
+        {
+          "trades": 8,
+          "target_rate": 0.5,
+          "win_rate": 0.625,
+          "mean_usd": -10.73272907453521,
+          "stress_mean_usd": -19.35788240455861,
+          "fixed_risk_drawdown_usd": 115.86183259627963,
+          "worst_loss_usd": -100.00000000000301,
+          "fixed_budget_account_balance": 914.1381674037184,
+          "affordable_trades": 8,
+          "account_exhausted": false
+        },
+        {
+          "trades": 19,
+          "target_rate": 0.631578947368421,
+          "win_rate": 0.631578947368421,
+          "mean_usd": -0.45569935660030975,
+          "stress_mean_usd": -8.133845650174196,
+          "fixed_risk_drawdown_usd": 176.34084379091047,
+          "worst_loss_usd": -100.00000000000095,
+          "fixed_budget_account_balance": 991.3417122245942,
+          "affordable_trades": 19,
+          "account_exhausted": false
+        }
+      ]
+    }
+  ]
+}

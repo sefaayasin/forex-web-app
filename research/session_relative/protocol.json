@@ -1,0 +1,33 @@
+{
+  "development": [
+    [
+      "2016-01-01",
+      "2019-01-01"
+    ],
+    [
+      "2019-01-01",
+      "2023-01-01"
+    ]
+  ],
+  "audit_start": "2023-01-01",
+  "audit_previously_inspected": true,
+  "target_usd": 30,
+  "risk_usd": [
+    20,
+    50,
+    100
+  ],
+  "stop_atr": 3,
+  "hold_hours": [
+    1,
+    4
+  ],
+  "minimum_development_trades": 100,
+  "sources": [
+    "https://arxiv.org/abs/1411.2153",
+    "https://arxiv.org/abs/1103.5664"
+  ],
+  "source_use": "Motivation only; original research rules, not paper replications.",
+  "trade_permission": false,
+  "code_hash": "d50806de50b565797d2f32e1f18bdaa5f2c6c3d174986e745f6c1d24e82b0d13"
+}

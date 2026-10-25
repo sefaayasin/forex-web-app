@@ -1,0 +1,17 @@
+{
+  "researched_on": "2026-10-08",
+  "formula_sources": [
+    {"indicator": "Fisher Transform", "author": "John Ehlers", "url": "https://c.mql5.com/forextsd/forum/3/130fish.pdf", "kind": "original author article, hosted copy", "parameters": "HL2, 10 bars, recursive normalization and delayed trigger"},
+    {"indicator": "SuperSmoother / Roofing / filtered stochastic", "author": "John Ehlers", "url": "https://c.mql5.com/forextsd/forum/122/predictiveindicators.pdf", "kind": "original author paper, hosted copy", "parameters": "highpass 48, lowpass 10, stochastic 20; anticipation and confirmation both tested", "adaptation": "Published daily-futures illustration applied experimentally to 15M forex; radians, steady initial state"},
+    {"indicator": "FRAMA", "author": "John Ehlers", "url": "https://c.mql5.com/forextsd/forum/208/FRAMA%20g%20Fractal%20Adaptive%20Moving%20Average.pdf", "kind": "original author paper, hosted copy", "parameters": "16 bars; HL2; alpha clamped 0.01 to 1"},
+    {"indicator": "KAMA", "url": "https://ta-lib.org/functions/kama.html", "kind": "official implementation formula", "parameters": "efficiency 30; fast 2, slow 30; fixed past-price seed"},
+    {"indicator": "Supertrend", "url": "https://www.tradingview.com/support/solutions/43000634738-supertrend/", "kind": "official platform formula", "parameters": "ATR10; factor 3; closed-bar band tracking"},
+    {"indicator": "ConnorsRSI", "author": "Connors Research", "url": "https://www.tradingmarkets.com/media/2012/CRHS.pdf", "kind": "developer-published formula", "parameters": "3,2,100; current return ranked against prior 100 returns", "adaptation": "15M instead of daily; flat streak neutral"},
+    {"indicator": "Laguerre RSI", "author": "John Ehlers", "url": "https://doczz.net/doc/8103163/time-warp-%E2%80%93-without-space-travel", "kind": "original author paper, hosted text copy", "parameters": "close, gamma 0.5, four recursive poles", "adaptation": "price-seeded filters; flat oscillator neutral 0.5; 16-bar warmup"}
+  ],
+  "research_review": [
+    {"title": "Assessing the Efficacy of Adjustable Moving Averages Using ASEAN-5 Currencies", "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0160931", "assessment": "Evidence for adaptive methods in specific daily ASEAN currencies; not proof for G10 15M cash targets. KAMA is not the paper's AMA-prime formula."},
+    {"title": "Self-augmenting technical indicator with recurrent reinforcement learning: evidence from Forex markets", "url": "https://link.springer.com/article/10.1007/s40622-026-00479-x", "assessment": "Reviewed 15M RRL alternative. Mean positive test Sharpe on only USDJPY/EURCHF; other six mean results negative. Best seed/test-checkpoint performance is not an ex-ante selector. Not represented as reproduced or profitable here."}
+  ],
+  "interpretation": "Formula availability is not verified forex profitability. Every rule, session, stop and budget adaptation is experimental and recorded before its results are evaluated."
+}

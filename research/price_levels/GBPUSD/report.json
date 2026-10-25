@@ -1,0 +1,185 @@
+{
+  "symbol": "GBPUSD",
+  "selected": {
+    "rule": "break_50pip",
+    "hours": 1,
+    "risk": 20.0,
+    "development": [
+      {
+        "trades": 2195,
+        "target_rate": 0.018223234624145785,
+        "win_rate": 0.4642369020501139,
+        "mean_usd": -0.46607209538453975,
+        "stress_mean_usd": -1.1565607339224244,
+        "fixed_risk_drawdown_usd": 1256.283101142833,
+        "worst_loss_usd": -20.000000000000835,
+        "fixed_budget_account_balance": 18.368585221065658,
+        "affordable_trades": 2101,
+        "account_exhausted": true
+      },
+      {
+        "trades": 3098,
+        "target_rate": 0.01646223369916075,
+        "win_rate": 0.4496449322143318,
+        "mean_usd": -1.0248115286077526,
+        "stress_mean_usd": -1.7353931808468184,
+        "fixed_risk_drawdown_usd": 3298.5694339937236,
+        "worst_loss_usd": -27.331087914033297,
+        "fixed_budget_account_balance": 17.559645455752523,
+        "affordable_trades": 464,
+        "account_exhausted": true
+      }
+    ]
+  },
+  "audit": {
+    "trades": 2286,
+    "target_rate": 0.013560804899387576,
+    "win_rate": 0.45975503062117234,
+    "mean_usd": -0.7322578734809869,
+    "stress_mean_usd": -1.6369911243976938,
+    "fixed_risk_drawdown_usd": 1791.0626973998314,
+    "worst_loss_usd": -20.000000000001187,
+    "fixed_budget_account_balance": 15.038029067385189,
+    "affordable_trades": 1115,
+    "account_exhausted": true
+  },
+  "normal_test": {
+    "status": "ready",
+    "sample_count": 830,
+    "observed_mean": -0.3096534804124193,
+    "ci_low": -0.8059942811979848,
+    "ci_high": 0.1870182661860473,
+    "p_value": 0.8950524737631185,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "stress_test": {
+    "status": "ready",
+    "sample_count": 830,
+    "observed_mean": -1.2421842760631852,
+    "ci_low": -1.7321371729001476,
+    "ci_high": -0.7452576584893387,
+    "p_value": 1.0,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "fee_scenarios_pips": {
+    "0.0": {
+      "trades": 2286,
+      "target_rate": 0.01968503937007874,
+      "win_rate": 0.4978127734033246,
+      "mean_usd": 0.18070870499592262,
+      "stress_mean_usd": 0.18070870499592262,
+      "fixed_risk_drawdown_usd": 587.8769618514162,
+      "worst_loss_usd": -20.000000000001293,
+      "fixed_budget_account_balance": 1413.1000996206762,
+      "affordable_trades": 2286,
+      "account_exhausted": false
+    },
+    "0.5": {
+      "trades": 2286,
+      "target_rate": 0.016185476815398076,
+      "win_rate": 0.4864391951006124,
+      "mean_usd": -0.19665333293084722,
+      "stress_mean_usd": -0.5546387995396809,
+      "fixed_risk_drawdown_usd": 834.7988303662264,
+      "worst_loss_usd": -20.000000000001243,
+      "fixed_budget_account_balance": 550.4504809200804,
+      "affordable_trades": 2286,
+      "account_exhausted": false
+    },
+    "1.0": {
+      "trades": 2286,
+      "target_rate": 0.01399825021872266,
+      "win_rate": 0.4693788276465442,
+      "mean_usd": -0.5296251933373608,
+      "stress_mean_usd": -1.2316254796201322,
+      "fixed_risk_drawdown_usd": 1356.86146850962,
+      "worst_loss_usd": -20.000000000001208,
+      "fixed_budget_account_balance": 18.730996217244368,
+      "affordable_trades": 1373,
+      "account_exhausted": true
+    },
+    "2.0": {
+      "trades": 2286,
+      "target_rate": 0.010498687664041995,
+      "win_rate": 0.4426946631671041,
+      "mean_usd": -1.1848258882875111,
+      "stress_mean_usd": -2.5364237316401055,
+      "fixed_risk_drawdown_usd": 2817.535051627981,
+      "worst_loss_usd": -20.00000000000114,
+      "fixed_budget_account_balance": 16.74145731101486,
+      "affordable_trades": 891,
+      "account_exhausted": true
+    }
+  },
+  "years": {
+    "2023": {
+      "trades": 690,
+      "target_rate": 0.017391304347826087,
+      "win_rate": 0.4782608695652174,
+      "mean_usd": -0.5763760446624048,
+      "stress_mean_usd": -1.3741649401953249,
+      "fixed_risk_drawdown_usd": 507.3300301083218,
+      "worst_loss_usd": -20.000000000000774,
+      "fixed_budget_account_balance": 602.3005291829402,
+      "affordable_trades": 690,
+      "account_exhausted": false
+    },
+    "2024": {
+      "trades": 504,
+      "target_rate": 0.011904761904761904,
+      "win_rate": 0.4365079365079365,
+      "mean_usd": -1.3455613528350565,
+      "stress_mean_usd": -2.373056232132647,
+      "fixed_risk_drawdown_usd": 770.170461647432,
+      "worst_loss_usd": -20.000000000001037,
+      "fixed_budget_account_balance": 321.8370781711315,
+      "affordable_trades": 504,
+      "account_exhausted": false
+    },
+    "2025": {
+      "trades": 651,
+      "target_rate": 0.016897081413210446,
+      "win_rate": 0.4731182795698925,
+      "mean_usd": -0.37476972464356556,
+      "stress_mean_usd": -1.2578129184457485,
+      "fixed_risk_drawdown_usd": 371.1322411555135,
+      "worst_loss_usd": -20.000000000001187,
+      "fixed_budget_account_balance": 756.0249092570376,
+      "affordable_trades": 651,
+      "account_exhausted": false
+    },
+    "2026": {
+      "trades": 441,
+      "target_rate": 0.0045351473922902496,
+      "win_rate": 0.4376417233560091,
+      "mean_usd": -0.8029569509946646,
+      "stress_mean_usd": -1.7667377567694265,
+      "fixed_risk_drawdown_usd": 422.10357877568845,
+      "worst_loss_usd": -20.00000000000075,
+      "fixed_budget_account_balance": 645.8959846113535,
+      "affordable_trades": 441,
+      "account_exhausted": false
+    }
+  },
+  "checks": {
+    "development_positive": false,
+    "sample_size": true,
+    "stress_lower_ci_positive": false,
+    "adjusted_p": false,
+    "all_years_positive": false
+  },
+  "screen_passed": false,
+  "trade_permission": false,
+  "limitations": [
+    "No actual stop-order locations available; round prices are a proxy.",
+    "Previously inspected historical audit.",
+    "Generic fee model; no real brokerage lot/margin execution.",
+    "Zero-fee case is diagnostic only."
+  ],
+  "price_hashes": {
+    "15m": "e7488b4ebd7f1752054518d28bd93f92e96c07263612fc6d3ddff567924e7ffe",
+    "5m": "d95efdaf800e87a4fe11bd72713a2b97d47394c4cc4246ba55c01db359bc07f4"
+  }
+}

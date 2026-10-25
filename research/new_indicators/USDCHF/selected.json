@@ -1,0 +1,32 @@
+{
+  "rule": "laguerre_kama",
+  "stop_atr": 3.0,
+  "hours": 4,
+  "loss_usd": 20.0,
+  "subperiods": [
+    {
+      "trades": 871,
+      "target_rate": 0.1515499425947187,
+      "win_rate": 0.4454649827784156,
+      "mean_usd": -0.9094837098834976,
+      "stress_mean_usd": -2.366705018499473,
+      "fixed_risk_drawdown_usd": 962.8795355507224,
+      "worst_loss_usd": -20.000000000001247,
+      "fixed_budget_account_balance": 207.83968869147338,
+      "affordable_trades": 871,
+      "account_exhausted": false
+    },
+    {
+      "trades": 1170,
+      "target_rate": 0.1264957264957265,
+      "win_rate": 0.44871794871794873,
+      "mean_usd": -0.9429684924499503,
+      "stress_mean_usd": -2.6089081962948675,
+      "fixed_risk_drawdown_usd": 1575.1726316772788,
+      "worst_loss_usd": -20.000000000002824,
+      "fixed_budget_account_balance": 17.80198535156017,
+      "affordable_trades": 814,
+      "account_exhausted": true
+    }
+  ]
+}

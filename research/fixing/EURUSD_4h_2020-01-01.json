@@ -1,0 +1,43 @@
+{
+  "summary": {
+    "symbol": "EURUSD",
+    "hours": 4,
+    "start": "2020-01-01",
+    "end": "2023-01-01",
+    "trades": 776,
+    "target_rate": 0.020618556701030927,
+    "win_rate": 0.45618556701030927,
+    "mean_usd": -1.1281140820163214,
+    "stress_mean_usd": -1.773545925353329,
+    "fixed_risk_drawdown_usd": 1124.669660062589,
+    "worst_loss_usd": -20.00000000000094,
+    "fixed_budget_account_balance": 124.58347235533458,
+    "affordable_trades": 776,
+    "account_exhausted": false,
+    "timed_trades": 776,
+    "timed_gross_pips": -0.31082474226809453,
+    "timed_net_pips": -1.3108247422680945,
+    "timed_stress_pips": -2.3108247422680943
+  },
+  "bracket_test": {
+    "status": "ready",
+    "sample_count": 776,
+    "observed_mean": -1.1281140820163214,
+    "ci_low": -1.8985151276431558,
+    "ci_high": -0.32676416224066956,
+    "p_value": 0.9975012493753124,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "timed_test": {
+    "status": "ready",
+    "sample_count": 776,
+    "observed_mean": -1.3108247422680945,
+    "ci_low": -2.8469780927835235,
+    "ci_high": 0.2385760309277967,
+    "p_value": 0.9555222388805598,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "trade_permission": false
+}

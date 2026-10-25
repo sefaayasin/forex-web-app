@@ -1,0 +1,68 @@
+{
+  "symbol": "GBPUSD",
+  "status": "RETROSPECTIVE_ONLY",
+  "trade_permission": false,
+  "selected": {
+    "delay_minutes": 60,
+    "surprise_multiplier": 2.0,
+    "direction": -1,
+    "risk_usd": 20.0,
+    "stop_atr": 3.0,
+    "hours": 1,
+    "development": [
+      {
+        "trades": 10,
+        "target_rate": 0.0,
+        "win_rate": 0.6,
+        "mean_usd": 0.5021951556286811,
+        "stress_mean_usd": -0.33811576108064695,
+        "fixed_risk_drawdown_usd": 13.919170151875392,
+        "worst_loss_usd": -13.919170151875392,
+        "fixed_budget_account_balance": 1005.0219515562868,
+        "affordable_trades": 10,
+        "account_exhausted": false
+      },
+      {
+        "trades": 24,
+        "target_rate": 0.0,
+        "win_rate": 0.5416666666666666,
+        "mean_usd": 0.7268161569013168,
+        "stress_mean_usd": -0.048148625426028525,
+        "fixed_risk_drawdown_usd": 45.3139520499485,
+        "worst_loss_usd": -20.00000000000009,
+        "fixed_budget_account_balance": 1017.4435877656316,
+        "affordable_trades": 24,
+        "account_exhausted": false
+      }
+    ]
+  },
+  "audit": {
+    "trades": 23,
+    "target_rate": 0.0,
+    "win_rate": 0.43478260869565216,
+    "mean_usd": 0.15916413397551618,
+    "stress_mean_usd": -0.838934611429131,
+    "fixed_risk_drawdown_usd": 41.0282067673173,
+    "worst_loss_usd": -20.000000000000853,
+    "fixed_budget_account_balance": 1003.660775081437,
+    "affordable_trades": 23,
+    "account_exhausted": false
+  },
+  "day_test": {
+    "status": "ready",
+    "sample_count": 22,
+    "observed_mean": 0.7789144368602664,
+    "ci_low": -2.1750650391344126,
+    "ci_high": 3.6535173103956313,
+    "p_value": 0.2868565717141429,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "trials": 144,
+  "development_both_positive": false,
+  "limitations": [
+    "Audit already inspected, no fresh holdout.",
+    "Low sample count; no live authorization.",
+    "Calendar vintages/feed timing and actual news spreads unverified."
+  ]
+}

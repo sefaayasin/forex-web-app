@@ -1,0 +1,233 @@
+{
+  "period_days": 365,
+  "entry_timeframe": "15m",
+  "cost_pips": 1.5,
+  "higher_timeframes": "Rebuilt from 15m archive",
+  "note": "Existing app engine with the stated settings; distinct entries/exits from adaptive candidate research.",
+  "results": [
+    {
+      "symbol": "EURUSD",
+      "trades": 14,
+      "net_pnl_usd": 106.8399890536564,
+      "avg_r": 0.15381815336007781,
+      "profit_factor": 1.480896061482585,
+      "max_drawdown_pct": 1.137254269473018,
+      "last_30pct_avg_r": 0.13461911686515354,
+      "diagnostics": {
+        "counts": {
+          "Giriş için incelenen mum": 24725,
+          "Yön ve skor": 8027,
+          "Üst zaman dilimi yapısı": 1801,
+          "Giriş modeli": 69,
+          "RSI yönü": 68,
+          "RSI uyumsuzluğu": 44,
+          "Oynaklık": 37,
+          "MACD yönü": 36,
+          "MACD uyumsuzluğu": 14,
+          "İşlem saatleri": 14,
+          "İşlemler arası bekleme": 14,
+          "Aynı yönde tekrar": 14,
+          "Açılan işlem": 14
+        },
+        "raw_bars": 24901,
+        "usable_bars": 24888,
+        "start": "2025-09-12 00:00:00+00:00",
+        "end": "2026-09-11 20:45:00+00:00",
+        "period": "365d",
+        "session": "Tüm Gün"
+      }
+    },
+    {
+      "symbol": "GBPUSD",
+      "trades": 12,
+      "net_pnl_usd": -214.32875955393604,
+      "avg_r": -0.3596491684139927,
+      "profit_factor": 0.28777700871150025,
+      "max_drawdown_pct": 2.14328759553935,
+      "last_30pct_avg_r": -0.32868149039207206,
+      "diagnostics": {
+        "counts": {
+          "Giriş için incelenen mum": 24692,
+          "Yön ve skor": 8069,
+          "Üst zaman dilimi yapısı": 1352,
+          "Giriş modeli": 51,
+          "RSI yönü": 51,
+          "RSI uyumsuzluğu": 29,
+          "Oynaklık": 25,
+          "MACD yönü": 24,
+          "MACD uyumsuzluğu": 13,
+          "İşlem saatleri": 13,
+          "İşlemler arası bekleme": 12,
+          "Aynı yönde tekrar": 12,
+          "Açılan işlem": 12
+        },
+        "raw_bars": 24901,
+        "usable_bars": 24888,
+        "start": "2025-09-12 00:00:00+00:00",
+        "end": "2026-09-11 20:45:00+00:00",
+        "period": "365d",
+        "session": "Tüm Gün"
+      }
+    },
+    {
+      "symbol": "USDJPY",
+      "trades": 17,
+      "net_pnl_usd": -468.57900362995764,
+      "avg_r": -0.5624117569884162,
+      "profit_factor": 0.2201051409870326,
+      "max_drawdown_pct": 4.685790036299568,
+      "last_30pct_avg_r": -0.7089318232485345,
+      "diagnostics": {
+        "counts": {
+          "Giriş için incelenen mum": 24672,
+          "Yön ve skor": 8886,
+          "Üst zaman dilimi yapısı": 2369,
+          "Giriş modeli": 85,
+          "RSI yönü": 84,
+          "RSI uyumsuzluğu": 54,
+          "Oynaklık": 49,
+          "MACD yönü": 44,
+          "MACD uyumsuzluğu": 18,
+          "İşlem saatleri": 18,
+          "İşlemler arası bekleme": 18,
+          "Aynı yönde tekrar": 17,
+          "Açılan işlem": 17
+        },
+        "raw_bars": 24905,
+        "usable_bars": 24892,
+        "start": "2025-09-12 00:00:00+00:00",
+        "end": "2026-09-11 20:45:00+00:00",
+        "period": "365d",
+        "session": "Tüm Gün"
+      }
+    },
+    {
+      "symbol": "AUDUSD",
+      "trades": 13,
+      "net_pnl_usd": -123.76951215447568,
+      "avg_r": -0.18912696880117888,
+      "profit_factor": 0.6600074754769529,
+      "max_drawdown_pct": 1.942082916061956,
+      "last_30pct_avg_r": 0.24649247600024216,
+      "diagnostics": {
+        "counts": {
+          "Giriş için incelenen mum": 24629,
+          "Yön ve skor": 8694,
+          "Üst zaman dilimi yapısı": 2153,
+          "Giriş modeli": 67,
+          "RSI yönü": 66,
+          "RSI uyumsuzluğu": 34,
+          "Oynaklık": 31,
+          "MACD yönü": 27,
+          "MACD uyumsuzluğu": 14,
+          "İşlem saatleri": 14,
+          "İşlemler arası bekleme": 13,
+          "Aynı yönde tekrar": 13,
+          "Açılan işlem": 13
+        },
+        "raw_bars": 24808,
+        "usable_bars": 24795,
+        "start": "2025-09-12 00:00:00+00:00",
+        "end": "2026-09-11 20:45:00+00:00",
+        "period": "365d",
+        "session": "Tüm Gün"
+      }
+    },
+    {
+      "symbol": "USDCAD",
+      "trades": 23,
+      "net_pnl_usd": -394.81056213960096,
+      "avg_r": -0.34784155705149916,
+      "profit_factor": 0.46355678952970947,
+      "max_drawdown_pct": 5.039522595482195,
+      "last_30pct_avg_r": -0.10040548422436253,
+      "diagnostics": {
+        "counts": {
+          "Giriş için incelenen mum": 24580,
+          "Yön ve skor": 9192,
+          "Üst zaman dilimi yapısı": 2411,
+          "Giriş modeli": 76,
+          "RSI yönü": 75,
+          "RSI uyumsuzluğu": 39,
+          "Oynaklık": 36,
+          "MACD yönü": 36,
+          "MACD uyumsuzluğu": 24,
+          "İşlem saatleri": 24,
+          "İşlemler arası bekleme": 24,
+          "Aynı yönde tekrar": 23,
+          "Açılan işlem": 23
+        },
+        "raw_bars": 24806,
+        "usable_bars": 24793,
+        "start": "2025-09-12 00:00:00+00:00",
+        "end": "2026-09-11 20:45:00+00:00",
+        "period": "365d",
+        "session": "Tüm Gün"
+      }
+    },
+    {
+      "symbol": "USDCHF",
+      "trades": 16,
+      "net_pnl_usd": -422.3997968229028,
+      "avg_r": -0.5371623326689521,
+      "profit_factor": 0.2652753900089007,
+      "max_drawdown_pct": 4.802861945023833,
+      "last_30pct_avg_r": -0.3568505752075465,
+      "diagnostics": {
+        "counts": {
+          "Giriş için incelenen mum": 24737,
+          "Yön ve skor": 8346,
+          "Üst zaman dilimi yapısı": 1824,
+          "Giriş modeli": 66,
+          "RSI yönü": 65,
+          "RSI uyumsuzluğu": 45,
+          "Oynaklık": 40,
+          "MACD yönü": 39,
+          "MACD uyumsuzluğu": 19,
+          "İşlem saatleri": 19,
+          "İşlemler arası bekleme": 19,
+          "Aynı yönde tekrar": 16,
+          "Açılan işlem": 16
+        },
+        "raw_bars": 24903,
+        "usable_bars": 24890,
+        "start": "2025-09-12 00:00:00+00:00",
+        "end": "2026-09-11 20:45:00+00:00",
+        "period": "365d",
+        "session": "Tüm Gün"
+      }
+    },
+    {
+      "symbol": "NZDUSD",
+      "trades": 14,
+      "net_pnl_usd": -158.88292118452685,
+      "avg_r": -0.22739517226818304,
+      "profit_factor": 0.44244487894888396,
+      "max_drawdown_pct": 2.0932067390259,
+      "last_30pct_avg_r": 0.013348973243109612,
+      "diagnostics": {
+        "counts": {
+          "Giriş için incelenen mum": 23780,
+          "Yön ve skor": 8041,
+          "Üst zaman dilimi yapısı": 1935,
+          "Giriş modeli": 65,
+          "RSI yönü": 65,
+          "RSI uyumsuzluğu": 35,
+          "Oynaklık": 31,
+          "MACD yönü": 29,
+          "MACD uyumsuzluğu": 15,
+          "İşlem saatleri": 15,
+          "İşlemler arası bekleme": 14,
+          "Aynı yönde tekrar": 14,
+          "Açılan işlem": 14
+        },
+        "raw_bars": 24006,
+        "usable_bars": 23993,
+        "start": "2025-09-12 00:00:00+00:00",
+        "end": "2026-09-11 20:45:00+00:00",
+        "period": "365d",
+        "session": "Tüm Gün"
+      }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-09",
+  "target_net_usd": 30,
+  "planned_stop_usd": 100,
+  "decision": "close of Mon-Thu Dukascopy UTC daily bar; entry next 5M open",
+  "rules": [
+    "tsmom20",
+    "tsmom60",
+    "tsmom250",
+    "sma50_200",
+    "donchian20",
+    "rsi2_fade",
+    "ibs_fade",
+    "rev5",
+    "carry",
+    "carry_tsmom60"
+  ],
+  "stops_daily_atr": [
+    1.0,
+    2.0
+  ],
+  "hold_calendar_days": [
+    7,
+    14
+  ],
+  "swap": "previous-month 3M rate differential minus 1%/yr markup; stress also subtracts the markup again",
+  "periods": {
+    "development": [
+      "2009-01-01",
+      "2018-01-01"
+    ],
+    "validation": [
+      "2018-01-01",
+      "2023-01-01"
+    ],
+    "audit": [
+      "2023-01-01",
+      "2027-01-01"
+    ]
+  },
+  "gates": {
+    "development": ">=100 trades and stress mean > 0",
+    "validation": ">=50 trades and mean > 0",
+    "audit": "report only"
+  },
+  "script_sha256": "024692be500862255fe7fdcec5170a03c7694ba28dbd0bdb83736a3ec7210f23"
+}

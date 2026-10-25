@@ -1,0 +1,2 @@
+pair,time,side,signal_price,entry,stop,target,alignment,cost_pips,ml_up,news_known,direction_1h_pips,direction_4h_pips,kind,exit_time,exit_price,actual_entry,gross_pips,ambiguous,entry_gap_pips,net_pips,stress_net_pips,risk_pips,net_r
+AUDUSD,2024-11-06 13:45:00+00:00,SHORT,0.65548,0.65548,0.6564269047619047,0.6531266666666666,88,1.6,0.48648028118662906,True,-4.999999999999449,-18.199999999999328,stop,2024-11-06 15:05:00+00:00,0.6564269047619047,0.65546,-9.669047619046411,False,0.1999999999990898,-11.269047619046411,-13.369047619046412,9.669047619046411,-1.0

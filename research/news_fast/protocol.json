@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-08",
+  "development": [
+    [
+      "2024-10-01",
+      "2025-04-01"
+    ],
+    [
+      "2025-04-01",
+      "2025-10-01"
+    ]
+  ],
+  "audit_start": "2025-10-01",
+  "audit_already_inspected": true,
+  "minimum_trades_per_development_half": 10,
+  "selection": "highest worst-half stress mean, selection on early periods only",
+  "delay_minutes": [
+    5,
+    30,
+    60
+  ],
+  "surprise_multiplier": [
+    1,
+    2
+  ],
+  "directions": [
+    1,
+    -1
+  ],
+  "risk_usd": [
+    20,
+    50,
+    100
+  ],
+  "stop_atr": [
+    1.5,
+    3
+  ],
+  "hours": [
+    1,
+    4
+  ],
+  "target_usd": 30,
+  "code_sha256": "70c504fb2b11d15e6623565653f2fc1f2afee0f5badf8ab58c97c87f6bb416ed"
+}

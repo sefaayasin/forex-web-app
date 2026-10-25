@@ -1,0 +1,68 @@
+{
+  "symbol": "EURUSD",
+  "status": "RETROSPECTIVE_ONLY",
+  "trade_permission": false,
+  "selected": {
+    "delay_minutes": 30,
+    "surprise_multiplier": 1.0,
+    "direction": -1,
+    "risk_usd": 100.0,
+    "stop_atr": 3.0,
+    "hours": 1,
+    "development": [
+      {
+        "trades": 18,
+        "target_rate": 0.5555555555555556,
+        "win_rate": 0.7222222222222222,
+        "mean_usd": 3.6652147758898033,
+        "stress_mean_usd": 0.30169195248895403,
+        "fixed_risk_drawdown_usd": 192.75865416654418,
+        "worst_loss_usd": -99.99999999999997,
+        "fixed_budget_account_balance": 1065.973865966017,
+        "affordable_trades": 18,
+        "account_exhausted": false
+      },
+      {
+        "trades": 35,
+        "target_rate": 0.6,
+        "win_rate": 0.6285714285714286,
+        "mean_usd": 3.251304311169711,
+        "stress_mean_usd": 0.1366826416272132,
+        "fixed_risk_drawdown_usd": 217.40829903013224,
+        "worst_loss_usd": -100.00000000000217,
+        "fixed_budget_account_balance": 1113.7956508909394,
+        "affordable_trades": 35,
+        "account_exhausted": false
+      }
+    ]
+  },
+  "audit": {
+    "trades": 39,
+    "target_rate": 0.48717948717948717,
+    "win_rate": 0.5128205128205128,
+    "mean_usd": -5.606032914683844,
+    "stress_mean_usd": -9.850795319605082,
+    "fixed_risk_drawdown_usd": 374.6535401503351,
+    "worst_loss_usd": -99.99999999999983,
+    "fixed_budget_account_balance": 781.36471632733,
+    "affordable_trades": 39,
+    "account_exhausted": false
+  },
+  "day_test": {
+    "status": "ready",
+    "sample_count": 38,
+    "observed_mean": -6.5430337808597665,
+    "ci_low": -19.488540842150453,
+    "ci_high": 6.905895041803473,
+    "p_value": 0.8275862068965517,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "trials": 144,
+  "development_both_positive": true,
+  "limitations": [
+    "Audit already inspected, no fresh holdout.",
+    "Low sample count; no live authorization.",
+    "Calendar vintages/feed timing and actual news spreads unverified."
+  ]
+}

@@ -1,0 +1,2 @@
+pair,time,side,signal_price,entry,stop,target,alignment,cost_pips,ml_up,news_known,direction_1h_pips,direction_4h_pips
+AUDUSD,2024-11-06 13:45:00+00:00,SHORT,0.65548,0.65548,0.6564269047619047,0.6531266666666666,88,1.6,0.48648028118662906,True,-4.999999999999449,-18.199999999999328

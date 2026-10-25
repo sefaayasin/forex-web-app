@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-09",
+  "instrument": "GC=F daily (Yahoo)",
+  "target_net_usd": 30,
+  "planned_stop_usd": 100,
+  "stops_daily_atr": [
+    1.0,
+    2.0
+  ],
+  "hold_calendar_days": [
+    7,
+    14
+  ],
+  "cost_usd_per_oz": 0.4,
+  "financing_per_year_both_sides": 0.02,
+  "periods": {
+    "development": [
+      "2001-01-01",
+      "2013-01-01"
+    ],
+    "validation": [
+      "2013-01-01",
+      "2019-01-01"
+    ],
+    "audit": [
+      "2019-01-01",
+      "2027-01-01"
+    ]
+  },
+  "gates": {
+    "development": ">=60 trades and stress mean > 0",
+    "validation": ">=30 trades and mean > 0"
+  },
+  "script_sha256": "6fb528d7df7633a042a1eed81d9228d94a44f9b5503aeaf1705080402107c287"
+}

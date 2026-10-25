@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-09",
+  "target_net_usd": 30,
+  "planned_stop_usd": 100,
+  "events": "ForexFactory high impact, numeric actual+forecast, direction = actualBetterWorse",
+  "surprise_z": "abs(actual-forecast) / median abs surprise of the previous 12 releases (min 4)",
+  "min_z": [
+    1.0,
+    2.0
+  ],
+  "entry_delay_minutes": [
+    5,
+    15
+  ],
+  "stops_daily_atr": [
+    0.25,
+    0.5
+  ],
+  "hold_hours": 4,
+  "cost": "measured spread x1.5 + 0.7 pip; stress 2x",
+  "pairs": {
+    "EUR": [
+      "EURUSD"
+    ],
+    "GBP": [
+      "GBPUSD"
+    ],
+    "JPY": [
+      "USDJPY"
+    ],
+    "AUD": [
+      "AUDUSD"
+    ],
+    "NZD": [
+      "NZDUSD"
+    ],
+    "CAD": [
+      "USDCAD"
+    ],
+    "CHF": [
+      "USDCHF"
+    ],
+    "USD": [
+      "EURUSD",
+      "USDJPY",
+      "GBPUSD",
+      "AUDUSD"
+    ]
+  },
+  "periods": {
+    "development": [
+      "2010-01-01",
+      "2018-01-01"
+    ],
+    "validation": [
+      "2018-01-01",
+      "2023-01-01"
+    ],
+    "audit": [
+      "2023-01-01",
+      "2027-01-01"
+    ]
+  },
+  "gates": {
+    "development": ">=100 trades and stress mean > 0",
+    "validation": ">=50 trades and mean > 0"
+  },
+  "script_sha256": "e410f8ccca8232986e87948b9a41d67e203b5673cdddbb20ea957c278a0f5194"
+}

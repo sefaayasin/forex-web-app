@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-09",
+  "target_net_usd": 30,
+  "planned_stop_usd": 100,
+  "signals": {
+    "contrarian": "3y z-score of speculative net/OI beyond +-1.5, faded",
+    "follow": "sign of speculative net",
+    "flow4": "sign of 4-week change in net/OI"
+  },
+  "entry": "Mon-Thu 00:00 UTC after the Friday release; daily ATR stops",
+  "stops_daily_atr": [
+    2.0,
+    4.0
+  ],
+  "hold_calendar_days": [
+    7,
+    14
+  ],
+  "swap": "not charged (stated limitation)",
+  "periods": {
+    "development": [
+      "2009-01-01",
+      "2018-01-01"
+    ],
+    "validation": [
+      "2018-01-01",
+      "2023-01-01"
+    ],
+    "audit": [
+      "2023-01-01",
+      "2027-01-01"
+    ]
+  },
+  "script_sha256": "93eb91e0ab599c7be02b3d49224d3c918ae2c554d3e9bb9ed4a7a2ddfa19ec8a"
+}

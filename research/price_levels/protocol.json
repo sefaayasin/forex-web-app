@@ -1,0 +1,31 @@
+{
+  "source": "https://www.newyorkfed.org/research/staff_reports/sr125.html",
+  "replication": false,
+  "rules": "50/100 pip round levels fixed from previous close; 0.1 ATR close confirmation; ambiguous events ignored",
+  "development": [
+    [
+      "2016-01-01",
+      "2019-01-01"
+    ],
+    [
+      "2019-01-01",
+      "2023-01-01"
+    ]
+  ],
+  "audit_start": "2023-01-01",
+  "audit_previously_inspected": true,
+  "stop_atr": 3,
+  "hold_hours": [
+    1,
+    4
+  ],
+  "risk_usd": [
+    20,
+    50,
+    100
+  ],
+  "target_usd": 30,
+  "selection": "Minimum 100 trades per development period, maximize worst-period stress net",
+  "code_hash": "cc87144943375885b51af65ff767a52ca2f286fe9208135faf7cf2e60c7f6a5d",
+  "trade_permission": false
+}

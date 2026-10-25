@@ -1,0 +1,32 @@
+{
+  "rule": "kama_pullback",
+  "stop_atr": 3.0,
+  "hours": 4,
+  "loss_usd": 20.0,
+  "subperiods": [
+    {
+      "trades": 676,
+      "target_rate": 0.08579881656804733,
+      "win_rate": 0.4511834319526627,
+      "mean_usd": -0.7885621024833466,
+      "stress_mean_usd": -2.3935771013019,
+      "fixed_risk_drawdown_usd": 915.85396371753,
+      "worst_loss_usd": -20.00000000000081,
+      "fixed_budget_account_balance": 466.9320187212576,
+      "affordable_trades": 676,
+      "account_exhausted": false
+    },
+    {
+      "trades": 969,
+      "target_rate": 0.08771929824561403,
+      "win_rate": 0.4602683178534572,
+      "mean_usd": -0.9659946588275191,
+      "stress_mean_usd": -2.6813646598551233,
+      "fixed_risk_drawdown_usd": 1225.2623302008,
+      "worst_loss_usd": -20.00000000000084,
+      "fixed_budget_account_balance": 16.852141509036436,
+      "affordable_trades": 877,
+      "account_exhausted": true
+    }
+  ]
+}

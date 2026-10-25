@@ -1,0 +1,46 @@
+{
+  "events_with_outcome": 16463,
+  "naive_better_up_rate_all": 0.613982870679706,
+  "naive_by_period": {
+    "development": {
+      "from_release": 0.5956302151954326,
+      "from_5min_after": 0.4932335790516008
+    },
+    "validation": {
+      "from_release": 0.5926754263349175,
+      "from_5min_after": 0.4879416713404375
+    },
+    "audit": {
+      "from_release": 0.6784012705134992,
+      "from_5min_after": 0.5199256110520722
+    }
+  },
+  "development": {
+    "predictions": 2106,
+    "hit_rate": 0.637701804368471,
+    "naive_hit_rate_same_events": 0.654320987654321,
+    "share_predicting_against_naive": 0.11633428300094967,
+    "hit_ci_low": 0.24011929460580916,
+    "hit_ci_high": 0.36256483402489614,
+    "hit_p_value": 0.0004997501249375312
+  },
+  "validation": {
+    "predictions": 1263,
+    "hit_rate": 0.6215360253365004,
+    "naive_hit_rate_same_events": 0.6231195566112431,
+    "share_predicting_against_naive": 0.011084718923198733,
+    "hit_ci_low": 0.20251937984496124,
+    "hit_ci_high": 0.3876211240310076,
+    "hit_p_value": 0.0004997501249375312
+  },
+  "audit": {
+    "predictions": 1284,
+    "hit_rate": 0.7001557632398754,
+    "naive_hit_rate_same_events": 0.7017133956386292,
+    "share_predicting_against_naive": 0.003115264797507788,
+    "hit_ci_low": 0.43047034764826175,
+    "hit_ci_high": 0.623721881390593,
+    "hit_p_value": 0.0004997501249375312
+  },
+  "H5_passed": false
+}

@@ -1,0 +1,32 @@
+{
+  "rule": "laguerre_reentry",
+  "stop_atr": 3.0,
+  "hours": 4,
+  "loss_usd": 20.0,
+  "subperiods": [
+    {
+      "trades": 1607,
+      "target_rate": 0.1555693839452396,
+      "win_rate": 0.46484131922837585,
+      "mean_usd": -0.22000858079006252,
+      "stress_mean_usd": -1.0159074021421814,
+      "fixed_risk_drawdown_usd": 990.7446468767042,
+      "worst_loss_usd": -20.00000000000118,
+      "fixed_budget_account_balance": 646.4462106703695,
+      "affordable_trades": 1607,
+      "account_exhausted": false
+    },
+    {
+      "trades": 2275,
+      "target_rate": 0.14417582417582417,
+      "win_rate": 0.4694505494505494,
+      "mean_usd": -0.08805296027573106,
+      "stress_mean_usd": -0.9232083392910043,
+      "fixed_risk_drawdown_usd": 902.7555842498829,
+      "worst_loss_usd": -20.630094892808856,
+      "fixed_budget_account_balance": 799.6795153727134,
+      "affordable_trades": 2275,
+      "account_exhausted": false
+    }
+  ]
+}

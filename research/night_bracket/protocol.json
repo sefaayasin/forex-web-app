@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-09",
+  "target_net_usd": 30,
+  "planned_stop_usd": 100,
+  "entry_ny_hours": [
+    19,
+    20,
+    21,
+    22,
+    23
+  ],
+  "time_exit_ny_hour": 2,
+  "stops_atr15m": [
+    2.0,
+    3.0,
+    5.0
+  ],
+  "rules": [
+    "bb_fade",
+    "rsi3_fade",
+    "range16_fade",
+    "z48_fade"
+  ],
+  "periods": {
+    "development": [
+      "2009-01-01",
+      "2018-01-01"
+    ],
+    "validation": [
+      "2018-01-01",
+      "2023-01-01"
+    ],
+    "audit": [
+      "2023-01-01",
+      "2027-01-01"
+    ]
+  },
+  "costs": "measured Dukascopy median spread at the decision New York hour + 0.7 pip; stress 2x",
+  "gates": {
+    "development": ">=150 trades and stress mean > 0",
+    "validation": ">=75 trades and mean > 0",
+    "audit": "report only; daily block bootstrap"
+  },
+  "script_sha256": "88a660323e162948bb662dc4c473cb10bfc9df09b875325d012a9ae0f741034f"
+}

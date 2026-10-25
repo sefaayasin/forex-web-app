@@ -6140,6 +6140,10 @@ def render_ml_prediction_page() -> None:
     model karşılaştırma/heatmap ekranı burada yoktur, sadece güncel tahmin.
     """
     st.subheader("🤖 ML Tahmini")
+    from forex_new_indicators_panel import render_new_indicators_panel
+    render_new_indicators_panel()
+    from forex_adaptive_panel import render_adaptive_entry_panel
+    render_adaptive_entry_panel()
     st.caption(
         "Her parite için 2008-2023 verisiyle eğitilmiş, 2023 sonrasını hiç görmeden test edilmiş iki ayrı model var: "
         "**72 saatlik oynaklık riski** (daha güvenilir olanı) ve **4 saatlik yön**. Yanlarındaki geçmiş sonuçlar bu "
@@ -6415,8 +6419,10 @@ def render_summary_trade_plan(
     """İşlem Planı: yön (ML), teknik stop, dolar hedefinden hedef ve lot, şart kontrolü ve planın geçmiş sonucu."""
     st.markdown(f"#### 🎯 İşlem Planı · {symbol.replace('=X', '')}")
     target_col, loss_col = st.columns(2)
-    target_usd = target_col.number_input("Hedef kâr ($)", min_value=1.0, value=50.0, step=5.0, key="plan_target_usd")
-    loss_usd = loss_col.number_input("Kabul ettiğin en büyük kayıp ($)", min_value=1.0, value=50.0, step=5.0, key="plan_loss_usd")
+    target_usd = target_col.number_input("Hedef net kâr ($)", min_value=1.0, value=30.0, step=5.0, key="plan_target_usd")
+    loss_usd = loss_col.number_input("Planlanan stop zararı ($)", min_value=1.0, value=100.0, step=5.0, key="plan_loss_usd")
+    from forex_cash_panel import render_cash_target_evidence
+    render_cash_target_evidence(symbol, float(target_usd), float(loss_usd))
 
     pip = get_pip_size(symbol)
     atr = None
@@ -6446,12 +6452,20 @@ def render_summary_trade_plan(
         timeout = round(ml["timeout_rate"] * 100)
         expected = f"{plan['expected_usd']:+.2f}".replace(".", ",").replace("-", "−")
         history = (
-            f"<div class='opportunity-line'><b>Geçmişte bu plan (2023–2026, bu parite, her saat):</b> 100 işlemden "
+            f"<div class='opportunity-line'><b>{'Geçmişte bu plan' if measured['exact'] else 'Yakın oranlı farklı plan'} (2023–2026, bu parite, her saat):</b> 100 işlemden "
             f"{ml['target_rate'] * 100:.0f} hedefe, {ml['stop_rate'] * 100:.0f} stopa gitti"
             + (f", {timeout} bir gün içinde ikisine de değmedi" if timeout else "")
             + f". Ters yöne girilseydi hedefe giden {opposite['target_rate'] * 100:.0f} olurdu.</div>"
             f"<div class='opportunity-line'><b>Ortalama sonuç:</b> işlem başına {expected} $ (maliyet dahil). "
             f"Bu plan geçmişte ortalamada {'kazandırdı' if plan['expected_usd'] > 0 else 'kaybettirdi'}.</div>"
+        )
+    partial = plan.get("partial_exit")
+    if partial:
+        history += (
+            f"<div class='opportunity-line'><b>İsteğe bağlı parçalı çıkış:</b> fiyat {partial['price']:.{decimals}f} "
+            f"(1R) gelince {partial['close_lot']:.2f} lotu kapat (≈ +{partial['locked_usd']:.2f} $), stopu girişe çek; "
+            f"kalan {partial['keep_lot']:.2f} lot hedefe kadar. Geçmişte kazanan işlem oranını %34'ten %49'a çıkardı ve "
+            f"en kötü ayı yumuşattı, ama ortalama sonucu biraz düşürdü: kâr artırmaz, kayıp serisini hafifletir.</div>"
         )
     lines = "".join(f"<div class='opportunity-line'>⛔ {escape(b)}</div>" for b in plan["blockers"])
     lines += "".join(f"<div class='opportunity-line'>⚠️ {escape(w)}</div>" for w in plan["warnings"])
@@ -6462,7 +6476,7 @@ def render_summary_trade_plan(
         f"<div class='opportunity-title'>{escape(title)}</div>"
         f"<div class='opportunity-line'><b>Giriş:</b> {plan['entry']:.{decimals}f} · <b>Stop:</b> {plan['stop']:.{decimals}f} "
         f"({plan['stop_pips']:.1f} pip) · <b>Hedef:</b> {plan['target']:.{decimals}f} ({plan['target_pips']:.1f} pip)</div>"
-        f"<div class='opportunity-line'><b>Lot:</b> {plan['lot']:.2f} → hedefte +{target_usd:.0f} $, stopta −{loss_usd:.0f} $ "
+        f"<div class='opportunity-line'><b>Lot:</b> {plan['lot']:.2f} → hedefte +{plan['target_usd']:.0f} $, stopta −{plan['planned_loss_usd']:.2f} $ "
         f"(maliyet {cost_pips:.1f} pip dahil)</div>"
         f"{history}{lines}</div>",
         unsafe_allow_html=True,
@@ -6472,6 +6486,8 @@ def render_summary_trade_plan(
         "Stop teknik (15M ATR × 1,5); hedef senin dolar hedefinden. Hedefi stoptan küçük tutarsan tutma oranı artar, "
         "ama kaybettiğin işlem daha çok götürür; asıl ölçü 'ortalama sonuç' satırı. (research_trade_plan.py)"
     )
+    st.caption(f"Hedef veya stopla biten işlemlerde başabaş kazanma oranı: %{plan['breakeven_win_rate'] * 100:.1f}. "
+               "Planlanan stop zararı gap, kayma ve değişen masraflarla aşılabilir.")
 
 
 def build_overall_reading(
@@ -6700,10 +6716,10 @@ def render_summary_opportunities(scanner_df: Optional[pd.DataFrame], max_cards: 
 
     actionable = scanner_df[scanner_df["Karar"] != "PAS"]
     if actionable.empty:
-        st.caption("Onaylı giriş fırsatı şu an yok.")
+        st.caption("Teknik giriş adayı şu an yok.")
         return
     shown = actionable.head(max_cards)
-    st.caption(f"Onaylı giriş: {len(actionable)} · en güçlü {len(shown)} tanesi")
+    st.caption(f"Teknik giriş adayı: {len(actionable)} · en güçlü {len(shown)} tanesi. Aday, işlem onayı veya kazanma olasılığı değildir.")
     for start in range(0, len(shown), 3):
         chunk = shown.iloc[start:start + 3]
         for col, (_, row) in zip(st.columns(3), chunk.iterrows()):
@@ -6758,7 +6774,7 @@ def usd_text(amount: float) -> str:
     return f"${amount:,.2f}" if abs(amount) < 100 else f"${amount:,.0f}"
 
 
-SUMMARY_PROFIT_TARGETS = [25, 50, 100, 200, 500]
+SUMMARY_PROFIT_TARGETS = [25, 30, 50, 100, 200, 500]
 
 
 def render_summary_lot(
@@ -6784,7 +6800,7 @@ def render_summary_lot(
     balance = c1.number_input("Bakiye ($)", min_value=10.0, value=float(account_size), step=100.0, key="summary_lot_balance")
     with c2:
         wanted_usd = st.segmented_control(
-            "Kâr hedefi", SUMMARY_PROFIT_TARGETS, default=50, format_func=lambda v: f"${v}", key="summary_lot_target",
+            "Kâr hedefi", SUMMARY_PROFIT_TARGETS, default=30, format_func=lambda v: f"${v}", key="summary_lot_target",
         ) or 50
     loss_pct = c3.number_input(
         "Stopta zarar (%)", min_value=0.1, max_value=50.0, value=2.0, step=0.5, key="summary_lot_loss_pct",
@@ -6964,6 +6980,12 @@ def render_calendar_page() -> None:
         "Beklenti çoğunlukla zaten fiyatlanmıştır. Son 2 yılda veri, beklentinin gösterdiği yönde öncekinden %78 "
         "ayrıldı; ama fiyatı oynatan sürpriz (beklentiyi aşma/altında kalma) aynı yönde yalnızca %53 geldi, "
         "yani yazı tura sayılır. Bu sütunlar işlem sinyali değil, haber öncesi riski görmek içindir."
+    )
+    st.caption(
+        "Açıklanan yeşil/kırmızı gelince: 2010–2026'da yüksek önemli haberlerde para birimi açıklamadan sonraki "
+        "1 saatte %59–68 oranında o yöne gitti. Ama hareket ilk dakikalarda oluyor: açıklamadan 5 dakika sonra "
+        "girilseydi kalan sürede aynı yön yalnızca %49–52 tuttu. Haberi görüp girmek geç kalmaktır. "
+        "(research/arda_ideas/REPORT.md)"
     )
     st.caption(
         "Neden ForexFactory: 2 yıllık testte hiçbir ücretsiz takvimin (Investing, FXStreet, Nasdaq) beklentisi "

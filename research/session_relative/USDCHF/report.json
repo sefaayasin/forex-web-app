@@ -1,0 +1,76 @@
+{
+  "selected": {
+    "rule": "peer_residual_revert",
+    "hours": 1,
+    "risk": 20.0,
+    "development": [
+      {
+        "trades": 392,
+        "target_rate": 0.02040816326530612,
+        "win_rate": 0.4642857142857143,
+        "mean_usd": -0.38001954154866924,
+        "stress_mean_usd": -1.5665952612207983,
+        "fixed_risk_drawdown_usd": 361.24765095718647,
+        "worst_loss_usd": -20.000000000000885,
+        "fixed_budget_account_balance": 851.0323397129209,
+        "affordable_trades": 392,
+        "account_exhausted": false
+      },
+      {
+        "trades": 632,
+        "target_rate": 0.004746835443037975,
+        "win_rate": 0.43829113924050633,
+        "mean_usd": -1.0264215255784541,
+        "stress_mean_usd": -2.4334657602272585,
+        "fixed_risk_drawdown_usd": 786.3617836355157,
+        "worst_loss_usd": -20.419511297565663,
+        "fixed_budget_account_balance": 351.3015958344166,
+        "affordable_trades": 632,
+        "account_exhausted": false
+      }
+    ]
+  },
+  "audit": {
+    "trades": 295,
+    "target_rate": 0.0,
+    "win_rate": 0.4440677966101695,
+    "mean_usd": -1.372859280262028,
+    "stress_mean_usd": -2.7081850106556407,
+    "fixed_risk_drawdown_usd": 404.9934876772983,
+    "worst_loss_usd": -20.000000000000444,
+    "fixed_budget_account_balance": 595.0065123227014,
+    "affordable_trades": 295,
+    "account_exhausted": false
+  },
+  "normal_test": {
+    "status": "ready",
+    "sample_count": 203,
+    "observed_mean": -1.5161981497608006,
+    "ci_low": -2.5465402528490757,
+    "ci_high": -0.4992494679914288,
+    "p_value": 0.9985007496251874,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "stress_test": {
+    "status": "ready",
+    "sample_count": 203,
+    "observed_mean": -2.860105535479014,
+    "ci_low": -3.887633476480962,
+    "ci_high": -1.8414743273719063,
+    "p_value": 1.0,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "screen_passed": false,
+  "trade_permission": false,
+  "limitations": [
+    "Previously inspected historical audit, no fresh holdout.",
+    "Estimated spreads, no broker lot/margin simulation.",
+    "Cross-market alignment uses exact timestamps, no forward fill."
+  ],
+  "source_hashes": {
+    "15m": "2a78af3f0b67ca6064ff6e07976a2c89d9c9772505aef8dc1cd4c23beb423937",
+    "5m": "986c950acbd9ec5eb6df13d114aa76ff7ea933fbd15a2a381b28505524d16842"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-08",
+  "symbols": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "USDCHF",
+    "NZDUSD",
+    "EURCHF"
+  ],
+  "research_source": "https://www.nber.org/papers/w8959",
+  "target_usd": 30.0,
+  "risk_usd": 20.0,
+  "stop_atr": 3.0,
+  "hours": 4,
+  "polarity": {
+    "Non-Farm Employment Change": 1,
+    "ADP Non-Farm Employment Change": 1,
+    "Employment Change": 1,
+    "Unemployment Rate": -1,
+    "Unemployment Claims": -1,
+    "ISM Manufacturing PMI": 1,
+    "ISM Services PMI": 1,
+    "Flash Manufacturing PMI": 1,
+    "Flash Services PMI": 1,
+    "Retail Sales m/m": 1,
+    "Core Retail Sales m/m": 1,
+    "GDP m/m": 1,
+    "GDP q/q": 1,
+    "GDP y/y": 1,
+    "Advance GDP q/q": 1,
+    "Prelim GDP q/q": 1
+  },
+  "split": "2025-10-01",
+  "vintages_unverified": true,
+  "selection": "none; one predeclared rule per pair",
+  "code_sha256": "ade6adaa342240d8b98a063ecf36f0c5ac896004bdb6ee710f7c5052b33e8f76"
+}

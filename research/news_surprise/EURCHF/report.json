@@ -1,0 +1,48 @@
+{
+  "symbol": "EURCHF",
+  "source": "ForexFactory local historical calendar",
+  "status": "EXPLORATORY_SCENARIO",
+  "trade_permission": false,
+  "target_usd": 30.0,
+  "planned_stop_loss_usd": 20.0,
+  "user_maximum_loss_usd": 100.0,
+  "development": {
+    "trades": 0,
+    "target_rate": null,
+    "win_rate": null,
+    "mean_usd": null,
+    "stress_mean_usd": null,
+    "fixed_risk_drawdown_usd": 0.0
+  },
+  "audit": {
+    "trades": 0,
+    "target_rate": null,
+    "win_rate": null,
+    "mean_usd": null,
+    "stress_mean_usd": null,
+    "fixed_risk_drawdown_usd": 0.0
+  },
+  "day_test": {
+    "ci_low": null,
+    "ci_high": null,
+    "p_value": null
+  },
+  "stress_day_test": {
+    "ci_low": null,
+    "ci_high": null,
+    "p_value": null
+  },
+  "price_end": "2026-09-11 21:00:00+00:00",
+  "source_hashes": {
+    "C:\\Users\\Sefa\\Desktop\\Yapay Zeka Projeleri\\yeni_forex\\data\\historical_15m\\EURCHF.csv": "f14e30f65f2f5acadef71bc059bdc7890a93c770d3218cb7940fb315d4698a35",
+    "C:\\Users\\Sefa\\Desktop\\Yapay Zeka Projeleri\\yeni_forex\\data\\historical_5m\\EURCHF.csv": "b996c8a3213e232872743801223dc603cf69ece77f7caac0e3ffb8dc8c1bc189"
+  },
+  "limitations": [
+    "Feed availability assumed by next 15M boundary after release+5m; not historically timestamped.",
+    "Archived actual/consensus numbers not verified initial vintages; no live authorization even if positive.",
+    "2026 regular-hour spread scenario; actual news spreads/slippage can be much higher.",
+    "Fixed $20 pip risk scale, not a broker-margin/lot simulation; goal $30 and four-hour limit.",
+    "Calendar sample Oct2024-Sep2026; not comparable to older indicator-development sample.",
+    "Scheduled UTC07-17 decisions only; CPI/rates/wages excluded rather than assuming uniform inflation-policy signs."
+  ]
+}

@@ -8,6 +8,64 @@ zarar bütçesi panelden seçilir. GİR kararı zarar etmeme garantisi değildir
 [Küçük hedef denemesi](research/pivot_advisor_small_profit/REPORT.md): 12/12
 geçmiş örnek, bağımsız doğrulama veya gelecekteki kazanma olasılığı değildir.
 
+Pivot Trader artık açıklamalı işlem yorumcusu olarak çalışır. Özet ekranında
+izlenecek pariteleri seçip `Yorumcuyu yenile` düğmesine basın: fiyat, zaman
+dilimleri, ML ve takvim birlikte tekrar okunur. Her paritede yön, 8 koşulun
+uyum puanı, giriş/stop/hedef izleme planı ve bekleme nedenleri gösterilir.
+70/100 teknik uyum **%70 kazanma ihtimali değildir**. Güncel koşullar
+tamamsa `LONG GİR` / `SHORT GİR`, eksikse `BEKLE` kararı üretilir.
+Ana trend, tepki, giriş bölgesi, veri, haber ve maliyet kontrolleri zorunludur;
+güncel ML güçlü biçimde ters yöndeyse giriş bekletilir. Stop ve hedef/risk
+oranı güncel gösterge fiyatından hesaplanır. Birleşik kuralın bağımsız
+başarı testi henüz bulunmuyor. Eski pivot kuralının
+maliyet sonrası sonucu negatiftir; ML yön isabeti de yaklaşık %52'dir.
+Mevcut araştırmalar, bu yeni birleşimin başarı kanıtı olarak kullanılmaz.
+Yeni yorumcunun kendi kurallarıyla yapılan geçmiş test:
+[Pivot Trader v2 raporu](research/pivot_advisor/REPORT.md).
+1 Ekim 2024–11 Eylül 2026, yedi ana parite: 974.306 karar anında 19 giriş
+kararı, tekrarlar/eksik yol ayrılınca 11 işlem. Maliyet sonrası 4 kâr, 6 stop,
+hedefe ulaşan işlem yok; ortalama −7,52 pip/işlem. İki tekrarsız LONG'da
+1 ve 4 saat sonraki yön doğru, fakat biri önce stop oluyor. Bu küçük örnek
+%70 başarıyı veya kârlılığı doğrulamıyor.
+[Tüm işlemler](research/pivot_advisor/all_trades.csv) giriş, stop, hedef ve sonucu içerir.
+Küçük kârla çıkma senaryosu ayrıca test edildi:
+[küçük net hedef raporu](research/pivot_advisor_small_profit/REPORT.md).
+Aynı sinyallerde net 3 pip hedefi 12/12, net 5 pip hedefi 10/11 işlemde stop
+öncesi görüldü. Bu çok küçük ve önceden incelenmiş örnek, zarar etmeme veya
+gelecekte aynı başarı garantisi değildir; dolar sonuçları lot ve maliyete bağlıdır.
+Tekrar çalıştırma: `python -X utf8 research_pivot_advisor.py` (yerel arşiv gerekir;
+protokol kaynak/veri değişikliklerini kontrol eder).
+Kontroller: `python -m unittest test_forex_pivot_advisor test_forex_pivot_plan test_forex_pivots test_forex_trade_plan test_forex_ml_live test_forex_costs`.
+
+30/100 hedef yapısı için yeni aramalar (gece seansı, günlük, hafta sonu boşluğu,
+COT, 2010–2026 haber sürprizi, 30 yeni indikatör 15M/1H/4H, altın; hiçbiri geçmedi):
+[rapor](research/bracket_search/REPORT.md).
+
+Arkadaşın MT5 projesindeki kurallar ve ekran fikirleri (USDJPY H4 geri çekilme,
+altın M15, yön merdiveni, sert hareket uyarısı, haber geçmişi, parçalı çıkış)
+görülmemiş yıllarda sınandı; hiçbiri geçmedi:
+[rapor](research/arda_ideas/REPORT.md).
+
+İnternetten araştırılan yedi yeni indikatörün ve fiyat dışı haber sürprizi
+yönteminin sonuçları: [yeni araştırma raporu](research/new_indicators/REPORT.md).
+ML ekranı kaynakları ve parite testlerini gösterir. Haber kaydı:
+`python -X utf8 forex_news_recorder.py --watch 600` (broker emri göndermez).
+
+1000 dolar hesap / 30 dolar net hedef / 100 dolar planlanan stop senaryosu:
+[hedefe göre test ve teknik düzeltmeler](research/cash_target/REPORT.md).
+Canlı/backtest skorları ortak hesap kullanır; uzun testler üst zaman diliminin
+tam geçmişini ister. Negatif veya doğrulanmamış işlem planı giriş önermez.
+Hedefe uygun otomatik öğrenme: `python -X utf8 forex_adaptive.py --net-target-ratio 0.3 --output research/adaptive_cash_entry --watch 600`.
+
+15 dakikalık girişler için otomatik model/indikatör seçimi, öğrenilen ağırlıklar
+ve üç aylık geçmiş testleri eklendi. Sonuçlar ve sınırlar:
+[otomatik öğrenme raporu](research/adaptive_entry/REPORT.md).
+Çalıştırma: `python -X utf8 forex_adaptive.py`; yerel arşivdeki değişiklikleri
+izleyerek yeniden öğrenme: `python -X utf8 forex_adaptive.py --watch 600`.
+ML Tahmini sekmesinde raporlar ve yerel güncelleme butonu bulunur.
+Yeni öğrenme deneyi maliyet sonrası üstünlük göstermediği için mevcut
+işlem kurallarını değiştirmez.
+
 Günlük kullanımda sol menüden parite ve işlem riskini seçin. `Planı Kontrol Et`
 normal backtest ile trend/yatay motor kanıtı testini birlikte çalıştırır; bu işlem
 tek backtestten uzun sürebilir. Otomatik plan kontrolü yalnız normal backtesti

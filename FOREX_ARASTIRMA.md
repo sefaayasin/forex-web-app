@@ -149,12 +149,40 @@
 - **Ders:** Sonuçlara bakarak bulunan kuralın görülmemiş veride sınanması şart. Bu kural sınanmasaydı uygulamaya girerdi.
 - Ayrıntı: research/month_end/REPORT.md
 
+### L. 30 dolar hedef / 100 dolar stop: 15M dışında beş arama — yapıldı, geçmedi
+- **Soru:** Masrafın riske oranı düşük ölçeklerde (günlük, haftalık) veya daha önce bakılmamış saatlerde (gece seansı) küçük hedef/geniş stop yapısı kazandırıyor mu?
+- **Kurgu (9 Ekim 2026):** Gece seansı ortalamaya dönüş, günlük trend/dönüş/carry, hafta sonu boşluğu, COT spekülatör pozisyonu ve 2010–2026 ForexFactory arşiviyle haber sürprizi sonrası devam. Toplam 1.808 ayar; kurallar sonuçtan önce yazıldı. Geliştirme 2009–2017, doğrulama 2018–2022, kontrol 2023+.
+- **Sonuç:** Hiçbir aile geçmedi.
+  - Gece dönüşü maliyetten önce var (+0,034 R) ama yıllar içinde eriyip kontrolde sıfıra iniyor; masrafı hiçbir paritede geçmiyor.
+  - Günlük ölçekte masraf riskin %1,7'si, ama maliyet öncesi kazanç da sıfır. Doğrulamayı geçen 23 ayarın yalnız 3'ü kontrolde pozitif.
+  - Haber sürprizi 5 dakika içinde fiyatlanıyor; sonrasında girmek maliyet öncesi bile kazandırmıyor.
+  - COT GBPUSD tek tutarlı aday, ama p ≈ 0,10 ve 72 ayardan biri.
+- **Ek tur:** Projede hiç denenmemiş 30 indikatör (hacim, pivot, likidite süpürmesi/FVG, mum formasyonları, Parabolic SAR, Aroon, Vortex, TRIX, TSI, Heikin Ashi, Hull, CCI, Williams %R, Ultimate) 15M/1H/4H'de; 178 kural ayarından 10 paritenin toplamında geliştirmeyi geçen yok. Altın (günlük, 148 ayar) da geçmedi.
+- **Ders:** 0,3:1 oranda rastgele fiyatın hedef oranı zaten %76,9. Yüksek isabet avantaj değildir; çıkış yönetimi kâr üretmez.
+- Ayrıntı: research/bracket_search/REPORT.md
+
+### M. Arkadaşın MT5 projesindeki kurallar ve ekran fikirleri — yapıldı, geçmedi
+- **Soru:** Arda'nın 2025–2026 XM verisinde seçtiği kurallar (USDJPY H4 EMA20 geri çekilmesi, altın M15 SCALP/TREND) ve ekran fikirleri (yön merdiveni, SERT HAREKET uyarısı, haber geçmişi satırı, parçalı çıkış) onun görmediği yıllarda tutuyor mu?
+- **Kurgu (25 Ekim 2026):** Kurallar kopyalandı, yeniden ayarlanmadı. Altında Arda'nın kendi simülatörü çalıştırıldı. Mumlar XM saatine göre (New York + 7) kuruldu. Port, Arda'nın 2025–2026 sonuçlarını tekrar üretti.
+- **Sonuç:** Yedi fikrin hiçbiri geçmedi.
+  - USDJPY kuralı 2009–2024'te işlem başına −0,005 R; 28 paritede −0,07 R.
+  - Altın kuralları 2020–2024'te spread sıfırken bile −0,03 … +0,01 R.
+  - Dört zaman dilimi uyumluyken 4 saatte maliyetten önce −0,3 pip.
+  - Sert mumdan sonra oynaklık normalin yalnız 1,2 katı, yön yok.
+  - Haber geçmişi satırı "iyi haber = para yükselir" kuralından fazlasını bilmiyor.
+  - Parçalı çıkış ortalamayı düşürdü.
+- **Ders:** 21 aylık tek dönemde seçilen kural, aynı enstrümanın başka yıllarında tutmuyor.
+- **Uygulamaya iki küçük ek:**
+  - Takvimde açıklanan değer notu: 1 saatte %59–68 o yön, ama 5 dakika sonra girince %49–52.
+  - İşlem Planı'nda isteğe bağlı "1R'de yarısını kapat" satırı: kötü ayı yumuşatır, kâr artırmaz.
+- Ayrıntı: research/arda_ideas/REPORT.md
+
 ### Yapılmamasını önerdiğim şeyler
 - 15M/5M'ye yeni gösterge veya filtre eklemek. Denenen her varyant maliyet sonrası zarar etti.
 - Kısa vadeli yön için daha büyük ML modelleri denemek. 1.680 eğitim ve yaklaşık 960 bin sinyalle yeterince denendi.
 - Sonuçlara bakarak parametre seçmek. Geçmişte iyi görünen her ayar, gelecekte aynı sonucu vermez.
 
-**Durum:** A, B, C, G, H, I, J ve K tamamlandı; sekizi de önceden yazılan ölçütü geçmedi. E yapıldı ve uygulamaya eklendi. F değerlendirildi; şimdilik Yahoo + düzeltmeyle devam ediliyor. Açık kalan: D (haber sürprizi arşivi; zaman istiyor, kod değil).
+**Durum:** A, B, C, G, H, I, J, K, L ve M tamamlandı; onu da önceden yazılan ölçütü geçmedi. E yapıldı ve uygulamaya eklendi. F değerlendirildi; şimdilik Yahoo + düzeltmeyle devam ediliyor. Açık kalan: D (haber sürprizi arşivi; zaman istiyor, kod değil).
 
 ## Kaynaklar
 

@@ -15,8 +15,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Optional
+import math
 
 import pandas as pd
+from forex_lot_calculator import floor_lot
 
 STATS_PATH = Path(__file__).resolve().parent / "data" / "ml" / "trade_plan_stats.json"
 STOP_ATR = 1.5
@@ -25,6 +27,7 @@ HIGH_COST_SHARE = 0.15  # forex_costs.HIGH_COST_SHARE
 NEWS_BEFORE_MINUTES = 60
 NEWS_AFTER_MINUTES = 15
 HIGH_RISK_SHARE = 0.02  # hesabın %2'sinden büyük kayıp riski uyarısı
+PARTIAL_AT_R = 1.0  # isteğe bağlı parçalı çıkış: 1R'de yarısı (research/arda_ideas H7)
 
 
 def load_plan_stats(path: Path = STATS_PATH) -> dict:
@@ -41,7 +44,7 @@ def measured_outcome(stats: dict, pair: str, ratio: float) -> Optional[dict]:
     ratios = [float(r) for r in entry["ratios"]]
     nearest = min(ratios, key=lambda r: abs(r - ratio))
     row = entry["ratios"][str(nearest)] if str(nearest) in entry["ratios"] else entry["ratios"][f"{nearest:g}"]
-    return {"ratio": nearest, "exact": abs(nearest - ratio) <= 0.15, **row}
+    return {"ratio": nearest, "exact": math.isclose(nearest, ratio, abs_tol=1e-8, rel_tol=0), **row}
 
 
 def trading_blockers(
@@ -67,6 +70,25 @@ def trading_blockers(
     return blockers
 
 
+def partial_exit(entry: float, direction: int, stop_pips: float, target_pips: float, pip: float,
+                 lot: float, cost_pips: float, pip_value_per_lot: float) -> Optional[dict]:
+    """İsteğe bağlı: fiyat 1R gidince yarısını kapat, stopu girişe çek.
+
+    Hedef 1R'den uzak ve lot ikiye bölünebiliyorsa anlamlıdır. H4 işlemlerinde (28 parite,
+    2008–2024) kazanan oranını %34'ten %49'a çıkardı ve en kötü ayı yumuşattı, ama ortalama
+    sonucu biraz düşürdü; kâr artırmaz.
+    """
+    if target_pips <= PARTIAL_AT_R * stop_pips or lot < 2 * MIN_LOT:
+        return None
+    close_lot = floor_lot(lot / 2)
+    return {
+        "price": entry + direction * PARTIAL_AT_R * stop_pips * pip,
+        "close_lot": close_lot,
+        "keep_lot": round(lot - close_lot, 2),
+        "locked_usd": close_lot * (PARTIAL_AT_R * stop_pips - cost_pips) * pip_value_per_lot,
+    }
+
+
 def build_trade_plan(
     pair: str,
     price: Optional[float],
@@ -82,33 +104,46 @@ def build_trade_plan(
     blockers: list[str],
 ) -> dict:
     """Yön, giriş/stop/hedef/lot ve bu planın ölçülmüş geçmiş sonucu."""
-    if probability_up is None or probability_up != probability_up or probability_up == 0.5:
+    if probability_up is None or not math.isfinite(probability_up) or not 0 < probability_up < 1 or probability_up == 0.5:
         return {"status": "no_side", "action": "BEKLE", "reason": "ML yön modelinin bu parite için şu an görüşü yok."}
-    if price is None or atr is None or not atr > 0 or pip_value_per_lot <= 0 or loss_usd <= 0 or target_usd <= 0:
+    values = (price, atr, pip, pip_value_per_lot, loss_usd, target_usd, account_usd, cost_pips)
+    if any(v is None or not math.isfinite(v) for v in values) or min(values[:-1]) <= 0 or cost_pips < 0:
         return {"status": "no_data", "action": "BEKLE", "reason": "Fiyat, ATR veya hesap ayarı eksik; plan hesaplanamadı."}
 
     side = "LONG" if probability_up > 0.5 else "SHORT"
     direction = 1 if side == "LONG" else -1
     side_probability = probability_up if side == "LONG" else 1 - probability_up
     stop_pips = STOP_ATR * atr / pip
-    lot = loss_usd / ((stop_pips + cost_pips) * pip_value_per_lot)
+    lot = floor_lot(min(loss_usd, account_usd) / ((stop_pips + cost_pips) * pip_value_per_lot))
+    if lot < MIN_LOT:
+        warning = f"Bütçe en küçük lota ({MIN_LOT:.2f}) yetmiyor; kayıp limitini aşmadan bu plan açılamaz."
+        return {"status": "no_data", "action": "BEKLE", "reason": warning, "warnings": [warning], "lot": lot}
     target_pips = target_usd / (lot * pip_value_per_lot) + cost_pips
     ratio = target_pips / stop_pips
     measured = measured_outcome(stats, pair, ratio)
     expected_usd = measured["ml"]["net_r"] * stop_pips * lot * pip_value_per_lot if measured else None
 
     warnings = []
-    if lot < MIN_LOT:
-        warnings.append(f"Hesaplanan lot {lot:.3f}; çoğu broker'da en küçük lot {MIN_LOT}. Kayıp limitini büyütmeden bu plan açılamaz.")
     if account_usd > 0 and loss_usd / account_usd > HIGH_RISK_SHARE:
         warnings.append(f"Bu işlemde kayıp riski hesabın %{loss_usd / account_usd * 100:.0f}'i. "
                         f"Üst üste 5 stop hesabın %{min(100, loss_usd * 5 / account_usd * 100):.0f}'ini götürür.")
     if measured and not measured["exact"]:
         warnings.append(f"Hedef/stop oranı {ratio:.2f}; geçmiş sonuç en yakın ölçülen oran {measured['ratio']:g} için.")
 
+    evidence_blockers = []
+    if measured is None:
+        evidence_blockers.append("Bu hedef/stop planı için ölçülmüş giriş başarısı yok.")
+    elif not measured["exact"]:
+        evidence_blockers.append("Bu hedef/stop oranı doğrudan test edilmedi; yakın oranın sonucu giriş izni vermez.")
+    elif measured["ml"]["net_r"] <= 0:
+        evidence_blockers.append("Bu plan geçmişte maliyet sonrası zarar etti; yön görüşü giriş sinyali sayılmaz.")
+    elif not measured["ml"].get("validated", False):
+        evidence_blockers.append("Pozitif ortalama için bağımsız giriş doğrulaması yok; geçmiş ortalama tek başına yeterli değil.")
+    all_blockers = list(blockers) + evidence_blockers
+    actual_loss = (stop_pips + cost_pips) * lot * pip_value_per_lot
     return {
         "status": "ready",
-        "action": "BEKLE" if blockers else side,
+        "action": "BEKLE" if all_blockers else side,
         "side": side,
         "side_probability": side_probability,
         "entry": price,
@@ -120,6 +155,10 @@ def build_trade_plan(
         "ratio": ratio,
         "measured": measured,
         "expected_usd": expected_usd,
-        "blockers": blockers,
+        "planned_loss_usd": actual_loss,
+        "target_usd": target_usd,
+        "breakeven_win_rate": actual_loss / (actual_loss + target_usd),
+        "partial_exit": partial_exit(price, direction, stop_pips, target_pips, pip, lot, cost_pips, pip_value_per_lot),
+        "blockers": all_blockers,
         "warnings": warnings,
     }

@@ -1,0 +1,30 @@
+{
+  "source": "https://www.bankofcanada.ca/wp-content/uploads/2021/10/swp2021-48.pdf",
+  "adaptation_not_replication": true,
+  "entry": "16:15 Europe/London, buy EURUSD and GBPUSD separately",
+  "holding_hours": [
+    1,
+    4
+  ],
+  "target_usd": 30,
+  "planned_risk_usd": 20,
+  "stop_atr": 3,
+  "periods": [
+    [
+      "2016-01-01",
+      "2020-01-01"
+    ],
+    [
+      "2020-01-01",
+      "2023-01-01"
+    ],
+    [
+      "2023-01-01",
+      "archive_end"
+    ]
+  ],
+  "all_results_reported": true,
+  "previously_inspected_history": true,
+  "trade_permission": false,
+  "code_hash": "ca12c2739da0c806158268d756fa6d7a3a7eb110b40c7cfca2944b60a48b4bc7"
+}

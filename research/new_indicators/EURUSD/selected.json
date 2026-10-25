@@ -1,0 +1,32 @@
+{
+  "rule": "connors_fade",
+  "stop_atr": 3.0,
+  "hours": 1,
+  "loss_usd": 20.0,
+  "subperiods": [
+    {
+      "trades": 1293,
+      "target_rate": 0.015467904098994586,
+      "win_rate": 0.4795050270688322,
+      "mean_usd": -0.35390805054536423,
+      "stress_mean_usd": -1.1577863177268548,
+      "fixed_risk_drawdown_usd": 720.4519319957777,
+      "worst_loss_usd": -20.000000000001272,
+      "fixed_budget_account_balance": 542.3968906448426,
+      "affordable_trades": 1293,
+      "account_exhausted": false
+    },
+    {
+      "trades": 1857,
+      "target_rate": 0.02207862143241788,
+      "win_rate": 0.4964997307485191,
+      "mean_usd": -0.2267872681706697,
+      "stress_mean_usd": -1.1576973203743655,
+      "fixed_risk_drawdown_usd": 896.4395425550373,
+      "worst_loss_usd": -20.000000000002526,
+      "fixed_budget_account_balance": 578.8560430070687,
+      "affordable_trades": 1857,
+      "account_exhausted": false
+    }
+  ]
+}

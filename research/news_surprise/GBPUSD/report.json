@@ -1,0 +1,66 @@
+{
+  "symbol": "GBPUSD",
+  "source": "ForexFactory local historical calendar",
+  "status": "EXPLORATORY_SCENARIO",
+  "trade_permission": false,
+  "target_usd": 30.0,
+  "planned_stop_loss_usd": 20.0,
+  "user_maximum_loss_usd": 100.0,
+  "development": {
+    "trades": 58,
+    "target_rate": 0.13793103448275862,
+    "win_rate": 0.39655172413793105,
+    "mean_usd": -1.4652288584210855,
+    "stress_mean_usd": -2.301249247504642,
+    "fixed_risk_drawdown_usd": 249.64269858969806,
+    "worst_loss_usd": -20.000000000000636,
+    "fixed_budget_account_balance": 915.0167262115764,
+    "affordable_trades": 58,
+    "account_exhausted": false
+  },
+  "audit": {
+    "trades": 45,
+    "target_rate": 0.2222222222222222,
+    "win_rate": 0.5555555555555556,
+    "mean_usd": 3.017425911388747,
+    "stress_mean_usd": 2.113156733835677,
+    "fixed_risk_drawdown_usd": 122.37686873506505,
+    "worst_loss_usd": -20.000000000000288,
+    "fixed_budget_account_balance": 1135.784166012494,
+    "affordable_trades": 45,
+    "account_exhausted": false
+  },
+  "day_test": {
+    "status": "ready",
+    "sample_count": 42,
+    "observed_mean": 2.714240649515314,
+    "ci_low": -3.168860963476552,
+    "ci_high": 8.537632409873163,
+    "p_value": 0.19790104947526238,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "stress_day_test": {
+    "status": "ready",
+    "sample_count": 42,
+    "observed_mean": 1.8110292488579527,
+    "ci_low": -4.005040095284832,
+    "ci_high": 7.5881575860594195,
+    "p_value": 0.27786106946526734,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "price_end": "2026-09-11 21:00:00+00:00",
+  "source_hashes": {
+    "C:\\Users\\Sefa\\Desktop\\Yapay Zeka Projeleri\\yeni_forex\\data\\historical_15m\\GBPUSD.csv": "e7488b4ebd7f1752054518d28bd93f92e96c07263612fc6d3ddff567924e7ffe",
+    "C:\\Users\\Sefa\\Desktop\\Yapay Zeka Projeleri\\yeni_forex\\data\\historical_5m\\GBPUSD.csv": "d95efdaf800e87a4fe11bd72713a2b97d47394c4cc4246ba55c01db359bc07f4"
+  },
+  "limitations": [
+    "Feed availability assumed by next 15M boundary after release+5m; not historically timestamped.",
+    "Archived actual/consensus numbers not verified initial vintages; no live authorization even if positive.",
+    "2026 regular-hour spread scenario; actual news spreads/slippage can be much higher.",
+    "Fixed $20 pip risk scale, not a broker-margin/lot simulation; goal $30 and four-hour limit.",
+    "Calendar sample Oct2024-Sep2026; not comparable to older indicator-development sample.",
+    "Scheduled UTC07-17 decisions only; CPI/rates/wages excluded rather than assuming uniform inflation-policy signs."
+  ]
+}

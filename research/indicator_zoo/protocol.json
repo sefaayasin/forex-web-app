@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-09",
+  "target_net_usd": 30,
+  "planned_stop_usd": 100,
+  "pairs": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "USDCHF",
+    "NZDUSD",
+    "EURJPY",
+    "GBPJPY",
+    "EURGBP"
+  ],
+  "timeframes": {
+    "15m": [
+      "historical_15m",
+      "0 days 00:15:00",
+      "0 days 04:00:00"
+    ],
+    "1h": [
+      "historical_1h_from_15m",
+      "0 days 01:00:00",
+      "1 days 00:00:00"
+    ],
+    "4h": [
+      "historical_4h",
+      "0 days 04:00:00",
+      "5 days 00:00:00"
+    ]
+  },
+  "stops_atr_of_timeframe": [
+    1.5,
+    3.0
+  ],
+  "skip_entry_ny_hours": [
+    16,
+    17
+  ],
+  "cost": "measured spread at decision New York hour + 0.7 pip; stress 2x; swap markup 1%/yr per night (2x stress)",
+  "periods": {
+    "development": [
+      "2009-01-01",
+      "2018-01-01"
+    ],
+    "validation": [
+      "2018-01-01",
+      "2023-01-01"
+    ],
+    "audit": [
+      "2023-01-01",
+      "2027-01-01"
+    ]
+  },
+  "gates": {
+    "development": "pooled over pairs: stress mean > 0, >=500 trades, >=6 of 10 pairs positive",
+    "validation": "pooled mean > 0 and >=6 of 10 pairs positive",
+    "audit": "report only; daily bootstrap"
+  },
+  "script_sha256": "9f5a0c73fa8a172b4d0f8f6ab40452e14bae68a4bc52f21434538b842c68c856"
+}

@@ -1,0 +1,68 @@
+{
+  "symbol": "USDCHF",
+  "status": "RETROSPECTIVE_ONLY",
+  "trade_permission": false,
+  "selected": {
+    "delay_minutes": 60,
+    "surprise_multiplier": 1.0,
+    "direction": 1,
+    "risk_usd": 20.0,
+    "stop_atr": 3.0,
+    "hours": 4,
+    "development": [
+      {
+        "trades": 19,
+        "target_rate": 0.05263157894736842,
+        "win_rate": 0.631578947368421,
+        "mean_usd": 2.0565632901480266,
+        "stress_mean_usd": 0.793490213580348,
+        "fixed_risk_drawdown_usd": 44.625219025966096,
+        "worst_loss_usd": -20.000000000000384,
+        "fixed_budget_account_balance": 1039.0747025128123,
+        "affordable_trades": 19,
+        "account_exhausted": false
+      },
+      {
+        "trades": 34,
+        "target_rate": 0.08823529411764706,
+        "win_rate": 0.5,
+        "mean_usd": -0.35212089788070683,
+        "stress_mean_usd": -1.5082116239455237,
+        "fixed_risk_drawdown_usd": 138.91205517409895,
+        "worst_loss_usd": -20.000000000000476,
+        "fixed_budget_account_balance": 988.027889472056,
+        "affordable_trades": 34,
+        "account_exhausted": false
+      }
+    ]
+  },
+  "audit": {
+    "trades": 38,
+    "target_rate": 0.15789473684210525,
+    "win_rate": 0.42105263157894735,
+    "mean_usd": 0.27245343156657836,
+    "stress_mean_usd": -1.139027568301879,
+    "fixed_risk_drawdown_usd": 88.71701972105575,
+    "worst_loss_usd": -20.000000000000448,
+    "fixed_budget_account_balance": 1010.3532303995296,
+    "affordable_trades": 38,
+    "account_exhausted": false
+  },
+  "day_test": {
+    "status": "ready",
+    "sample_count": 37,
+    "observed_mean": 0.04733979415157371,
+    "ci_low": -4.118251745095745,
+    "ci_high": 4.2553479498958895,
+    "p_value": 0.4962518740629685,
+    "simulations": 2000,
+    "mean_block_length": 5.0
+  },
+  "trials": 144,
+  "development_both_positive": false,
+  "limitations": [
+    "Audit already inspected, no fresh holdout.",
+    "Low sample count; no live authorization.",
+    "Calendar vintages/feed timing and actual news spreads unverified."
+  ]
+}

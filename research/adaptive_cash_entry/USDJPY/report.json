@@ -1,0 +1,3399 @@
+{
+  "symbol": "USDJPY",
+  "identity": {
+    "version": 1,
+    "start": "2023-01-01",
+    "months": 3,
+    "cost": 1.5,
+    "stress_cost": 3.0,
+    "net_target_ratio": 0.3,
+    "code_hashes": {
+      "forex_adaptive.py": "5a037009545bf7e10ea19fb5c9b6541a36c2604a36633fa21e09718988f57845",
+      "forex_indicators.py": "096fb08b51e9e3dc589137c91d843640904954be2c46549f9f8536d2d8dd0d3c",
+      "forex_analysis.py": "b6b64d55d3b27b7242b3b0085cf8336eceab954fd015f7921bdf7844747d5d5c",
+      "forex_ml_tournament.py": "c9e125a44325fd666bea3a7864ad9866b5b96ee0fcffc797331ec41eed290267",
+      "research_news_scan.py": "9f0a60516f623e23309b8850b5a05e65f9ac669f5f9f44aa8fd5ea6445329761"
+    },
+    "score_code": "b732a1f96d116ef4badb5bea93efd0d8d2af32162a4e7453d76dea00def192b9",
+    "sources": {
+      "C:\\Users\\Sefa\\Desktop\\Yapay Zeka Projeleri\\yeni_forex\\data\\historical_15m\\USDJPY.csv": "6883136fa4fe0c5e2ca0b4209c5468656734c41129b4f776b2b624cfe86a7313",
+      "C:\\Users\\Sefa\\Desktop\\Yapay Zeka Projeleri\\yeni_forex\\data\\historical_5m\\USDJPY.csv": "82a258969839f3c333e77e678117b48f8d1e76cea8c871b69601a561b4f5d045"
+    }
+  },
+  "audit": {
+    "bars15": 466630,
+    "bars5": 1356725,
+    "start": "2008-01-01 00:00:00+00:00",
+    "end": "2026-09-11 21:00:00+00:00",
+    "counters": {
+      "candidates": 37577,
+      "occupied": 9227,
+      "missing_path": 2174,
+      "warmup": 390
+    },
+    "repaired_bounds": [
+      10,
+      38
+    ],
+    "quarantined_rows": [
+      9,
+      24
+    ],
+    "source_hashes": {
+      "C:\\Users\\Sefa\\Desktop\\Yapay Zeka Projeleri\\yeni_forex\\data\\historical_15m\\USDJPY.csv": "6883136fa4fe0c5e2ca0b4209c5468656734c41129b4f776b2b624cfe86a7313",
+      "C:\\Users\\Sefa\\Desktop\\Yapay Zeka Projeleri\\yeni_forex\\data\\historical_5m\\USDJPY.csv": "82a258969839f3c333e77e678117b48f8d1e76cea8c871b69601a561b4f5d045"
+    }
+  },
+  "net_target_ratio": 0.3,
+  "label_definition": "target_before_stop_or_timeout",
+  "status": "RESEARCH_ONLY",
+  "trade_permission": false,
+  "evaluation": "Retrospective purged walk-forward; 2023+ history was already inspected in earlier research.",
+  "all_candidates": {
+    "trades": 5062,
+    "win_rate": 0.6716712761754248,
+    "target_rate": 0.6698933227973133,
+    "mean_r": -0.11385026306347791,
+    "mean_r_stress": -0.21090540912980887,
+    "max_drawdown_r": 582.9312992688641
+  },
+  "selected": {
+    "trades": 0,
+    "win_rate": null,
+    "mean_r": null,
+    "mean_r_stress": null,
+    "max_drawdown_r": 0.0
+  },
+  "diagnostic": {
+    "trades": 1331,
+    "win_rate": 0.6867017280240421,
+    "target_rate": 0.6836964688204358,
+    "mean_r": -0.09696855971087572,
+    "mean_r_stress": -0.19167564437936907,
+    "max_drawdown_r": 136.65542729378245
+  },
+  "coverage": 0.0,
+  "brier": 0.22030590085437135,
+  "baseline_brier": 0.22241061480892238,
+  "auc": 0.5338010585629824,
+  "day_bootstrap": {
+    "status": "insufficient",
+    "sample_count": 0,
+    "observed_mean": null,
+    "ci_low": null,
+    "ci_high": null,
+    "p_value": null
+  },
+  "periods": [
+    {
+      "cutoff": "2023-01-01 00:00:00+00:00",
+      "test_end": "2023-04-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.6998577524893315,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "adx",
+          "di_balance",
+          "stochastic",
+          "donchian",
+          "efficiency",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2023-01-01 00:00:00+00:00",
+        "config": {
+          "model": "hist_boost",
+          "bundle": "extended",
+          "years": 8,
+          "validation_brier": 0.2281282166830997
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.704303432967713,
+        "baseline_probability": 0.6336842105263157,
+        "weights": [],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.22953498605005834
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.2312524282216628
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.23175626863126364
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.22925189535637894
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.22880797556151222
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.22967991645191158
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2305775418044808
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2281282166830997
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.704303432967713,
+            "coverage": 0.1,
+            "trades": 71,
+            "mean_r": -0.02516954494679183,
+            "mean_r_stress": -0.13171081616865887
+          },
+          {
+            "threshold": 0.702800393853989,
+            "coverage": 0.2,
+            "trades": 141,
+            "mean_r": -0.03891516093065452,
+            "mean_r_stress": -0.14035720603784882
+          },
+          {
+            "threshold": 0.7017926456096845,
+            "coverage": 0.3,
+            "trades": 211,
+            "mean_r": -0.06595338972655815,
+            "mean_r_stress": -0.1629821440382274
+          },
+          {
+            "threshold": 0.700108013664964,
+            "coverage": 0.5,
+            "trades": 352,
+            "mean_r": -0.07447774213722569,
+            "mean_r_stress": -0.16557667011555377
+          },
+          {
+            "threshold": 0.6865050396373111,
+            "coverage": 1.0,
+            "trades": 703,
+            "mean_r": -0.07596269080319917,
+            "mean_r_stress": -0.1547723156396861
+          }
+        ],
+        "periods": {
+          "train_start": "2014-01-02 03:30:00+00:00",
+          "train_last_label": "2021-12-31 22:00:00+00:00",
+          "validation_start": "2022-01-01 00:00:00+00:00",
+          "calibration_start": "2022-07-01 00:00:00+00:00",
+          "calibration_last_label": "2022-12-30 20:00:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 370,
+        "win_rate": 0.7081081081081081,
+        "target_rate": 0.7054054054054054,
+        "mean_r": -0.06983983204000767,
+        "mean_r_stress": -0.14182497277183365,
+        "max_drawdown_r": 35.84171126715052
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 22,
+        "win_rate": 0.7727272727272727,
+        "target_rate": 0.7272727272727273,
+        "mean_r": 0.01773974175487836,
+        "mean_r_stress": -0.07666579752372599,
+        "max_drawdown_r": 1.9999999999999605
+      },
+      "brier": 0.2080720397298367,
+      "baseline_brier": 0.21295254922512546
+    },
+    {
+      "cutoff": "2023-04-01 00:00:00+00:00",
+      "test_end": "2023-07-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.7030812324929971,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "adx",
+          "di_balance",
+          "stochastic",
+          "donchian",
+          "efficiency",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2023-04-01 00:00:00+00:00",
+        "config": {
+          "model": "hist_boost",
+          "bundle": "extended",
+          "years": 3,
+          "validation_brier": 0.21991785292334315
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.7182368491135542,
+        "baseline_probability": 0.6196226415094339,
+        "weights": [],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.22228126716955127
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.22353161212472641
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.22440896957011405
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.21991785292334315
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.2206479546520819
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.22155649992241433
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2221062621181265
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2201450305964081
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.7242559367236305,
+            "coverage": 0.1,
+            "trades": 72,
+            "mean_r": -0.1152777777777762,
+            "mean_r_stress": -0.1831807011983582
+          },
+          {
+            "threshold": 0.7182368491135542,
+            "coverage": 0.2,
+            "trades": 143,
+            "mean_r": -0.04219490870661706,
+            "mean_r_stress": -0.1069527164159823
+          },
+          {
+            "threshold": 0.7126186706761647,
+            "coverage": 0.3,
+            "trades": 214,
+            "mean_r": -0.06142654109069114,
+            "mean_r_stress": -0.12728739506767647
+          },
+          {
+            "threshold": 0.7043432199915594,
+            "coverage": 0.5,
+            "trades": 357,
+            "mean_r": -0.047745881774251535,
+            "mean_r_stress": -0.11530249253039573
+          },
+          {
+            "threshold": 0.6344978289793975,
+            "coverage": 1.0,
+            "trades": 714,
+            "mean_r": -0.0752642409185862,
+            "mean_r_stress": -0.14947068269327665
+          }
+        ],
+        "periods": {
+          "train_start": "2019-04-01 04:30:00+00:00",
+          "train_last_label": "2022-03-31 14:00:00+00:00",
+          "validation_start": "2022-04-01 00:00:00+00:00",
+          "calibration_start": "2022-10-01 00:00:00+00:00",
+          "calibration_last_label": "2023-03-31 20:30:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 377,
+        "win_rate": 0.6870026525198939,
+        "target_rate": 0.6870026525198939,
+        "mean_r": -0.09546794908110545,
+        "mean_r_stress": -0.19200177437261062,
+        "max_drawdown_r": 40.291416803577036
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 45,
+        "win_rate": 0.8,
+        "target_rate": 0.8,
+        "mean_r": 0.040000000000002034,
+        "mean_r_stress": -0.04111241940456824,
+        "max_drawdown_r": 3.1999999999998603
+      },
+      "brier": 0.21490372471070956,
+      "baseline_brier": 0.2195700738342935
+    },
+    {
+      "cutoff": "2023-07-01 00:00:00+00:00",
+      "test_end": "2023-10-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.6961178045515395,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2023-07-01 00:00:00+00:00",
+        "config": {
+          "model": "logistic",
+          "bundle": "price",
+          "years": 3,
+          "validation_brier": 0.2086250375031212
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.7047661698852505,
+        "baseline_probability": 0.625,
+        "weights": [
+          {
+            "feature": "return_1",
+            "coefficient": -0.026794988190664008,
+            "relative_weight_pct": 12.962377140939413
+          },
+          {
+            "feature": "return_4",
+            "coefficient": 0.003938702451679283,
+            "relative_weight_pct": 1.9053916449344912
+          },
+          {
+            "feature": "return_16",
+            "coefficient": -0.0038879538021023845,
+            "relative_weight_pct": 1.8808414144761576
+          },
+          {
+            "feature": "return_96",
+            "coefficient": 0.013818516328929642,
+            "relative_weight_pct": 6.6848628149881195
+          },
+          {
+            "feature": "rv_ratio",
+            "coefficient": -0.02198744275199939,
+            "relative_weight_pct": 10.6366729213762
+          },
+          {
+            "feature": "atr_pct",
+            "coefficient": -0.006215586087730273,
+            "relative_weight_pct": 3.0068597324184663
+          },
+          {
+            "feature": "body_atr",
+            "coefficient": 0.01389936733789343,
+            "relative_weight_pct": 6.723975400631252
+          },
+          {
+            "feature": "range_atr",
+            "coefficient": 0.020167528124092792,
+            "relative_weight_pct": 9.75626873521361
+          },
+          {
+            "feature": "hour_sin",
+            "coefficient": -0.0012549473264008612,
+            "relative_weight_pct": 0.6070948948016103
+          },
+          {
+            "feature": "hour_cos",
+            "coefficient": 0.0037593774130359773,
+            "relative_weight_pct": 1.8186411390127173
+          },
+          {
+            "feature": "side",
+            "coefficient": -0.01269957675421485,
+            "relative_weight_pct": 6.143563200964439
+          },
+          {
+            "feature": "cost_fraction",
+            "coefficient": -0.07828954983992015,
+            "relative_weight_pct": 37.87345096024353
+          }
+        ],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.2086250375031212
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.20880986248853473
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.20968412001768447
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.212875900557077
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.21055390262812348
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.21068077352768233
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21116342549329326
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21225643438825026
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.7047661698852505,
+            "coverage": 0.1,
+            "trades": 75,
+            "mean_r": -0.011999999999997677,
+            "mean_r_stress": -0.08591808784090064
+          },
+          {
+            "threshold": 0.7019813079902586,
+            "coverage": 0.2,
+            "trades": 150,
+            "mean_r": -0.05954101875373568,
+            "mean_r_stress": -0.13634990496641813
+          },
+          {
+            "threshold": 0.6998822777546113,
+            "coverage": 0.3,
+            "trades": 224,
+            "mean_r": -0.06878442459564435,
+            "mean_r_stress": -0.14687116291439176
+          },
+          {
+            "threshold": 0.6963776956859133,
+            "coverage": 0.5,
+            "trades": 374,
+            "mean_r": -0.06487663012274349,
+            "mean_r_stress": -0.146553188614488
+          },
+          {
+            "threshold": 0.653957590398845,
+            "coverage": 1.0,
+            "trades": 747,
+            "mean_r": -0.08277396875285087,
+            "mean_r_stress": -0.16714847237490313
+          }
+        ],
+        "periods": {
+          "train_start": "2019-07-01 10:00:00+00:00",
+          "train_last_label": "2022-06-30 16:30:00+00:00",
+          "validation_start": "2022-07-01 00:00:00+00:00",
+          "calibration_start": "2023-01-01 00:00:00+00:00",
+          "calibration_last_label": "2023-06-30 19:00:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 355,
+        "win_rate": 0.6704225352112676,
+        "target_rate": 0.6676056338028169,
+        "mean_r": -0.11538328060040076,
+        "mean_r_stress": -0.2170800013536356,
+        "max_drawdown_r": 43.061064613142264
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 35,
+        "win_rate": 0.5714285714285714,
+        "target_rate": 0.5714285714285714,
+        "mean_r": -0.2571428571428523,
+        "mean_r_stress": -0.34516569082755405,
+        "max_drawdown_r": 10.1999999999999
+      },
+      "brier": 0.22237461449465798,
+      "baseline_brier": 0.22372359154929577
+    },
+    {
+      "cutoff": "2023-10-01 00:00:00+00:00",
+      "test_end": "2024-01-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.6775956284153005,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "adx",
+          "di_balance",
+          "stochastic",
+          "donchian",
+          "efficiency",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2023-10-01 00:00:00+00:00",
+        "config": {
+          "model": "logistic",
+          "bundle": "extended",
+          "years": 3,
+          "validation_brier": 0.20672380454752332
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.6780287664584994,
+        "baseline_probability": 0.6299134734239802,
+        "weights": [
+          {
+            "feature": "return_1",
+            "coefficient": -0.036308558041500356,
+            "relative_weight_pct": 8.154763882887792
+          },
+          {
+            "feature": "return_4",
+            "coefficient": 0.009976583913217003,
+            "relative_weight_pct": 2.24070275875763
+          },
+          {
+            "feature": "return_16",
+            "coefficient": -0.004161907239824722,
+            "relative_weight_pct": 0.9347485186401364
+          },
+          {
+            "feature": "return_96",
+            "coefficient": 0.021485925037883134,
+            "relative_weight_pct": 4.825656950879114
+          },
+          {
+            "feature": "rv_ratio",
+            "coefficient": -0.020203591475916667,
+            "relative_weight_pct": 4.537649715643096
+          },
+          {
+            "feature": "atr_pct",
+            "coefficient": -0.008135789618822623,
+            "relative_weight_pct": 1.8272673694867176
+          },
+          {
+            "feature": "body_atr",
+            "coefficient": 0.028273113969175884,
+            "relative_weight_pct": 6.3500337410556815
+          },
+          {
+            "feature": "range_atr",
+            "coefficient": 0.014403094244573474,
+            "relative_weight_pct": 3.2348801242183214
+          },
+          {
+            "feature": "hour_sin",
+            "coefficient": 0.0015796375408439972,
+            "relative_weight_pct": 0.35478057683824293
+          },
+          {
+            "feature": "hour_cos",
+            "coefficient": 0.00013499358906584035,
+            "relative_weight_pct": 0.03031904608487234
+          },
+          {
+            "feature": "ema_20_atr",
+            "coefficient": -0.026560160697529953,
+            "relative_weight_pct": 5.965310958709806
+          },
+          {
+            "feature": "ema_50_atr",
+            "coefficient": -0.00444565731869517,
+            "relative_weight_pct": 0.99847770591038
+          },
+          {
+            "feature": "ema_200_atr",
+            "coefficient": 0.0032642733445847408,
+            "relative_weight_pct": 0.7331433637179222
+          },
+          {
+            "feature": "rsi",
+            "coefficient": -0.02496878127868988,
+            "relative_weight_pct": 5.60789320078356
+          },
+          {
+            "feature": "macd_atr",
+            "coefficient": -0.02171058407046414,
+            "relative_weight_pct": 4.876114514155575
+          },
+          {
+            "feature": "bb_position",
+            "coefficient": 0.042842659250554097,
+            "relative_weight_pct": 9.622298134339523
+          },
+          {
+            "feature": "score15",
+            "coefficient": 0.005949827028790964,
+            "relative_weight_pct": 1.3363084953237985
+          },
+          {
+            "feature": "score1h",
+            "coefficient": -0.01059381936191276,
+            "relative_weight_pct": 2.3793314902679548
+          },
+          {
+            "feature": "score4h",
+            "coefficient": -0.017015205871377243,
+            "relative_weight_pct": 3.8215504493792283
+          },
+          {
+            "feature": "adx",
+            "coefficient": 0.006275189395093472,
+            "relative_weight_pct": 1.4093836439028733
+          },
+          {
+            "feature": "di_balance",
+            "coefficient": 0.010916432258150165,
+            "relative_weight_pct": 2.451789118339651
+          },
+          {
+            "feature": "stochastic",
+            "coefficient": -0.002070915116936192,
+            "relative_weight_pct": 0.4651196497755427
+          },
+          {
+            "feature": "donchian",
+            "coefficient": -0.0030577681698942152,
+            "relative_weight_pct": 0.686763087798649
+          },
+          {
+            "feature": "efficiency",
+            "coefficient": 0.01715661477655819,
+            "relative_weight_pct": 3.8533103510357534
+          },
+          {
+            "feature": "side",
+            "coefficient": -0.0016787284400673974,
+            "relative_weight_pct": 0.37703601549229937
+          },
+          {
+            "feature": "cost_fraction",
+            "coefficient": -0.10207371240358978,
+            "relative_weight_pct": 22.92536713657587
+          }
+        ],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.20747333740522408
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.20677212930742178
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.20672380454752332
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.21113450512134752
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.20854973031693785
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.20826822705204553
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2079001609278308
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21035155209087575
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.6912400251697376,
+            "coverage": 0.1,
+            "trades": 74,
+            "mean_r": -0.1391891891891901,
+            "mean_r_stress": -0.2257555207261237
+          },
+          {
+            "threshold": 0.6868955801151487,
+            "coverage": 0.2,
+            "trades": 147,
+            "mean_r": -0.1321457317868161,
+            "mean_r_stress": -0.21970329554295098
+          },
+          {
+            "threshold": 0.6835124029771672,
+            "coverage": 0.3,
+            "trades": 220,
+            "mean_r": -0.11069730264374297,
+            "mean_r_stress": -0.2004235214167864
+          },
+          {
+            "threshold": 0.6780287664584994,
+            "coverage": 0.5,
+            "trades": 366,
+            "mean_r": -0.08817805427270652,
+            "mean_r_stress": -0.179308692862522
+          },
+          {
+            "threshold": 0.5767908871931721,
+            "coverage": 1.0,
+            "trades": 732,
+            "mean_r": -0.10512634073322272,
+            "mean_r_stress": -0.2041640292609493
+          }
+        ],
+        "periods": {
+          "train_start": "2019-10-01 00:30:00+00:00",
+          "train_last_label": "2022-09-30 17:00:00+00:00",
+          "validation_start": "2022-10-01 00:00:00+00:00",
+          "calibration_start": "2023-04-01 00:00:00+00:00",
+          "calibration_last_label": "2023-09-29 19:15:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 358,
+        "win_rate": 0.6424581005586593,
+        "target_rate": 0.6396648044692738,
+        "mean_r": -0.14950569717998263,
+        "mean_r_stress": -0.25738446470328574,
+        "max_drawdown_r": 55.0230395904338
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 169,
+        "win_rate": 0.6923076923076923,
+        "target_rate": 0.6863905325443787,
+        "mean_r": -0.09911194474904447,
+        "mean_r_stress": -0.18409136070755203,
+        "max_drawdown_r": 18.849918662588458
+      },
+      "brier": 0.23017102668240566,
+      "baseline_brier": 0.2305888308497145
+    },
+    {
+      "cutoff": "2024-01-01 00:00:00+00:00",
+      "test_end": "2024-04-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.6535764375876578,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "adx",
+          "di_balance",
+          "stochastic",
+          "donchian",
+          "efficiency",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2024-01-01 00:00:00+00:00",
+        "config": {
+          "model": "hist_boost",
+          "bundle": "extended",
+          "years": 8,
+          "validation_brier": 0.2106246092185994
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.6852198724850395,
+        "baseline_probability": 0.6408418760772929,
+        "weights": [],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.21144259767888887
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.21091788802932163
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.21085010187548053
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.21257987794089273
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.2112500518599525
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.21142118877097324
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2113980074068889
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2106246092185994
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.7027346597671269,
+            "coverage": 0.1,
+            "trades": 72,
+            "mean_r": -0.09722222222222136,
+            "mean_r_stress": -0.16397739663549887
+          },
+          {
+            "threshold": 0.6852198724850395,
+            "coverage": 0.2,
+            "trades": 143,
+            "mean_r": -0.08076866197614033,
+            "mean_r_stress": -0.15131100732413877
+          },
+          {
+            "threshold": 0.6752550839765995,
+            "coverage": 0.3,
+            "trades": 214,
+            "mean_r": -0.09109436049647558,
+            "mean_r_stress": -0.16627507995256374
+          },
+          {
+            "threshold": 0.6606704402152782,
+            "coverage": 0.5,
+            "trades": 357,
+            "mean_r": -0.0790093925475464,
+            "mean_r_stress": -0.16227141337921913
+          },
+          {
+            "threshold": 0.3231852743324465,
+            "coverage": 1.0,
+            "trades": 713,
+            "mean_r": -0.13251627518033102,
+            "mean_r_stress": -0.23731702502709245
+          }
+        ],
+        "periods": {
+          "train_start": "2015-01-01 22:45:00+00:00",
+          "train_last_label": "2022-12-30 20:00:00+00:00",
+          "validation_start": "2023-01-01 00:00:00+00:00",
+          "calibration_start": "2023-07-01 00:00:00+00:00",
+          "calibration_last_label": "2023-12-29 19:00:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 374,
+        "win_rate": 0.6524064171122995,
+        "target_rate": 0.6497326203208557,
+        "mean_r": -0.12792567160789808,
+        "mean_r_stress": -0.2345487430591155,
+        "max_drawdown_r": 48.14420118135395
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 42,
+        "win_rate": 0.7380952380952381,
+        "target_rate": 0.7380952380952381,
+        "mean_r": -0.017022203188366378,
+        "mean_r_stress": -0.09067907283897884,
+        "max_drawdown_r": 3.60000000000022
+      },
+      "brier": 0.2256532359572365,
+      "baseline_brier": 0.22765918774505486
+    },
+    {
+      "cutoff": "2024-04-01 00:00:00+00:00",
+      "test_end": "2024-07-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.644808743169399,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "adx",
+          "di_balance",
+          "stochastic",
+          "donchian",
+          "efficiency",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2024-04-01 00:00:00+00:00",
+        "config": {
+          "model": "hist_boost",
+          "bundle": "extended",
+          "years": 8,
+          "validation_brier": 0.21683070591121623
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.6853529533146592,
+        "baseline_probability": 0.6436594202898551,
+        "weights": [],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.21861935473883382
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.2183018517390069
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.21839309070572513
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.2185207243552419
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.21715935669853104
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.21725847826116731
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21761646911403393
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21683070591121623
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.6853529533146592,
+            "coverage": 0.1,
+            "trades": 74,
+            "mean_r": -0.05135135135135243,
+            "mean_r_stress": -0.11733225450280302
+          },
+          {
+            "threshold": 0.6732907975939135,
+            "coverage": 0.2,
+            "trades": 147,
+            "mean_r": -0.1072748849396679,
+            "mean_r_stress": -0.17891174689438746
+          },
+          {
+            "threshold": 0.6645478715926532,
+            "coverage": 0.3,
+            "trades": 220,
+            "mean_r": -0.09284842391400597,
+            "mean_r_stress": -0.16920804711365312
+          },
+          {
+            "threshold": 0.6507408706195967,
+            "coverage": 0.5,
+            "trades": 366,
+            "mean_r": -0.0973536478404538,
+            "mean_r_stress": -0.18030229092940606
+          },
+          {
+            "threshold": 0.3679169198676798,
+            "coverage": 1.0,
+            "trades": 732,
+            "mean_r": -0.1384798371199285,
+            "mean_r_stress": -0.245717033152849
+          }
+        ],
+        "periods": {
+          "train_start": "2015-04-01 01:00:00+00:00",
+          "train_last_label": "2023-03-31 20:30:00+00:00",
+          "validation_start": "2023-04-01 00:00:00+00:00",
+          "calibration_start": "2023-10-01 00:00:00+00:00",
+          "calibration_last_label": "2024-03-29 11:45:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 325,
+        "win_rate": 0.6246153846153846,
+        "target_rate": 0.6215384615384615,
+        "mean_r": -0.17151001922686243,
+        "mean_r_stress": -0.2940522155268643,
+        "max_drawdown_r": 57.84075624873025
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 26,
+        "win_rate": 0.7307692307692307,
+        "target_rate": 0.7307692307692307,
+        "mean_r": -0.02937492610446857,
+        "mean_r_stress": -0.09468970734331737,
+        "max_drawdown_r": 2.400000000000087
+      },
+      "brier": 0.23189365010991236,
+      "baseline_brier": 0.23571773918294472
+    },
+    {
+      "cutoff": "2024-07-01 00:00:00+00:00",
+      "test_end": "2024-10-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.6362339514978602,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "adx",
+          "di_balance",
+          "stochastic",
+          "donchian",
+          "efficiency",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2024-07-01 00:00:00+00:00",
+        "config": {
+          "model": "hist_boost",
+          "bundle": "extended",
+          "years": 8,
+          "validation_brier": 0.223542600742454
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.6775826781390925,
+        "baseline_probability": 0.6446512468377303,
+        "weights": [],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.22548910610286277
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.2256998360412241
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.22613083326127945
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.22627558267817113
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.22445968217838086
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.2243012755446072
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.22452593520056777
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.223542600742454
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.6775826781390925,
+            "coverage": 0.1,
+            "trades": 71,
+            "mean_r": -0.05100281398738848,
+            "mean_r_stress": -0.11828184501948093
+          },
+          {
+            "threshold": 0.6611814445094972,
+            "coverage": 0.2,
+            "trades": 141,
+            "mean_r": -0.08446564303002148,
+            "mean_r_stress": -0.15503437856532026
+          },
+          {
+            "threshold": 0.653523758402751,
+            "coverage": 0.3,
+            "trades": 211,
+            "mean_r": -0.08982742534030119,
+            "mean_r_stress": -0.16746104099889297
+          },
+          {
+            "threshold": 0.6400154025073901,
+            "coverage": 0.5,
+            "trades": 351,
+            "mean_r": -0.10667756809181436,
+            "mean_r_stress": -0.19550312387728663
+          },
+          {
+            "threshold": 0.42045205943371605,
+            "coverage": 1.0,
+            "trades": 701,
+            "mean_r": -0.14876598777472758,
+            "mean_r_stress": -0.2629261185503828
+          }
+        ],
+        "periods": {
+          "train_start": "2015-07-01 01:30:00+00:00",
+          "train_last_label": "2023-06-30 19:00:00+00:00",
+          "validation_start": "2023-07-01 00:00:00+00:00",
+          "calibration_start": "2024-01-01 00:00:00+00:00",
+          "calibration_last_label": "2024-06-28 18:45:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 350,
+        "win_rate": 0.7171428571428572,
+        "target_rate": 0.7114285714285714,
+        "mean_r": -0.06453384148525086,
+        "mean_r_stress": -0.1350155919309222,
+        "max_drawdown_r": 28.68684451983753
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 142,
+        "win_rate": 0.7253521126760564,
+        "target_rate": 0.7183098591549296,
+        "mean_r": -0.05752380316699135,
+        "mean_r_stress": -0.11206055968423419,
+        "max_drawdown_r": 14.1999999999997
+      },
+      "brier": 0.207852705129208,
+      "baseline_brier": 0.20975717026318405
+    },
+    {
+      "cutoff": "2024-10-01 00:00:00+00:00",
+      "test_end": "2025-01-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.6676514032496307,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2024-10-01 00:00:00+00:00",
+        "config": {
+          "model": "logistic",
+          "bundle": "technical",
+          "years": 8,
+          "validation_brier": 0.22645788356359778
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.7250164917507355,
+        "baseline_probability": 0.6466172214182344,
+        "weights": [
+          {
+            "feature": "return_1",
+            "coefficient": -0.05809674513918858,
+            "relative_weight_pct": 6.051805454550959
+          },
+          {
+            "feature": "return_4",
+            "coefficient": -0.004574156457261853,
+            "relative_weight_pct": 0.476479447027648
+          },
+          {
+            "feature": "return_16",
+            "coefficient": -0.02805581315046995,
+            "relative_weight_pct": 2.9225100760653038
+          },
+          {
+            "feature": "return_96",
+            "coefficient": -0.008404878017674876,
+            "relative_weight_pct": 0.8755169762150756
+          },
+          {
+            "feature": "rv_ratio",
+            "coefficient": -0.0573291643144234,
+            "relative_weight_pct": 5.971848310463222
+          },
+          {
+            "feature": "atr_pct",
+            "coefficient": 0.04277117960317659,
+            "relative_weight_pct": 4.4553762418177705
+          },
+          {
+            "feature": "body_atr",
+            "coefficient": 0.0063799021064187235,
+            "relative_weight_pct": 0.664579853391512
+          },
+          {
+            "feature": "range_atr",
+            "coefficient": 0.034954358346339684,
+            "relative_weight_pct": 3.6411157973464023
+          },
+          {
+            "feature": "hour_sin",
+            "coefficient": 0.05076999081667692,
+            "relative_weight_pct": 5.28859416505616
+          },
+          {
+            "feature": "hour_cos",
+            "coefficient": -0.0283001572296383,
+            "relative_weight_pct": 2.9479628415783377
+          },
+          {
+            "feature": "ema_20_atr",
+            "coefficient": -0.10037543076272619,
+            "relative_weight_pct": 10.455879721616581
+          },
+          {
+            "feature": "ema_50_atr",
+            "coefficient": 0.05277620183091714,
+            "relative_weight_pct": 5.497576591349943
+          },
+          {
+            "feature": "ema_200_atr",
+            "coefficient": 0.03153577246725329,
+            "relative_weight_pct": 3.285009502228836
+          },
+          {
+            "feature": "rsi",
+            "coefficient": -0.013281355147706696,
+            "relative_weight_pct": 1.3834884782986387
+          },
+          {
+            "feature": "macd_atr",
+            "coefficient": -0.035085068414104865,
+            "relative_weight_pct": 3.6547315670280063
+          },
+          {
+            "feature": "bb_position",
+            "coefficient": 0.1338016123056395,
+            "relative_weight_pct": 13.937808826277584
+          },
+          {
+            "feature": "score15",
+            "coefficient": -0.0024956868973240007,
+            "relative_weight_pct": 0.2599700128103888
+          },
+          {
+            "feature": "score1h",
+            "coefficient": -0.009495130413628263,
+            "relative_weight_pct": 0.989086082037793
+          },
+          {
+            "feature": "score4h",
+            "coefficient": -0.014062136313486998,
+            "relative_weight_pct": 1.4648206718072316
+          },
+          {
+            "feature": "side",
+            "coefficient": 0.0033734199551052604,
+            "relative_weight_pct": 0.3514014638149865
+          },
+          {
+            "feature": "cost_fraction",
+            "coefficient": -0.24407213701642466,
+            "relative_weight_pct": 25.424437919217617
+          }
+        ],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.22776368121069915
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.22717429080448234
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.2276631363847499
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.2294424043823712
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.22707281224312276
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.22645788356359778
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.22681675143795646
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2275153904729535
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.7250164917507355,
+            "coverage": 0.1,
+            "trades": 68,
+            "mean_r": -0.04512323602518652,
+            "mean_r_stress": -0.0920444055580638
+          },
+          {
+            "threshold": 0.7106896146299256,
+            "coverage": 0.2,
+            "trades": 136,
+            "mean_r": -0.04462044154200185,
+            "mean_r_stress": -0.09740313710873758
+          },
+          {
+            "threshold": 0.7003814823673209,
+            "coverage": 0.3,
+            "trades": 203,
+            "mean_r": -0.08768606273336443,
+            "mean_r_stress": -0.14426066441276109
+          },
+          {
+            "threshold": 0.6757534454901565,
+            "coverage": 0.5,
+            "trades": 339,
+            "mean_r": -0.06630284424030344,
+            "mean_r_stress": -0.13004028495735526
+          },
+          {
+            "threshold": 0.36280667496189906,
+            "coverage": 1.0,
+            "trades": 677,
+            "mean_r": -0.11673205431103104,
+            "mean_r_stress": -0.21230004194159155
+          }
+        ],
+        "periods": {
+          "train_start": "2015-10-01 02:00:00+00:00",
+          "train_last_label": "2023-09-29 19:15:00+00:00",
+          "validation_start": "2023-10-01 00:00:00+00:00",
+          "calibration_start": "2024-04-01 00:00:00+00:00",
+          "calibration_last_label": "2024-09-30 22:30:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 126,
+        "win_rate": 0.6904761904761905,
+        "target_rate": 0.6904761904761905,
+        "mean_r": -0.0900920927457329,
+        "mean_r_stress": -0.17007984175980806,
+        "max_drawdown_r": 11.6516036859623
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 16,
+        "win_rate": 0.75,
+        "target_rate": 0.75,
+        "mean_r": -0.02499999999997561,
+        "mean_r_stress": -0.08437076191836636,
+        "max_drawdown_r": 2.499999999999723
+      },
+      "brier": 0.21635006925357925,
+      "baseline_brier": 0.21564243002850478
+    },
+    {
+      "cutoff": "2025-01-01 00:00:00+00:00",
+      "test_end": "2025-04-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.7058823529411765,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2025-01-01 00:00:00+00:00",
+        "config": {
+          "model": "logistic",
+          "bundle": "technical",
+          "years": 8,
+          "validation_brier": 0.22838757209025567
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.707117767236673,
+        "baseline_probability": 0.6473826714801444,
+        "weights": [
+          {
+            "feature": "return_1",
+            "coefficient": -0.012713538178229244,
+            "relative_weight_pct": 6.435220349770653
+          },
+          {
+            "feature": "return_4",
+            "coefficient": 0.000819197376813028,
+            "relative_weight_pct": 0.41465369874558283
+          },
+          {
+            "feature": "return_16",
+            "coefficient": -0.004325923696639337,
+            "relative_weight_pct": 2.189655768040954
+          },
+          {
+            "feature": "return_96",
+            "coefficient": -0.0008284982911115385,
+            "relative_weight_pct": 0.4193615489227854
+          },
+          {
+            "feature": "rv_ratio",
+            "coefficient": -0.012235641466451189,
+            "relative_weight_pct": 6.193323043009195
+          },
+          {
+            "feature": "atr_pct",
+            "coefficient": 0.007240362996318917,
+            "relative_weight_pct": 3.6648595096386836
+          },
+          {
+            "feature": "body_atr",
+            "coefficient": 0.005229485967972816,
+            "relative_weight_pct": 2.6470125033774003
+          },
+          {
+            "feature": "range_atr",
+            "coefficient": 0.007562306446282095,
+            "relative_weight_pct": 3.8278178467777613
+          },
+          {
+            "feature": "hour_sin",
+            "coefficient": 0.009144950737994215,
+            "relative_weight_pct": 4.62890599467938
+          },
+          {
+            "feature": "hour_cos",
+            "coefficient": -0.006719873393609593,
+            "relative_weight_pct": 3.4014029300269804
+          },
+          {
+            "feature": "ema_20_atr",
+            "coefficient": -0.024194384782153328,
+            "relative_weight_pct": 12.246488358914105
+          },
+          {
+            "feature": "ema_50_atr",
+            "coefficient": 0.01355034527435066,
+            "relative_weight_pct": 6.858787572230754
+          },
+          {
+            "feature": "ema_200_atr",
+            "coefficient": 0.003674226449538838,
+            "relative_weight_pct": 1.8597857249704763
+          },
+          {
+            "feature": "rsi",
+            "coefficient": -0.005501091041821375,
+            "relative_weight_pct": 2.7844910301123273
+          },
+          {
+            "feature": "macd_atr",
+            "coefficient": -0.00442301297269515,
+            "relative_weight_pct": 2.2387995135711134
+          },
+          {
+            "feature": "bb_position",
+            "coefficient": 0.026039656791544068,
+            "relative_weight_pct": 13.180510959013569
+          },
+          {
+            "feature": "score15",
+            "coefficient": -0.0005346919140602543,
+            "relative_weight_pct": 0.27064537330060673
+          },
+          {
+            "feature": "score1h",
+            "coefficient": -0.002822280239009924,
+            "relative_weight_pct": 1.4285555265750471
+          },
+          {
+            "feature": "score4h",
+            "coefficient": -0.0006270428040532421,
+            "relative_weight_pct": 0.3173906867036047
+          },
+          {
+            "feature": "side",
+            "coefficient": 0.0004038705474524306,
+            "relative_weight_pct": 0.2044274323326794
+          },
+          {
+            "feature": "cost_fraction",
+            "coefficient": -0.04897143450169021,
+            "relative_weight_pct": 24.787904629286352
+          }
+        ],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.22914473377616904
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.22954936380957064
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.22945022639513082
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.23137751931007633
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.2286186187869613
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.22838757209025567
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.22873888576947612
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.22955576363742522
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.7113209110379212,
+            "coverage": 0.2,
+            "trades": 96,
+            "mean_r": -0.09342062551783481,
+            "mean_r_stress": -0.14523487296489557
+          },
+          {
+            "threshold": 0.7095095549797377,
+            "coverage": 0.3,
+            "trades": 143,
+            "mean_r": -0.10956909125672701,
+            "mean_r_stress": -0.16354532524981213
+          },
+          {
+            "threshold": 0.707117767236673,
+            "coverage": 0.5,
+            "trades": 238,
+            "mean_r": -0.08529525518853873,
+            "mean_r_stress": -0.1431459912844653
+          },
+          {
+            "threshold": 0.6538152858183454,
+            "coverage": 1.0,
+            "trades": 476,
+            "mean_r": -0.07129926093655492,
+            "mean_r_stress": -0.14429730512092143
+          }
+        ],
+        "periods": {
+          "train_start": "2016-01-04 01:15:00+00:00",
+          "train_last_label": "2023-12-29 19:00:00+00:00",
+          "validation_start": "2024-01-01 00:00:00+00:00",
+          "calibration_start": "2024-07-01 00:00:00+00:00",
+          "calibration_last_label": "2024-12-31 20:00:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 368,
+        "win_rate": 0.7092391304347826,
+        "target_rate": 0.7092391304347826,
+        "mean_r": -0.06848349818229404,
+        "mean_r_stress": -0.14347558911074268,
+        "max_drawdown_r": 30.643648800152825
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 133,
+        "win_rate": 0.706766917293233,
+        "target_rate": 0.706766917293233,
+        "mean_r": -0.0757852288815438,
+        "mean_r_stress": -0.14433812474976246,
+        "max_drawdown_r": 13.979435441245199
+      },
+      "brier": 0.20627912290771366,
+      "baseline_brier": 0.21004520780930286
+    },
+    {
+      "cutoff": "2025-04-01 00:00:00+00:00",
+      "test_end": "2025-07-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.7044534412955465,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2025-04-01 00:00:00+00:00",
+        "config": {
+          "model": "logistic",
+          "bundle": "price",
+          "years": 8,
+          "validation_brier": 0.21838993807944654
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.713581597153125,
+        "baseline_probability": 0.6448269646719539,
+        "weights": [
+          {
+            "feature": "return_1",
+            "coefficient": 0.033396742060181096,
+            "relative_weight_pct": 11.045564155774532
+          },
+          {
+            "feature": "return_4",
+            "coefficient": 0.00024946196617619545,
+            "relative_weight_pct": 0.08250649559946571
+          },
+          {
+            "feature": "return_16",
+            "coefficient": 0.0028895207157644824,
+            "relative_weight_pct": 0.9556736518760618
+          },
+          {
+            "feature": "return_96",
+            "coefficient": -0.005083968457596674,
+            "relative_weight_pct": 1.6814604150047336
+          },
+          {
+            "feature": "rv_ratio",
+            "coefficient": 0.03610358618359573,
+            "relative_weight_pct": 11.940819757982082
+          },
+          {
+            "feature": "atr_pct",
+            "coefficient": -0.010370078009613945,
+            "relative_weight_pct": 3.4297765257811608
+          },
+          {
+            "feature": "body_atr",
+            "coefficient": -0.02380148841729763,
+            "relative_weight_pct": 7.872051316934948
+          },
+          {
+            "feature": "range_atr",
+            "coefficient": -0.024292495182800307,
+            "relative_weight_pct": 8.034445801986996
+          },
+          {
+            "feature": "hour_sin",
+            "coefficient": -0.02241596841852617,
+            "relative_weight_pct": 7.4138075155497365
+          },
+          {
+            "feature": "hour_cos",
+            "coefficient": 0.015380020930943959,
+            "relative_weight_pct": 5.0867538996399775
+          },
+          {
+            "feature": "side",
+            "coefficient": -0.003890334634379267,
+            "relative_weight_pct": 1.286680620344164
+          },
+          {
+            "feature": "cost_fraction",
+            "coefficient": 0.12448067011357397,
+            "relative_weight_pct": 41.17045984352615
+          }
+        ],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.21974626495349708
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.22051509915522682
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.220462024170294
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.22209205413295777
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.21838993807944654
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.21850424771399116
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21869560821477502
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21873911888546013
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.7179654014141915,
+            "coverage": 0.1,
+            "trades": 50,
+            "mean_r": -0.09000000000001934,
+            "mean_r_stress": -0.18835485123891033
+          },
+          {
+            "threshold": 0.713581597153125,
+            "coverage": 0.2,
+            "trades": 99,
+            "mean_r": -0.01515151515152183,
+            "mean_r_stress": -0.10686758434073924
+          },
+          {
+            "threshold": 0.709010912912135,
+            "coverage": 0.3,
+            "trades": 148,
+            "mean_r": -0.06713711081652175,
+            "mean_r_stress": -0.155718980865711
+          },
+          {
+            "threshold": 0.7038052287401242,
+            "coverage": 0.5,
+            "trades": 247,
+            "mean_r": -0.04300718439809834,
+            "mean_r_stress": -0.12610685888386236
+          },
+          {
+            "threshold": 0.6669248469484932,
+            "coverage": 1.0,
+            "trades": 494,
+            "mean_r": -0.07399500205879869,
+            "mean_r_stress": -0.15026128917912782
+          }
+        ],
+        "periods": {
+          "train_start": "2016-04-01 07:30:00+00:00",
+          "train_last_label": "2024-03-29 11:45:00+00:00",
+          "validation_start": "2024-04-01 00:00:00+00:00",
+          "calibration_start": "2024-10-01 00:00:00+00:00",
+          "calibration_last_label": "2025-03-31 19:00:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 344,
+        "win_rate": 0.6947674418604651,
+        "target_rate": 0.6947674418604651,
+        "mean_r": -0.09332535420237201,
+        "mean_r_stress": -0.16121265206027752,
+        "max_drawdown_r": 38.80392184561598
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 45,
+        "win_rate": 0.6888888888888889,
+        "target_rate": 0.6888888888888889,
+        "mean_r": -0.09748823616172458,
+        "mean_r_stress": -0.17474800176156643,
+        "max_drawdown_r": 7.086970627277513
+      },
+      "brier": 0.21217862857232403,
+      "baseline_brier": 0.21455969485294657
+    },
+    {
+      "cutoff": "2025-07-01 00:00:00+00:00",
+      "test_end": "2025-10-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.7030812324929971,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2025-07-01 00:00:00+00:00",
+        "config": {
+          "model": "logistic",
+          "bundle": "price",
+          "years": 8,
+          "validation_brier": 0.2083781116497676
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.7087459383910119,
+        "baseline_probability": 0.6425797127630747,
+        "weights": [
+          {
+            "feature": "return_1",
+            "coefficient": 0.027102763578840002,
+            "relative_weight_pct": 11.638414620899226
+          },
+          {
+            "feature": "return_4",
+            "coefficient": -0.0018026336509550781,
+            "relative_weight_pct": 0.7740833431384885
+          },
+          {
+            "feature": "return_16",
+            "coefficient": 0.002648023917728232,
+            "relative_weight_pct": 1.1371091435354708
+          },
+          {
+            "feature": "return_96",
+            "coefficient": -0.0040913456182363325,
+            "relative_weight_pct": 1.7568974663384387
+          },
+          {
+            "feature": "rv_ratio",
+            "coefficient": 0.02585502693787286,
+            "relative_weight_pct": 11.102614043846588
+          },
+          {
+            "feature": "atr_pct",
+            "coefficient": -0.002622199788319485,
+            "relative_weight_pct": 1.1260197974468893
+          },
+          {
+            "feature": "body_atr",
+            "coefficient": -0.020919073755478083,
+            "relative_weight_pct": 8.983026883705183
+          },
+          {
+            "feature": "range_atr",
+            "coefficient": -0.01836602529654532,
+            "relative_weight_pct": 7.886701912051533
+          },
+          {
+            "feature": "hour_sin",
+            "coefficient": -0.017465956246806698,
+            "relative_weight_pct": 7.500196057848705
+          },
+          {
+            "feature": "hour_cos",
+            "coefficient": 0.010183624085491252,
+            "relative_weight_pct": 4.373031521510827
+          },
+          {
+            "feature": "side",
+            "coefficient": -0.003868778695587939,
+            "relative_weight_pct": 1.6613232228062418
+          },
+          {
+            "feature": "cost_fraction",
+            "coefficient": 0.09794787749970554,
+            "relative_weight_pct": 42.06058198687241
+          }
+        ],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.20858194173661684
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.2098441567158804
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.20991571094888709
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.2115427255910833
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.2083781116497676
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.20852363255501524
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2086403941735679
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21027759461461712
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.7121026453370836,
+            "coverage": 0.1,
+            "trades": 72,
+            "mean_r": -0.09722222222222898,
+            "mean_r_stress": -0.18059701329729994
+          },
+          {
+            "threshold": 0.7087459383910119,
+            "coverage": 0.2,
+            "trades": 143,
+            "mean_r": -0.017064435289935783,
+            "mean_r_stress": -0.0978701736477191
+          },
+          {
+            "threshold": 0.7061720179586598,
+            "coverage": 0.3,
+            "trades": 214,
+            "mean_r": -0.05158978619841488,
+            "mean_r_stress": -0.13027623234318667
+          },
+          {
+            "threshold": 0.7024744120247544,
+            "coverage": 0.5,
+            "trades": 357,
+            "mean_r": -0.05301516452508335,
+            "mean_r_stress": -0.12934066516437673
+          },
+          {
+            "threshold": 0.6764161733767526,
+            "coverage": 1.0,
+            "trades": 714,
+            "mean_r": -0.0794199568301124,
+            "mean_r_stress": -0.15101637373522067
+          }
+        ],
+        "periods": {
+          "train_start": "2016-07-01 00:15:00+00:00",
+          "train_last_label": "2024-06-28 18:45:00+00:00",
+          "validation_start": "2024-07-01 00:00:00+00:00",
+          "calibration_start": "2025-01-01 00:00:00+00:00",
+          "calibration_last_label": "2025-06-30 19:15:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 380,
+        "win_rate": 0.6973684210526315,
+        "target_rate": 0.6973684210526315,
+        "mean_r": -0.08745003075091103,
+        "mean_r_stress": -0.18326676600866898,
+        "max_drawdown_r": 34.95288417459766
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 179,
+        "win_rate": 0.6927374301675978,
+        "target_rate": 0.6927374301675978,
+        "mean_r": -0.09694948844749571,
+        "mean_r_stress": -0.2045774949102511,
+        "max_drawdown_r": 20.953958432102148
+      },
+      "brier": 0.21155853356672152,
+      "baseline_brier": 0.21404750892722926
+    },
+    {
+      "cutoff": "2025-10-01 00:00:00+00:00",
+      "test_end": "2026-01-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.6961325966850829,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "adx",
+          "di_balance",
+          "stochastic",
+          "donchian",
+          "efficiency",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2025-10-01 00:00:00+00:00",
+        "config": {
+          "model": "logistic",
+          "bundle": "extended",
+          "years": 3,
+          "validation_brier": 0.20836168412553618
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.7024627092108625,
+        "baseline_probability": 0.6715823970037453,
+        "weights": [
+          {
+            "feature": "return_1",
+            "coefficient": 0.011491370895821964,
+            "relative_weight_pct": 4.906037705124463
+          },
+          {
+            "feature": "return_4",
+            "coefficient": -0.0016050789056179639,
+            "relative_weight_pct": 0.6852600705390758
+          },
+          {
+            "feature": "return_16",
+            "coefficient": 0.006282452492249103,
+            "relative_weight_pct": 2.6821820553049514
+          },
+          {
+            "feature": "return_96",
+            "coefficient": -0.008739334387967772,
+            "relative_weight_pct": 3.7311043576749756
+          },
+          {
+            "feature": "rv_ratio",
+            "coefficient": 0.0026358061656625437,
+            "relative_weight_pct": 1.125310857109448
+          },
+          {
+            "feature": "atr_pct",
+            "coefficient": -0.0050905153590544,
+            "relative_weight_pct": 2.173305562621448
+          },
+          {
+            "feature": "body_atr",
+            "coefficient": -0.004632623505424039,
+            "relative_weight_pct": 1.977816728508832
+          },
+          {
+            "feature": "range_atr",
+            "coefficient": -0.0025220556216373606,
+            "relative_weight_pct": 1.07674707276855
+          },
+          {
+            "feature": "hour_sin",
+            "coefficient": -0.006511750465071861,
+            "relative_weight_pct": 2.780076772182123
+          },
+          {
+            "feature": "hour_cos",
+            "coefficient": 0.0017227308144941228,
+            "relative_weight_pct": 0.735489473650254
+          },
+          {
+            "feature": "ema_20_atr",
+            "coefficient": 0.02464713559342493,
+            "relative_weight_pct": 10.522658927371491
+          },
+          {
+            "feature": "ema_50_atr",
+            "coefficient": -0.02516561755438589,
+            "relative_weight_pct": 10.744015636937466
+          },
+          {
+            "feature": "ema_200_atr",
+            "coefficient": 0.014872728425239587,
+            "relative_weight_pct": 6.349648540091144
+          },
+          {
+            "feature": "rsi",
+            "coefficient": 0.021894533209926917,
+            "relative_weight_pct": 9.34748398931718
+          },
+          {
+            "feature": "macd_atr",
+            "coefficient": 0.005555834134934616,
+            "relative_weight_pct": 2.3719651899249845
+          },
+          {
+            "feature": "bb_position",
+            "coefficient": -0.02554778207880993,
+            "relative_weight_pct": 10.907174026252614
+          },
+          {
+            "feature": "score15",
+            "coefficient": -0.0009460087935904309,
+            "relative_weight_pct": 0.40388173463458504
+          },
+          {
+            "feature": "score1h",
+            "coefficient": -0.0006113600789133826,
+            "relative_weight_pct": 0.26100938049501377
+          },
+          {
+            "feature": "score4h",
+            "coefficient": -0.004897411044396869,
+            "relative_weight_pct": 2.09086308841008
+          },
+          {
+            "feature": "adx",
+            "coefficient": -0.0008774063324045933,
+            "relative_weight_pct": 0.374593126313325
+          },
+          {
+            "feature": "di_balance",
+            "coefficient": -0.010954492912914277,
+            "relative_weight_pct": 4.676827139120199
+          },
+          {
+            "feature": "stochastic",
+            "coefficient": -0.008345768548953523,
+            "relative_weight_pct": 3.563078378602725
+          },
+          {
+            "feature": "donchian",
+            "coefficient": 0.008891020167181655,
+            "relative_weight_pct": 3.795863920211162
+          },
+          {
+            "feature": "efficiency",
+            "coefficient": 0.0027366509786575033,
+            "relative_weight_pct": 1.1683647676832836
+          },
+          {
+            "feature": "side",
+            "coefficient": -0.008191895671411192,
+            "relative_weight_pct": 3.4973850730900513
+          },
+          {
+            "feature": "cost_fraction",
+            "coefficient": 0.01885979565446944,
+            "relative_weight_pct": 8.051856426060578
+          }
+        ],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.20949924928355856
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.20876123526890447
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.20836168412553618
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.21092976935426683
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.20980758041756514
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.20965472911473795
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.20967490531508562
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21040487404235145
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.7024627092108625,
+            "coverage": 0.1,
+            "trades": 73,
+            "mean_r": -0.020547945205484038,
+            "mean_r_stress": -0.12338132497648198
+          },
+          {
+            "threshold": 0.6998748541616072,
+            "coverage": 0.2,
+            "trades": 145,
+            "mean_r": -0.06149621529888872,
+            "mean_r_stress": -0.1621427220406377
+          },
+          {
+            "threshold": 0.6981778034828021,
+            "coverage": 0.3,
+            "trades": 217,
+            "mean_r": -0.0892668647485689,
+            "mean_r_stress": -0.18477236582186796
+          },
+          {
+            "threshold": 0.6961509720335298,
+            "coverage": 0.5,
+            "trades": 362,
+            "mean_r": -0.0904913819826427,
+            "mean_r_stress": -0.1813441556464246
+          },
+          {
+            "threshold": 0.6795186738886778,
+            "coverage": 1.0,
+            "trades": 724,
+            "mean_r": -0.09024162089911901,
+            "mean_r_stress": -0.17278801573484767
+          }
+        ],
+        "periods": {
+          "train_start": "2021-10-01 00:15:00+00:00",
+          "train_last_label": "2024-09-30 22:30:00+00:00",
+          "validation_start": "2024-10-01 00:00:00+00:00",
+          "calibration_start": "2025-04-01 00:00:00+00:00",
+          "calibration_last_label": "2025-09-30 20:00:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 330,
+        "win_rate": 0.6757575757575758,
+        "target_rate": 0.6727272727272727,
+        "mean_r": -0.10519580215497476,
+        "mean_r_stress": -0.2020894845869965,
+        "max_drawdown_r": 36.19706320378299
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 44,
+        "win_rate": 0.7272727272727273,
+        "target_rate": 0.7272727272727273,
+        "mean_r": 0.00375346876656491,
+        "mean_r_stress": -0.11045693426794546,
+        "max_drawdown_r": 5.50000000000018
+      },
+      "brier": 0.22076303905980854,
+      "baseline_brier": 0.22016659999662067
+    },
+    {
+      "cutoff": "2026-01-01 00:00:00+00:00",
+      "test_end": "2026-04-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.6849507735583685,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "adx",
+          "di_balance",
+          "stochastic",
+          "donchian",
+          "efficiency",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2026-01-01 00:00:00+00:00",
+        "config": {
+          "model": "hist_boost",
+          "bundle": "extended",
+          "years": 8,
+          "validation_brier": 0.20874407876494358
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.6946793703535995,
+        "baseline_probability": 0.6440568475452196,
+        "weights": [],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.20933456756367702
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.20876036966947847
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.20912901025511674
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.20990555519193044
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.2094593106144041
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.209489682892364
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.20951749792942545
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.20874407876494358
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.7107965832720694,
+            "coverage": 0.1,
+            "trades": 72,
+            "mean_r": -0.08189257556753027,
+            "mean_r_stress": -0.15137867253926815
+          },
+          {
+            "threshold": 0.7031993609684158,
+            "coverage": 0.2,
+            "trades": 143,
+            "mean_r": -0.06350682286342761,
+            "mean_r_stress": -0.13721252146383714
+          },
+          {
+            "threshold": 0.6946793703535995,
+            "coverage": 0.3,
+            "trades": 214,
+            "mean_r": -0.045653876494424456,
+            "mean_r_stress": -0.12343520789429559
+          },
+          {
+            "threshold": 0.6843680963521263,
+            "coverage": 0.5,
+            "trades": 356,
+            "mean_r": -0.05384811676912169,
+            "mean_r_stress": -0.1398216757373459
+          },
+          {
+            "threshold": 0.5644355709380929,
+            "coverage": 1.0,
+            "trades": 711,
+            "mean_r": -0.09696993867297862,
+            "mean_r_stress": -0.1933075073211098
+          }
+        ],
+        "periods": {
+          "train_start": "2017-01-02 17:00:00+00:00",
+          "train_last_label": "2024-12-31 20:00:00+00:00",
+          "validation_start": "2025-01-01 00:00:00+00:00",
+          "calibration_start": "2025-07-01 00:00:00+00:00",
+          "calibration_last_label": "2025-12-31 12:30:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 355,
+        "win_rate": 0.6788732394366197,
+        "target_rate": 0.676056338028169,
+        "mean_r": -0.1081244295856848,
+        "mean_r_stress": -0.19510093052082855,
+        "max_drawdown_r": 39.58417250291847
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 143,
+        "win_rate": 0.6713286713286714,
+        "target_rate": 0.6643356643356644,
+        "mean_r": -0.11553752199507004,
+        "mean_r_stress": -0.18552658685473397,
+        "max_drawdown_r": 18.679770537104794
+      },
+      "brier": 0.21971713214278132,
+      "baseline_brier": 0.22002813323127943
+    },
+    {
+      "cutoff": "2026-04-01 00:00:00+00:00",
+      "test_end": "2026-07-01 00:00:00+00:00",
+      "selection": {
+        "constant": 0.6744525547445256,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "adx",
+          "di_balance",
+          "stochastic",
+          "donchian",
+          "efficiency",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2026-04-01 00:00:00+00:00",
+        "config": {
+          "model": "hist_boost",
+          "bundle": "extended",
+          "years": 3,
+          "validation_brier": 0.21081325692647263
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.6756841463939507,
+        "baseline_probability": 0.6769532206710752,
+        "weights": [],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.21190602899692768
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.21228253363812538
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.21332133097043054
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.21081325692647263
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.2118261330209573
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.2116818625439266
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21217990691223915
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21162846113445424
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.6770656555095373,
+            "coverage": 0.1,
+            "trades": 69,
+            "mean_r": -0.06291887417304483,
+            "mean_r_stress": -0.17496762433861346
+          },
+          {
+            "threshold": 0.6762873540185196,
+            "coverage": 0.2,
+            "trades": 137,
+            "mean_r": -0.06312876365153036,
+            "mean_r_stress": -0.16810362400563258
+          },
+          {
+            "threshold": 0.6756841463939507,
+            "coverage": 0.3,
+            "trades": 206,
+            "mean_r": -0.05362424494269523,
+            "mean_r_stress": -0.15652044859900516
+          },
+          {
+            "threshold": 0.6745157724894212,
+            "coverage": 0.5,
+            "trades": 343,
+            "mean_r": -0.10379033012177896,
+            "mean_r_stress": -0.20256095720811396
+          },
+          {
+            "threshold": 0.6684980678525833,
+            "coverage": 1.0,
+            "trades": 685,
+            "mean_r": -0.10671355797672961,
+            "mean_r_stress": -0.19846767919504085
+          }
+        ],
+        "periods": {
+          "train_start": "2022-04-01 00:00:00+00:00",
+          "train_last_label": "2025-03-31 19:00:00+00:00",
+          "validation_start": "2025-04-01 00:00:00+00:00",
+          "calibration_start": "2025-10-01 00:00:00+00:00",
+          "calibration_last_label": "2026-03-31 15:30:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 361,
+        "win_rate": 0.5983379501385041,
+        "target_rate": 0.5983379501385041,
+        "mean_r": -0.20285604473042798,
+        "mean_r_stress": -0.3441418934316438,
+        "max_drawdown_r": 77.5310321476843
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 241,
+        "win_rate": 0.5933609958506224,
+        "target_rate": 0.5933609958506224,
+        "mean_r": -0.20660719102669234,
+        "mean_r_stress": -0.3681910791603119,
+        "max_drawdown_r": 51.29233303743291
+      },
+      "brier": 0.24671444105852497,
+      "baseline_brier": 0.24651000832346637
+    },
+    {
+      "cutoff": "2026-07-01 00:00:00+00:00",
+      "test_end": "2026-09-11 14:05:00+00:00",
+      "selection": {
+        "constant": 0.6368715083798883,
+        "columns": [
+          "return_1",
+          "return_4",
+          "return_16",
+          "return_96",
+          "rv_ratio",
+          "atr_pct",
+          "body_atr",
+          "range_atr",
+          "hour_sin",
+          "hour_cos",
+          "ema_20_atr",
+          "ema_50_atr",
+          "ema_200_atr",
+          "rsi",
+          "macd_atr",
+          "bb_position",
+          "score15",
+          "score1h",
+          "score4h",
+          "side",
+          "cost_fraction"
+        ],
+        "cutoff": "2026-07-01 00:00:00+00:00",
+        "config": {
+          "model": "logistic",
+          "bundle": "technical",
+          "years": 8,
+          "validation_brier": 0.2150549204446358
+        },
+        "threshold": null,
+        "diagnostic_threshold": 0.6500705636489771,
+        "baseline_probability": 0.6468686495473859,
+        "weights": [
+          {
+            "feature": "return_1",
+            "coefficient": -0.03075470800470098,
+            "relative_weight_pct": 6.6131051641944545
+          },
+          {
+            "feature": "return_4",
+            "coefficient": 0.01582429263362806,
+            "relative_weight_pct": 3.402656637779627
+          },
+          {
+            "feature": "return_16",
+            "coefficient": -0.019431643985967844,
+            "relative_weight_pct": 4.178336050947055
+          },
+          {
+            "feature": "return_96",
+            "coefficient": -0.006491307527180355,
+            "relative_weight_pct": 1.3958090359306639
+          },
+          {
+            "feature": "rv_ratio",
+            "coefficient": -0.018154079787221323,
+            "relative_weight_pct": 3.90362473198317
+          },
+          {
+            "feature": "atr_pct",
+            "coefficient": 0.01688257857110419,
+            "relative_weight_pct": 3.630217120462408
+          },
+          {
+            "feature": "body_atr",
+            "coefficient": 0.033053754056374875,
+            "relative_weight_pct": 7.107463078915075
+          },
+          {
+            "feature": "range_atr",
+            "coefficient": 0.005948322922955175,
+            "relative_weight_pct": 1.2790524635798306
+          },
+          {
+            "feature": "hour_sin",
+            "coefficient": 0.013343344072029136,
+            "relative_weight_pct": 2.869184697733803
+          },
+          {
+            "feature": "hour_cos",
+            "coefficient": -0.0017368184233983598,
+            "relative_weight_pct": 0.37346356477480197
+          },
+          {
+            "feature": "ema_20_atr",
+            "coefficient": -0.09310150897079153,
+            "relative_weight_pct": 20.019376209812403
+          },
+          {
+            "feature": "ema_50_atr",
+            "coefficient": 0.051691072812262734,
+            "relative_weight_pct": 11.114997434060337
+          },
+          {
+            "feature": "ema_200_atr",
+            "coefficient": -0.0026124265537405067,
+            "relative_weight_pct": 0.5617433119826507
+          },
+          {
+            "feature": "rsi",
+            "coefficient": 0.0039026266880110966,
+            "relative_weight_pct": 0.8391717034173876
+          },
+          {
+            "feature": "macd_atr",
+            "coefficient": 0.022270217786244047,
+            "relative_weight_pct": 4.788707219312052
+          },
+          {
+            "feature": "bb_position",
+            "coefficient": 0.03440565439416727,
+            "relative_weight_pct": 7.398158705222584
+          },
+          {
+            "feature": "score15",
+            "coefficient": -0.0023319489432762582,
+            "relative_weight_pct": 0.5014329382369944
+          },
+          {
+            "feature": "score1h",
+            "coefficient": -0.005799139227746616,
+            "relative_weight_pct": 1.2469738801952466
+          },
+          {
+            "feature": "score4h",
+            "coefficient": 0.004260603281166064,
+            "relative_weight_pct": 0.9161464825793941
+          },
+          {
+            "feature": "side",
+            "coefficient": -0.00065410499465052,
+            "relative_weight_pct": 0.1406505019455085
+          },
+          {
+            "feature": "cost_fraction",
+            "coefficient": -0.08240683912401796,
+            "relative_weight_pct": 17.719729066934555
+          }
+        ],
+        "selection_trials": [
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 3,
+            "validation_brier": 0.2172318419612845
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 3,
+            "validation_brier": 0.21737793628218668
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.21764317408795797
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 3,
+            "validation_brier": 0.2152054981867433
+          },
+          {
+            "model": "logistic",
+            "bundle": "price",
+            "years": 8,
+            "validation_brier": 0.2156625290682325
+          },
+          {
+            "model": "logistic",
+            "bundle": "technical",
+            "years": 8,
+            "validation_brier": 0.2150549204446358
+          },
+          {
+            "model": "logistic",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.21586490464250815
+          },
+          {
+            "model": "hist_boost",
+            "bundle": "extended",
+            "years": 8,
+            "validation_brier": 0.2156286885259716
+          }
+        ],
+        "threshold_trials": [
+          {
+            "threshold": 0.6544971823611088,
+            "coverage": 0.1,
+            "trades": 72,
+            "mean_r": -0.243289729049323,
+            "mean_r_stress": -0.31359015103776844
+          },
+          {
+            "threshold": 0.6500705636489771,
+            "coverage": 0.2,
+            "trades": 144,
+            "mean_r": -0.1431726423024412,
+            "mean_r_stress": -0.21784166109813285
+          },
+          {
+            "threshold": 0.6464229674029104,
+            "coverage": 0.3,
+            "trades": 215,
+            "mean_r": -0.16301317676614438,
+            "mean_r_stress": -0.242389850860804
+          },
+          {
+            "threshold": 0.6406155526272173,
+            "coverage": 0.5,
+            "trades": 358,
+            "mean_r": -0.1357923520918226,
+            "mean_r_stress": -0.22117491536008108
+          },
+          {
+            "threshold": 0.558690537989934,
+            "coverage": 1.0,
+            "trades": 716,
+            "mean_r": -0.15588715733324388,
+            "mean_r_stress": -0.2702458852845217
+          }
+        ],
+        "periods": {
+          "train_start": "2017-07-02 23:15:00+00:00",
+          "train_last_label": "2025-06-30 19:15:00+00:00",
+          "validation_start": "2025-07-01 00:00:00+00:00",
+          "calibration_start": "2026-01-01 00:00:00+00:00",
+          "calibration_last_label": "2026-06-30 02:15:00+00:00"
+        }
+      },
+      "all": {
+        "trades": 289,
+        "win_rate": 0.6262975778546713,
+        "target_rate": 0.6262975778546713,
+        "mean_r": -0.15779822458717854,
+        "mean_r_stress": -0.2888560282235814,
+        "max_drawdown_r": 49.50151284359655
+      },
+      "selected": {
+        "trades": 0,
+        "win_rate": null,
+        "mean_r": null,
+        "mean_r_stress": null,
+        "max_drawdown_r": 0.0
+      },
+      "diagnostic": {
+        "trades": 49,
+        "win_rate": 0.7959183673469388,
+        "target_rate": 0.7959183673469388,
+        "mean_r": 0.05124413446467248,
+        "mean_r_stress": -0.021508012858733837,
+        "max_drawdown_r": 3.8999999999996717
+      },
+      "brier": 0.23135947134678278,
+      "baseline_brier": 0.23447209081863002
+    }
+  ],
+  "latest": {
+    "constant": 0.6217331499312242,
+    "columns": [
+      "return_1",
+      "return_4",
+      "return_16",
+      "return_96",
+      "rv_ratio",
+      "atr_pct",
+      "body_atr",
+      "range_atr",
+      "hour_sin",
+      "hour_cos",
+      "ema_20_atr",
+      "ema_50_atr",
+      "ema_200_atr",
+      "rsi",
+      "macd_atr",
+      "bb_position",
+      "score15",
+      "score1h",
+      "score4h",
+      "adx",
+      "di_balance",
+      "stochastic",
+      "donchian",
+      "efficiency",
+      "side",
+      "cost_fraction"
+    ],
+    "cutoff": "2026-09-11 14:05:00+00:00",
+    "config": {
+      "model": "hist_boost",
+      "bundle": "extended",
+      "years": 8,
+      "validation_brier": 0.21887832389611298
+    },
+    "threshold": null,
+    "diagnostic_threshold": 0.6540622727047118,
+    "baseline_probability": 0.6466372657111357,
+    "weights": [],
+    "selection_trials": [
+      {
+        "model": "logistic",
+        "bundle": "price",
+        "years": 3,
+        "validation_brier": 0.22173495614001063
+      },
+      {
+        "model": "logistic",
+        "bundle": "technical",
+        "years": 3,
+        "validation_brier": 0.22145612473939513
+      },
+      {
+        "model": "logistic",
+        "bundle": "extended",
+        "years": 3,
+        "validation_brier": 0.22213705199727465
+      },
+      {
+        "model": "hist_boost",
+        "bundle": "extended",
+        "years": 3,
+        "validation_brier": 0.2208447021924197
+      },
+      {
+        "model": "logistic",
+        "bundle": "price",
+        "years": 8,
+        "validation_brier": 0.21986718585688036
+      },
+      {
+        "model": "logistic",
+        "bundle": "technical",
+        "years": 8,
+        "validation_brier": 0.21950776473989927
+      },
+      {
+        "model": "logistic",
+        "bundle": "extended",
+        "years": 8,
+        "validation_brier": 0.22043353952010894
+      },
+      {
+        "model": "hist_boost",
+        "bundle": "extended",
+        "years": 8,
+        "validation_brier": 0.21887832389611298
+      }
+    ],
+    "threshold_trials": [
+      {
+        "threshold": 0.6658009784933726,
+        "coverage": 0.1,
+        "trades": 73,
+        "mean_r": -0.12194758989174506,
+        "mean_r_stress": -0.1978799422774587
+      },
+      {
+        "threshold": 0.6540622727047118,
+        "coverage": 0.2,
+        "trades": 146,
+        "mean_r": -0.08283541414846088,
+        "mean_r_stress": -0.166725094649597
+      },
+      {
+        "threshold": 0.646886752218558,
+        "coverage": 0.3,
+        "trades": 218,
+        "mean_r": -0.11092782079154387,
+        "mean_r_stress": -0.20171611761391525
+      },
+      {
+        "threshold": 0.6305136448796244,
+        "coverage": 0.5,
+        "trades": 364,
+        "mean_r": -0.1245940330427642,
+        "mean_r_stress": -0.2229945581064005
+      },
+      {
+        "threshold": 0.4549305939051618,
+        "coverage": 1.0,
+        "trades": 727,
+        "mean_r": -0.17102437283821,
+        "mean_r_stress": -0.303566444350921
+      }
+    ],
+    "periods": {
+      "train_start": "2017-09-11 22:30:00+00:00",
+      "train_last_label": "2025-09-11 05:30:00+00:00",
+      "validation_start": "2025-09-11 14:05:00+00:00",
+      "calibration_start": "2026-03-11 14:05:00+00:00",
+      "calibration_last_label": "2026-09-11 14:00:00+00:00"
+    }
+  }
+}
