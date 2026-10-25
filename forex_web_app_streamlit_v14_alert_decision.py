@@ -6628,6 +6628,7 @@ def render_summary_pivot_opportunities(news_events: Optional[pd.DataFrame] = Non
         get_cost=pivot_live_cost, get_pip_value=estimate_pip_value_per_lot_usd,
         refresh=refresh_pivot_advisor, provider=st.session_state.get("data_provider", "Yahoo Finance"),
         account_usd=float(account_usd),
+        get_bars=lambda sym, provider: fetch_ohlc(sym, "5m", "5d"),
     )
 
 

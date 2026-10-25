@@ -78,6 +78,57 @@ def clear_trade_journal() -> None:
         conn.commit()
 
 
+def _init_plan_tracking(conn) -> None:
+    conn.execute("""CREATE TABLE IF NOT EXISTS tracked_plans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        symbol TEXT NOT NULL, provider TEXT NOT NULL,
+        created_at TEXT NOT NULL, archived_at TEXT, payload TEXT NOT NULL
+    )""")
+    conn.execute("""CREATE UNIQUE INDEX IF NOT EXISTS one_active_plan_per_source
+        ON tracked_plans(symbol, provider) WHERE archived_at IS NULL""")
+
+
+def save_tracked_plan(plan: dict) -> int:
+    """Freeze one active plan per symbol/source; refreshes never move its levels."""
+    from forex_position_chart import validate_plan
+    validate_plan(plan)
+    with closing(sqlite3.connect(APP_DB_PATH)) as conn:
+        _init_plan_tracking(conn)
+        conn.execute("INSERT OR IGNORE INTO tracked_plans(symbol, provider, created_at, payload) VALUES (?, ?, ?, ?)",
+                     (plan["symbol"], plan["provider"], plan["tracked_at"],
+                      json.dumps(plan, ensure_ascii=False, allow_nan=False)))
+        row = conn.execute("SELECT id FROM tracked_plans WHERE symbol=? AND provider=? AND archived_at IS NULL",
+                           (plan["symbol"], plan["provider"])).fetchone()
+        conn.commit()
+    return int(row[0])
+
+
+def tracked_plans(provider: str | None = None) -> list[dict]:
+    with closing(sqlite3.connect(APP_DB_PATH)) as conn:
+        _init_plan_tracking(conn)
+        sql, params = "SELECT id, payload FROM tracked_plans WHERE archived_at IS NULL", ()
+        if provider is not None:
+            sql, params = sql + " AND provider=?", (provider,)
+        rows = conn.execute(sql + " ORDER BY id DESC", params).fetchall()
+        conn.commit()
+    plans = []
+    for row_id, payload in rows:
+        try:
+            plans.append({**json.loads(payload), "id": row_id})
+        except (ValueError, TypeError):
+            LOGGER.warning("Tracked plan %s contains invalid JSON", row_id)
+    return plans
+
+
+def archive_tracked_plan(plan_id: int) -> None:
+    """Archive a visual watch plan, without declaring a broker trade closed."""
+    with closing(sqlite3.connect(APP_DB_PATH)) as conn:
+        _init_plan_tracking(conn)
+        conn.execute("UPDATE tracked_plans SET archived_at=? WHERE id=? AND archived_at IS NULL",
+                     (datetime.now(tz=TR_TZ).isoformat(), int(plan_id)))
+        conn.commit()
+
+
 def record_alert_once(symbol: str, side: str, candle_time: str, payload: dict) -> bool:
     """Store a symbol/side/candle alert once and report whether it was new."""
     init_trade_journal()

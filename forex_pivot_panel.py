@@ -13,7 +13,7 @@ EVIDENCE = Path(__file__).resolve().parent / "research/pivot_advisor_small_profi
 
 
 def render_pivot_panel(*, scan, get_quote, get_calendar, get_news, get_cost, get_pip_value,
-                       refresh, provider, account_usd, risk_pct=.5):
+                       refresh, provider, account_usd, risk_pct=.5, get_bars=None):
     st.markdown("#### 📐 Pivot Trader · küçük kâr yorumcusu")
     st.caption("LONG GİR / SHORT GİR yalnız giriş koşulları uygunsa gösterilir. Net hedef: 3 pip · azami süre: 4 saat.")
     buttons, budget = st.columns([1, 2])
@@ -28,6 +28,9 @@ def render_pivot_panel(*, scan, get_quote, get_calendar, get_news, get_cost, get
                "Lot zarar bütçesine göre hesaplanır; gap, kayma ve değişen maliyet planlanan kaybı aşırabilir.")
     if not symbols:
         st.info("Bir parite seçerek yorumcuyu başlat.")
+        if get_bars is not None:
+            from forex_position_panel import render_position_tracker
+            render_position_tracker(readings=[], provider=provider, get_bars=get_bars, get_quote=get_quote)
         return
     try:
         events, _, fetched_at, _ = get_calendar()
@@ -80,6 +83,9 @@ def render_pivot_panel(*, scan, get_quote, get_calendar, get_news, get_cost, get
                       "Net hedef $": round(r["expected_profit_usd"], 2) if r["expected_profit_usd"] is not None else None,
                       "Stop kaybı $": round(r["planned_loss_usd"], 2) if r["planned_loss_usd"] is not None else None})
     st.dataframe(pd.DataFrame(table), hide_index=True, use_container_width=True)
+    if get_bars is not None:
+        from forex_position_panel import render_position_tracker
+        render_position_tracker(readings=readings, provider=provider, get_bars=get_bars, get_quote=get_quote)
     for r in readings:
         with st.expander(f"{r['symbol'].replace('=X', '')} · {r['action']} · gerekçe ve seviyeler", expanded=r["technical_ready"]):
             decimals = price_decimals(r["symbol"])

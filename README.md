@@ -1,5 +1,14 @@
 # Forex Analyzer Pro
 
+Anasayfa → Pivot Trader → **İşlem takip grafiği**: 5M mumlarının üzerinde giriş,
+kırmızı stop alanı ve yeşil hedef alanı gösterilir. Hazır planı **Bu planı takibe al**
+ile sabitleyin veya **Kendi planını ekle** bölümüne seviyelerinizi girin. Takipteki
+planın seviyeleri yeni sinyallerle değişmez; aynı veri kaynağındaki kayıtlar
+parite taramadan çıkarılsa da saklanır. **Takibi bitir** yalnız görsel takibi
+arşivler. Fiyat hareketi gösterge niteliğindedir, broker kâr/zararı veya TP/SL
+gerçekleşmesi değildir. Yerel SQLite kayıtlarını **Takip listesini indir** ile
+saklayabilirsiniz; bulut sunucusu yenilenirse yerel kayıtlar kaybolabilir.
+
 Pivot Trader canlı alanı küçük net hedefle çalışır: koşullar uygunsa `LONG GİR` /
 `SHORT GİR`, eksikse `BEKLE`. Referans giriş, net 3 pip hedefi, stop, lot ve
 planlanan dolar kaybı birlikte gösterilir. Panel 30 saniyede bir yenilenir;
