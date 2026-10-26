@@ -1,6 +1,4 @@
-import ast
 import unittest
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -10,11 +8,8 @@ NOW = pd.Timestamp("2026-10-26 17:26:50", tz="UTC")
 
 
 def offset_fn():
-    tree = ast.parse(Path("forex_web_app_streamlit_v14_alert_decision.py").read_text(encoding="utf-8"))
-    fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "_mt5_server_offset")
-    namespace = {"pd": pd}
-    exec(compile(ast.Module(body=[fn], type_ignores=[]), "offset", "exec"), namespace)
-    return namespace["_mt5_server_offset"]
+    from forex_mt5 import server_offset
+    return server_offset
 
 
 def terminal(tick_time):
