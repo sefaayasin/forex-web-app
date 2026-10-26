@@ -102,17 +102,25 @@ def build_trade_plan(
     cost_pips: float,
     stats: dict,
     blockers: list[str],
+    side: Optional[str] = None,
 ) -> dict:
-    """Yön, giriş/stop/hedef/lot ve bu planın ölçülmüş geçmiş sonucu."""
-    if probability_up is None or not math.isfinite(probability_up) or not 0 < probability_up < 1 or probability_up == 0.5:
+    """Yön, giriş/stop/hedef/lot ve bu planın ölçülmüş geçmiş sonucu.
+
+    side: ML'nin görüşü yokken kullanılacak yön (Karar kutusu). ML varsa yön her zaman ML'den gelir;
+    geçmiş sonuç yalnız ML yönü için ölçüldüğünden dışarıdan verilen yönde measured boş kalır.
+    """
+    has_ml = (probability_up is not None and math.isfinite(probability_up) and 0 < probability_up < 1
+              and probability_up != 0.5)
+    if not has_ml and side not in ("LONG", "SHORT"):
         return {"status": "no_side", "action": "BEKLE", "reason": "ML yön modelinin bu parite için şu an görüşü yok."}
     values = (price, atr, pip, pip_value_per_lot, loss_usd, target_usd, account_usd, cost_pips)
     if any(v is None or not math.isfinite(v) for v in values) or min(values[:-1]) <= 0 or cost_pips < 0:
         return {"status": "no_data", "action": "BEKLE", "reason": "Fiyat, ATR veya hesap ayarı eksik; plan hesaplanamadı."}
 
-    side = "LONG" if probability_up > 0.5 else "SHORT"
+    if has_ml:
+        side = "LONG" if probability_up > 0.5 else "SHORT"
     direction = 1 if side == "LONG" else -1
-    side_probability = probability_up if side == "LONG" else 1 - probability_up
+    side_probability = (probability_up if side == "LONG" else 1 - probability_up) if has_ml else None
     stop_pips = STOP_ATR * atr / pip
     lot = floor_lot(min(loss_usd, account_usd) / ((stop_pips + cost_pips) * pip_value_per_lot))
     if lot < MIN_LOT:
@@ -120,7 +128,7 @@ def build_trade_plan(
         return {"status": "no_data", "action": "BEKLE", "reason": warning, "warnings": [warning], "lot": lot}
     target_pips = target_usd / (lot * pip_value_per_lot) + cost_pips
     ratio = target_pips / stop_pips
-    measured = measured_outcome(stats, pair, ratio)
+    measured = measured_outcome(stats, pair, ratio) if has_ml else None
     expected_usd = measured["ml"]["net_r"] * stop_pips * lot * pip_value_per_lot if measured else None
 
     warnings = []

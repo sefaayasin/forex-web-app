@@ -152,5 +152,6 @@ def overall_reading(
             "planın geçmiş sonucu için aşağıdaki İşlem Planı'na bak."
         ),
         "views": [(VIEW_LABELS[name], SIDE_TEXT[sides[name]]) for name in VIEW_LABELS],
+        "sides": dict(sides),
         "warnings": warnings,
     }
