@@ -6430,6 +6430,99 @@ def cached_plan_stats() -> dict:
     return load_plan_stats()
 
 
+def decision_atr(symbol: str) -> Optional[float]:
+    """Karar planının stopu için kapanmış 15M mumlarında ATR14."""
+    df = fetch_ohlc(symbol, TIMEFRAMES["15 Dakika"]["interval"], TIMEFRAMES["15 Dakika"]["period"])
+    if df is None or len(df) < 40:
+        return None
+    row = latest_valid_row(add_indicators(df.iloc[:-1]))
+    return float(row["ATR14"]) if row is not None else None
+
+
+def decision_outcome(symbol: str, price: Optional[float], atr: Optional[float], probability_up: Optional[float],
+                     side: Optional[str], target_usd: float, loss_usd: float, account_usd: float,
+                     pip_value_per_lot: float, cost_pips: float) -> tuple[dict, Optional[dict]]:
+    """Karar kutusu ve parite listesinin ortak hesabı: plan (ML varsa ML yönü) ve hedef kontrolü."""
+    pair = symbol.replace("=X", "").upper()
+    plan = build_trade_plan(pair, price, get_pip_size(symbol), atr, probability_up, float(target_usd), float(loss_usd),
+                            float(account_usd), float(pip_value_per_lot), float(cost_pips), {}, [], side=side)
+    if plan["status"] != "ready":
+        return plan, None
+    return plan, target_check(cached_plan_stats(), pair, plan["side_probability"] is not None,
+                              plan["target_pips"], plan["stop_pips"], float(cost_pips))
+
+
+def decision_costs(symbol: str, price: Optional[float]) -> tuple[float, float]:
+    """Paritenin maliyeti ve 1 lot pip değeri: kenar çubuğunda girilmişse o, yoksa kenar çubuğunun varsayılanı."""
+    cost = st.session_state.get(f"spread_pips_{symbol}")
+    if cost is None:
+        observed = observed_broker_spread_pips(symbol, "15 Dakika")
+        cost = observed + ECN_COMMISSION_PIPS if observed is not None else recommended_spread_pips(symbol)
+    pip_value = st.session_state.get(f"pip_value_per_lot_{symbol}")
+    if not pip_value:
+        estimate = estimate_pip_value_per_lot_usd(symbol, price)
+        pip_value = round(float(estimate), 2) if estimate and estimate > 0 else 10.0
+    return float(cost), float(pip_value)
+
+
+def collect_decision_inputs(symbols: list[str]) -> None:
+    """Parite listesi için ağır girdileri bir kez toplar: fiyat, ML 4 saatlik yön olasılığı ve 15M ATR.
+
+    Hedef ve stop değişince liste bu girdilerden yeniden hesaplanır; veri yeniden indirilmez.
+    """
+    provider = st.session_state.get("data_provider", "Yahoo Finance")
+    inputs, missing = {}, []
+    progress = st.progress(0, text="Pariteler Karar için kontrol ediliyor...")
+    for i, sym in enumerate(symbols, start=1):
+        base = sym.replace("=X", "").upper()
+        progress.progress(i / len(symbols), text=f"{base} kontrol ediliyor ({i}/{len(symbols)})")
+        if not has_research_model(base, "direction"):
+            missing.append(base)
+            continue
+        quote = fetch_mt5_quote(sym) if provider == "MetaTrader 5" else None
+        price = float(quote["mid"]) if quote else fetch_last_price(sym)
+        prediction = build_research_prediction(base, bars=fetch_research_bars(sym), range_ratio=research_range_ratio(base))
+        probability_up = float(prediction["probability_up"]) if prediction.get("status") == "ready" else None
+        if price is None or probability_up is None:
+            missing.append(base)
+            continue
+        inputs[sym] = {"price": float(price), "probability_up": probability_up, "atr": decision_atr(sym)}
+    progress.empty()
+    st.session_state["decision_scan"] = {"at": pd.Timestamp.now(tz=TR_TZ), "provider": provider,
+                                         "inputs": inputs, "missing": missing}
+
+
+def render_decision_pairs(target_usd: float, loss_usd: float, account_usd: float) -> None:
+    """Hedefi bu stopla tutabilecek pariteler; tıklanınca Karar kartı o pariteye geçer."""
+    button_col, time_col = st.columns([2, 1], vertical_alignment="center")
+    if button_col.button("🔎 Tüm paritelerde kontrol et", use_container_width=True, key="decision_scan_button"):
+        collect_decision_inputs(SYMBOL_LIST)
+    scan = st.session_state.get("decision_scan")
+    if not scan or scan["provider"] != st.session_state.get("data_provider", "Yahoo Finance"):
+        time_col.caption("Henüz kontrol edilmedi")
+        return
+    time_col.caption(f"Son kontrol: {scan['at']:%H:%M}")
+    groups, waiting = {"LONG": [], "SHORT": []}, 0
+    for sym, item in scan["inputs"].items():
+        cost, pip_value = decision_costs(sym, item["price"])
+        plan, check = decision_outcome(sym, item["price"], item["atr"], item["probability_up"], None,
+                                       target_usd, loss_usd, account_usd, pip_value, cost)
+        if check and check["ok"]:
+            groups[plan["side"]].append((sym, check["hit"] * 100))
+        else:
+            waiting += 1
+    long_col, short_col = st.columns(2)
+    with long_col:
+        render_chip_group("🟢 LONG GİR", sorted(groups["LONG"], key=lambda x: -x[1]), "LONG", "decision")
+    with short_col:
+        render_chip_group("🔴 SHORT GİR", sorted(groups["SHORT"], key=lambda x: -x[1]), "SHORT", "decision")
+    note = (f"Sayı: hedefin stoptan önce gelme oranı %. {waiting} paritede {target_usd:.0f} $ hedef bu stopla "
+            "sıkıntılı (BEKLE). Liste son kontrolün fiyatıyla; tıklayınca kart güncel fiyatla yeniden hesaplar.")
+    if scan["missing"]:
+        note += f" ML yön modeli veya verisi olmayan: {', '.join(scan['missing'])}."
+    st.caption(note)
+
+
 def render_summary_decision(
     symbol: str,
     reading: Optional[dict],
@@ -6445,6 +6538,7 @@ def render_summary_decision(
     target_col, loss_col = st.columns(2)
     target_usd = target_col.number_input("Hedef net kâr ($)", min_value=1.0, value=30.0, step=5.0, key="plan_target_usd")
     loss_usd = loss_col.number_input("Planlanan stop zararı ($)", min_value=1.0, value=100.0, step=5.0, key="plan_loss_usd")
+    render_decision_pairs(float(target_usd), float(loss_usd), float(account_usd))
     if not reading:
         st.info("Görüşler hesaplanamadı; fiyat verisi gelince karar verilir.")
         return
@@ -6455,21 +6549,12 @@ def render_summary_decision(
         st.info(call["reason"])
         return
 
-    pip = get_pip_size(symbol)
-    atr = None
-    df = fetch_ohlc(symbol, TIMEFRAMES["15 Dakika"]["interval"], TIMEFRAMES["15 Dakika"]["period"])
-    if df is not None and len(df) >= 40:
-        row = latest_valid_row(add_indicators(df.iloc[:-1]))
-        atr = float(row["ATR14"]) if row is not None else None
-    stop_pips = 1.5 * atr / pip if atr else None
-    share = cost_share_of_risk(float(cost_pips), stop_pips) if stop_pips else None
+    plan, check = decision_outcome(symbol, price, decision_atr(symbol), probability_up, call["action"],
+                                   target_usd, loss_usd, account_usd, pip_value_per_lot, cost_pips)
+    share = cost_share_of_risk(float(cost_pips), plan["stop_pips"]) if plan["status"] == "ready" else None
     news_minutes, news_title = pair_news(symbol, news_events, ahead_hours=1, after_minutes=15)
     now = pd.Timestamp.now(tz="UTC")
     timing = trading_blockers(now, news_minutes, news_title, share)
-    plan = build_trade_plan(
-        symbol.replace("=X", "").upper(), price, pip, atr, probability_up, float(target_usd), float(loss_usd),
-        float(account_usd), float(pip_value_per_lot), float(cost_pips), {}, [], side=call["action"],
-    )
 
     views = " · ".join(f"{escape(name)}: <b>{escape(side)}</b> {mark}" for name, side, mark in call["views"])
     warnings = list(dict.fromkeys(timing + plan.get("warnings", []) + reading["warnings"]))
@@ -6478,8 +6563,6 @@ def render_summary_decision(
     if plan["status"] != "ready":
         trade = f"<div class='opportunity-line'>⚠️ {escape(plan['reason'])}</div>"
     else:
-        check = target_check(cached_plan_stats(), symbol.replace("=X", "").upper(), call["pattern"].startswith("ml"),
-                             plan["target_pips"], plan["stop_pips"], float(cost_pips))
         usd_per_pip = plan["lot"] * float(pip_value_per_lot)
         hit_text = (f"{check['bound']} %{check['hit'] * 100:.0f}" if check["hit"] is not None else "ölçülmedi")
         odds = (f"<div class='opportunity-line'><b>Hedefe ulaşma:</b> {hit_text} (stoptan önce, {HOLD_HOURS} saat "
@@ -7323,7 +7406,9 @@ with st.sidebar:
         bt_period = st.text_input("Backtest period", value=default_period, key=f"bt_period_{bt_tf}", help="Örn: 5d, 30d, 90d, 120d")
         signal_threshold = st.slider("Sinyal eşiği", min_value=25, max_value=85, value=60, step=5)
         observed_spread = observed_broker_spread_pips(symbol, bt_tf)
-        spread_default = observed_spread if observed_spread is not None else recommended_spread_pips(symbol)
+        # Broker mumlarındaki spread komisyonu içermez (ham/ECN hesap); Pivot paneliyle aynı komisyon eklenir.
+        spread_default = (observed_spread + ECN_COMMISSION_PIPS if observed_spread is not None
+                          else recommended_spread_pips(symbol))
         spread_pips = st.number_input(
             "Toplam işlem maliyeti (pip)",
             min_value=0.0,
@@ -7339,7 +7424,8 @@ with st.sidebar:
             help="Major paritelerde likiditenin daha düzenli olduğu Londra saatleri günlük işlem için varsayılandır.",
         )
         if observed_spread is not None:
-            st.caption(f"Broker son mumlarından medyan spread: {observed_spread:.1f} pip.")
+            st.caption(f"Varsayılan: broker son mumlarından medyan spread {observed_spread:.1f} pip + "
+                       f"~{ECN_COMMISSION_PIPS:.1f} pip komisyon. Komisyonsuz hesapta komisyonu çıkar.")
         else:
             measured_now = measured_spread_pips(cached_spread_profile(), symbol, current_ny_hour())
             if measured_now is not None:
@@ -8120,6 +8206,7 @@ def scan_everything_for_summary() -> None:
             **_alert_filter_kwargs,
         )
     scan_late_reversal_pairs(SYMBOL_LIST)
+    collect_decision_inputs(SYMBOL_LIST)
 
 
 with tab_summary:
