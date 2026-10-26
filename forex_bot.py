@@ -16,6 +16,9 @@ Yönetim (kullanıcı seçimi, 26 Ekim 2026; geçmişte ölçülmedi, günlük h
 - Sabit TP yok. Fiyat hedefe gelince stop giriş + maliyete çekilir, sonra en iyi fiyatın 1 ATR gerisinden takip eder.
 - Fiyat stop mesafesinin yarısına gelirse çıkar; saat başında ML yönü dönerse çıkar (takip başlamadıysa).
 - Takip başlamamış pozisyon 24 saatte kapanır. Tam stop sunucuda güvenlik olarak durur.
+- Takas: pozisyon sayısı veya teminat dolu ve yeni GİR adayı bekliyorsa, hedefe gelmemiş, en az --stale-hours
+  (varsayılan 4: ML yön modelinin ufku) açık ve şu an komisyon dahil zararsız pozisyonlardan hedefe en az
+  ilerlemiş olanı kapatıp yenisini açar. Zarardaki pozisyon takas edilmez.
 
 Yalnız DEMO hesapta çalışır; gerçek hesaba bağlıysa emir göndermeden çıkar. Emir için MT5'te
 "Algo Trading" açık olmalıdır. Kararlar ve işlemler data/bot_journal.db'ye yazılır.
@@ -245,20 +248,58 @@ def margin_for(mt5, item: dict, volume: float, leverage: float) -> Optional[floa
     return None if margin is None else float(margin) * mt5.account_info().leverage / leverage
 
 
+def room_for(mt5, conn, item: dict, args) -> tuple[bool, str]:
+    """Yeni pozisyon sığar mı: pozisyon sayısı ve sanal bakiyenin yarısına kadar teminat."""
+    if len(own_positions(mt5)) >= args.max_positions:
+        return False, f"pozisyon sınırı ({args.max_positions}) dolu"
+    volume = volume_for(item["info"], item["plan"]["lot"])
+    balance = virtual_balance(conn, args.balance)
+    margin = margin_for(mt5, item, volume, args.leverage or mt5.account_info().leverage)
+    used = conn.execute("SELECT COALESCE(SUM(margin), 0) FROM trades WHERE closed_at IS NULL "
+                        "AND sizing_balance IS NOT NULL").fetchone()[0]
+    item["margin"], item["balance"] = margin, balance
+    if margin is None or used + margin > balance * MAX_MARGIN_SHARE:
+        return False, (f"teminat {0 if margin is None else margin:.2f} $ + açık {used:.2f} $ > sanal bakiyenin "
+                       f"%{MAX_MARGIN_SHARE * 100:.0f}'i ({balance * MAX_MARGIN_SHARE:.2f} $)")
+    return True, ""
+
+
+def swappable(trailing: bool, opened_at: pd.Timestamp, now: pd.Timestamp, net_usd: float, stale_hours: float) -> bool:
+    """Takasa açık: hedefe gelmemiş, en az stale_hours açık ve şu an kapatılınca zararsız."""
+    return not trailing and now - opened_at >= pd.Timedelta(hours=stale_hours) and net_usd >= 0
+
+
+def net_if_closed(mt5, position) -> float:
+    """Şimdi kapatılsa net sonuç: kâr + swap + giriş komisyonu ve aynı kadar çıkış komisyonu."""
+    entry_commission = sum(d.commission for d in (mt5.history_deals_get(position=position.ticket) or ())
+                           if d.entry == mt5.DEAL_ENTRY_IN)
+    return float(position.profit) + float(position.swap) + 2 * float(entry_commission)
+
+
+def swap_pool(mt5, conn, args, now: pd.Timestamp) -> list[tuple[float, object]]:
+    """Takasa açık pozisyonlar, hedefe en az ilerlemişten başlayarak (ilerleme oranı, pozisyon)."""
+    pool = []
+    for position in own_positions(mt5):
+        row = conn.execute("SELECT * FROM trades WHERE ticket=?", (position.ticket,)).fetchone()
+        if row is None or row["target"] is None:
+            continue
+        opened = server_time_to_utc(position.time, server_offset(mt5, position.symbol))
+        if not swappable(bool(row["trailing"]), opened, now, net_if_closed(mt5, position), args.stale_hours):
+            continue
+        sign = 1 if row["side"] == "LONG" else -1
+        distance = sign * (row["target"] - row["entry"])
+        progress = sign * (float(position.price_current) - row["entry"]) / distance if distance > 0 else 0.0
+        pool.append((progress, position))
+    return sorted(pool, key=lambda x: x[0])
+
+
 def open_position(mt5, conn, item: dict, args, signal_hour: pd.Timestamp) -> Optional[int]:
     info, plan = item["info"], item["plan"]
     tick = mt5.symbol_info_tick(item["name"])
     buy = plan["side"] == "LONG"
     sign = 1 if buy else -1
     volume = volume_for(info, plan["lot"])
-    balance = virtual_balance(conn, args.balance)
-    margin = margin_for(mt5, item, volume, args.leverage or mt5.account_info().leverage)
-    used = conn.execute("SELECT COALESCE(SUM(margin), 0) FROM trades WHERE closed_at IS NULL "
-                        "AND sizing_balance IS NOT NULL").fetchone()[0]
-    if margin is None or used + margin > balance * MAX_MARGIN_SHARE:
-        log(f"– {item['name']} atlandı: teminat {0 if margin is None else margin:.2f} $ + açık {used:.2f} $ > "
-            f"sanal bakiyenin %{MAX_MARGIN_SHARE * 100:.0f}'i ({balance * MAX_MARGIN_SHARE:.2f} $)")
-        return None
+    balance, margin = item["balance"], item["margin"]
     request = {
         "action": mt5.TRADE_ACTION_DEAL, "symbol": item["name"], "volume": volume,
         "type": mt5.ORDER_TYPE_BUY if buy else mt5.ORDER_TYPE_SELL,
@@ -431,8 +472,8 @@ def scan(mt5, conn, args, quiet: bool = False) -> None:
     scanned_at, signal_hour = now.floor("s"), now.floor("h")
     held = {p.symbol for p in own_positions(mt5)}
     entered = {r["symbol"] for r in conn.execute("SELECT symbol FROM trades WHERE signal_hour=?", (str(signal_hour),))}
-    slots = max(args.max_positions - len(held), 0)
-    if slots == 0 and not args.dry_run:
+    pool = [] if args.dry_run else swap_pool(mt5, conn, args, now)
+    if len(held) >= args.max_positions and not pool and not args.dry_run:
         return
     candidates = []
     for symbol in SYMBOL_LIST:
@@ -458,12 +499,24 @@ def scan(mt5, conn, args, quiet: bool = False) -> None:
             log(f"(deneme) {item['name']} {item['plan']['side']} {item['plan']['lot']:.2f} lot · ulaşma "
                 f"≈%{item['check']['hit'] * 100:.0f} (yarım stopa göre ≈%{item['check_half']['hit'] * 100:.0f})")
             continue
-        if opened >= slots:
+        fits, why = room_for(mt5, conn, item, args)
+        swapped = None
+        while not fits and pool:  # yer yoksa takılmış ama zararsız bir pozisyonu bırak
+            _, victim = pool.pop(0)
+            if close_position(mt5, conn, victim, "DAHA İYİ FIRSAT"):
+                sync_closed(mt5, conn)
+                swapped = victim.symbol
+                log(f"⇄ {victim.symbol} {args.stale_hours:g} saatte hedefe gelmedi, zararsız kapatıldı; "
+                    f"yerine {item['name']} (ulaşma ≈%{item['check']['hit'] * 100:.0f}).")
+                fits, why = room_for(mt5, conn, item, args)
+        if not fits:
             if not quiet:
                 record_decision(conn, scanned_at, item["name"], item, "LİMİT DOLU")
+                log(f"– {item['name']} bekliyor: {why}")
             continue
         ticket = open_position(mt5, conn, item, args, signal_hour)
-        record_decision(conn, scanned_at, item["name"], item, "AÇILDI" if ticket else "AÇILAMADI")
+        action = ("TAKASLA AÇILDI" if swapped else "AÇILDI") if ticket else "AÇILAMADI"
+        record_decision(conn, scanned_at, item["name"], item, action)
         opened += bool(ticket)
     if opened or not quiet:
         log(f"Tarama: {len(candidates)} GİR adayı, {opened} işlem açıldı, açık pozisyon "
@@ -475,19 +528,23 @@ def report() -> None:
     trades = pd.read_sql("SELECT * FROM trades", conn)
     decisions = pd.read_sql("SELECT action, COUNT(*) n FROM decisions GROUP BY action", conn)
     print("Kararlar:\n" + (decisions.to_string(index=False) if not decisions.empty else "  henüz yok"))
+    legacy = trades[trades["sizing_balance"].isna()]
+    if not legacy.empty:  # ilk sürüm, 98 bin $ demo bakiyesiyle boyutlanmış: sanal hesaba ve oranlara girmez
+        print(f"\nİlk sürümün işlemleri (sayılmıyor): {len(legacy)} adet, net {legacy['profit_usd'].sum():+.2f} $")
+    trades = trades[trades["sizing_balance"].notna()]
     closed = trades.dropna(subset=["closed_at"])
     print(f"\nİşlem: {len(trades)} açıldı, {len(closed)} kapandı, {len(trades) - len(closed)} açık.")
-    sized = closed[closed["sizing_balance"].notna()] if "sizing_balance" in closed else closed.iloc[0:0]
-    if not trades.empty and trades["sizing_balance"].notna().any():
-        start = float(trades.loc[trades["sizing_balance"].notna(), "sizing_balance"].iloc[0])
-        result = float(sized["profit_usd"].sum())
-        print(f"Sanal hesap: {start:.2f} $ → {start + result:.2f} $ ({result / start * 100:+.1f}%)")
+    if trades.empty:
+        return
+    start = float(trades["sizing_balance"].iloc[0])
+    result = float(closed["profit_usd"].sum())
+    print(f"Sanal hesap: {start:.2f} $ → {start + result:.2f} $ ({result / start * 100:+.1f}%)")
     if closed.empty:
         return
     reached = closed["trailing"].astype(bool).mean()
     print(f"Hedefe (takip başlangıcına) gelen: %{reached * 100:.0f} · ölçümün beklediği: tam stopa göre "
           f"%{closed['hit'].mean() * 100:.0f}, yarım stopa göre %{closed['hit_half_stop'].mean() * 100:.0f}")
-    print(f"Net sonuç: {closed['profit_usd'].sum():+.2f} $ · işlem başına {closed['profit_usd'].mean():+.2f} $")
+    print(f"Net sonuç: {result:+.2f} $ · işlem başına {closed['profit_usd'].mean():+.2f} $")
     by_outcome = closed.groupby("outcome")["profit_usd"].agg(["count", "mean", "sum"]).round(2)
     print("\nKapanış sebebi (adet · ortalama $ · toplam $):\n" + by_outcome.to_string())
     if len(closed) < 100:
@@ -503,6 +560,8 @@ def main() -> None:
     parser.add_argument("--loss-usd", type=float, help="Sabit stop zararı $ (verilirse --risk-pct yerine)")
     parser.add_argument("--leverage", type=float, help="Gerçek hesabın kaldıracı (teminat için; varsayılan demo)")
     parser.add_argument("--max-positions", type=int, default=5, help="Aynı anda en fazla açık pozisyon")
+    parser.add_argument("--stale-hours", type=float, default=4.0,
+                        help="Takas: bu kadar saatte hedefe gelmemiş zararsız pozisyon yeni fırsata bırakılır")
     parser.add_argument("--dry-run", action="store_true", help="Emir gönderme, yalnız kararları yaz")
     parser.add_argument("--once", action="store_true", help="Tek tarama yap ve çık")
     parser.add_argument("--report", action="store_true", help="Günlükteki sonuçları göster")

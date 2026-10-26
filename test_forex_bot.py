@@ -84,6 +84,16 @@ class ForexBotTests(unittest.TestCase):
                 forex_bot.claim_heartbeat(conn, 111)
         self.assertIn("2984", str(stop.exception))
 
+    def test_only_stale_breakeven_positions_are_swapped(self):
+        import pandas as pd
+        now = pd.Timestamp("2026-10-26 20:00", tz="UTC")
+        old, fresh = now - pd.Timedelta(hours=5), now - pd.Timedelta(hours=1)
+        self.assertTrue(forex_bot.swappable(False, old, now, 0.0, 4))      # başabaş, 5 saat: takas
+        self.assertTrue(forex_bot.swappable(False, old, now, 0.8, 4))
+        self.assertFalse(forex_bot.swappable(False, old, now, -0.1, 4))    # zararda: takas yok
+        self.assertFalse(forex_bot.swappable(False, fresh, now, 0.8, 4))   # henüz 1 saat
+        self.assertFalse(forex_bot.swappable(True, old, now, 3.0, 4))      # hedefe gelmiş, takipte: dokunma
+
     def test_decision_uses_karar_rule(self):
         stats = {"pairs": {"EURUSD": {"ratios": {
             "0.5": {"ml": {"target_rate": 0.67}, "opposite": {"target_rate": 0.63}},
