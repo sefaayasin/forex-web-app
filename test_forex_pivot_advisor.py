@@ -155,6 +155,8 @@ class RefreshIntegrationTests(unittest.TestCase):
 
         tree = ast.parse(Path("forex_web_app_streamlit_v14_alert_decision.py").read_text(encoding="utf-8"))
         fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "build_pivot_advisor_snapshot")
+        heavy = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "pivot_timeframe_reading")
+        heavy.decorator_list = []
         now = pd.Timestamp.now(tz="UTC")
 
         def fetch(symbol, interval, period):
@@ -172,7 +174,7 @@ class RefreshIntegrationTests(unittest.TestCase):
                          _utc_index_df=lambda frame: frame, market_structure_frame=market_structure_frame,
                          score_series_for_backtest=lambda frame: bias_score_frame(frame)["score"],
                          reversal_warnings=reversal_warnings, has_research_model=lambda *args: False)
-        exec(compile(ast.Module(body=[fn], type_ignores=[]), "snapshot", "exec"), namespace)
+        exec(compile(ast.Module(body=[heavy, fn], type_ignores=[]), "snapshot", "exec"), namespace)
         result = namespace[fn.name]("EURUSD=X", "Yahoo Finance")
         self.assertNotIn("error", result)
         self.assertTrue(result["fresh"])
@@ -189,7 +191,8 @@ class RefreshIntegrationTests(unittest.TestCase):
         tree = ast.parse(Path("forex_web_app_streamlit_v14_alert_decision.py").read_text(encoding="utf-8"))
         fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "refresh_pivot_advisor")
         names = ("_fetch_ohlc_yahoo", "_fetch_ohlc_mt5", "_fetch_intraday_history_yahoo", "fetch_mt5_quote",
-                 "fetch_last_price", "fetch_price_change", "scan_pivot_advisor", "cached_calendar")
+                 "fetch_last_price", "fetch_price_change", "scan_pivot_advisor", "pivot_timeframe_reading",
+                 "cached_calendar")
         namespace = {name: Mock() for name in names}
         exec(compile(ast.Module(body=[fn], type_ignores=[]), "refresh", "exec"), namespace)
         namespace["refresh_pivot_advisor"]()

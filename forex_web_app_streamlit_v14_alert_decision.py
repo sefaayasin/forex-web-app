@@ -898,6 +898,22 @@ def _period_to_days(period: str, default: int = 30) -> int:
     return int(default)
 
 
+def _mt5_server_offset(mt5, mt5_symbol: str) -> pd.Timedelta:
+    """MT5 mum/tick zamanları broker sunucu saatindedir, UTC değil (Pepperstone: UTC+2/+3).
+
+    Fark canlı tick'ten ölçülür. Piyasa kapalıyken tick eskidir; o zaman MT5 brokerlarının yaygın
+    "New York 17:00 = sunucu 00:00" kuralına (New York + 7 saat) düşülür.
+    """
+    now = pd.Timestamp.now(tz="UTC")
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    if tick is not None and int(tick.time) > 0:
+        diff = int(tick.time) - now.timestamp()
+        step = round(diff / 1800) * 1800
+        if abs(diff - step) <= 120 and -12 * 3600 <= step <= 14 * 3600:
+            return pd.Timedelta(seconds=step)
+    return now.tz_convert("America/New_York").utcoffset() + pd.Timedelta(hours=7)
+
+
 @st.cache_data(ttl=30, show_spinner=False)
 def _fetch_ohlc_mt5(symbol: str, interval: str, period: str) -> pd.DataFrame:
     """Bağlı MetaTrader 5 terminalinden broker mumlarını alır; bağlantı yoksa boş döner."""
@@ -912,11 +928,13 @@ def _fetch_ohlc_mt5(symbol: str, interval: str, period: str) -> pd.DataFrame:
         end = datetime.now(tz=pytz.UTC)
         start = end - timedelta(days=period_days)
         mt5.symbol_select(mt5_symbol, True)
-        rates = mt5.copy_rates_range(mt5_symbol, timeframe, start, end)
+        # Günlük mum etiketi zaten işlem günüdür (pivotlar bunu kullanır); gün içi mumlar UTC'ye çevrilir.
+        offset = pd.Timedelta(0) if interval.lower() == "1d" else _mt5_server_offset(mt5, mt5_symbol)
+        rates = mt5.copy_rates_range(mt5_symbol, timeframe, start + offset, end + offset)
         if rates is None or len(rates) == 0:
             return pd.DataFrame()
         out = pd.DataFrame(rates)
-        out["time"] = pd.to_datetime(out["time"], unit="s", utc=True)
+        out["time"] = pd.to_datetime(out["time"], unit="s", utc=True) - offset
         out = out[out["time"] >= pd.Timestamp(start)]
         out = out.set_index("time").rename(columns={"open": "Open", "high": "High", "low": "Low", "close": "Close", "tick_volume": "Volume", "spread": "SpreadPoints"})
         return _fix_cols(out)
@@ -944,13 +962,14 @@ def fetch_mt5_quote(symbol: str) -> Optional[dict]:
         tick = mt5.symbol_info_tick(mt5_symbol)
         if tick is None or float(tick.bid) <= 0 or float(tick.ask) <= 0:
             return None
+        offset = _mt5_server_offset(mt5, mt5_symbol)
         pip = get_pip_size(symbol)
         return {
             "bid": float(tick.bid),
             "ask": float(tick.ask),
             "mid": (float(tick.bid) + float(tick.ask)) / 2.0,
             "spread_pips": (float(tick.ask) - float(tick.bid)) / pip,
-            "time": pd.to_datetime(int(tick.time), unit="s", utc=True),
+            "time": pd.to_datetime(int(tick.time), unit="s", utc=True) - offset,
         }
     except Exception as exc:
         LOGGER.exception("MT5 quote error for %s: %s", symbol, exc)
@@ -996,7 +1015,10 @@ def fetch_intraday_history(symbol: str, period: str = "2d") -> pd.DataFrame:
         cutoff = out.index[-1] - pd.Timedelta(days=_period_to_days(period, 2))
         return out[out.index >= cutoff].copy()
     if provider == "MetaTrader 5":
-        return _fetch_ohlc_mt5(symbol, "1m", period)
+        # Yahoo'nun "2d"si son 2 işlem günüdür; takvim günü sayılırsa pazartesi hafta sonuna denk gelir.
+        now = pd.Timestamp.now(tz="UTC")
+        days = (now - (now - pd.offsets.BDay(_period_to_days(period, 2)))).days
+        return _fetch_ohlc_mt5(symbol, "1m", f"{days}d")
     return _fetch_intraday_history_yahoo(symbol, period)
 
 
@@ -6547,6 +6569,44 @@ def build_overall_reading(
 PIVOT_NEAR_ATR = 1.0  # yalnız izleme bölgesi; giriş izni değildir
 
 
+@st.cache_data(ttl=900, max_entries=300, show_spinner=False)
+def pivot_timeframe_reading(symbol: str, provider: str, side: str, window: pd.Timestamp) -> dict:
+    """Pivot yorumcusunun ağır kısmı: 4 zaman dilimi skoru, dönüş uyarıları ve ML; yalnız kapanmış mumlar.
+
+    Mumlar 5 dakikanın katlarında kapandığından aynı 5 dakikalık pencerede kapanmış mum kümesi
+    değişmez; sonuç pencere başına bir kez hesaplanır. Canlı fiyat burada kullanılmaz.
+    """
+    now = window
+    frames, scores, last_bars, complete = {}, {}, [], True
+    for label, tf, minutes in (("4H", "4 Saat", 240), ("1H", "1 Saat", 60),
+                               ("15M", "15 Dakika", 15), ("5M", "5 Dakika", 5)):
+        prm = TIMEFRAMES[tf]
+        data = closed_bars(fetch_ohlc(symbol, prm["interval"], prm["period"]), now, minutes)
+        if len(data) < 220:
+            complete = False
+            continue
+        frame = market_structure_frame(data)
+        values = score_series_for_backtest(data)
+        frame["Score"] = values.reindex(frame.index)
+        frames[label] = frame
+        scores[label] = float(values.iloc[-1]) if not values.empty else float("nan")
+        last_bars.append((frame.index[-1], minutes))
+    warnings = None
+    if "15M" in frames and "5M" in frames:
+        warnings = [f"{label}: {warning}" for label in ("15M", "5M")
+                    for warning in reversal_warnings(frames[label], side)]
+    ml, vol_prediction = {}, None
+    if has_research_model(symbol, "direction") or has_research_model(symbol, "high_volatility"):
+        hourly = fetch_research_bars(symbol)
+        ratio = research_range_ratio(symbol)
+        ml = build_research_prediction(symbol, "direction", bars=hourly, now=now, range_ratio=ratio)
+        vol_prediction = build_research_prediction(symbol, "high_volatility", bars=hourly, now=now, range_ratio=ratio)
+    return {"scores": scores, "last_bars": last_bars, "complete": complete, "reversal_warnings": warnings,
+            "response_side": str(frames["15M"]["ResponseSide"].iloc[-1]) if "15M" in frames else "NONE",
+            "ml": ml, "vol_prediction": vol_prediction,
+            "signal_bar": frames["15M"].index[-1] if "15M" in frames else None}
+
+
 def build_pivot_advisor_snapshot(symbol: str, provider: str) -> dict:
     """Tek paritede aynı kaynak, kapanmış mumlar ve güncel ML; oturum taramasına bağımlı değil."""
     now = pd.Timestamp.now(tz="UTC")
@@ -6568,37 +6628,15 @@ def build_pivot_advisor_snapshot(symbol: str, provider: str) -> dict:
                       distance_atr=abs(price - plan["entry"]) / atr if atr > 0 else float("nan"))
         if plan["side"] == "WAIT":
             return result
-        frames, scores = {}, {}
-        fresh = recent_bar(result["price_at"], now, 15, closed=False)
-        for label, tf, minutes in (("4H", "4 Saat", 240), ("1H", "1 Saat", 60),
-                                   ("15M", "15 Dakika", 15), ("5M", "5 Dakika", 5)):
-            prm = TIMEFRAMES[tf]
-            data = bars if label == "15M" else closed_bars(fetch_ohlc(symbol, prm["interval"], prm["period"]), now, minutes)
-            if len(data) < 220:
-                fresh = False
-                continue
-            frame = market_structure_frame(data)
-            values = score_series_for_backtest(data)
-            frame["Score"] = values.reindex(frame.index)
-            frames[label] = frame
-            scores[label] = float(values.iloc[-1]) if not values.empty else float("nan")
-            fresh = fresh and recent_bar(frame.index[-1], now, minutes)
-        warnings = None
-        if "15M" in frames and "5M" in frames:
-            warnings = [f"{label}: {warning}" for label in ("15M", "5M")
-                        for warning in reversal_warnings(frames[label], plan["side"])]
-        response = str(frames["15M"]["ResponseSide"].iloc[-1]) if "15M" in frames else "NONE"
-        ml, volatility = {}, None
-        if has_research_model(symbol, "direction") or has_research_model(symbol, "high_volatility"):
-            hourly = fetch_research_bars(symbol)
-            ratio = research_range_ratio(symbol)
-            ml = build_research_prediction(symbol, "direction", bars=hourly, now=now, range_ratio=ratio)
-            vol_prediction = build_research_prediction(symbol, "high_volatility", bars=hourly, now=now, range_ratio=ratio)
-            if recent_bar(vol_prediction.get("as_of"), now, 60):
-                volatility = reliable_volatility_view(vol_prediction)
-        result.update(scores=scores, fresh=fresh, response_side=response, reversal_warnings=warnings,
-                      ml=ml, volatility=volatility,
-                      signal_bar=frames["15M"].index[-1] if "15M" in frames else None)
+        reading = pivot_timeframe_reading(symbol, provider, plan["side"], now.floor("5min"))
+        fresh = recent_bar(result["price_at"], now, 15, closed=False) and reading["complete"] and all(
+            recent_bar(last, now, minutes) for last, minutes in reading["last_bars"])
+        vol_prediction = reading["vol_prediction"]
+        volatility = (reliable_volatility_view(vol_prediction)
+                      if vol_prediction and recent_bar(vol_prediction.get("as_of"), now, 60) else None)
+        result.update(scores=reading["scores"], fresh=fresh, response_side=reading["response_side"],
+                      reversal_warnings=reading["reversal_warnings"], ml=reading["ml"], volatility=volatility,
+                      signal_bar=reading["signal_bar"])
         if symbol == "XAUUSD=X" and provider == "Yahoo Finance":
             result.update(fresh=False, error="Yahoo altın verisi spot XAUUSD yerine vadeli GC=F; spot işlem için kullanma.")
         return result
@@ -6614,7 +6652,8 @@ def scan_pivot_advisor(symbol: str, provider: str) -> dict:
 def refresh_pivot_advisor() -> None:
     """Yorumcunun fiyat, model girdisi ve takvim önbelleklerini birlikte yeniler."""
     for cached in (_fetch_ohlc_yahoo, _fetch_ohlc_mt5, _fetch_intraday_history_yahoo,
-                   fetch_mt5_quote, fetch_last_price, fetch_price_change, scan_pivot_advisor, cached_calendar):
+                   fetch_mt5_quote, fetch_last_price, fetch_price_change, scan_pivot_advisor,
+                   pivot_timeframe_reading, cached_calendar):
         cached.clear()
 
 
