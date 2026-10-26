@@ -1,6 +1,7 @@
 """Demo hesapta Karar kuralıyla al-sat yapan canlı MT5 botu: uygulamadaki kuralın ileri testi.
 
-Lot (kullanıcı 500 $ ile başlayacak, 26 Ekim 2026): demo hesabın bakiyesi değil, --balance ile başlayan sanal
+Lot (kullanıcı 500 $ ile başlayacak, 26 Ekim 2026; varsayılan %2,5 risk ve 3 pozisyon: 500 $'da
+3 tipik pozisyonun teminatı sanal bakiyenin yarısına sığar): demo hesabın bakiyesi değil, --balance ile başlayan sanal
 bakiye kullanılır; botun bu düzende kapanan işlemleri bakiyeye eklenir. Stop zararı sanal bakiyenin --risk-pct'i,
 hedef bunun --target-r katı (Karar kutusundaki 30/100 oranı). Açık pozisyonların teminatı sanal bakiyenin
 yarısını geçmez; --leverage gerçek hesabın kaldıracıyla teminatı yeniden ölçekler.
@@ -554,12 +555,12 @@ def report() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--balance", type=float, default=500.0, help="Sanal başlangıç bakiyesi ($)")
-    parser.add_argument("--risk-pct", type=float, default=1.0, help="İşlem başına stop zararı, sanal bakiyenin %%'si")
+    parser.add_argument("--risk-pct", type=float, default=2.5, help="İşlem başına stop zararı, sanal bakiyenin %%'si")
     parser.add_argument("--target-r", type=float, default=0.3, help="Takip başlangıcı: stop zararının katı")
     parser.add_argument("--target-usd", type=float, help="Sabit hedef $ (verilirse --target-r yerine)")
     parser.add_argument("--loss-usd", type=float, help="Sabit stop zararı $ (verilirse --risk-pct yerine)")
     parser.add_argument("--leverage", type=float, help="Gerçek hesabın kaldıracı (teminat için; varsayılan demo)")
-    parser.add_argument("--max-positions", type=int, default=5, help="Aynı anda en fazla açık pozisyon")
+    parser.add_argument("--max-positions", type=int, default=3, help="Aynı anda en fazla açık pozisyon")
     parser.add_argument("--stale-hours", type=float, default=4.0,
                         help="Takas: bu kadar saatte hedefe gelmemiş zararsız pozisyon yeni fırsata bırakılır")
     parser.add_argument("--dry-run", action="store_true", help="Emir gönderme, yalnız kararları yaz")
