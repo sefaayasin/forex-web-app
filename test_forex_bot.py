@@ -94,6 +94,31 @@ class ForexBotTests(unittest.TestCase):
         self.assertFalse(forex_bot.swappable(False, fresh, now, 0.8, 4))   # henüz 1 saat
         self.assertFalse(forex_bot.swappable(True, old, now, 3.0, 4))      # hedefe gelmiş, takipte: dokunma
 
+    def test_same_direction_currency_is_limited_opposite_is_allowed(self):
+        held = [("AUDUSD", "SHORT")]
+        self.assertIn("AUD", forex_bot.exposure_block("AUDCAD", "SHORT", held, 1))   # ikinci AUD satımı
+        self.assertIsNone(forex_bot.exposure_block("AUDCAD", "LONG", held, 1))       # AUD alımı dengeler
+        # AUDUSD SHORT = USD alımı: EURUSD SHORT ikinci USD alımı olur, EURUSD LONG (USD satımı) dengeler
+        self.assertIn("USD", forex_bot.exposure_block("EURUSD", "SHORT", held, 1))
+        self.assertIsNone(forex_bot.exposure_block("EURUSD", "LONG", held, 1))
+        self.assertIsNone(forex_bot.exposure_block("AUDCAD", "SHORT", held, 2))      # sınır 2 ise olur
+        self.assertEqual(forex_bot.currency_exposure([("EURUSD", "LONG"), ("USDJPY", "LONG")]),
+                         {"EUR": 1, "USD": 0, "JPY": -1})
+
+    def test_expensive_moments_block_entry(self):
+        import pandas as pd
+        monday = pd.Timestamp("2026-10-26 12:00", tz="UTC")  # Londra-New York, sakin saat
+        item = {"name": "EURUSD", "spread_pips": 0.1, "median_spread_pips": 0.0}
+        events = pd.DataFrame({"time": [monday + pd.Timedelta(minutes=30)], "currency": ["USD"],
+                               "event": ["CPI m/m"], "impact": [3]})
+        no_news = events.iloc[0:0]
+        self.assertEqual(forex_bot.entry_blockers(item, monday, no_news), [])
+        self.assertIn("spread", forex_bot.entry_blockers({**item, "spread_pips": 1.2}, monday, no_news)[0])
+        self.assertIn("CPI", " ".join(forex_bot.entry_blockers(item, monday, events)))
+        self.assertIn("takvimi", forex_bot.entry_blockers(item, monday, None)[0])
+        rollover = pd.Timestamp("2026-10-26 21:10", tz="UTC")  # New York 17:10
+        self.assertIn("Gün sonu", " ".join(forex_bot.entry_blockers(item, rollover, no_news)))
+
     def test_decision_uses_karar_rule(self):
         stats = {"pairs": {"EURUSD": {"ratios": {
             "0.5": {"ml": {"target_rate": 0.67}, "opposite": {"target_rate": 0.63}},

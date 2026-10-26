@@ -17,6 +17,10 @@ Yönetim (kullanıcı seçimi, 26 Ekim 2026; geçmişte ölçülmedi, günlük h
 - Sabit TP yok. Fiyat hedefe gelince stop giriş + maliyete çekilir, sonra en iyi fiyatın 1 ATR gerisinden takip eder.
 - Fiyat stop mesafesinin yarısına gelirse çıkar; saat başında ML yönü dönerse çıkar (takip başlamadıysa).
 - Takip başlamamış pozisyon 24 saatte kapanır. Tam stop sunucuda güvenlik olarak durur.
+- Girmeden önce (26 Ekim 2026): anlık spread normalin 2 katını (en az +0,5 pip) aşıyorsa, New York gün sonu
+  spread saatinde, piyasa kapanırken ya da paritenin para birimlerinde yüksek etkili haberden 60 dk önce ile
+  15 dk sonrası arasında girmez (haber takvimi alınamazsa hiç girmez). Aynı para biriminde aynı yönde en fazla
+  --max-currency pozisyon (ör. üç ayrı AUD SHORT tek bir AUD bahsidir); ters yönler birbirini dengeler.
 - Takas: pozisyon sayısı veya teminat dolu ve yeni GİR adayı bekliyorsa, hedefe gelmemiş, en az --stale-hours
   (varsayılan 4: ML yön modelinin ufku) açık ve şu an komisyon dahil zararsız pozisyonlardan hedefe en az
   ilerlemiş olanı kapatıp yenisini açar. Zarardaki pozisyon takas edilmez.
@@ -49,7 +53,8 @@ from forex_indicators import add_indicators
 from forex_analysis import latest_valid_row
 from forex_ml_live import build_research_prediction, has_research_model
 from forex_mt5 import rates_utc, server_offset, server_time_to_utc
-from forex_trade_plan import build_trade_plan, load_plan_stats
+from forex_calendar import fetch_calendar
+from forex_trade_plan import build_trade_plan, load_plan_stats, trading_blockers
 
 DB_PATH = Path(__file__).resolve().parent / "data" / "bot_journal.db"
 MAGIC = 26102026
@@ -63,6 +68,11 @@ EARLY_EXIT_SHARE = 0.5  # stop mesafesinin bu kadarında çık
 TRAIL_ATR = 1.0  # takip eden stop: en iyi fiyatın bu kadar ATR gerisi
 MIN_SL_STEP_PIPS = 0.1
 MAX_MARGIN_SHARE = 0.5  # açık pozisyon teminatı en fazla sanal bakiyenin bu kadarı
+SPREAD_SPIKE_FACTOR = 2.0  # anlık spread normalin bu katını aşarsa girme
+SPREAD_SPIKE_MIN_PIPS = 0.5  # ham spreadli hesapta normal ≈ 0; en az bu kadar pay
+NEWS_REFRESH_SECONDS = 600
+NEWS_MAX_AGE_HOURS = 24  # takvim bu kadar süredir alınamıyorsa haber durumu bilinmiyor sayılır
+HIGH_IMPACT = 3
 HEARTBEAT_SECONDS = 60
 
 
@@ -193,6 +203,7 @@ def pair_inputs(mt5, symbol: str) -> dict:
         "atr": float(row["ATR14"]) if row is not None else None,
         "cost_pips": float(spread_points) * info.point / pip + ECN_COMMISSION_PIPS,
         "spread_pips": (float(tick.ask) - float(tick.bid)) / pip,
+        "median_spread_pips": float(spread_points) * info.point / pip,
         "pip_value": float(info.trade_tick_value) * pip / float(info.trade_tick_size),
     }
 
@@ -247,6 +258,77 @@ def margin_for(mt5, item: dict, volume: float, leverage: float) -> Optional[floa
     margin = mt5.order_calc_margin(mt5.ORDER_TYPE_BUY if buy else mt5.ORDER_TYPE_SELL, item["name"], volume,
                                    float(tick.ask if buy else tick.bid))
     return None if margin is None else float(margin) * mt5.account_info().leverage / leverage
+
+
+class NewsCalendar:
+    """Yüksek etkili haberler; 10 dakikada bir yenilenir, alınamazsa son başarılı kopya kullanılır."""
+
+    def __init__(self):
+        self.events, self.fetched_at, self.tried_at = None, None, None
+
+    def current(self, now: pd.Timestamp) -> Optional[pd.DataFrame]:
+        if self.tried_at is None or (now - self.tried_at).total_seconds() >= NEWS_REFRESH_SECONDS:
+            self.tried_at = now
+            try:
+                events, _ = fetch_calendar()
+                events = events.assign(time=pd.to_datetime(events["time"], utc=True, errors="coerce"))
+                self.events = events[pd.to_numeric(events["impact"], errors="coerce") == HIGH_IMPACT]
+                self.fetched_at = now
+            except Exception as exc:  # ağ hatası botu durdurmasın
+                log(f"Haber takvimi alınamadı: {exc}")
+        if self.fetched_at is None or now - self.fetched_at > pd.Timedelta(hours=NEWS_MAX_AGE_HOURS):
+            return None
+        return self.events
+
+
+def pair_news(events: pd.DataFrame, name: str, now: pd.Timestamp) -> tuple[Optional[int], str]:
+    """Paritenin para birimlerinde 15 dk önce ile 60 dk sonrası arasındaki en yakın yüksek etkili haber."""
+    mine = events[events["currency"].astype(str).str.upper().isin({name[:3], name[3:6]})
+                  & (events["time"] >= now - pd.Timedelta(minutes=15))
+                  & (events["time"] <= now + pd.Timedelta(minutes=60))].sort_values("time")
+    if mine.empty:
+        return None, ""
+    first = mine.iloc[0]
+    return int((first["time"] - now).total_seconds() // 60), f"{first['currency']} {first.get('event', '')}".strip()
+
+
+def entry_blockers(item: dict, now: pd.Timestamp, events: Optional[pd.DataFrame]) -> list[str]:
+    """Pahalı anlar: spread sıçraması, gün sonu spread saati, piyasa kapanışı ve yakın yüksek etkili haber."""
+    blockers = []
+    normal = item["median_spread_pips"]
+    limit = max(SPREAD_SPIKE_FACTOR * normal, normal + SPREAD_SPIKE_MIN_PIPS)
+    if item["spread_pips"] > limit:
+        blockers.append(f"Anlık spread {item['spread_pips']:.1f} pip; normali {normal:.1f} pip (sınır {limit:.1f}).")
+    if events is None:
+        blockers.append("Haber takvimi alınamadı; yüksek etkili haber olup olmadığı bilinmiyor.")
+        minutes, title = None, ""
+    else:
+        minutes, title = pair_news(events, item["name"].upper(), now)
+    return blockers + trading_blockers(now, minutes, title, None)
+
+
+def currency_exposure(positions: list[tuple[str, str]]) -> dict[str, int]:
+    """Para birimi başına yön: LONG EURUSD = EUR +1, USD −1."""
+    exposure: dict[str, int] = {}
+    for name, side in positions:
+        sign = 1 if side == "LONG" else -1
+        for currency, direction in ((name[:3], sign), (name[3:6], -sign)):
+            exposure[currency] = exposure.get(currency, 0) + direction
+    return exposure
+
+
+def exposure_block(name: str, side: str, positions: list[tuple[str, str]], limit: int) -> Optional[str]:
+    """Yeni pozisyon bir para biriminde aynı yöndeki açık pozisyon sayısını sınırın üstüne çıkarıyorsa sebep."""
+    current = currency_exposure(positions)
+    for currency, direction in currency_exposure([(name, side)]).items():
+        if current.get(currency, 0) * direction >= limit:
+            word = "alım" if direction > 0 else "satım"
+            return f"{currency} {word} yönünde zaten {abs(current[currency])} pozisyon var (sınır {limit})."
+    return None
+
+
+def position_sides(mt5) -> list[tuple[str, str]]:
+    return [(p.symbol.upper(), "LONG" if p.type == mt5.POSITION_TYPE_BUY else "SHORT") for p in own_positions(mt5)]
 
 
 def room_for(mt5, conn, item: dict, args) -> tuple[bool, str]:
@@ -465,7 +547,7 @@ def sync_closed(mt5, conn) -> None:
         log(f"• {last.symbol} kapandı: {outcome} · {profit:+.2f} $")
 
 
-def scan(mt5, conn, args, quiet: bool = False) -> None:
+def scan(mt5, conn, args, calendar: NewsCalendar, quiet: bool = False) -> None:
     stats = load_plan_stats()
     balance = virtual_balance(conn, args.balance)
     target_usd, loss_usd = budget(balance, args)
@@ -493,12 +575,23 @@ def scan(mt5, conn, args, quiet: bool = False) -> None:
         elif not quiet:
             record_decision(conn, scanned_at, name, item, "BEKLE")
     candidates.sort(key=lambda x: -x["check"]["hit"])
+    events = calendar.current(now)
+    sides = position_sides(mt5)  # açılan (denemede açılacak sayılan) pozisyonlar da eklenir
     opened = 0
     for item in candidates:
+        blockers = entry_blockers(item, now, events)
+        exposure = exposure_block(item["name"].upper(), item["plan"]["side"], sides, args.max_currency)
+        if blockers or exposure:
+            if not quiet:
+                item["check"] = {**item["check"], "reasons": blockers + ([exposure] if exposure else [])}
+                record_decision(conn, scanned_at, item["name"], item, "PAHALI AN" if blockers else "PARA BİRİMİ SINIRI")
+                log(f"– {item['name']} {item['plan']['side']} girilmedi: {(blockers + [exposure])[0]}")
+            continue
         if args.dry_run:
             record_decision(conn, scanned_at, item["name"], item, "DRY-RUN")
             log(f"(deneme) {item['name']} {item['plan']['side']} {item['plan']['lot']:.2f} lot · ulaşma "
                 f"≈%{item['check']['hit'] * 100:.0f} (yarım stopa göre ≈%{item['check_half']['hit'] * 100:.0f})")
+            sides.append((item["name"].upper(), item["plan"]["side"]))
             continue
         fits, why = room_for(mt5, conn, item, args)
         swapped = None
@@ -519,6 +612,8 @@ def scan(mt5, conn, args, quiet: bool = False) -> None:
         action = ("TAKASLA AÇILDI" if swapped else "AÇILDI") if ticket else "AÇILAMADI"
         record_decision(conn, scanned_at, item["name"], item, action)
         opened += bool(ticket)
+        if ticket:
+            sides = position_sides(mt5)
     if opened or not quiet:
         log(f"Tarama: {len(candidates)} GİR adayı, {opened} işlem açıldı, açık pozisyon "
             f"{len(own_positions(mt5))}/{args.max_positions}.")
@@ -561,6 +656,8 @@ def main() -> None:
     parser.add_argument("--loss-usd", type=float, help="Sabit stop zararı $ (verilirse --risk-pct yerine)")
     parser.add_argument("--leverage", type=float, help="Gerçek hesabın kaldıracı (teminat için; varsayılan demo)")
     parser.add_argument("--max-positions", type=int, default=3, help="Aynı anda en fazla açık pozisyon")
+    parser.add_argument("--max-currency", type=int, default=1,
+                        help="Bir para biriminde aynı yönde en fazla bu kadar pozisyon")
     parser.add_argument("--stale-hours", type=float, default=4.0,
                         help="Takas: bu kadar saatte hedefe gelmemiş zararsız pozisyon yeni fırsata bırakılır")
     parser.add_argument("--dry-run", action="store_true", help="Emir gönderme, yalnız kararları yaz")
@@ -585,6 +682,7 @@ def main() -> None:
         f"{args.leverage or account.leverage:.0f} · en fazla {args.max_positions} pozisyon"
         + (" · DENEME (emir yok)" if args.dry_run else ""))
     last_scan, last_ml_hour = None, pd.Timestamp.now(tz="UTC").floor("h")
+    calendar = NewsCalendar()
     try:
         while True:
             now = pd.Timestamp.now(tz="UTC")
@@ -596,7 +694,7 @@ def main() -> None:
             if check_ml:
                 last_ml_hour = hour
             if last_scan is None or (now - last_scan).total_seconds() >= SCAN_SECONDS:
-                scan(mt5, conn, args, quiet=last_scan is not None and last_scan.floor("h") == hour)
+                scan(mt5, conn, args, calendar, quiet=last_scan is not None and last_scan.floor("h") == hour)
                 last_scan = now
                 if args.once:
                     break
