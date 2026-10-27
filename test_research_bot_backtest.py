@@ -31,6 +31,14 @@ def market(opens, highs=None, lows=None, prob=0.6, atr=0.0010, start="2023-01-02
 
 
 class BotBacktestTests(unittest.TestCase):
+    def test_cost_share_cap_blocks_expensive_entry_but_keeps_cheap_one(self):
+        m = market(list(np.linspace(1.1, 1.102, 30)))
+        m["spread"][:] = 1.5  # 2.2 pip including commission, versus 15 pip stop: >10%, <15%.
+        self.assertTrue(bt.run(bt.Variant("allow", max_cost_share=.15), m, {}, STATS)["trades"])
+        self.assertFalse(bt.run(bt.Variant("block", max_cost_share=.10), m, {}, STATS)["trades"])
+        m["spread"][:] = 0.0
+        self.assertTrue(bt.run(bt.Variant("cheap", max_cost_share=.10), m, {}, STATS)["trades"])
+
     def test_target_starts_trailing_and_exit_never_loses(self):
         # stop 15 pip; 12,5 $ risk ve 0,01 lot adımıyla hedef ≈ 5 pip; fiyat 20 pip çıkıp geri düşer
         path = list(np.linspace(1.1000, 1.1020, 30)) + list(np.linspace(1.1020, 1.0990, 30))

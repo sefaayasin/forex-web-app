@@ -14,9 +14,13 @@ class ForexBotTests(unittest.TestCase):
     def test_new_entry_defaults_and_confidence_argument_validation(self):
         args = forex_bot.parse_args([])
         self.assertEqual((args.risk_pct, args.min_ml_confidence, args.exit_mode), (1.0, .55, "fixed"))
+        self.assertEqual(args.max_cost_share, .10)
         for value in ("0.49", "1.01", "nan"):
             with patch("sys.stderr"), self.assertRaises(SystemExit):
                 forex_bot.parse_args(["--min-ml-confidence", value])
+        for value in ("0", "1", "nan", "inf", "-0.1"):
+            with patch("sys.stderr"), self.assertRaises(SystemExit):
+                forex_bot.parse_args(["--max-cost-share", value])
 
     def test_three_observed_weak_signals_are_blocked_in_experiment_mode(self):
         stats = {"pooled": {"ratios": {
@@ -230,6 +234,18 @@ class ForexBotTests(unittest.TestCase):
         self.assertIn("Gün sonu", " ".join(forex_bot.entry_blockers(item, rollover, no_news)))
         pricey = {**item, "cost_pips": 2.0, "plan": {"stop_pips": 5.0}}  # maliyet riskin %29'u
         self.assertIn("Maliyet", " ".join(forex_bot.entry_blockers(pricey, monday, no_news)))
+
+    def test_entry_cost_cap_accepts_ten_percent_and_blocks_just_above(self):
+        now = forex_bot.pd.Timestamp("2026-10-27 12:00", tz="UTC")
+        events = forex_bot.pd.DataFrame(columns=["time", "currency", "event"])
+        events["time"] = forex_bot.pd.to_datetime(events["time"], utc=True)
+        item = {"name": "EURUSD", "spread_pips": .1, "median_spread_pips": .1,
+                "cost_pips": 1., "plan": {"stop_pips": 9.}}
+        self.assertEqual(forex_bot.entry_blockers(item, now, events), [])
+        item["plan"]["stop_pips"] = 8.99
+        reasons = forex_bot.entry_blockers(item, now, events)
+        self.assertIn("sınır %10", " ".join(reasons))
+        self.assertEqual(forex_bot.entry_blockers(item, now, events, max_cost_share=.15), [])
 
     def test_decision_uses_karar_rule(self):
         stats = {"pairs": {"EURUSD": {"ratios": {

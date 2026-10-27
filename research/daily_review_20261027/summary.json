@@ -1,0 +1,68 @@
+{
+  "snapshot_local": "2026-10-27 17:02:36.758683+03:00",
+  "closed_sized_bot": 20,
+  "winners": 7,
+  "losers": 13,
+  "gross_winning_net": 25.130000000000003,
+  "gross_losing_net": -79.55000000000001,
+  "net": -54.42000000000001,
+  "fees_swap": -21.18,
+  "target_only_same_entries_net": -49.81247344049543,
+  "losers_never_net_positive": 5,
+  "losers_reached_target": 3,
+  "open_sized_bot": [],
+  "filters": [
+    {
+      "filter": "all",
+      "kept": 20,
+      "kept_winners": 7,
+      "kept_losers": 13,
+      "kept_actual_net": -54.42000000000001,
+      "removed_winner_profit": 0.0,
+      "removed_loss": 0.0
+    },
+    {
+      "filter": "ml_at_least_0.52",
+      "kept": 8,
+      "kept_winners": 2,
+      "kept_losers": 6,
+      "kept_actual_net": -26.619999999999997,
+      "removed_winner_profit": 9.280000000000001,
+      "removed_loss": -37.08
+    },
+    {
+      "filter": "ml_at_least_0.55",
+      "kept": 1,
+      "kept_winners": 0,
+      "kept_losers": 1,
+      "kept_actual_net": -12.860000000000001,
+      "removed_winner_profit": 25.130000000000003,
+      "removed_loss": -66.69
+    },
+    {
+      "filter": "cost_share_at_most_0.1",
+      "kept": 11,
+      "kept_winners": 6,
+      "kept_losers": 5,
+      "kept_actual_net": -8.49,
+      "removed_winner_profit": 3.9800000000000004,
+      "removed_loss": -49.91
+    },
+    {
+      "filter": "cost_share_at_most_0.15",
+      "kept": 19,
+      "kept_winners": 7,
+      "kept_losers": 12,
+      "kept_actual_net": -42.45,
+      "removed_winner_profit": 0.0,
+      "removed_loss": -11.969999999999999
+    }
+  ],
+  "closed_by_account_group": [
+    {
+      "group": "sized_bot",
+      "size": 20,
+      "sum": -54.419999999999995
+    }
+  ]
+}

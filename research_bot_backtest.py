@@ -77,6 +77,7 @@ class Variant:
     floor_atr: float | None = None  # takip tabanı: None giriş + maliyet; x giriş − x ATR; inf taban yok
     min_conf: float = 0.0       # ML olasılığı yön tarafında en az bu (ör. 0,55); 0 şart yok
     cooldown_hours: float = 0.0  # zararla kapanan paritede bu kadar saat giriş yok
+    max_cost_share: float = 1.0  # isteğe bağlı maliyet / (stop + maliyet) giriş sınırı
 
 
 VARIANTS = [
@@ -390,6 +391,8 @@ def run(variant: Variant, market: dict, events: dict, stats: dict, steps: int | 
                     pv = pip * CONTRACT * usd[names[j][1]][i]
                     stop_pips = STOP_ATR * atr / pip
                     cost = spread[ny_hour[i], j] + ECN_COMMISSION_PIPS + variant.extra_cost
+                    if cost / (stop_pips + cost) > variant.max_cost_share:
+                        continue
                     lot = math.floor(loss_usd / ((stop_pips + cost) * pv) / MIN_LOT + 1e-9) * MIN_LOT
                     if lot < MIN_LOT:
                         continue

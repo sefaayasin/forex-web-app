@@ -1,0 +1,8 @@
+{
+  "written": "2026-10-27 after today's ledger/cost filter results, before these four historical portfolio runs",
+  "question": "Does the cost-share <=10% filter that preserved 6 of today's 7 winners improve results beyond this selected day?",
+  "variants": ["Old half-stop/trailing with 2.5% risk and cost cap 15%", "Same old policy with cost cap 10%", "New fixed target, 55% ML confidence, 1% risk with cap 15%", "Same new policy with cap 10%"],
+  "other_rules": "target hit >=65%, 3 positions, currency cap1, same news, same half stop and hourly ML/swap. Basket arm is 1.2 times risk budget: old3% of500, new1.2% of500. Fixed sizing balance500, actual lot rounding.",
+  "period": "2023-01-01 to 2026-09-10; report 2023-24 and 2025-26 separately. These years have already been inspected; not new blind validation.",
+  "decision": "Compare paired policies with only cap changed. Report frequency, net R and absolute net. A lower loss is not proof of positive edge. No automatic live cap changes or commits."
+}

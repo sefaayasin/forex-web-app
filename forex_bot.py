@@ -8,6 +8,7 @@ yarısını geçmez; --leverage gerçek hesabın kaldıracıyla teminatı yenide
 Giriş (Özet'teki Karar kutusuyla aynı hesap, forex_trade_plan + forex_decision):
 - Yön: ML 4 saatlik yön modeli (son kapanmış saatlik mum; yön yalnız saat başında değişebilir).
 - Yeni girişte ham ML yön güveni en az %55 (--min-ml-confidence); %65 hedef ulaşma oranından ayrı bir kontroldür.
+- Yeni girişte maliyet / (stop + maliyet) en fazla %10 (--max-cost-share); deney kipinde de uygulanır.
 - Stop: kapanmış 15M mumlarında ATR14 × 1,5; lot bu stop ve zarar bütçesinden. Hedef: dolar hedefinden.
 - Şart (27 Ekim 2026'dan beri Karar kutusuyla tek karar, forex_decision.entry_decision): hedefin stoptan önce
   gelme oranı ≥ %65 ve başabaş oranının üstünde (2023–2026 ölçümü), maliyet hedefin yarısından az, işlem
@@ -38,7 +39,7 @@ Yalnız DEMO hesapta çalışır; gerçek hesaba bağlıysa emir göndermeden ç
 
   python forex_bot.py --dry-run --once   # emir göndermeden tek tarama
   python forex_bot.py                    # sürekli çalış (Ctrl+C ile dur)
-  python forex_bot.py --deney --risk-pct 1 --min-ml-confidence 0.55 --exit-mode fixed
+  python forex_bot.py --deney --risk-pct 1 --min-ml-confidence 0.55 --exit-mode fixed --max-cost-share 0.10
   python forex_bot.py --report           # sonuçlar
 """
 from __future__ import annotations
@@ -57,7 +58,7 @@ import pandas as pd
 
 from forex_config import SYMBOL_LIST, get_pip_size
 from forex_costs import ECN_COMMISSION_PIPS, cost_share_of_risk
-from forex_decision import HOLD_HOURS, entry_decision, target_check
+from forex_decision import HOLD_HOURS, MIN_HIT, entry_decision, target_check
 from forex_indicators import add_indicators
 from forex_analysis import latest_valid_row
 from forex_ml_live import build_research_prediction, has_research_model
@@ -89,6 +90,7 @@ BASKET_GIVEBACK = 0.3  # sepet tepeden bu kadarını geri verirse hepsini kapat
 BASKET_STALL_MINUTES = 10  # bu kadar dakika yeni tepe yoksa "dolanıyor"
 BASKET_SLOPE_MINUTES = 5  # "düşecek gibi": son bu kadar dakikanın eğimi aşağı
 DEFAULT_MIN_ML_CONFIDENCE = 0.55
+DEFAULT_MAX_COST_SHARE = 0.10
 
 
 def log(text: str) -> None:
@@ -318,7 +320,8 @@ def pair_news(events: pd.DataFrame, name: str, now: pd.Timestamp) -> tuple[Optio
     return int((first["time"] - now).total_seconds() // 60), f"{first['currency']} {first.get('event', '')}".strip()
 
 
-def entry_blockers(item: dict, now: pd.Timestamp, events: Optional[pd.DataFrame]) -> list[str]:
+def entry_blockers(item: dict, now: pd.Timestamp, events: Optional[pd.DataFrame],
+                   max_cost_share: float = DEFAULT_MAX_COST_SHARE) -> list[str]:
     """Pahalı anlar: spread sıçraması, gün sonu spread saati, piyasa kapanışı ve yakın yüksek etkili haber."""
     blockers = []
     normal = item["median_spread_pips"]
@@ -331,7 +334,7 @@ def entry_blockers(item: dict, now: pd.Timestamp, events: Optional[pd.DataFrame]
     else:
         minutes, title = pair_news(events, item["name"].upper(), now)
     share = cost_share_of_risk(item["cost_pips"], item["plan"]["stop_pips"])
-    return blockers + trading_blockers(now, minutes, title, share)
+    return blockers + trading_blockers(now, minutes, title, share, max_cost_share=max_cost_share)
 
 
 def currency_exposure(positions: list[tuple[str, str]]) -> dict[str, int]:
@@ -669,7 +672,7 @@ def scan(mt5, conn, args, calendar: NewsCalendar, quiet: bool = False) -> None:
     sides = position_sides(mt5)  # açılan (denemede açılacak sayılan) pozisyonlar da eklenir
     opened = 0
     for item in candidates:
-        blockers = entry_blockers(item, now, events)
+        blockers = entry_blockers(item, now, events, args.max_cost_share)
         exposure = exposure_block(item["name"].upper(), item["plan"]["side"], sides, args.max_currency)
         if blockers or exposure:
             if not quiet:
@@ -746,6 +749,8 @@ def parse_args(argv: Optional[list[str]] = None):
                         help="Yeni girişte ham ML yön güveni alt sınırı (0.50–1.00; hedef ulaşma oranından ayrı)")
     parser.add_argument("--exit-mode", choices=("fixed", "trailing"), default="fixed",
                         help="Yeni işlemlerde sabit hedefte çıkış veya eski takip kuralı")
+    parser.add_argument("--max-cost-share", type=float, default=DEFAULT_MAX_COST_SHARE,
+                        help="Yeni girişte maliyet / (stop + maliyet) üst sınırı (varsayılan 0.10)")
     parser.add_argument("--target-usd", type=float, help="Sabit hedef $ (verilirse --target-r yerine)")
     parser.add_argument("--loss-usd", type=float, help="Sabit stop zararı $ (verilirse --risk-pct yerine)")
     parser.add_argument("--leverage", type=float, help="Gerçek hesabın kaldıracı (teminat için; varsayılan demo)")
@@ -764,6 +769,8 @@ def parse_args(argv: Optional[list[str]] = None):
     args = parser.parse_args(argv)
     if not math.isfinite(args.min_ml_confidence) or not .5 <= args.min_ml_confidence <= 1:
         parser.error("--min-ml-confidence 0.50 ile 1.00 arasında olmalı")
+    if not math.isfinite(args.max_cost_share) or not 0 < args.max_cost_share < 1:
+        parser.error("--max-cost-share 0 ile 1 arasında olmalı (sınırlar hariç)")
     return args
 
 
@@ -786,6 +793,7 @@ def main() -> None:
         f"stop zararı {loss_usd:.2f} $ / net hedef {target_usd:.2f} $ · risk %{args.risk_pct:g} · "
         f"ML yön güveni ≥ %{args.min_ml_confidence * 100:.0f} · çıkış {args.exit_mode} · kaldıraç 1:"
         f"{args.leverage or account.leverage:.0f} · en fazla {args.max_positions} pozisyon"
+        f" · hedef ulaşma ≥ %{MIN_HIT * 100:.0f} · maliyet/risk ≤ %{args.max_cost_share * 100:.0f}"
         + (f" · sepet kârı {args.basket_r * loss_usd:.2f} $'dan sonra izlenir" if args.basket_r > 0 else "")
         + (" · DENEY: başabaş/ölçüm engelleri atlanıyor" if args.experiment else "")
         + (" · DENEME (emir yok)" if args.dry_run else ""))

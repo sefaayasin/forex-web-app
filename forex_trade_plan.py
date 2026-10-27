@@ -52,6 +52,7 @@ def trading_blockers(
     news_minutes: Optional[int] = None,
     news_title: str = "",
     cost_share: Optional[float] = None,
+    max_cost_share: float = HIGH_COST_SHARE,
 ) -> list[str]:
     """İşlem açmayı bekletmesi gereken durumlar (ölçülmüş maliyet ve spread davranışına göre)."""
     ny = now.tz_convert("America/New_York")
@@ -65,8 +66,8 @@ def trading_blockers(
     if news_minutes is not None and -NEWS_AFTER_MINUTES <= news_minutes <= NEWS_BEFORE_MINUTES:
         when = f"{news_minutes} dk sonra" if news_minutes >= 0 else f"{-news_minutes} dk önce"
         blockers.append(f"Yüksek etkili haber {when}{': ' + news_title if news_title else ''}. Haberde yönü sürpriz belirler.")
-    if cost_share is not None and cost_share > HIGH_COST_SHARE:
-        blockers.append(f"Maliyet planlanan kaybın %{cost_share * 100:.0f}'i (sınır %15); bu parite/saat bu stop için pahalı.")
+    if cost_share is not None and cost_share > max_cost_share:
+        blockers.append(f"Maliyet planlanan kaybın %{cost_share * 100:.0f}'i (sınır %{max_cost_share * 100:.0f}); bu parite/saat bu stop için pahalı.")
     return blockers
 
 

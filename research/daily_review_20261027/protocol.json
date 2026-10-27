@@ -1,0 +1,9 @@
+{
+  "written": "2026-10-27 before this daily MT5 snapshot and counterfactual results; earlier three-loss research and existing winner-model report already inspected",
+  "scope": "All bot positions with sizing_balance recorded, fully closed today in Europe/Istanbul time; also reconcile other/legacy closed positions separately. Open positions are not counted as wins or losses.",
+  "entry_filters": ["raw ML confidence >= .52", "raw ML confidence >= .55", "cost share <= .10", "cost share <= .15"],
+  "exits": ["half stop + trailing", "75 percent stop + trailing", "full stop + trailing", "fixed target + half stop", "fixed target + full stop"],
+  "method": "Actual MT5 entry fills and two-sided commissions; executable bid/ask tick paths. Measure best/worst net value before real close. Reuse bounded 4-hour counterfactual exit engine. Report lost winners as well as avoided losers.",
+  "limits": "Actual realized fills are authoritative. Tick extrema are hindsight diagnostics, not achievable strategies. Alternative exits omit basket/ML/swap and endogenous new entries; no exact portfolio PnL claim. Any still-open alternative at snapshot end is marked unfinished. This is one-day exploratory analysis, not an out-of-sample profitability test.",
+  "deployment": "Read-only review; no orders, bot setting changes or new commits requested. Keep prior snapshot artifacts intact."
+}
