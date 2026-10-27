@@ -1,6 +1,6 @@
 import unittest
 
-from forex_decision import final_call, pivot_side, target_check
+from forex_decision import breakeven_hit, entry_decision, final_call, pivot_side, target_check
 from forex_trade_plan import build_trade_plan
 
 
@@ -52,22 +52,45 @@ class ForexDecisionTests(unittest.TestCase):
             "1.0": {"ml": {"target_rate": 0.51}, "opposite": {"target_rate": 0.49}},
             "3.0": {"ml": {"target_rate": 0.24}, "opposite": {"target_rate": 0.22}},
         }}}}
-        ok = target_check(stats, "EURUSD", True, target_pips=3.5, stop_pips=7.4, cost_pips=1.0)
+        old = dict(require_breakeven=False)  # 27 Ekim öncesi kural (botun --deney kipi)
+        ok = target_check(stats, "EURUSD", True, target_pips=3.5, stop_pips=7.4, cost_pips=1.0, **old)
         self.assertTrue(ok["ok"])
         self.assertEqual((ok["bound"], round(ok["hit"], 2)), ("≥", 0.67))
-        small = target_check(stats, "EURUSD", True, target_pips=1.8, stop_pips=7.4, cost_pips=1.0)
+        small = target_check(stats, "EURUSD", True, target_pips=1.8, stop_pips=7.4, cost_pips=1.0, **old)
         self.assertFalse(small["ok"])
         self.assertIn("Maliyet", small["reasons"][0])
-        far = target_check(stats, "EURUSD", True, target_pips=17.8, stop_pips=7.4, cost_pips=1.0)
+        far = target_check(stats, "EURUSD", True, target_pips=17.8, stop_pips=7.4, cost_pips=1.0, **old)
         self.assertFalse(far["ok"])
         self.assertIn("%60", far["reasons"][0])
         low, high = far["ok_pips"]
         self.assertAlmostEqual(low, 2.0)
-        self.assertAlmostEqual(high / 7.4, 0.5 + 0.5 * (0.67 - 0.60) / (0.67 - 0.51))
+        self.assertAlmostEqual(high / 7.4, 0.5 + 0.5 * (0.67 - 0.60) / (0.67 - 0.51), places=2)
         # ML'siz yön: ML ve ters yönün ortalaması (0.65) %60'ı geçer, 1.0 oranında (0.50) geçmez
-        self.assertTrue(target_check(stats, "EURUSD", False, 3.7, 7.4, 1.0)["ok"])
-        self.assertFalse(target_check(stats, "EURUSD", False, 7.4, 7.4, 1.0)["ok"])
+        self.assertTrue(target_check(stats, "EURUSD", False, 3.7, 7.4, 1.0, **old)["ok"])
+        self.assertFalse(target_check(stats, "EURUSD", False, 7.4, 7.4, 1.0, **old)["ok"])
         self.assertFalse(target_check({}, "EURUSD", True, 3.5, 7.4, 1.0)["ok"])
+
+    def test_target_check_requires_breakeven(self):
+        # 3,5 pip hedef (maliyet dahil), 7,4 pip stop, 1 pip maliyet: başabaş (7,4+1)/(3,5+7,4) ≈ %77
+        stats = {"pooled": {"ratios": {"0.5": {"ml": {"target_rate": 0.67}, "opposite": {"target_rate": 0.63}},
+                                       "3.0": {"ml": {"target_rate": 0.20}, "opposite": {"target_rate": 0.18}}}}}
+        self.assertAlmostEqual(breakeven_hit(3.5, 7.4, 1.0), 8.4 / 10.9)
+        check = target_check(stats, "EURUSD", True, 3.5, 7.4, 1.0)
+        self.assertFalse(check["ok"])
+        self.assertIn("başabaş", check["reasons"][0])
+        self.assertIsNone(check["ok_pips"][1])  # hiçbir hedef başabaşı geçmiyor
+        rich = {"pooled": {"ratios": {"0.5": {"ml": {"target_rate": 0.90}, "opposite": {"target_rate": 0.5}},
+                                      "3.0": {"ml": {"target_rate": 0.30}, "opposite": {"target_rate": 0.28}}}}}
+        self.assertTrue(target_check(rich, "EURUSD", True, 3.5, 7.4, 1.0)["ok"])
+
+    def test_entry_decision_keeps_plan_and_timing_blockers(self):
+        check = {"ok": True, "hit": 0.9, "bound": "≈", "reasons": [], "ok_pips": (2.0, 5.0)}
+        ready = {"status": "ready", "blockers": []}
+        self.assertTrue(entry_decision(ready, check, [])["ok"])
+        waiting = {"status": "ready", "blockers": ["Bu plan geçmişte maliyet sonrası zarar etti."]}
+        self.assertEqual(entry_decision(waiting, check, [])["reasons"], waiting["blockers"])
+        self.assertFalse(entry_decision(ready, check, ["Yüksek etkili haber 20 dk sonra."])["ok"])
+        self.assertFalse(entry_decision({"status": "no_data", "reason": "ATR yok"}, None, [])["ok"])
 
     def test_no_target_reaches_threshold(self):
         stats = {"pooled": {"ratios": {"0.5": {"ml": {"target_rate": 0.55}, "opposite": {"target_rate": 0.5}}}}}

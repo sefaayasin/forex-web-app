@@ -73,3 +73,4 @@ research/indicator_zoo/*/trades.csv.gz
 research/gold_daily/trades.csv.gz
 research/arda_ideas/cache/
 research/arda_ideas/rows/
+research/bot_backtest/cache/

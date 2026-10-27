@@ -108,7 +108,8 @@ class ForexBotTests(unittest.TestCase):
     def test_expensive_moments_block_entry(self):
         import pandas as pd
         monday = pd.Timestamp("2026-10-26 12:00", tz="UTC")  # Londra-New York, sakin saat
-        item = {"name": "EURUSD", "spread_pips": 0.1, "median_spread_pips": 0.0}
+        item = {"name": "EURUSD", "spread_pips": 0.1, "median_spread_pips": 0.0, "cost_pips": 0.7,
+                "plan": {"stop_pips": 10.0}}
         events = pd.DataFrame({"time": [monday + pd.Timedelta(minutes=30)], "currency": ["USD"],
                                "event": ["CPI m/m"], "impact": [3]})
         no_news = events.iloc[0:0]
@@ -118,20 +119,27 @@ class ForexBotTests(unittest.TestCase):
         self.assertIn("takvimi", forex_bot.entry_blockers(item, monday, None)[0])
         rollover = pd.Timestamp("2026-10-26 21:10", tz="UTC")  # New York 17:10
         self.assertIn("Gün sonu", " ".join(forex_bot.entry_blockers(item, rollover, no_news)))
+        pricey = {**item, "cost_pips": 2.0, "plan": {"stop_pips": 5.0}}  # maliyet riskin %29'u
+        self.assertIn("Maliyet", " ".join(forex_bot.entry_blockers(pricey, monday, no_news)))
 
     def test_decision_uses_karar_rule(self):
         stats = {"pairs": {"EURUSD": {"ratios": {
-            "0.5": {"ml": {"target_rate": 0.67}, "opposite": {"target_rate": 0.63}},
-            "1.0": {"ml": {"target_rate": 0.51}, "opposite": {"target_rate": 0.49}},
+            "0.5": {"ml": {"target_rate": 0.67, "net_r": -0.1}, "opposite": {"target_rate": 0.63, "net_r": -0.12}},
+            "1.0": {"ml": {"target_rate": 0.51, "net_r": -0.1}, "opposite": {"target_rate": 0.49, "net_r": -0.12}},
         }}}}
         item = {"name": "EURUSD", "price": 1.1, "pip": 0.0001, "atr": 0.0005, "probability_up": 0.45,
                 "pip_value": 10.0, "cost_pips": 0.7}
         out = forex_bot.decide(dict(item), 30.0, 100.0, 100000.0, stats)
         self.assertEqual(out["plan"]["side"], "SHORT")
-        self.assertTrue(out["check"]["ok"])
-        self.assertFalse(forex_bot.decide(dict(item), 200.0, 100.0, 100000.0, stats)["check"]["ok"])
+        # %67 ulaşma %60'ı geçiyor ama 30/100'de başabaş ≈ %76 ve ölçülen sonuç eksi: Karar kutusu gibi BEKLE
+        self.assertFalse(out["check"]["ok"])
+        self.assertTrue(any("başabaş" in r for r in out["check"]["reasons"]))
+        self.assertTrue(any("zarar etti" in r or "test edilmedi" in r for r in out["check"]["reasons"]))
+        # --deney: 27 Ekim öncesi kural (ulaşma ≥ %60, maliyet şartı)
+        self.assertTrue(forex_bot.decide(dict(item), 30.0, 100.0, 100000.0, stats, experiment=True)["check"]["ok"])
+        self.assertFalse(forex_bot.decide(dict(item), 200.0, 100.0, 100000.0, stats, experiment=True)["check"]["ok"])
         # 500 $ hesap, %1 risk: aynı oran, küçük lot
-        small = forex_bot.decide(dict(item), 1.5, 5.0, 500.0, stats)
+        small = forex_bot.decide(dict(item), 1.5, 5.0, 500.0, stats, experiment=True)
         self.assertTrue(small["check"]["ok"])
         self.assertEqual(small["plan"]["lot"], 0.06)
 
@@ -150,6 +158,40 @@ class ForexBotTests(unittest.TestCase):
             (None, "x", 40.0),      # ilk sürüm, 98 bin $ ile boyutlanmış: sayılmaz
             (500.0, "x", -5.0), (500.0, "x", 1.5), (500.0, None, 99.0)])  # sonuncusu açık
         self.assertAlmostEqual(forex_bot.virtual_balance(conn, 500.0), 496.5)
+
+    def feed_basket(self, watch, values, tickets=frozenset({1, 2, 3}), start_minute=0):
+        """Her 30 sn'de bir sepet değeri verir; ilk çıkış sebebini (dakika, sebep) döner."""
+        start = forex_bot.pd.Timestamp("2026-10-26 19:00", tz="UTC")
+        for i, value in enumerate(values):
+            minute = start_minute + i / 2
+            why = watch.update(tickets, start + forex_bot.pd.Timedelta(minutes=minute), value, 15.0)
+            if why:
+                return minute, why
+        return None
+
+    def test_basket_waits_until_armed(self):
+        self.assertIsNone(self.feed_basket(forex_bot.BasketWatch(), [14.0] * 60 + [9.0] * 20))
+
+    def test_basket_exits_after_giving_back_part_of_the_peak(self):
+        minute, why = self.feed_basket(forex_bot.BasketWatch(), [10, 14, 16, 15, 13, 11, 12])
+        self.assertEqual(minute, 2.5)
+        self.assertIn("geri verdi", why)
+
+    def test_basket_exits_when_stalled_and_turning_down(self):
+        rising = [15 + i * 0.1 for i in range(10)]  # tepe 15,9 $ (4,5. dk)
+        drifting = [15.5 + (0.2 if i % 2 else 0) for i in range(30)]  # 15 dk yatay
+        sliding = [15.5 - i * 0.05 for i in range(1, 20)]  # sonra yavaş düşüş
+        minute, why = self.feed_basket(forex_bot.BasketWatch(), rising + drifting + sliding)
+        self.assertGreater(minute, 4.5 + forex_bot.BASKET_STALL_MINUTES)
+        self.assertIn("düşüyor", why)
+
+    def test_basket_keeps_rising_basket_open(self):
+        self.assertIsNone(self.feed_basket(forex_bot.BasketWatch(), [15 + i * 0.2 for i in range(120)]))
+
+    def test_basket_restarts_when_positions_change(self):
+        watch = forex_bot.BasketWatch()
+        self.assertIsNone(self.feed_basket(watch, [16, 17]))
+        self.assertIsNone(self.feed_basket(watch, [5, 6], tickets=frozenset({1, 2}), start_minute=1))
 
 
 if __name__ == "__main__":

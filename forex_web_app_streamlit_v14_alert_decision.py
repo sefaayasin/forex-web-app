@@ -78,7 +78,7 @@ from forex_pivots import LEVEL_NAMES, levels_for_day
 from forex_overall import overall_reading, view_sides_now
 from forex_mt5 import rates_utc as mt5_rates_utc, server_offset as mt5_server_offset
 from forex_mt5 import server_time_to_utc as mt5_time_to_utc
-from forex_decision import HOLD_HOURS, MIN_HIT, final_call, pivot_side, target_check
+from forex_decision import HOLD_HOURS, MIN_HIT, entry_decision, final_call, pivot_side, target_check
 from forex_trade_plan import build_trade_plan, load_plan_stats, trading_blockers
 from forex_indicators import (
     add_indicators,
@@ -114,6 +114,7 @@ from forex_lot_calculator import (
 )
 from forex_ml_live import (
     LIVE_AGREEMENT_MIN,
+    LIVE_MAX_AGE,
     VOLATILITY_CONFIDENCE_THRESHOLD,
     VOLATILITY_LEVEL_LABELS,
     build_research_prediction,
@@ -6420,14 +6421,17 @@ def decision_atr(symbol: str) -> Optional[float]:
 def decision_outcome(symbol: str, price: Optional[float], atr: Optional[float], probability_up: Optional[float],
                      side: Optional[str], target_usd: float, loss_usd: float, account_usd: float,
                      pip_value_per_lot: float, cost_pips: float) -> tuple[dict, Optional[dict]]:
-    """Karar kutusu ve parite listesinin ortak hesabı: plan (ML varsa ML yönü) ve hedef kontrolü."""
+    """Karar kutusu, parite listesi ve botun ortak kararı (entry_decision): plan (ML varsa ML yönü), hedef
+    kontrolü ve planın BEKLE nedenleri. Zamanlama engellerini kart ayrıca ekler."""
     pair = symbol.replace("=X", "").upper()
+    stats = cached_plan_stats()
     plan = build_trade_plan(pair, price, get_pip_size(symbol), atr, probability_up, float(target_usd), float(loss_usd),
-                            float(account_usd), float(pip_value_per_lot), float(cost_pips), {}, [], side=side)
+                            float(account_usd), float(pip_value_per_lot), float(cost_pips), stats, [], side=side)
     if plan["status"] != "ready":
         return plan, None
-    return plan, target_check(cached_plan_stats(), pair, plan["side_probability"] is not None,
-                              plan["target_pips"], plan["stop_pips"], float(cost_pips))
+    check = target_check(stats, pair, plan["side_probability"] is not None,
+                         plan["target_pips"], plan["stop_pips"], float(cost_pips))
+    return plan, entry_decision(plan, check, [])
 
 
 def decision_costs(symbol: str, price: Optional[float]) -> tuple[float, float]:
@@ -6459,7 +6463,8 @@ def collect_decision_inputs(symbols: list[str]) -> None:
             continue
         quote = fetch_mt5_quote(sym) if provider == "MetaTrader 5" else None
         price = float(quote["mid"]) if quote else fetch_last_price(sym)
-        prediction = build_research_prediction(base, bars=fetch_research_bars(sym), range_ratio=research_range_ratio(base))
+        prediction = build_research_prediction(base, bars=fetch_research_bars(sym), range_ratio=research_range_ratio(base),
+                                               max_age=LIVE_MAX_AGE)
         probability_up = float(prediction["probability_up"]) if prediction.get("status") == "ready" else None
         if price is None or probability_up is None:
             missing.append(base)
@@ -6533,9 +6538,11 @@ def render_summary_decision(
     news_minutes, news_title = pair_news(symbol, news_events, ahead_hours=1, after_minutes=15)
     now = pd.Timestamp.now(tz="UTC")
     timing = trading_blockers(now, news_minutes, news_title, share)
+    if check is not None:  # haber, gün sonu spread saati ve pahalı maliyet de girişi engeller
+        check = entry_decision(plan, check, timing)
 
     views = " · ".join(f"{escape(name)}: <b>{escape(side)}</b> {mark}" for name, side, mark in call["views"])
-    warnings = list(dict.fromkeys(timing + plan.get("warnings", []) + reading["warnings"]))
+    warnings = list(dict.fromkeys((timing if check is None else []) + plan.get("warnings", []) + reading["warnings"]))
     lines = "".join(f"<div class='opportunity-line'>⚠️ {escape(w)}</div>" for w in warnings)
     css, title, kicker_extra = "opportunity-neutral", "BEKLE", ""
     if plan["status"] != "ready":
@@ -6572,8 +6579,8 @@ def render_summary_decision(
                               f"{max((low - float(cost_pips)) * usd_per_pip, 1):.0f} $ – "
                               f"{(high - float(cost_pips)) * usd_per_pip:.0f} $.")
             else:
-                suggestion = (f"Bu stopla %{MIN_HIT * 100:.0f} ulaşma oranına çıkan hedef yok; "
-                              "stop zararını büyütmeyi dene.")
+                suggestion = (f"Bu stopla hem %{MIN_HIT * 100:.0f} ulaşmayı hem başabaş oranını geçen hedef yok; "
+                              "ölçülen planların hepsi maliyet sonrası eksi.")
             trade = ("".join(f"<div class='opportunity-line'>⛔ {escape(r)}</div>" for r in check["reasons"])
                      + odds + f"<div class='opportunity-line'><b>Öneri:</b> {escape(suggestion)}</div>")
     st.markdown(
@@ -6588,8 +6595,10 @@ def render_summary_decision(
         unsafe_allow_html=True,
     )
     st.caption(f"Yön sırası: ML 4 saatlik yön → teknik çoğunluk → pivot P. Stop 15M ATR × 1,5; hedef senin dolar "
-               f"hedefinden. GİR için hedefin stoptan önce gelme oranı en az %{MIN_HIT * 100:.0f} ve maliyet hedefin "
-               "yarısından az olmalı. Uyarılar girişi engellemez. Planlanan stop zararı gap, kayma ve değişen "
+               f"hedefinden. GİR için hedefin stoptan önce gelme oranı en az %{MIN_HIT * 100:.0f} ve başabaş oranının "
+               "üstünde, maliyet hedefin yarısından az, işlem planının ölçülmüş sonucu artı ve doğrulanmış olmalı; "
+               "haber, gün sonu spread saati ve pahalı maliyet de girişi engeller. Bot aynı kararı kullanır. "
+               "Planlanan stop zararı gap, kayma ve değişen "
                "masraflarla aşılabilir.")
 
 
@@ -8087,7 +8096,8 @@ research_bars = (
     else pd.DataFrame()
 )
 research_range = research_range_ratio(research_symbol)
-research_prediction = build_research_prediction(research_symbol, bars=research_bars, range_ratio=research_range)
+research_prediction = build_research_prediction(research_symbol, bars=research_bars, range_ratio=research_range,
+                                                max_age=LIVE_MAX_AGE)
 volatility_prediction = build_research_prediction(research_symbol, "high_volatility", bars=research_bars, range_ratio=research_range)
 simple_decision = apply_operational_safety_filters(
     decision=simple_decision,

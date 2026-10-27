@@ -1,0 +1,37 @@
+{
+ "written": "2026-10-26, sonuçlardan önce",
+ "question": "forex_bot.py'nin kuralları 2023-01-01 – 2026-09-10 geçmişinde 500 $ hesapla ne yapardı; hangi çıkış kuralı katkı veriyor?",
+ "period": [
+  "2023-01-01",
+  "2026-09-10"
+ ],
+ "why_period": "ML yön modeli 2023 öncesiyle eğitildi; bu dönem modelin görmediği veri.",
+ "pairs": "data/ml/tournament altındaki yön modeli olan 28 parite",
+ "data": "Dukascopy 5M mumları (giriş ve yönetim), 15M ATR14, 15M'den üretilmiş saatlik mumlar (ML), ForexFactory yüksek etkili haber saatleri, saat başı ölçülmüş spread profili",
+ "rules": {
+  "entry": "Her 5M açılışında; ML yönü (son kapanmış saat), stop 1,5 x ATR14 (son kapanmış 15M), lot = risk / ((stop + maliyet) x pip değeri), 0,01'e aşağı yuvarlanır; hedef = 0,3 x risk; trade_plan_stats ile hedefin stoptan önce gelme oranı >= %60 ve maliyet / hedef <= 0,5",
+  "filters": "New York 16:45-18:00 ve hafta sonu kapanışı girilmez; paritenin para birimlerinde yüksek etkili haberden 60 dk önce - 15 dk sonra girilmez; para biriminde aynı yönde en fazla 1 pozisyon; en fazla 3 pozisyon; teminat (1:200) <= bakiyenin yarısı; parite başına saatlik sinyalde tek giriş; adaylar ulaşma oranına göre sıralanır",
+  "sizing": "500 $ başlangıç, %2,5 risk, kapanan sonuçlar bakiyeye eklenir (bileşik)",
+  "management": "hedefte stop giriş + maliyete, sonra en iyi fiyatın 1 ATR (girişteki) gerisinden takip; takip yokken: stop mesafesinin yarısında çıkış, saat başında ML yönü dönerse çıkış, 24 saatte çıkış; takas: pozisyon/teminat doluyken en az 4 saat açık, takipsiz ve maliyet sonrası zararsız pozisyonlardan hedefe en az ilerlemiş olan kapatılır",
+  "fills": "giriş ve açılışta tetiklenen çıkışlar 5M açılışından; mum içi seviyeler tam fiyatından; aynı mumda kötü ve iyi taraf birlikte varsa önce kötü taraf (takip başladığı mumda geri dönerse başabaş)",
+  "cost": "girişin New York saatindeki ölçülmüş spread + 0,7 pip komisyon, her işlemden bir kez"
+ },
+ "variants": [
+  "Bot (şu anki kurallar)",
+  "Sabit hedef (Karar kartı planı: hedefte kapat, tam stop, 24 saat)",
+  "Bot, yarım stop yok",
+  "Bot, ML dönüş çıkışı yok",
+  "Bot, takas yok",
+  "Bot, ML'nin ters yönü (kontrol)",
+  "Bot, +0,5 pip kayma (stres)"
+ ],
+ "reported": "son bakiye, getiri, en büyük düşüş (günlük gerçekleşmiş bakiye), işlem sayısı, kazanma oranı, ortalama R, takibe geçme oranı, en uzun kayıp serisi, kapanış sebebine ve yıla göre sonuç",
+ "decision_rule": "Bot varyantı maliyet ve +0,5 pip stres sonrası artıda değilse ve ML yönü ters yönden belirgin iyi değilse, bunu demo sonuçlarından önce kullanıcıya açıkça söyle. Parametre araması yapılmaz; sonuçlara göre kural değiştirilecekse ayrı ve önceden yazılmış bir testle sınanır.",
+ "limitations": [
+  "Anlık spread sıçraması, kayma (stres hariç) ve broker reddi yok",
+  "Bot dakikada bir bakar; test 5M adım",
+  "trade_plan_stats aynı dönemden ölçüldü (giriş eşiği için hafif aynı-dönem bilgisi; oranlar 0,3 R'de neredeyse hep eşiğin üstünde)",
+  "Pip değeri ve teminat USD paritelerinin 5M açılışlarından",
+  "Gerçekleşmiş bakiye günlük örneklenir; açık pozisyonların anlık zararı düşüşe katılmaz"
+ ]
+}

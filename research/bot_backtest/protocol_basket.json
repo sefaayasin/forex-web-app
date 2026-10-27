@@ -1,0 +1,20 @@
+{
+ "written": "2026-10-26, sepet sonuçlarından önce (ana protokol ve sonuçları zaten yayımlanmıştı)",
+ "question": "Kullanıcının fikri: açık pozisyonların toplam net kârı +15 $ (500 $'ın %3'ü) olunca hepsini kapat, yeni işlemlere geç. Bu kural kazandırır mı?",
+ "rule": "Toplam net kâr = Σ (yön x fiyat farkı pip - maliyet pip) x pip değeri x lot. Toplam >= sanal bakiyenin %3'ü (sabit risk görünümünde 15 $) olunca bütün açık pozisyonlar kapanır. Girişler ve filtreler ana protokolle aynı.",
+ "variants": {
+  "B1": "toplam +%3 + botun bütün kuralları (takip, yarım stop, ML çıkışı, 24 saat, takas)",
+  "B2": "toplam +%3 + işlem başına yalnız tam stop (hedef/takip/yarım stop/ML çıkışı/takas yok; 24 saat kalır)",
+  "B3": "toplam +%3 + işlem başına yarım stop (hedef/takip/ML çıkışı/takas yok; 24 saat kalır)",
+  "B4": "B2, ML'nin ters yönü (kontrol)"
+ },
+ "fills": {
+  "temkinli": "toplam her 5M mum açılışında açılış fiyatlarıyla kontrol edilir ve oradan kapanır",
+  "iyimser": "ayrıca mum içinde her pozisyonun en iyi fiyatı aynı anda görülmüş sayılır ve o fiyatlardan kapanır (üst sınır)"
+ },
+ "views": [
+  "bileşik (500 $, %2,5 risk, hedef bakiyenin %3'ü)",
+  "sabit risk (12,5 $ risk, 15 $ toplam hedef)"
+ ],
+ "decision": "İyimser sınırda bile sabit risk görünümünde işlem başına ortalama <= 0 ise kural kazandırmıyor denir. Eşik (15 $) ve varyantlar değiştirilmez."
+}

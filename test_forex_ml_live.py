@@ -53,6 +53,16 @@ class ForexMlLiveTests(unittest.TestCase):
     def test_alignment_is_none_when_model_not_ready(self):
         self.assertIsNone(research_signal_alignment({"status": "unavailable"}, "LONG"))
 
+    def test_stale_bars_are_not_scored_when_max_age_given(self):
+        bars = synthetic_hourly_bars()
+        last_close = bars.index[-1] + pd.Timedelta(hours=1)
+        fresh = build_research_prediction("EURUSD", bars=bars, now=last_close + pd.Timedelta(minutes=30),
+                                          max_age=pd.Timedelta(hours=2))
+        self.assertEqual(fresh["status"], "ready")
+        stale = build_research_prediction("EURUSD", bars=bars, now=last_close + pd.Timedelta(days=30),
+                                          max_age=pd.Timedelta(hours=2))
+        self.assertEqual(stale["status"], "stale")
+
     def test_unclosed_last_bar_is_not_scored(self):
         bars = synthetic_hourly_bars()
         last_open = bars.index[-1]

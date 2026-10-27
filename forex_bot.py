@@ -9,7 +9,9 @@ yarısını geçmez; --leverage gerçek hesabın kaldıracıyla teminatı yenide
 Giriş (Özet'teki Karar kutusuyla aynı hesap, forex_trade_plan + forex_decision):
 - Yön: ML 4 saatlik yön modeli (son kapanmış saatlik mum; yön yalnız saat başında değişebilir).
 - Stop: kapanmış 15M mumlarında ATR14 × 1,5; lot bu stop ve zarar bütçesinden. Hedef: dolar hedefinden.
-- Şart: hedefin stoptan önce gelme oranı ≥ %60 (2023–2026 ölçümü) ve maliyet hedefin yarısından az.
+- Şart (27 Ekim 2026'dan beri Karar kutusuyla tek karar, forex_decision.entry_decision): hedefin stoptan önce
+  gelme oranı ≥ %60 ve başabaş oranının üstünde (2023–2026 ölçümü), maliyet hedefin yarısından az, işlem
+  planının BEKLE nedenleri yok (maliyet sonrası ölçülmüş artı ve doğrulama) ve ML'nin son saatlik mumu güncel.
 - Her dakika tarar; parite başına tek pozisyon, en fazla --max-positions açık pozisyon (önce en yüksek oran);
   aynı paritede aynı saatlik sinyalle ikinci kez girmez.
 
@@ -24,12 +26,17 @@ Yönetim (kullanıcı seçimi, 26 Ekim 2026; geçmişte ölçülmedi, günlük h
 - Takas: pozisyon sayısı veya teminat dolu ve yeni GİR adayı bekliyorsa, hedefe gelmemiş, en az --stale-hours
   (varsayılan 4: ML yön modelinin ufku) açık ve şu an komisyon dahil zararsız pozisyonlardan hedefe en az
   ilerlemiş olanı kapatıp yenisini açar. Zarardaki pozisyon takas edilmez.
+- Sepet (kullanıcı isteği, 27 Ekim 2026; geçmişte ölçülmedi): açık pozisyonların komisyon dahil toplam kârı
+  stop zararının --basket-r katını (500 $'da 15 $) gördükten sonra her 5 sn izlenir. Tepeden %30 geri verirse
+  ya da 10 dk yeni tepe yapmayıp son 5 dk aşağı eğimliyse hepsi kapanır. Benzer "toplam +15 $'da kapat"
+  kuralı 26 Ekim'de 2023–2026'da zarar etti (research/bot_backtest/REPORT.md).
 
 Yalnız DEMO hesapta çalışır; gerçek hesaba bağlıysa emir göndermeden çıkar. Emir için MT5'te
 "Algo Trading" açık olmalıdır. Kararlar ve işlemler data/bot_journal.db'ye yazılır.
 
   python forex_bot.py --dry-run --once   # emir göndermeden tek tarama
   python forex_bot.py                    # sürekli çalış (Ctrl+C ile dur)
+  python forex_bot.py --deney            # ileri test: eski giriş şartıyla (ölçümler eksi olsa da girer)
   python forex_bot.py --report           # sonuçlar
 """
 from __future__ import annotations
@@ -47,8 +54,8 @@ from typing import Optional
 import pandas as pd
 
 from forex_config import SYMBOL_LIST, get_pip_size
-from forex_costs import ECN_COMMISSION_PIPS
-from forex_decision import HOLD_HOURS, target_check
+from forex_costs import ECN_COMMISSION_PIPS, cost_share_of_risk
+from forex_decision import HOLD_HOURS, entry_decision, target_check
 from forex_indicators import add_indicators
 from forex_analysis import latest_valid_row
 from forex_ml_live import build_research_prediction, has_research_model
@@ -74,6 +81,10 @@ NEWS_REFRESH_SECONDS = 600
 NEWS_MAX_AGE_HOURS = 24  # takvim bu kadar süredir alınamıyorsa haber durumu bilinmiyor sayılır
 HIGH_IMPACT = 3
 HEARTBEAT_SECONDS = 60
+ML_MAX_AGE = pd.Timedelta(hours=2)  # son kapanmış saatlik mum bundan eskiyse ML tahmini kullanılmaz
+BASKET_GIVEBACK = 0.3  # sepet tepeden bu kadarını geri verirse hepsini kapat
+BASKET_STALL_MINUTES = 10  # bu kadar dakika yeni tepe yoksa "dolanıyor"
+BASKET_SLOPE_MINUTES = 5  # "düşecek gibi": son bu kadar dakikanın eğimi aşağı
 
 
 def log(text: str) -> None:
@@ -173,7 +184,7 @@ def own_positions(mt5) -> list:
 def ml_probability(mt5, name: str, now: pd.Timestamp) -> Optional[float]:
     end = now.to_pydatetime()
     hourly = rates_utc(mt5, name, mt5.TIMEFRAME_H1, end - timedelta(days=150), end)
-    prediction = build_research_prediction(name, bars=hourly, now=now) if not hourly.empty else {}
+    prediction = build_research_prediction(name, bars=hourly, now=now, max_age=ML_MAX_AGE) if not hourly.empty else {}
     return float(prediction["probability_up"]) if prediction.get("status") == "ready" else None
 
 
@@ -222,16 +233,23 @@ def budget(balance: float, args) -> tuple[float, float]:
     return float(target), float(loss)
 
 
-def decide(item: dict, target_usd: float, loss_usd: float, account_usd: float, stats: dict) -> dict:
-    """Karar kutusunun hesabı; ayrıca erken çıkışla fiilen yarıya inen stopa göre oran (yalnız kayıt için)."""
+def decide(item: dict, target_usd: float, loss_usd: float, account_usd: float, stats: dict,
+           experiment: bool = False) -> dict:
+    """Karar kutusunun hesabı (entry_decision); ayrıca erken çıkışla yarıya inen stopa göre oran (yalnız kayıt).
+
+    experiment: --deney kipi, 27 Ekim öncesi kural (ulaşma ≥ %60 ve maliyet şartı); başabaş ve planın
+    ölçülmüş-sonuç engelleri atlanır. Ölçümlerin hepsi maliyet sonrası eksi olduğundan yalnız ileri test içindir.
+    """
     pair = item["name"].upper()
     plan = build_trade_plan(pair, item["price"], item["pip"], item["atr"], item["probability_up"],
-                            target_usd, loss_usd, account_usd, item["pip_value"], item["cost_pips"], {}, [])
+                            target_usd, loss_usd, account_usd, item["pip_value"], item["cost_pips"], stats, [])
     item["plan"] = plan
     if plan["status"] != "ready":
         item["check"] = {"ok": False, "reasons": [plan.get("reason", "Plan hesaplanamadı.")]}
         return item
-    item["check"] = target_check(stats, pair, True, plan["target_pips"], plan["stop_pips"], item["cost_pips"])
+    check = target_check(stats, pair, True, plan["target_pips"], plan["stop_pips"], item["cost_pips"],
+                         require_breakeven=not experiment)
+    item["check"] = check if experiment else entry_decision(plan, check, [])
     item["check_half"] = target_check(stats, pair, True, plan["target_pips"], plan["stop_pips"] * EARLY_EXIT_SHARE,
                                       item["cost_pips"])
     return item
@@ -304,7 +322,8 @@ def entry_blockers(item: dict, now: pd.Timestamp, events: Optional[pd.DataFrame]
         minutes, title = None, ""
     else:
         minutes, title = pair_news(events, item["name"].upper(), now)
-    return blockers + trading_blockers(now, minutes, title, None)
+    share = cost_share_of_risk(item["cost_pips"], item["plan"]["stop_pips"])
+    return blockers + trading_blockers(now, minutes, title, share)
 
 
 def currency_exposure(positions: list[tuple[str, str]]) -> dict[str, int]:
@@ -484,9 +503,61 @@ def adopt_legacy(mt5, conn, position, row) -> Optional[sqlite3.Row]:
     return conn.execute("SELECT * FROM trades WHERE ticket=?", (position.ticket,)).fetchone()
 
 
-def manage(mt5, conn, check_ml: bool) -> None:
+class BasketWatch:
+    """Açık pozisyonların toplam net kârı (komisyon dahil); pozisyon kümesi değişince baştan başlar.
+
+    Toplam arm_usd'yi gördükten sonra çıkış sebebi döner: tepeden BASKET_GIVEBACK kadarı geri verildiyse,
+    ya da BASKET_STALL_MINUTES boyunca yeni tepe yokken son BASKET_SLOPE_MINUTES'ın eğimi aşağıysa.
+    """
+
+    def __init__(self):
+        self.reset(frozenset())
+
+    def reset(self, tickets: frozenset) -> None:
+        self.tickets, self.peak, self.peak_at, self.recent = tickets, -math.inf, None, []
+
+    def update(self, tickets: frozenset, now: pd.Timestamp, net: float, arm_usd: float) -> Optional[str]:
+        if tickets != self.tickets:
+            self.reset(tickets)
+        if net > self.peak:
+            self.peak, self.peak_at = net, now
+        window = pd.Timedelta(minutes=BASKET_SLOPE_MINUTES)
+        self.recent = [(t, v) for t, v in self.recent if now - t <= window] + [(now, net)]
+        if not tickets or arm_usd <= 0 or self.peak < arm_usd:
+            return None
+        if net <= self.peak * (1 - BASKET_GIVEBACK):
+            return f"tepe {self.peak:+.2f} $, şimdi {net:+.2f} $ (%{BASKET_GIVEBACK * 100:.0f} geri verdi)"
+        if now - self.peak_at < pd.Timedelta(minutes=BASKET_STALL_MINUTES) or now - self.recent[0][0] < window * 0.6:
+            return None
+        minutes = pd.Series([(t - self.recent[0][0]).total_seconds() / 60 for t, _ in self.recent])
+        values = pd.Series([v for _, v in self.recent])
+        slope = minutes.cov(values) / minutes.var()  # $/dk, en küçük kareler doğrusu
+        if slope < 0:
+            return (f"tepe {self.peak:+.2f} $ {BASKET_STALL_MINUTES} dk aşılmadı, şimdi {net:+.2f} $ ve düşüyor "
+                    f"({slope:+.2f} $/dk)")
+        return None
+
+
+def basket_check(mt5, conn, watch: BasketWatch, arm_usd: float, now: pd.Timestamp) -> bool:
+    """Sepet kuralı çıkış diyorsa bütün pozisyonları kapatır."""
+    positions = own_positions(mt5)
+    net = sum(net_if_closed(mt5, p) for p in positions)
+    why = watch.update(frozenset(p.ticket for p in positions), now, net, arm_usd)
+    if why is None:
+        return False
+    log(f"◎ Sepet kârı alınıyor: {why}; {len(positions)} pozisyon kapatılıyor.")
+    for position in positions:
+        close_position(mt5, conn, position, "SEPET KÂR")
+    sync_closed(mt5, conn)
+    watch.reset(frozenset())
+    return True
+
+
+def manage(mt5, conn, check_ml: bool, watch: Optional[BasketWatch] = None, arm_usd: float = 0.0) -> None:
     """Açık pozisyonları yönetir ve kapananların sonucunu günlüğe yazar."""
     now = pd.Timestamp.now(tz="UTC")
+    if watch is not None and basket_check(mt5, conn, watch, arm_usd, now):
+        return
     for position in own_positions(mt5):
         row = conn.execute("SELECT * FROM trades WHERE ticket=?", (position.ticket,)).fetchone()
         if row is None:
@@ -566,7 +637,7 @@ def scan(mt5, conn, args, calendar: NewsCalendar, quiet: bool = False) -> None:
         try:
             item = pair_inputs(mt5, symbol)
             if "name" in item:
-                item = decide(item, target_usd, loss_usd, balance, stats)
+                item = decide(item, target_usd, loss_usd, balance, stats, args.experiment)
                 item.update(target_usd=target_usd, loss_usd=loss_usd)
         except Exception as exc:  # tek paritenin hatası taramayı durdurmasın
             item = {"reasons": [f"Hata: {exc}"]}
@@ -660,6 +731,10 @@ def main() -> None:
                         help="Bir para biriminde aynı yönde en fazla bu kadar pozisyon")
     parser.add_argument("--stale-hours", type=float, default=4.0,
                         help="Takas: bu kadar saatte hedefe gelmemiş zararsız pozisyon yeni fırsata bırakılır")
+    parser.add_argument("--basket-r", type=float, default=1.2,
+                        help="Sepet kuralı: toplam net kâr stop zararının bu katını görünce izlemeye başla (0: kapalı)")
+    parser.add_argument("--deney", dest="experiment", action="store_true",
+                        help="İleri test: Karar'ın başabaş ve ölçülmüş-sonuç engellerini atla (27 Ekim öncesi kural)")
     parser.add_argument("--dry-run", action="store_true", help="Emir gönderme, yalnız kararları yaz")
     parser.add_argument("--once", action="store_true", help="Tek tarama yap ve çık")
     parser.add_argument("--report", action="store_true", help="Günlükteki sonuçları göster")
@@ -680,9 +755,12 @@ def main() -> None:
     log(f"Bot başladı · {account.server} #{account.login} (DEMO) · sanal bakiye {balance:,.2f} $ · "
         f"stop zararı {loss_usd:.2f} $ / takip başlangıcı {target_usd:.2f} $ · kaldıraç 1:"
         f"{args.leverage or account.leverage:.0f} · en fazla {args.max_positions} pozisyon"
+        + (f" · sepet kârı {args.basket_r * loss_usd:.2f} $'dan sonra izlenir" if args.basket_r > 0 else "")
+        + (" · DENEY: başabaş/ölçüm engelleri atlanıyor" if args.experiment else "")
         + (" · DENEME (emir yok)" if args.dry_run else ""))
     last_scan, last_ml_hour = None, pd.Timestamp.now(tz="UTC").floor("h")
     calendar = NewsCalendar()
+    watch = BasketWatch()
     try:
         while True:
             now = pd.Timestamp.now(tz="UTC")
@@ -690,7 +768,8 @@ def main() -> None:
             check_ml = hour > last_ml_hour and (now - hour).total_seconds() >= ML_CHECK_DELAY_SECONDS
             if not args.dry_run:
                 beat(conn, os.getpid())
-                manage(mt5, conn, check_ml)
+                arm_usd = args.basket_r * budget(virtual_balance(conn, args.balance), args)[1]
+                manage(mt5, conn, check_ml, watch, arm_usd)
             if check_ml:
                 last_ml_hour = hour
             if last_scan is None or (now - last_scan).total_seconds() >= SCAN_SECONDS:

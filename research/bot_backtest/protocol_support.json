@@ -1,0 +1,23 @@
+{
+ "written": "2026-10-27, sonuçlardan önce",
+ "question": "Kullanıcının isteği: ML yön girişine destek olarak 15M ve 5M teknik skorları ile oynaklık tahmini eklensin. Bu destekler botun girişini maliyetten sonra kârlı yapar mı?",
+ "base": "Canlı botun bütün kuralları ve 27 Ekim sepet takibi (arm %3, geri %30); sabit risk görünümü (12,5 $). Girişler, filtreler, çıkışlar research_bot_backtest.py ile aynı.",
+ "support": {
+  "15M": "uygulamanın canlı teknik skoru (forex_analysis.bias_score_frame) son kapanmış 15M mumunda; giriş yönünde >= 25 (SIDE_THRESHOLD) ise destekliyor",
+  "5M": "aynı skor son kapanmış 5M mumunda; giriş yönünde >= 25",
+  "vol_high": "4 saatlik oynaklık modeli (high_volatility_4h, son kapanmış saatlik mum) olasılığı >= 0,5 (modelin dondurulmuş eşiği)",
+  "vol_low": "aynı olasılık < 0,5"
+ },
+ "variants": {
+  "S0": "destek yok (karşılaştırma)",
+  "S1": "ML + 15M",
+  "S2": "ML + 15M + 5M",
+  "S3": "ML + oynaklık yüksek",
+  "S4": "ML + oynaklık düşük",
+  "S5": "ML + 15M + 5M + oynaklık yüksek",
+  "S6": "ML + 15M + 5M + oynaklık düşük"
+ },
+ "controls": "Her varyant ML'nin ters yönüyle de çalışır; destek şartları giriş yönüne göre uygulanır (ör. S2 tersi: 15M ve 5M girişi destekliyor, ML karşı).",
+ "split": {"first": "2023-01-01 – 2024-12-31 kapanan işlemler", "second": "2025-01-01 – 2026-09-10 kapanan işlemler"},
+ "decision": "Ayar seçimi yok. Bir varyant iki dönemin ikisinde de işlem başına ortalama > 0 R ve iki dönemde de kendi ters-yön kontrolünden yüksekse geçer, canlı bota eklenir. Geçen yoksa canlı botun giriş kuralı değiştirilmez ve sonuç bildirilir."
+}

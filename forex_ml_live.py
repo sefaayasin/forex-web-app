@@ -35,6 +35,8 @@ DIRECTION_ACCURACY_NOTE = (
 )
 # selected.json'da dondurulan güven eşiği; bundle config'inde yoksa bu kullanılır.
 VOLATILITY_CONFIDENCE_THRESHOLD = 0.65
+# Uygulamanın yön tahmini için: son kapanmış saatlik mum bundan eskiyse "stale" (Yahoo ~1 saat gecikebilir).
+LIVE_MAX_AGE = pd.Timedelta(hours=3)
 
 
 def _model_path(symbol: str, task: str) -> Path:
@@ -105,6 +107,7 @@ def build_research_prediction(
     bars: Optional[pd.DataFrame] = None,
     now: Optional[pd.Timestamp] = None,
     range_ratio: Optional[float] = None,
+    max_age: Optional[pd.Timedelta] = None,
 ) -> dict:
     """Score the latest closed hourly bar with the frozen research model.
 
@@ -115,6 +118,8 @@ def build_research_prediction(
     `probability_up` is the model's positive-class probability: price up for
     "direction", above-normal volatility for "high_volatility". Pass
     `range_ratio` (from load_live_calibration) when `bars` come from Yahoo.
+    `max_age`: if the last closed bar closed longer ago than this, return "stale"
+    instead of scoring old data (e.g. a feed that stopped updating).
     """
     base_symbol = str(symbol).replace("=X", "").upper()
     bundle = load_research_model(base_symbol, task)
@@ -135,6 +140,13 @@ def build_research_prediction(
             "status": "insufficient_data",
             "text": f"Özellik hesaplamak için en az {MIN_BARS_REQUIRED} saatlik mum gerekiyor; {len(normalized)} var.",
         }
+
+    if max_age is not None:
+        closed_at = normalized.index[-1] + pd.Timedelta(hours=1)
+        age = (pd.Timestamp.now(tz="UTC") if now is None else now) - closed_at
+        if age > max_age:
+            return {"status": "stale",
+                    "text": f"Son saatlik mum {age.total_seconds() / 3600:.0f} saat önce kapandı; veri güncel değil."}
 
     try:
         features_df, _ = build_features(normalized, base_symbol)

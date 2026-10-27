@@ -1,0 +1,17 @@
+{
+ "written": "2026-10-27, sonuçlardan önce (ana protokol ve sabit sepet B1–B4 sonuçları zaten yayımlanmıştı)",
+ "question": "Kullanıcının fikri: açık pozisyonların toplam net kârı +15 $ civarında dolanıp düşecek gibiyse hepsini kapat. Botun 27 Ekim'de eklenen sepet kuralı (BasketWatch) geçmişte kazandırır mı, ayarı değiştirilmeli mi?",
+ "rule": "Toplam net kâr = Σ (yön x fiyat farkı pip - maliyet pip) x pip değeri x lot, her 5M açılışında açılış fiyatlarıyla. Pozisyon kümesi değişince tepe baştan başlar. Tepe >= bakiyenin arm_pct'i olduktan sonra: toplam <= tepe x (1 - giveback) ise, ya da en az 2 adımdır (10 dk) yeni tepe yokken toplam bir önceki adımdakinden düşükse (5 dk eğim aşağı) bütün pozisyonlar o açılıştan kapanır. Girişler ve filtreler ana protokolle aynı.",
+ "fill": "Yalnız temkinli: kontrol ve kapanış 5M açılışlarında. Canlı bot 5 sn'de bir bakar; 5M adım tepeyi daha az görür ve daha geç çıkar. İyimser sınır yok (B4 kontrolü iyimser sınırın varsayımdan kâr ürettiğini gösterdi).",
+ "bases": {
+  "bot": "botun bütün kuralları (takip, yarım stop, ML çıkışı, 24 saat, takas) = şu anki canlı bot",
+  "stop": "işlem başına yalnız tam stop (hedef/takip/yarım stop/ML çıkışı/takas yok; 24 saat kalır) = B2'nin tabanı"
+ },
+ "grid": {"arm_pct": [0.02, 0.03, 0.05], "giveback": [0.2, 0.3, 0.5]},
+ "live_setting": "arm_pct 0.03 (1,2 x 2,5 %), giveback 0.3",
+ "controls": "seçilen her ayar ve canlı ayar, ML'nin ters yönüyle de çalıştırılır",
+ "view": "sabit risk (12,5 $ risk, arm 500 $ x arm_pct); bileşik görünüm yalnız bilgi için",
+ "split": {"choose": "2023-01-01 – 2024-12-31 kapanan işlemler", "confirm": "2025-01-01 – 2026-09-10 kapanan işlemler"},
+ "selection": "Her taban için 2023–2024 ortalama R'si en yüksek ızgara noktası seçilir.",
+ "decision": "Seçilen ayar 2025–2026'da işlem başına ortalama > 0 R VE aynı ayarın ters-yön kontrolünden yüksekse geçer; canlı bot o tabana ve ayara çekilir. Hiçbiri geçmezse canlı botun ayarı ve kuralları değiştirilmez, yalnız sonuç bildirilir."
+}

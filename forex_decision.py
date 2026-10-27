@@ -1,15 +1,16 @@
 """Özet sekmesinin "Karar" kutusu: bütün görüşleri okuyup LONG, SHORT ya da hedefe göre BEKLE der.
 
-Kullanıcı yön için BEKLE değil net bir taraf istedi; BEKLE yalnız istediği dolar hedefi bu stopla
-sıkıntılıysa çıkar (target_check: ulaşma oranı < %60 veya maliyet hedefin yarısından büyük).
+Kullanıcı yön için BEKLE değil net bir taraf istedi. GİR ise kart ve botun ortak kararıdır (entry_decision):
+hedef kontrolü (target_check: ulaşma oranı < %60, başabaş oranının altında ya da maliyet hedefin yarısından
+büyükse BEKLE), işlem planının BEKLE nedenleri (ölçülmüş net sonuç ve doğrulama) ve zamanlama engelleri.
 Yön sırası, ölçülen en iyi bilgiye göre:
 1. ML 4 saatlik yön modeli (research/consensus: tek başına %52; teknik görüşlerle çeliştiğinde ML'nin
    yönü ≈ %53).
 2. ML'nin görüşü yoksa teknik görüşlerin çoğunluğu (Özet kartı, Piyasa tara 15M+5M, Pariteler).
 3. O da yoksa fiyatın günlük pivot P'ye göre konumu.
 
-Geçmiş oranlar kartta açıkça yazar; hiçbiri maliyetten sonra artıda değildir. Haber, spread saati gibi
-durumlar girişi engellemez, uyarı olarak gösterilir.
+Geçmiş oranlar kartta açıkça yazar; hiçbiri maliyetten sonra artıda değildir. Haber, gün sonu spread
+saati ve pahalı maliyet de girişi engeller (27 Ekim 2026'dan beri; önceden yalnız uyarıydı).
 
 Streamlit bağımlılığı yoktur; uygulamayı açmadan test edilebilir.
 """
@@ -54,9 +55,16 @@ def _hit_curve(stats: dict, pair: str, use_ml: bool) -> Optional[tuple[list[floa
     return [r for r, _ in rows], hits
 
 
+def breakeven_hit(target_pips: float, stop_pips: float, cost_pips: float) -> float:
+    """Hedefte net (hedef − maliyet) kazanıp stopta (stop + maliyet) kaybeden düzende başabaş ulaşma oranı."""
+    return (stop_pips + cost_pips) / (target_pips + stop_pips)
+
+
 def target_check(stats: dict, pair: str, use_ml: bool, target_pips: float, stop_pips: float,
-                 cost_pips: float) -> dict:
-    """Bu dolar hedefi bu stopla 'ihtimalli' mi: ulaşma oranı ≥ %60 ve maliyet hedefin yarısından az.
+                 cost_pips: float, require_breakeven: bool = True) -> dict:
+    """Bu dolar hedefi bu stopla 'ihtimalli' mi: ulaşma oranı ≥ %60 ve başabaş oranının üstünde, maliyet
+    hedefin yarısından az. Yüksek ulaşma oranı tek başına yetmez: 0,3:1 hedefte başabaş ≈ %77.
+    require_breakeven=False yalnız botun --deney kipi içindir (27 Ekim öncesi kural).
 
     Ölçülen aralığın dışında oran sınır olarak verilir: daha yakın hedef en az en yakın ölçülen kadar,
     daha uzak hedef en fazla onun kadar tutar (aynı stopta hedef yaklaştıkça stoptan önce gelme artar).
@@ -69,15 +77,18 @@ def target_check(stats: dict, pair: str, use_ml: bool, target_pips: float, stop_
         ratio = target_pips / stop_pips
         hit = float(np.interp(ratio, ratios, hits))
         bound = "≥" if ratio < ratios[0] else ("≤" if ratio > ratios[-1] else "≈")
-        if hits[0] < MIN_HIT:
-            max_ratio = None
-        elif hits[-1] >= MIN_HIT:
-            max_ratio = ratios[-1]
-        else:
-            max_ratio = float(np.interp(MIN_HIT, hits[::-1], ratios[::-1]))
-        ok_range = (cost_pips / MAX_COST_OF_TARGET, max_ratio * stop_pips if max_ratio else None)
+        grid = np.linspace(0.0, ratios[-1], 801)  # ölçülenden küçük oranda isabet en az ilk ölçülen kadar
+        floor = breakeven_hit(grid * stop_pips, stop_pips, cost_pips) if require_breakeven else 0.0
+        passing = grid[np.interp(grid, ratios, hits) >= np.maximum(MIN_HIT, floor)]
+        low = cost_pips / MAX_COST_OF_TARGET
+        ok_range = (max(low, float(passing[0]) * stop_pips) if passing.size else low,
+                    float(passing[-1]) * stop_pips if passing.size else None)
+        needed = breakeven_hit(target_pips, stop_pips, cost_pips)
         if hit < MIN_HIT:
             reasons.append(f"Hedefe ulaşma oranı %{hit * 100:.0f}; en az %{MIN_HIT * 100:.0f} istiyorsun.")
+        elif require_breakeven and hit < needed:
+            reasons.append(f"Hedefe ulaşma oranı %{hit * 100:.0f}; bu hedef ve stopla başabaş için "
+                           f"%{needed * 100:.0f} gerekiyor, beklenen sonuç maliyet sonrası eksi.")
     else:
         reasons.append("Bu parite ve hedef için ölçülmüş ulaşma oranı yok.")
     if target_pips > 0 and cost_pips / target_pips > MAX_COST_OF_TARGET:
@@ -85,6 +96,17 @@ def target_check(stats: dict, pair: str, use_ml: bool, target_pips: float, stop_
                        f"hedef fazla küçük.")
     return {"ok": not reasons, "hit": hit, "bound": bound, "reasons": reasons,
             "ok_pips": ok_range}  # (en küçük, en büyük) hedef mesafesi, pip; en büyük None ise hiçbir hedef yetmiyor
+
+
+def entry_decision(plan: dict, check: Optional[dict], blockers: list[str]) -> dict:
+    """Karar kutusu ve botun tek giriş kararı: hedef kontrolü, planın BEKLE nedenleri ve zamanlama engelleri.
+
+    Plan ölçülmüş istatistikle kurulmuş olmalı; aksi halde planın kanıt engeli "ölçülmüş başarı yok" der.
+    """
+    if plan.get("status") != "ready" or check is None:
+        return {"ok": False, "hit": None, "reasons": [plan.get("reason", "Plan hesaplanamadı.")]}
+    reasons = list(dict.fromkeys(list(check["reasons"]) + list(plan.get("blockers", [])) + list(blockers)))
+    return {**check, "ok": not reasons, "reasons": reasons}
 
 
 def _pips(value: float) -> str:
