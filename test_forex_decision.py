@@ -52,7 +52,7 @@ class ForexDecisionTests(unittest.TestCase):
             "1.0": {"ml": {"target_rate": 0.51}, "opposite": {"target_rate": 0.49}},
             "3.0": {"ml": {"target_rate": 0.24}, "opposite": {"target_rate": 0.22}},
         }}}}
-        old = dict(require_breakeven=False)  # 27 Ekim öncesi kural (botun --deney kipi)
+        old = dict(require_breakeven=False)  # botun --deney kipi; %65 ulaşma eşiği geçerli
         ok = target_check(stats, "EURUSD", True, target_pips=3.5, stop_pips=7.4, cost_pips=1.0, **old)
         self.assertTrue(ok["ok"])
         self.assertEqual((ok["bound"], round(ok["hit"], 2)), ("≥", 0.67))
@@ -61,11 +61,11 @@ class ForexDecisionTests(unittest.TestCase):
         self.assertIn("Maliyet", small["reasons"][0])
         far = target_check(stats, "EURUSD", True, target_pips=17.8, stop_pips=7.4, cost_pips=1.0, **old)
         self.assertFalse(far["ok"])
-        self.assertIn("%60", far["reasons"][0])
+        self.assertIn("%65", far["reasons"][0])
         low, high = far["ok_pips"]
         self.assertAlmostEqual(low, 2.0)
-        self.assertAlmostEqual(high / 7.4, 0.5 + 0.5 * (0.67 - 0.60) / (0.67 - 0.51), places=2)
-        # ML'siz yön: ML ve ters yönün ortalaması (0.65) %60'ı geçer, 1.0 oranında (0.50) geçmez
+        self.assertAlmostEqual(high / 7.4, 0.5 + 0.5 * (0.67 - 0.65) / (0.67 - 0.51), places=2)
+        # ML'siz yön: ortalama 0.65 eşikte kabul edilir, 1.0 oranında 0.50 kabul edilmez
         self.assertTrue(target_check(stats, "EURUSD", False, 3.7, 7.4, 1.0, **old)["ok"])
         self.assertFalse(target_check(stats, "EURUSD", False, 7.4, 7.4, 1.0, **old)["ok"])
         self.assertFalse(target_check({}, "EURUSD", True, 3.5, 7.4, 1.0)["ok"])

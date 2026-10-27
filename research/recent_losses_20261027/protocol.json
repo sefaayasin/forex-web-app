@@ -1,0 +1,11 @@
+{
+  "written": "2026-10-27 before new tick replay and new historical variant results",
+  "scope": "Focus three named losses plus every closed journaled demo bot trade opened today. Existing confidence/cooldown/floor research already inspected; not a fresh holdout.",
+  "focus_tickets": [411021217, 411045182, 411059397],
+  "question": "Would allowing more room before loss exit, or a fixed target, improve current half-stop/trailing policy?",
+  "variants": ["50% early stop and current trailing", "75% early stop and current trailing", "Full stop and current trailing", "Fixed target plus full stop, no ML exit or swap"],
+  "historical": {"period": "2023-01-01 to 2026-09-10", "pairs": 28, "risk": "fixed 12.5 USD, actual lot rounding", "target_hit_min": 0.65, "basket": "unchanged 3% arm, 30% giveback", "trailing_floor_atr": 0.5},
+  "comparison": "Report both 2023-24 and 2025-26 mean net R; no variant is validated merely because it saved these three trades. Already inspected historical years are not new independent confirmation.",
+  "tick_replay_limits": "Same actual fills and observed commissions; exit at executable bid/ask ticks. Includes ticks after actual close. Basket, hourly ML exits, 5-second polling and future endogenous entries omitted; this is an exit-path counterfactual, not an exact bot or portfolio replay. Unfinished alternatives are marked at capture end, not counted as wins.",
+  "deployment": "Do not change running bot exit rules based only on these exploratory results. Report findings and limitations. No orders from the research script."
+}

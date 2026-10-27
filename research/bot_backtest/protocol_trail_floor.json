@@ -1,0 +1,14 @@
+{
+ "written": "2026-10-27, sonuçlardan önce",
+ "question": "Kullanıcının fikri: hedefe gelince stopu başabaşa (giriş + maliyet) değil biraz daha aşağıya çekmek, küçük geri çekilmede çıkmamak. Bu, botun sonucunu iyileştirir mi?",
+ "base": "Canlı botun kuralları + sepet takibi (arm %3, geri %30), sabit risk (12,5 $); research_bot_backtest.py",
+ "variants": {
+  "F0": "şu anki: hedefte taban giriş + maliyet",
+  "F1": "taban giriş − 0,25 ATR",
+  "F2": "taban giriş − 0,5 ATR",
+  "F3": "taban giriş − 1 ATR",
+  "F4": "taban yok: stop yalnız en iyi fiyatın 1 ATR gerisi (ilk stoptan geri gelmez)"
+ },
+ "split": {"first": "2023-01-01 – 2024-12-31", "second": "2025-01-01 – 2026-09-10"},
+ "decision": "Bir varyant iki dönemin ikisinde de F0'dan en az 0,01 R iyiyse canlı bota uygulanır (birden fazlaysa iki dönemin en kötüsü en iyi olan). Değilse kod değişmez."
+}

@@ -1,22 +1,24 @@
 """Demo hesapta Karar kuralıyla al-sat yapan canlı MT5 botu: uygulamadaki kuralın ileri testi.
 
-Lot (kullanıcı 500 $ ile başlayacak, 26 Ekim 2026; varsayılan %2,5 risk ve 3 pozisyon: 500 $'da
-3 tipik pozisyonun teminatı sanal bakiyenin yarısına sığar): demo hesabın bakiyesi değil, --balance ile başlayan sanal
+Lot (27 Ekim 2026 demo düzeni: varsayılan %1 risk ve en fazla 3 pozisyon): demo hesabın bakiyesi değil, --balance ile başlayan sanal
 bakiye kullanılır; botun bu düzende kapanan işlemleri bakiyeye eklenir. Stop zararı sanal bakiyenin --risk-pct'i,
 hedef bunun --target-r katı (Karar kutusundaki 30/100 oranı). Açık pozisyonların teminatı sanal bakiyenin
 yarısını geçmez; --leverage gerçek hesabın kaldıracıyla teminatı yeniden ölçekler.
 
 Giriş (Özet'teki Karar kutusuyla aynı hesap, forex_trade_plan + forex_decision):
 - Yön: ML 4 saatlik yön modeli (son kapanmış saatlik mum; yön yalnız saat başında değişebilir).
+- Yeni girişte ham ML yön güveni en az %55 (--min-ml-confidence); %65 hedef ulaşma oranından ayrı bir kontroldür.
 - Stop: kapanmış 15M mumlarında ATR14 × 1,5; lot bu stop ve zarar bütçesinden. Hedef: dolar hedefinden.
 - Şart (27 Ekim 2026'dan beri Karar kutusuyla tek karar, forex_decision.entry_decision): hedefin stoptan önce
-  gelme oranı ≥ %60 ve başabaş oranının üstünde (2023–2026 ölçümü), maliyet hedefin yarısından az, işlem
+  gelme oranı ≥ %65 ve başabaş oranının üstünde (2023–2026 ölçümü), maliyet hedefin yarısından az, işlem
   planının BEKLE nedenleri yok (maliyet sonrası ölçülmüş artı ve doğrulama) ve ML'nin son saatlik mumu güncel.
 - Her dakika tarar; parite başına tek pozisyon, en fazla --max-positions açık pozisyon (önce en yüksek oran);
   aynı paritede aynı saatlik sinyalle ikinci kez girmez.
 
-Yönetim (kullanıcı seçimi, 26 Ekim 2026; geçmişte ölçülmedi, günlük hangi kuralın kapattığını yazar):
-- Sabit TP yok. Fiyat hedefe gelince stop giriş + maliyete çekilir, sonra en iyi fiyatın 1 ATR gerisinden takip eder.
+Yönetim (27 Ekim 2026):
+- Yeni işlemlerde varsayılan sabit hedef (--exit-mode fixed): hedef broker TP emrine yazılır, hedefte çıkılır.
+  --exit-mode trailing eski takip kuralını seçer: hedefte stop en iyi fiyatın 1 ATR gerisine, tabanı girişin
+  0,5 ATR altına taşınır. Önceden açık işlemler kayıtlı çıkış kuralıyla yönetilir; lotları değiştirilmez.
 - Fiyat stop mesafesinin yarısına gelirse çıkar; saat başında ML yönü dönerse çıkar (takip başlamadıysa).
 - Takip başlamamış pozisyon 24 saatte kapanır. Tam stop sunucuda güvenlik olarak durur.
 - Girmeden önce (26 Ekim 2026): anlık spread normalin 2 katını (en az +0,5 pip) aşıyorsa, New York gün sonu
@@ -36,7 +38,7 @@ Yalnız DEMO hesapta çalışır; gerçek hesaba bağlıysa emir göndermeden ç
 
   python forex_bot.py --dry-run --once   # emir göndermeden tek tarama
   python forex_bot.py                    # sürekli çalış (Ctrl+C ile dur)
-  python forex_bot.py --deney            # ileri test: eski giriş şartıyla (ölçümler eksi olsa da girer)
+  python forex_bot.py --deney --risk-pct 1 --min-ml-confidence 0.55 --exit-mode fixed
   python forex_bot.py --report           # sonuçlar
 """
 from __future__ import annotations
@@ -73,6 +75,7 @@ MAX_TICK_AGE_SECONDS = 180  # daha eski tick: piyasa kapalı
 DEVIATION_POINTS = 10
 EARLY_EXIT_SHARE = 0.5  # stop mesafesinin bu kadarında çık
 TRAIL_ATR = 1.0  # takip eden stop: en iyi fiyatın bu kadar ATR gerisi
+TRAIL_FLOOR_ATR = 0.5  # hedefte stop en az girişin bu kadar ATR altına çekilir (başabaş değil)
 MIN_SL_STEP_PIPS = 0.1
 MAX_MARGIN_SHARE = 0.5  # açık pozisyon teminatı en fazla sanal bakiyenin bu kadarı
 SPREAD_SPIKE_FACTOR = 2.0  # anlık spread normalin bu katını aşarsa girme
@@ -85,6 +88,7 @@ ML_MAX_AGE = pd.Timedelta(hours=2)  # son kapanmış saatlik mum bundan eskiyse 
 BASKET_GIVEBACK = 0.3  # sepet tepeden bu kadarını geri verirse hepsini kapat
 BASKET_STALL_MINUTES = 10  # bu kadar dakika yeni tepe yoksa "dolanıyor"
 BASKET_SLOPE_MINUTES = 5  # "düşecek gibi": son bu kadar dakikanın eğimi aşağı
+DEFAULT_MIN_ML_CONFIDENCE = 0.55
 
 
 def log(text: str) -> None:
@@ -98,7 +102,7 @@ TRADE_COLUMNS = (
     " fill REAL, stop REAL, target REAL, early_exit REAL, atr REAL, pip REAL, cost_pips REAL, spread_pips REAL,"
     " probability REAL, hit REAL, hit_half_stop REAL, target_usd REAL, loss_usd REAL, best REAL,"
     " trailing INTEGER DEFAULT 0, close_reason TEXT, closed_at TEXT, exit_price REAL, profit_usd REAL, outcome TEXT,"
-    " sizing_balance REAL, margin REAL")
+    " sizing_balance REAL, margin REAL, exit_mode TEXT DEFAULT 'trailing'")
 
 
 def db() -> sqlite3.Connection:
@@ -234,10 +238,10 @@ def budget(balance: float, args) -> tuple[float, float]:
 
 
 def decide(item: dict, target_usd: float, loss_usd: float, account_usd: float, stats: dict,
-           experiment: bool = False) -> dict:
+           experiment: bool = False, min_ml_confidence: float = DEFAULT_MIN_ML_CONFIDENCE) -> dict:
     """Karar kutusunun hesabı (entry_decision); ayrıca erken çıkışla yarıya inen stopa göre oran (yalnız kayıt).
 
-    experiment: --deney kipi, 27 Ekim öncesi kural (ulaşma ≥ %60 ve maliyet şartı); başabaş ve planın
+    experiment: --deney kipi (ulaşma ≥ %65 ve maliyet şartı); başabaş ve planın
     ölçülmüş-sonuç engelleri atlanır. Ölçümlerin hepsi maliyet sonrası eksi olduğundan yalnız ileri test içindir.
     """
     pair = item["name"].upper()
@@ -250,6 +254,10 @@ def decide(item: dict, target_usd: float, loss_usd: float, account_usd: float, s
     check = target_check(stats, pair, True, plan["target_pips"], plan["stop_pips"], item["cost_pips"],
                          require_breakeven=not experiment)
     item["check"] = check if experiment else entry_decision(plan, check, [])
+    confidence = float(plan["side_probability"])
+    if confidence < min_ml_confidence:
+        reason = f"Ham ML yön güveni %{confidence * 100:.2f}; yeni giriş için en az %{min_ml_confidence * 100:.0f} gerekiyor."
+        item["check"] = {**item["check"], "ok": False, "reasons": item["check"]["reasons"] + [reason]}
     item["check_half"] = target_check(stats, pair, True, plan["target_pips"], plan["stop_pips"] * EARLY_EXIT_SHARE,
                                       item["cost_pips"])
     return item
@@ -402,11 +410,12 @@ def open_position(mt5, conn, item: dict, args, signal_hour: pd.Timestamp) -> Opt
     sign = 1 if buy else -1
     volume = volume_for(info, plan["lot"])
     balance, margin = item["balance"], item["margin"]
+    exit_mode = args.exit_mode
     request = {
         "action": mt5.TRADE_ACTION_DEAL, "symbol": item["name"], "volume": volume,
         "type": mt5.ORDER_TYPE_BUY if buy else mt5.ORDER_TYPE_SELL,
         "price": float(tick.ask if buy else tick.bid),
-        "sl": round(plan["stop"], info.digits), "tp": 0.0,
+        "sl": round(plan["stop"], info.digits), "tp": round(plan["target"], info.digits) if exit_mode == "fixed" else 0.0,
         "deviation": DEVIATION_POINTS, "magic": MAGIC, "comment": COMMENT,
         "type_time": mt5.ORDER_TIME_GTC, "type_filling": filling(mt5, info),
     }
@@ -420,14 +429,14 @@ def open_position(mt5, conn, item: dict, args, signal_hour: pd.Timestamp) -> Opt
     conn.execute(
         "INSERT OR REPLACE INTO trades (ticket, symbol, side, opened_at, signal_hour, lot, entry, fill, stop, target,"
         " early_exit, atr, pip, cost_pips, spread_pips, probability, hit, hit_half_stop, target_usd, loss_usd, best,"
-        " sizing_balance, margin) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        " sizing_balance, margin, exit_mode) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (ticket, item["name"], plan["side"], str(pd.Timestamp.now(tz="UTC")), str(signal_hour), request["volume"],
          plan["entry"], float(result.price), request["sl"], plan["target"], early_exit, item["atr"], item["pip"],
          item["cost_pips"], item["spread_pips"], item["probability_up"], item["check"]["hit"],
-         item["check_half"].get("hit"), item["target_usd"], item["loss_usd"], float(result.price), balance, margin))
+         item["check_half"].get("hit"), item["target_usd"], item["loss_usd"], float(result.price), balance, margin, exit_mode))
     conn.commit()
     log(f"✓ {item['name']} {plan['side']} {request['volume']:.2f} lot @ {result.price} · stop {request['sl']} · "
-        f"hedef/takip başlangıcı {round(plan['target'], info.digits)} · erken çıkış {round(early_exit, info.digits)} · "
+        f"{'sabit hedef' if exit_mode == 'fixed' else 'takip başlangıcı'} {round(plan['target'], info.digits)} · erken çıkış {round(early_exit, info.digits)} · "
         f"ulaşma ≈%{item['check']['hit'] * 100:.0f}")
     return ticket
 
@@ -457,8 +466,8 @@ def move_stop(mt5, position, new_sl: float, digits: int) -> bool:
 
 
 def next_stop(side: str, entry: float, current_sl: float, best: float, price: float, target: float, atr: float,
-              cost_pips: float, pip: float, trailing: bool) -> tuple[Optional[float], bool]:
-    """Kâr tarafı: hedefe gelince stop giriş + maliyete, sonra en iyi fiyatın TRAIL_ATR × ATR gerisine.
+              pip: float, trailing: bool) -> tuple[Optional[float], bool]:
+    """Kâr tarafı: hedefe gelince stop en iyi fiyatın TRAIL_ATR × ATR gerisine, en az girişin TRAIL_FLOOR_ATR altına.
 
     Döner: (yeni stop ya da None, takip başladı mı). Stop yalnız lehe ve fiyatın doğru tarafında taşınır.
     """
@@ -466,7 +475,7 @@ def next_stop(side: str, entry: float, current_sl: float, best: float, price: fl
     trailing = trailing or sign * (best - target) >= 0
     if not trailing:
         return None, False
-    floor = entry + sign * cost_pips * pip
+    floor = entry - sign * TRAIL_FLOOR_ATR * atr
     candidate = best - sign * TRAIL_ATR * atr
     wanted = max(floor, candidate) if sign == 1 else min(floor, candidate)
     if sign * (wanted - current_sl) < MIN_SL_STEP_PIPS * pip or sign * (price - wanted) <= 0:
@@ -571,17 +580,25 @@ def manage(mt5, conn, check_ml: bool, watch: Optional[BasketWatch] = None, arm_u
         best = max(row["best"], price) if sign == 1 else min(row["best"], price)
         if best != row["best"]:
             conn.execute("UPDATE trades SET best=? WHERE ticket=?", (best, position.ticket))
-        trailing = bool(row["trailing"])
-        new_sl, now_trailing = next_stop(row["side"], row["entry"], float(position.sl), best, price, row["target"],
-                                         row["atr"], row["cost_pips"], row["pip"], trailing)
-        if now_trailing and not trailing:
-            conn.execute("UPDATE trades SET trailing=1 WHERE ticket=?", (position.ticket,))
-            log(f"↗ {position.symbol} hedefe geldi; stop maliyet dahil başabaşa çekiliyor, takip başladı.")
-        if new_sl is not None and move_stop(mt5, position, new_sl, info.digits):
-            log(f"↗ {position.symbol} stop {position.sl} → {round(new_sl, info.digits)}")
+        if row["exit_mode"] == "fixed":
+            # TP is also on the broker. This covers a still-open position after target crossing.
+            if sign * (price - row["target"]) >= 0:
+                close_position(mt5, conn, position, "HEDEF")
+                conn.commit()
+                continue
+        else:
+            trailing = bool(row["trailing"])
+            new_sl, now_trailing = next_stop(row["side"], row["entry"], float(position.sl), best, price, row["target"],
+                                             row["atr"], row["pip"], trailing)
+            if now_trailing and not trailing:
+                conn.execute("UPDATE trades SET trailing=1 WHERE ticket=?", (position.ticket,))
+                log(f"↗ {position.symbol} hedefe geldi; stop en iyi fiyatın 1 ATR gerisine çekiliyor, takip başladı.")
+            if new_sl is not None and move_stop(mt5, position, new_sl, info.digits):
+                log(f"↗ {position.symbol} stop {position.sl} → {round(new_sl, info.digits)}")
+            if now_trailing:
+                conn.commit()
+                continue
         conn.commit()
-        if now_trailing:
-            continue
         opened = server_time_to_utc(position.time, server_offset(mt5, position.symbol))
         if sign * (price - row["early_exit"]) <= 0:
             close_position(mt5, conn, position, "YARIM STOP")
@@ -604,7 +621,9 @@ def sync_closed(mt5, conn) -> None:
         if not exits:
             continue
         last = exits[-1]
-        if last.reason == mt5.DEAL_REASON_SL:
+        if last.reason == mt5.DEAL_REASON_TP:
+            outcome = "HEDEF"
+        elif last.reason == mt5.DEAL_REASON_SL:
             outcome = "TAKİP STOPU" if row["trailing"] else "STOP"
         elif last.reason == mt5.DEAL_REASON_EXPERT and row["close_reason"]:
             outcome = row["close_reason"]
@@ -637,7 +656,7 @@ def scan(mt5, conn, args, calendar: NewsCalendar, quiet: bool = False) -> None:
         try:
             item = pair_inputs(mt5, symbol)
             if "name" in item:
-                item = decide(item, target_usd, loss_usd, balance, stats, args.experiment)
+                item = decide(item, target_usd, loss_usd, balance, stats, args.experiment, args.min_ml_confidence)
                 item.update(target_usd=target_usd, loss_usd=loss_usd)
         except Exception as exc:  # tek paritenin hatası taramayı durdurmasın
             item = {"reasons": [f"Hata: {exc}"]}
@@ -718,11 +737,15 @@ def report() -> None:
         print(f"\nNot: {len(closed)} işlem az; oran ±{100 / math.sqrt(len(closed)):.0f} puan kadar oynayabilir.")
 
 
-def main() -> None:
+def parse_args(argv: Optional[list[str]] = None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--balance", type=float, default=500.0, help="Sanal başlangıç bakiyesi ($)")
-    parser.add_argument("--risk-pct", type=float, default=2.5, help="İşlem başına stop zararı, sanal bakiyenin %%'si")
-    parser.add_argument("--target-r", type=float, default=0.3, help="Takip başlangıcı: stop zararının katı")
+    parser.add_argument("--risk-pct", type=float, default=1.0, help="İşlem başına stop zararı, sanal bakiyenin %%'si")
+    parser.add_argument("--target-r", type=float, default=0.3, help="Net hedef: stop zararının katı")
+    parser.add_argument("--min-ml-confidence", type=float, default=DEFAULT_MIN_ML_CONFIDENCE,
+                        help="Yeni girişte ham ML yön güveni alt sınırı (0.50–1.00; hedef ulaşma oranından ayrı)")
+    parser.add_argument("--exit-mode", choices=("fixed", "trailing"), default="fixed",
+                        help="Yeni işlemlerde sabit hedefte çıkış veya eski takip kuralı")
     parser.add_argument("--target-usd", type=float, help="Sabit hedef $ (verilirse --target-r yerine)")
     parser.add_argument("--loss-usd", type=float, help="Sabit stop zararı $ (verilirse --risk-pct yerine)")
     parser.add_argument("--leverage", type=float, help="Gerçek hesabın kaldıracı (teminat için; varsayılan demo)")
@@ -738,7 +761,14 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="Emir gönderme, yalnız kararları yaz")
     parser.add_argument("--once", action="store_true", help="Tek tarama yap ve çık")
     parser.add_argument("--report", action="store_true", help="Günlükteki sonuçları göster")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    if not math.isfinite(args.min_ml_confidence) or not .5 <= args.min_ml_confidence <= 1:
+        parser.error("--min-ml-confidence 0.50 ile 1.00 arasında olmalı")
+    return args
+
+
+def main() -> None:
+    args = parse_args()
     if args.report:
         report()
         return
@@ -753,7 +783,8 @@ def main() -> None:
     balance = virtual_balance(conn, args.balance)
     target_usd, loss_usd = budget(balance, args)
     log(f"Bot başladı · {account.server} #{account.login} (DEMO) · sanal bakiye {balance:,.2f} $ · "
-        f"stop zararı {loss_usd:.2f} $ / takip başlangıcı {target_usd:.2f} $ · kaldıraç 1:"
+        f"stop zararı {loss_usd:.2f} $ / net hedef {target_usd:.2f} $ · risk %{args.risk_pct:g} · "
+        f"ML yön güveni ≥ %{args.min_ml_confidence * 100:.0f} · çıkış {args.exit_mode} · kaldıraç 1:"
         f"{args.leverage or account.leverage:.0f} · en fazla {args.max_positions} pozisyon"
         + (f" · sepet kârı {args.basket_r * loss_usd:.2f} $'dan sonra izlenir" if args.basket_r > 0 else "")
         + (" · DENEY: başabaş/ölçüm engelleri atlanıyor" if args.experiment else "")

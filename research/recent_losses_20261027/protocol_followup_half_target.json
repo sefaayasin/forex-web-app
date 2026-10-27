@@ -1,0 +1,6 @@
+{
+  "written": "2026-10-27, after four first-stage exit comparisons and before this one additional comparison",
+  "reason": "Fixed target plus full stop improved the mean but changed several rules. Isolate closing at target while preserving current half stop, hourly ML exit and swap.",
+  "variant": "Fixed target at existing target level; half stop remains 50%, ML exits and swap remain enabled, basket remains unchanged",
+  "comparison": "Compare with H50 current. Same already inspected years; exploratory only. Do not promote as independent validation or deploy automatically."
+}

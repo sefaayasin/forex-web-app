@@ -74,6 +74,9 @@ class Variant:
     need_15m: bool = False      # destek: son kapanmış 15M teknik skoru giriş yönünde >= SUPPORT_SCORE
     need_5m: bool = False       # destek: aynısı 5M'de
     vol: int = 0                # destek: 1 yalnız oynaklık yüksek, -1 yalnız düşük (4 saatlik model)
+    floor_atr: float | None = None  # takip tabanı: None giriş + maliyet; x giriş − x ATR; inf taban yok
+    min_conf: float = 0.0       # ML olasılığı yön tarafında en az bu (ör. 0,55); 0 şart yok
+    cooldown_hours: float = 0.0  # zararla kapanan paritede bu kadar saat giriş yok
 
 
 VARIANTS = [
@@ -114,6 +117,15 @@ _SUPPORTS = [("S0 destek yok", {}), ("S1 ML + 15M", {"need_15m": True}),
              ("S3 ML + oynaklık yüksek", {"vol": 1}), ("S4 ML + oynaklık düşük", {"vol": -1}),
              ("S5 ML + 15M + 5M + oynaklık yüksek", {"need_15m": True, "need_5m": True, "vol": 1}),
              ("S6 ML + 15M + 5M + oynaklık düşük", {"need_15m": True, "need_5m": True, "vol": -1})]
+FLOOR_VARIANTS = [Variant(name, **_LIVE_BASKET, floor_atr=x) for name, x in (
+    ("F0 taban giriş + maliyet", None), ("F1 taban giriş − 0,25 ATR", 0.25), ("F2 taban giriş − 0,5 ATR", 0.5),
+    ("F3 taban giriş − 1 ATR", 1.0), ("F4 taban yok", math.inf))]
+_LIVE_NOW = dict(**_LIVE_BASKET, floor_atr=0.5)
+CONF_VARIANTS = [Variant(name, direction=way, **_LIVE_NOW, **rules) for name, rules, way in (
+    ("C0 taban", {}, 1), ("C1 güven ≥ 0,52", {"min_conf": 0.52}, 1), ("C2 güven ≥ 0,55", {"min_conf": 0.55}, 1),
+    ("C3 güven ≥ 0,60", {"min_conf": 0.60}, 1), ("D1 zarardan sonra 4 saat bekle", {"cooldown_hours": 4}, 1),
+    ("CD güven ≥ 0,55 + 4 saat bekle", {"min_conf": 0.55, "cooldown_hours": 4}, 1),
+    ("C2 ters", {"min_conf": 0.55}, -1), ("D1 ters", {"cooldown_hours": 4}, -1))]
 SUPPORT_VARIANTS = [Variant(name + (" ters" if way == -1 else ""), direction=way, **_LIVE_BASKET, **rules)
                     for name, rules in _SUPPORTS for way in (1, -1)]
 
@@ -265,6 +277,7 @@ def run(variant: Variant, market: dict, events: dict, stats: dict, steps: int | 
 
     balance, trades, open_pos = BALANCE, [], []
     b_key, b_peak, b_peak_i, b_prev = None, -math.inf, 0, None  # sepet takibi
+    last_loss: dict[int, int] = {}  # parite → son zararlı kapanış (ns)
     entered: set[tuple[int, int]] = set()
     equity_curve = []
 
@@ -276,6 +289,8 @@ def run(variant: Variant, market: dict, events: dict, stats: dict, steps: int | 
         gross = pos.side * (price - pos.entry) / pips[pos.j]
         net_usd = (gross - pos.cost_pips) * pos.pv * pos.lot
         balance += net_usd
+        if net_usd < 0:
+            last_loss[pos.j] = int(ns[i])
         trades.append({"pair": PAIRS[pos.j], "side": pos.side, "opened": pos.opened_ns, "closed": int(ns[i]),
                        "lot": pos.lot, "gross_pips": gross, "net_usd": net_usd, "reason": reason,
                        "trailing": pos.trailing, "risk_usd": (pos.stop_pips + pos.cost_pips) * pos.pv * pos.lot})
@@ -360,6 +375,10 @@ def run(variant: Variant, market: dict, events: dict, stats: dict, steps: int | 
                     if not (np.isfinite(o) and np.isfinite(atr) and atr > 0 and np.isfinite(prob)) or prob == 0.5:
                         continue
                     side = (1 if prob > 0.5 else -1) * variant.direction
+                    if variant.min_conf and abs(prob - 0.5) < variant.min_conf - 0.5:
+                        continue
+                    if variant.cooldown_hours and t_ns - last_loss.get(j, -10**19) < variant.cooldown_hours * hour_ns:
+                        continue
                     if variant.need_15m and not side * S15[i, j] >= SUPPORT_SCORE:
                         continue
                     if variant.need_5m and not side * S5[i, j] >= SUPPORT_SCORE:
@@ -428,7 +447,12 @@ def run(variant: Variant, market: dict, events: dict, stats: dict, steps: int | 
                         close(pos, i, pos.target, "HEDEF")
                         continue
                     pos.trailing, pos.best = True, best
-                    floor = pos.entry + pos.side * pos.cost_pips * pips[pos.j]
+                    if variant.floor_atr is None:
+                        floor = pos.entry + pos.side * pos.cost_pips * pips[pos.j]
+                    elif math.isinf(variant.floor_atr):
+                        floor = pos.exit_level
+                    else:
+                        floor = pos.entry - pos.side * variant.floor_atr * pos.atr
                     trail = best - pos.side * TRAIL_ATR * pos.atr
                     pos.sl = max(floor, trail) if pos.side == 1 else min(floor, trail)
                     if pos.side * (worst - pos.sl) <= 0:  # aynı mumda geri döndü: başabaşta çık
@@ -492,7 +516,7 @@ def summarize(result: dict) -> dict:
 def _run_one(args) -> dict:
     variant, steps, fixed = args
     variants = VARIANTS + BASKET_VARIANTS + [Variant(**{**v.__dict__, "name": v.name + " (iyimser)", "basket_optimistic": True})
-                                             for v in BASKET_VARIANTS] + TRAIL_VARIANTS + SUPPORT_VARIANTS
+                                             for v in BASKET_VARIANTS] + TRAIL_VARIANTS + SUPPORT_VARIANTS + FLOOR_VARIANTS + CONF_VARIANTS
     started = time.time()
     market, events, stats = load_market(parallel=False), high_impact_events(), load_plan_stats()
     result = run(variant, market, events, stats, steps, fixed_risk=fixed)
@@ -511,6 +535,8 @@ def main() -> None:
     parser.add_argument("--basket", action="store_true", help="protocol_basket.json varyantları (temkinli + iyimser)")
     parser.add_argument("--basket-trail", action="store_true", help="protocol_basket_trail.json ızgarası ve kontrolleri")
     parser.add_argument("--support", action="store_true", help="protocol_support.json: 15M/5M/oynaklık desteği")
+    parser.add_argument("--floor", action="store_true", help="protocol_trail_floor.json: takip tabanı")
+    parser.add_argument("--confidence", action="store_true", help="protocol_confidence_cooldown.json")
     args = parser.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     CACHE.mkdir(parents=True, exist_ok=True)
@@ -530,9 +556,13 @@ def main() -> None:
         chosen = TRAIL_VARIANTS
     if args.support:
         chosen = SUPPORT_VARIANTS
-    with Pool(min(len(chosen), WORKERS if args.basket_trail or args.support else 4)) as pool:
+    if args.floor:
+        chosen = FLOOR_VARIANTS
+    if args.confidence:
+        chosen = CONF_VARIANTS
+    with Pool(min(len(chosen), WORKERS if args.basket_trail or args.support or args.floor or args.confidence else 4)) as pool:
         summaries = pool.map(_run_one, [(v, None, args.fixed_risk) for v in chosen])
-    name = ("results_support" if args.support else "results_basket_trail" if args.basket_trail else "results_basket" if args.basket else "results")         + ("_fixed_risk" if args.fixed_risk else "")
+    name = ("results_confidence" if args.confidence else "results_floor" if args.floor else "results_support" if args.support else "results_basket_trail" if args.basket_trail else "results_basket" if args.basket else "results")         + ("_fixed_risk" if args.fixed_risk else "")
     (OUT / f"{name}.json").write_text(json.dumps(summaries, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     for s in summaries:
         print(f"{s['variant']:<36} işlem {s['trades']:>5} · son bakiye {s.get('final_balance', 0):>8.2f} $ "

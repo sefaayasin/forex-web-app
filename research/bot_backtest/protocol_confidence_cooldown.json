@@ -1,0 +1,16 @@
+{
+ "written": "2026-10-27, sonuçlardan önce",
+ "question": "Demo botu ML olasılığı 0,500 ve 0,504 iken NZDUSD'ye girdi, yarım stoptan sonra 9 dk içinde aynı yöne yeniden girip yine kaybetti. Asgari ML güveni ya da zarardan sonra bekleme botu iyileştirir mi?",
+ "base": "Şu an çalışan bot: ulaşma ≥ %65, takip tabanı girişin 0,5 ATR altı, sepet takibi (arm %3, geri %30); sabit risk (12,5 $)",
+ "variants": {
+  "C0": "taban",
+  "C1": "ML olasılığı yön tarafında ≥ 0,52",
+  "C2": "≥ 0,55",
+  "C3": "≥ 0,60",
+  "D1": "bir paritede zararla kapanan işlemden sonra o pariteye 4 saat giriş yok",
+  "CD": "C2 + D1"
+ },
+ "controls": "C2 ve D1 ML'nin ters yönüyle de çalışır (güven şartı ters yöne aynı mesafeyle uygulanır)",
+ "split": {"first": "2023-01-01 – 2024-12-31", "second": "2025-01-01 – 2026-09-10"},
+ "decision": "Bir varyant iki dönemde de C0'dan en az 0,01 R iyiyse ve ters-yön kontrolünden iyiyse canlı bota uygulanır (birden fazlaysa iki dönemin en kötüsü en iyi olan). Değilse kod değişmez."
+}

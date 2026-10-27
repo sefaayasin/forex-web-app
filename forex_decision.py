@@ -1,7 +1,7 @@
 """Özet sekmesinin "Karar" kutusu: bütün görüşleri okuyup LONG, SHORT ya da hedefe göre BEKLE der.
 
 Kullanıcı yön için BEKLE değil net bir taraf istedi. GİR ise kart ve botun ortak kararıdır (entry_decision):
-hedef kontrolü (target_check: ulaşma oranı < %60, başabaş oranının altında ya da maliyet hedefin yarısından
+hedef kontrolü (target_check: ulaşma oranı < %65, başabaş oranının altında ya da maliyet hedefin yarısından
 büyükse BEKLE), işlem planının BEKLE nedenleri (ölçülmüş net sonuç ve doğrulama) ve zamanlama engelleri.
 Yön sırası, ölçülen en iyi bilgiye göre:
 1. ML 4 saatlik yön modeli (research/consensus: tek başına %52; teknik görüşlerle çeliştiğinde ML'nin
@@ -35,7 +35,7 @@ MEASURED = {
 }
 
 
-MIN_HIT = 0.60  # hedefin stoptan önce gelme oranı en az bu olmalı (kullanıcı seçimi, 26 Ekim 2026)
+MIN_HIT = 0.65  # hedefin stoptan önce gelme oranı en az bu olmalı (kullanıcı seçimi, 27 Ekim 2026)
 MAX_COST_OF_TARGET = 0.5  # maliyet hedef mesafesinin yarısını geçerse hedef fazla küçük
 HOLD_HOURS = 24  # trade_plan_stats ufku: 288 5M mum (bir işlem günü)
 
@@ -62,9 +62,9 @@ def breakeven_hit(target_pips: float, stop_pips: float, cost_pips: float) -> flo
 
 def target_check(stats: dict, pair: str, use_ml: bool, target_pips: float, stop_pips: float,
                  cost_pips: float, require_breakeven: bool = True) -> dict:
-    """Bu dolar hedefi bu stopla 'ihtimalli' mi: ulaşma oranı ≥ %60 ve başabaş oranının üstünde, maliyet
+    """Bu dolar hedefi bu stopla 'ihtimalli' mi: ulaşma oranı ≥ %65 ve başabaş oranının üstünde, maliyet
     hedefin yarısından az. Yüksek ulaşma oranı tek başına yetmez: 0,3:1 hedefte başabaş ≈ %77.
-    require_breakeven=False yalnız botun --deney kipi içindir (27 Ekim öncesi kural).
+    require_breakeven=False yalnız botun --deney kipi içindir; %65 ulaşma eşiği bu kipte de uygulanır.
 
     Ölçülen aralığın dışında oran sınır olarak verilir: daha yakın hedef en az en yakın ölçülen kadar,
     daha uzak hedef en fazla onun kadar tutar (aynı stopta hedef yaklaştıkça stoptan önce gelme artar).

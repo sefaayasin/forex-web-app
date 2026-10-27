@@ -163,3 +163,47 @@ Kurallar sonuçlardan önce `protocol_support.json`'a yazıldı; ayar seçimi ya
 - **Oynaklık:** Yüksek oynaklıkta girmek kötüleştiriyor (−0,20 R). Düşük oynaklıkta girmek desteksiz girişle aynı.
 
 `python -X utf8 research_bot_backtest.py --support --fixed-risk`. Sonuçlar `results_support_fixed_risk.json` dosyasında.
+
+## Ek 4: Hedefte stop başabaş yerine biraz aşağıda
+
+27 Ekim 2026. Kullanıcının sorusu: stop hedefte başabaşa (giriş + maliyet) çekiliyor ve küçük geri çekilmede işlem ~0 $ ile kapanıyor. Stop biraz aşağıda kalsa daha iyi mi olur? Kurallar sonuçlardan önce `protocol_trail_floor.json`'a yazıldı.
+
+Taban, canlı bot artı sepet takibi. Ulaşma eşiği %65; bu eşik test sırasında kodda 15:38'de %60'tan %65'e çekilmişti, beş varyantta da aynı. Görünüm sabit risk.
+
+| Varyant | Haftada | Kazanma | 2023–24 | 2025–26 |
+|---|---:|---:|---:|---:|
+| F0 taban giriş + maliyet (eski) | 587 | %31,8 | −0,180 R | −0,174 R |
+| F1 taban girişin 0,25 ATR altı | 503 | %28,8 | −0,158 R | −0,151 R |
+| F2 taban girişin 0,5 ATR altı (**uygulandı**) | 502 | %28,9 | −0,158 R | −0,152 R |
+| F3 taban girişin 1 ATR altı | 502 | %28,9 | −0,158 R | −0,152 R |
+| F4 taban yok | 502 | %28,9 | −0,158 R | −0,152 R |
+
+F2–F4 aynı çıktı. Hedef girişten yaklaşık 0,55 ATR uzakta olduğundan, hedefte "en iyi fiyat − 1 ATR" zaten girişin 0,5 ATR altının üstünde kalıyor; taban hiç bağlamıyor.
+
+**Karar.** Protokoldeki şart sağlandı: iki dönemde de yaklaşık +0,02 R iyileşme var. Canlı bota F2 uygulandı (`TRAIL_FLOOR_ATR = 0.5`). Sonuç yine eksi; kural zararı azaltıyor ama kâra geçirmiyor. Hedefe gelen işlem artık zararla da kapanabilir.
+
+`python -X utf8 research_bot_backtest.py --floor --fixed-risk`. Sonuçlar `results_floor_fixed_risk.json` dosyasında.
+
+## Ek 5: Asgari ML güveni ve zarardan sonra bekleme
+
+27 Ekim 2026. Demo botu NZDUSD'ye ML olasılığı 0,500 ve 0,504 iken girdi. Yarım stoptan 9 dakika sonra aynı yöne yeniden girip yine kaybetti. Kurallar sonuçlardan önce `protocol_confidence_cooldown.json`'a yazıldı. Taban, o an çalışan bot: ulaşma ≥ %65, takip tabanı 0,5 ATR, sepet takibi. Görünüm sabit risk.
+
+| Varyant | Haftada | 2023–24 | 2025–26 | Toplam net (3,7 yıl) |
+|---|---:|---:|---:|---:|
+| C0 taban | 502 | −0,158 R | −0,152 R | −178.833 $ |
+| C1 güven ≥ 0,52 | 341 | −0,155 R | −0,145 R | −117.860 $ |
+| C2 güven ≥ 0,55 | 103 | −0,153 R | −0,146 R | −35.268 $ |
+| C3 güven ≥ 0,60 | 12 | −0,191 R | −0,163 R | −4.972 $ |
+| D1 zarardan sonra 4 saat bekle | 362 | −0,165 R | −0,155 R | −134.095 $ |
+| CD C2 + D1 | 78 | −0,156 R | −0,144 R | −26.814 $ |
+| C2, ML'nin ters yönü | 88 | −0,160 R | −0,164 R | −32.468 $ |
+| D1, ML'nin ters yönü | 328 | −0,166 R | −0,159 R | −122.782 $ |
+
+**Karar.** Protokoldeki şart (iki dönemde de en az +0,01 R ve ters yönden iyi) hiçbir varyantta sağlanmadı; kod değiştirilmedi.
+
+**Gözlemler.**
+- **Güven eşiği işlem başına sonucu az değiştiriyor:** En fazla +0,007 R. Toplam zararı ise işlem sayısıyla birlikte azaltıyor; C2'de haftada 502 yerine 103 işlem.
+- **0,55'te ML yönü tersinden biraz iyi:** 2025–26'da −0,146 R'ye karşı −0,164 R. Fark, maliyetin yanında küçük.
+- **Zarardan sonra beklemek kötüleştiriyor:** D1 −0,165 / −0,155 R.
+
+`python -X utf8 research_bot_backtest.py --confidence --fixed-risk`. Sonuçlar `results_confidence_fixed_risk.json` dosyasında.

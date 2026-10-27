@@ -1,0 +1,32 @@
+[
+ {
+  "ticket": 411021217,
+  "symbol": "NZDUSD",
+  "opened_local": "2026-10-27 15:43:43.655000+03:00",
+  "actual_net": -6.0200000000000005,
+  "ml_confidence": 0.5003010804250752,
+  "before_close_max_net": -0.1399999999991598,
+  "risk_1pct_same_path_lot": 0.05,
+  "risk_1pct_same_path_net": -2.15
+ },
+ {
+  "ticket": 411045182,
+  "symbol": "GBPUSD",
+  "opened_local": "2026-10-27 16:05:49.657000+03:00",
+  "actual_net": -5.680000000000001,
+  "ml_confidence": 0.5235804123599632,
+  "before_close_max_net": 0.4399999999990817,
+  "risk_1pct_same_path_lot": 0.03,
+  "risk_1pct_same_path_net": -1.8933333333333338
+ },
+ {
+  "ticket": 411059397,
+  "symbol": "NZDUSD",
+  "opened_local": "2026-10-27 16:23:54.255000+03:00",
+  "actual_net": -6.0200000000000005,
+  "ml_confidence": 0.504083011690489,
+  "before_close_max_net": -0.98,
+  "risk_1pct_same_path_lot": 0.05,
+  "risk_1pct_same_path_net": -2.15
+ }
+]
