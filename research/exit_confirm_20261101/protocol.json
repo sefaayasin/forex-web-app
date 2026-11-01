@@ -1,0 +1,20 @@
+{
+  "written": "2026-11-01, sonuçlardan önce",
+  "question": "Saat başındaki ML dönüş çıkışı %50 çizgisi geçilince mi çalışmalı, yoksa ters yönde en az %52 güven ya da iki saat üst üste teyit mi aranmalı?",
+  "base": "K1 (protocol_currency_exit.json): saatlik ML, ML güveni ≥ 0,55, ulaşma ≥ %65, maliyet riskin ≤ %10'u, sabit 0,3 R net hedef, yarım stop, takas, sepet takibi, sabit risk görünümü (12,5 $). E0 K1'i birebir üretmelidir.",
+  "variants": {
+    "E0": "mevcut: saat başında ML yönü pozisyonun tersine geçtiyse çık",
+    "E1": "saat başında ters yönde güven en az %52 ise çık",
+    "E2": "iki saat başı üst üste ters yönse çık",
+    "E3": "kontrol: ML dönüş çıkışı yok"
+  },
+  "comparison": "Portföy simülasyonunda çıkış değişince sonraki girişler de değişir. Bu yüzden her varyant E0 ile ortak girişlerde (aynı parite, giriş anı, yön) eşleştirilir. Portföy toplamları ayrıca raporlanır.",
+  "metrics": ["maliyet sonrası net R/işlem", "toplam net $", "ortalama kayıp", "büyük kayıp: R ≤ −0,75 adedi", "en kötü %1 işlemin ortalaması", "ortanca tutma süresi", "60 dk içinde aynı paritede yeniden giriş sayısı"],
+  "uncertainty": "Eşleşmiş farkta haftalık blok bootstrap, %95 aralık, 2.000 tekrar, tohum 0.",
+  "split": {
+    "first": "2023-01-01 – 2024-12-31",
+    "second": "2025-01-01 – 2026-09-10"
+  },
+  "decision": "E1 veya E2, ortak girişlerde iki dönemde de E0'dan en az +0,01 R iyiyse ve portföy net zararını artırmıyorsa ileri demo adayı olur. Bu çalışmada canlı bota uygulanmaz. Daha az erken çıkış tek başına başarı sayılmaz.",
+  "limits": "Yalnız saat başına hizalı ML ölçülür; --ml-every 5 kayan mumlarının geçmiş simülasyonu yoktur, bu çalışma onun kanıtı değildir. Tarihler önceki araştırmalarda incelendi; yeni kör test değildir."
+}

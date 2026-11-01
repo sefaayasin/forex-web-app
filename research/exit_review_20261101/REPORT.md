@@ -170,5 +170,5 @@ başlatılmış. Bu dört giriş %55 kuralının uygulanmış örneği sayılmaz
 python -X utf8 -m unittest test_forex_bot test_forex_decision test_forex_trade_plan test_forex_ml_live
 ```
 
-**75 test geçti** (33'ü `test_forex_bot`). Testler sahte veriyle çalışır; piyasa kapalıyken
+Bu rapor yayınlandığında **75 test geçti** (34'ü `test_forex_bot`). Testler sahte veriyle çalışır; piyasa kapalıyken
 canlı emir denenmedi. Broker H1 karşılaştırması gerçek MT5 verisiyle ayrıca yapıldı.

@@ -77,6 +77,8 @@ class Variant:
     floor_atr: float | None = None  # takip tabanı: None giriş + maliyet; x giriş − x ATR; inf taban yok
     min_conf: float = 0.0       # ML olasılığı yön tarafında en az bu (ör. 0,55); 0 şart yok
     cooldown_hours: float = 0.0  # zararla kapanan paritede bu kadar saat giriş yok
+    exit_conf: float = 0.5      # ML dönüş çıkışı: ters yönde en az bu güven
+    exit_confirm: int = 1       # ML dönüş çıkışı: üst üste bu kadar saat başı ters
     max_cost_share: float = 1.0  # isteğe bağlı maliyet / (stop + maliyet) giriş sınırı
 
 
@@ -243,6 +245,7 @@ class Position:
     sl: float = math.nan  # takip stopu
     trailing: bool = False
     best: float = math.nan
+    against: int = 0     # ML'nin üst üste ters kaldığı saat başı sayısı
 
 
 def hit_curve(stats: dict, pair: str) -> tuple[list[float], list[float], list[float]]:
@@ -250,6 +253,11 @@ def hit_curve(stats: dict, pair: str) -> tuple[list[float], list[float], list[fl
     rows = sorted((float(r), row) for r, row in entry["ratios"].items())
     return [r for r, _ in rows], [row["ml"]["target_rate"] for _, row in rows], \
         [(row["ml"]["target_rate"] + row["opposite"]["target_rate"]) / 2 for _, row in rows]
+
+
+def ml_against(prob: float, side: int, direction: int, exit_conf: float) -> bool:
+    """Saat başındaki ML okuması pozisyonun tersinde ve en az exit_conf güvende mi."""
+    return (1 if prob > 0.5 else -1) * direction != side and abs(prob - 0.5) >= exit_conf - 0.5
 
 
 def news_blocked(events: dict[str, np.ndarray], currencies: tuple[str, str], ns: int) -> bool:
@@ -307,8 +315,8 @@ def run(variant: Variant, market: dict, events: dict, stats: dict, steps: int | 
                 continue
             if not pos.trailing:
                 if variant.ml_exit and new_hour and np.isfinite(P[i, pos.j]) and P[i, pos.j] != 0.5:
-                    ml_side = (1 if P[i, pos.j] > 0.5 else -1) * variant.direction
-                    if ml_side != pos.side:
+                    pos.against = pos.against + 1 if ml_against(P[i, pos.j], pos.side, variant.direction, variant.exit_conf) else 0
+                    if pos.against >= variant.exit_confirm:
                         close(pos, i, o, "ML YÖN DÖNDÜ")
                         continue
                 if t_ns - pos.opened_ns >= HOLD_HOURS * hour_ns:

@@ -1,0 +1,99 @@
+[
+ {
+  "variant": "E0 mevcut (%50 çizgisi)",
+  "trades": 8520,
+  "net_usd": -6490.597850335279,
+  "mean_r": -0.0649242345902951,
+  "mean_r_first": -0.06449930410419723,
+  "mean_r_second": -0.065360690671305,
+  "win_rate": 0.5501173708920187,
+  "mean_loss_r": -0.5372690727798747,
+  "big_losses": 38,
+  "worst_1pct_r": -0.8606639230978052,
+  "median_hold_minutes": 15.0,
+  "reentries": 2729,
+  "ml_exits": 163,
+  "paired_with_e0": null
+ },
+ {
+  "variant": "E1 ters güven ≥ %52",
+  "trades": 8511,
+  "net_usd": -6511.8888695727455,
+  "mean_r": -0.0652549283874072,
+  "mean_r_first": -0.06428359045443685,
+  "mean_r_second": -0.06625193739432031,
+  "win_rate": 0.5514040653272236,
+  "mean_loss_r": -0.5425517233862519,
+  "big_losses": 41,
+  "worst_1pct_r": -0.8916948023203153,
+  "median_hold_minutes": 15.0,
+  "reentries": 2720,
+  "ml_exits": 84,
+  "paired_with_e0": {
+   "common": 8478,
+   "share_of_base": 0.9950704225352113,
+   "changed": 97,
+   "diff_r": -6.272254707416098e-05,
+   "ci95": [
+    -0.0010579424845336878,
+    0.0009001215123387974
+   ],
+   "diff_r_first": 0.0007946244390932375,
+   "diff_r_second": -0.0009405361597912707
+  }
+ },
+ {
+  "variant": "E2 iki saat teyit",
+  "trades": 8505,
+  "net_usd": -6428.648994601903,
+  "mean_r": -0.06446387100656338,
+  "mean_r_first": -0.06338042659135439,
+  "mean_r_second": -0.06557492403154312,
+  "win_rate": 0.5522633744855967,
+  "mean_loss_r": -0.5443456095073265,
+  "big_losses": 41,
+  "worst_1pct_r": -0.8914868374220637,
+  "median_hold_minutes": 15.0,
+  "reentries": 2718,
+  "ml_exits": 41,
+  "paired_with_e0": {
+   "common": 8455,
+   "share_of_base": 0.9923708920187794,
+   "changed": 159,
+   "diff_r": 0.0006828794590527019,
+   "ci95": [
+    -0.00046958725471781546,
+    0.001861382585731466
+   ],
+   "diff_r_first": 0.0016672719378686164,
+   "diff_r_second": -0.00032293332477809756
+  }
+ },
+ {
+  "variant": "E3 ML çıkışı yok",
+  "trades": 8506,
+  "net_usd": -6396.169630908619,
+  "mean_r": -0.06414528681796762,
+  "mean_r_first": -0.06265894160180581,
+  "mean_r_second": -0.06566771180853415,
+  "win_rate": 0.5525511403715024,
+  "mean_loss_r": -0.5455347076574764,
+  "big_losses": 41,
+  "worst_1pct_r": -0.8914868374220637,
+  "median_hold_minutes": 15.0,
+  "reentries": 2719,
+  "ml_exits": 0,
+  "paired_with_e0": {
+   "common": 8452,
+   "share_of_base": 0.992018779342723,
+   "changed": 158,
+   "diff_r": 0.0011644719146193278,
+   "ci95": [
+    2.7443927087038135e-05,
+    0.002404291370011739
+   ],
+   "diff_r_first": 0.002359572767949293,
+   "diff_r_second": -5.808936999825767e-05
+  }
+ }
+]

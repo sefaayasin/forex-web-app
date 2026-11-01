@@ -94,6 +94,24 @@ class BotBacktestTests(unittest.TestCase):
         self.assertEqual(pd.Timestamp(trades[0]["closed"], tz="UTC"), pd.Timestamp("2023-01-02 11:00", tz="UTC"))
         self.assertNotIn("ML YÖN DÖNDÜ", [t["reason"] for t in bt.run(bt.VARIANTS[3], m, {}, STATS)["trades"]])
 
+    def test_ml_exit_can_require_confidence_or_two_hours(self):
+        reasons = lambda variant, m: [(t["reason"], t["closed"]) for t in bt.run(variant, m, {}, STATS)["trades"]]
+        weak = market([1.1000] * 40, prob=0.6)
+        weak["Prob"][12:, J] = 0.49  # 11:00'dan sonra ML zayıf SHORT der
+        hour = lambda text: pd.Timestamp(text, tz="UTC").value
+        self.assertEqual(reasons(bt.VARIANTS[0], weak)[0], ("ML YÖN DÖNDÜ", hour("2023-01-02 11:00")))
+        confident = bt.Variant("e1", exit_conf=0.52)
+        self.assertNotIn("ML YÖN DÖNDÜ", [r for r, _ in reasons(confident, weak)])
+        strong = market([1.1000] * 40, prob=0.6)
+        strong["Prob"][12:, J] = 0.47
+        self.assertEqual(reasons(confident, strong)[0], ("ML YÖN DÖNDÜ", hour("2023-01-02 11:00")))
+        two_hours = bt.Variant("e2", exit_confirm=2)
+        self.assertEqual(reasons(two_hours, strong)[0], ("ML YÖN DÖNDÜ", hour("2023-01-02 12:00")))
+        # Araya giren lehe okuma teyit sayacını sıfırlar.
+        back = market([1.1000] * 40, prob=0.6)
+        back["Prob"][12:24, J] = 0.47
+        self.assertNotIn(("ML YÖN DÖNDÜ", hour("2023-01-02 12:00")), reasons(two_hours, back))
+
     def test_basket_closes_everything_at_the_total_target(self):
         path = list(np.linspace(1.1000, 1.1040, 40))  # 40 pip yükseliş; tek pozisyonun kârı 15 $'ı geçer
         stop_only = bt.BASKET_VARIANTS[1]
