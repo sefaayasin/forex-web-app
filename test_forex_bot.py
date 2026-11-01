@@ -327,6 +327,119 @@ class ForexBotTests(unittest.TestCase):
         self.assertTrue(small["check"]["ok"])
         self.assertEqual(small["plan"]["lot"], 0.06)
 
+    def test_rolling_hourly_bars_end_at_anchor(self):
+        import pandas as pd
+        index = pd.date_range("2026-10-27 10:00", "2026-10-27 12:40", freq="5min", tz="UTC")
+        bars = pd.DataFrame({"Open": range(len(index)), "High": range(len(index)), "Low": range(len(index)),
+                             "Close": range(len(index))}, index=index, dtype=float)
+        anchor = pd.Timestamp("2026-10-27 12:45", tz="UTC")
+        hourly = forex_bot.rolling_hourly(bars, anchor)
+        self.assertEqual(hourly.index[-1], pd.Timestamp("2026-10-27 11:45", tz="UTC"))
+        last = bars.loc["2026-10-27 11:45":"2026-10-27 12:40"]
+        self.assertEqual(hourly.iloc[-1].tolist(), [last.Open.iloc[0], last.High.max(), last.Low.min(),
+                                                     last.Close.iloc[-1]])
+        # henüz kapanmamış 5M mum (12:45 açılışı) alınmaz
+        later = forex_bot.rolling_hourly(pd.concat([bars, bars.iloc[[-1]].set_axis(
+            [pd.Timestamp("2026-10-27 12:45", tz="UTC")])]), anchor)
+        self.assertEqual(later.iloc[-1].tolist(), hourly.iloc[-1].tolist())
+
+    def five_minute_bars(self, start, end):
+        pd = forex_bot.pd
+        index = pd.date_range(start, end, freq="5min", tz="UTC")
+        return pd.DataFrame(1., index=index, columns=["Open", "High", "Low", "Close"])
+
+    def test_rolling_hourly_keeps_broker_gaps_and_drops_only_the_cut_first_hour(self):
+        pd = forex_bot.pd
+        anchor = pd.Timestamp("2026-10-27 12:45", tz="UTC")
+        bars = self.five_minute_bars("2026-10-27 10:00", "2026-10-27 12:40")
+        expected = [pd.Timestamp("2026-10-27 10:45", tz="UTC"), pd.Timestamp("2026-10-27 11:45", tz="UTC")]
+        # 09:45–10:45 yüklemenin başında kesilmiş; sonraki saatler tam.
+        self.assertEqual(forex_bot.rolling_hourly(bars, anchor).index.tolist(), expected)
+        # Tam saat sınırından başlayan geçmişin ilk saati kesik değildir.
+        whole = bars[bars.index >= expected[0]]
+        self.assertEqual(forex_bot.rolling_hourly(whole, anchor).index.tolist(), expected)
+        # Geçmişteki olağan boşluk saati silmez; broker H1 de bu saati tutar.
+        gap = bars.drop(pd.Timestamp("2026-10-27 12:00", tz="UTC"))
+        self.assertEqual(forex_bot.rolling_hourly(gap, anchor).index.tolist(), expected)
+        # Yinelenen ve geçersiz mumlar saati değiştirmez.
+        duplicate = pd.concat([gap, gap.loc[[pd.Timestamp("2026-10-27 12:05", tz="UTC")]]])
+        self.assertEqual(forex_bot.rolling_hourly(duplicate, anchor).index.tolist(), expected)
+        null = bars.copy()
+        null.loc[pd.Timestamp("2026-10-27 12:00", tz="UTC"), "High"] = float("nan")
+        self.assertEqual(forex_bot.rolling_hourly(null, anchor).index.tolist(), expected)
+        self.assertTrue(forex_bot.rolling_hourly(bars.iloc[:0], anchor).empty)
+
+    def test_last_hour_needs_ten_distinct_valid_closed_bars(self):
+        pd = forex_bot.pd
+        anchor = pd.Timestamp("2026-10-27 12:45", tz="UTC")
+        hour = self.five_minute_bars("2026-10-27 09:45", "2026-10-27 12:40")
+        history, last = hour[hour.index < anchor - pd.Timedelta(hours=1)], hour[hour.index >= anchor - pd.Timedelta(hours=1)]
+        with_last = lambda keep: pd.concat([history, last.iloc[:keep]])
+        self.assertTrue(forex_bot.last_hour_complete(hour, anchor))
+        self.assertTrue(forex_bot.last_hour_complete(with_last(11), anchor))
+        self.assertTrue(forex_bot.last_hour_complete(with_last(10), anchor))
+        self.assertFalse(forex_bot.last_hour_complete(with_last(9), anchor))
+        # Yinelenen mum sayıyı şişirmez, geçersiz mum sayılmaz.
+        self.assertFalse(forex_bot.last_hour_complete(pd.concat([with_last(9), last.iloc[[0]]]), anchor))
+        null = with_last(10).copy()
+        null.iloc[-1, 1] = float("nan")
+        self.assertFalse(forex_bot.last_hour_complete(null, anchor))
+        # Eski son saat ve kapanmamış mum kabul edilmez.
+        self.assertFalse(forex_bot.last_hour_complete(history, anchor))
+        unclosed = pd.concat([with_last(9), last.iloc[[-1]].set_axis([anchor])])
+        self.assertFalse(forex_bot.last_hour_complete(unclosed, anchor))
+
+    def test_rolling_ml_retries_missing_latest_hour_without_caching_failure(self):
+        pd = forex_bot.pd
+        anchor = pd.Timestamp("2026-10-27 12:45", tz="UTC")
+        full = self.five_minute_bars("2026-10-27 10:45", "2026-10-27 12:40")
+        incomplete = full.iloc[:-3]
+        mt5 = SimpleNamespace(TIMEFRAME_M5=5)
+        with patch.dict(forex_bot._ML_CACHE, {}, clear=True), \
+             patch.object(forex_bot, "rates_utc", side_effect=[incomplete, full]) as rates, \
+             patch.object(forex_bot, "build_research_prediction", return_value={
+                 "status": "ready", "probability_up": .56}) as predict:
+            self.assertIsNone(forex_bot.ml_probability(mt5, "EURUSD", anchor, 5))
+            predict.assert_not_called()
+            self.assertEqual(forex_bot.ml_probability(mt5, "EURUSD", anchor, 5), .56)
+            self.assertEqual(forex_bot.ml_probability(mt5, "EURUSD", anchor, 5), .56)
+            self.assertEqual(rates.call_count, 2)
+            self.assertEqual(predict.call_count, 1)
+
+    def test_rejected_close_does_not_assign_a_successful_exit_reason(self):
+        conn = sqlite3.connect(":memory:")
+        self.addCleanup(conn.close)
+        conn.execute("CREATE TABLE trades (ticket INTEGER, close_reason TEXT)")
+        conn.execute("INSERT INTO trades VALUES (123, NULL)")
+        mt5 = SimpleNamespace(TRADE_ACTION_DEAL=1, POSITION_TYPE_BUY=0,
+            ORDER_TYPE_BUY=0, ORDER_TYPE_SELL=1, ORDER_TIME_GTC=0, TRADE_RETCODE_DONE=10009,
+            symbol_info_tick=lambda _: SimpleNamespace(bid=1.1, ask=1.1001),
+            symbol_info=lambda _: SimpleNamespace(),
+            order_send=lambda _: SimpleNamespace(retcode=10018, comment="Market closed"))
+        position = SimpleNamespace(ticket=123, symbol="EURUSD", type=0, volume=.1)
+        with patch.object(forex_bot, "filling", return_value=0), patch.object(forex_bot, "log"):
+            self.assertFalse(forex_bot.close_position(mt5, conn, position, "ML YÖN DÖNDÜ"))
+            self.assertIsNone(conn.execute("SELECT close_reason FROM trades").fetchone()[0])
+            mt5.order_send = lambda _: SimpleNamespace(retcode=10009)
+            self.assertTrue(forex_bot.close_position(mt5, conn, position, "ML YÖN DÖNDÜ"))
+            self.assertEqual(conn.execute("SELECT close_reason FROM trades").fetchone()[0], "ML YÖN DÖNDÜ")
+
+    def test_report_counts_fixed_tp_as_reaching_target(self):
+        from contextlib import redirect_stdout
+        from io import StringIO
+        conn = sqlite3.connect(":memory:")
+        self.addCleanup(conn.close)
+        conn.execute(f"CREATE TABLE trades ({forex_bot.TRADE_COLUMNS})")
+        conn.execute("CREATE TABLE decisions (action TEXT)")
+        conn.executemany("""INSERT INTO trades
+            (ticket,sizing_balance,closed_at,profit_usd,outcome,trailing,hit,hit_half_stop)
+            VALUES (?,500,'2026-10-27',1,?,?,.67,.55)""",
+            [(1, "HEDEF", 0), (2, "TAKİP STOPU", 1), (3, "STOP", 0)])
+        output = StringIO()
+        with patch.object(forex_bot, "db", return_value=conn), redirect_stdout(output):
+            forex_bot.report()
+        self.assertIn("Hedefe (sabit TP veya takip başlangıcına) gelen: %67", output.getvalue())
+
     def test_budget_follows_virtual_balance(self):
         args = SimpleNamespace(loss_usd=None, target_usd=None, risk_pct=1.0, target_r=0.3)
         self.assertEqual(forex_bot.budget(500.0, args), (1.5, 5.0))

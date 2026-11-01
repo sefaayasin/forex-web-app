@@ -6,7 +6,10 @@ hedef bunun --target-r katı (Karar kutusundaki 30/100 oranı). Açık pozisyonl
 yarısını geçmez; --leverage gerçek hesabın kaldıracıyla teminatı yeniden ölçekler.
 
 Giriş (Özet'teki Karar kutusuyla aynı hesap, forex_trade_plan + forex_decision):
-- Yön: ML 4 saatlik yön modeli (son kapanmış saatlik mum; yön yalnız saat başında değişebilir).
+- Yön: ML 4 saatlik yön modeli (son kapanmış saatlik mum; yön yalnız saat başında değişebilir). --ml-every 5:
+  her 5 dakikada son 60 dakika saatlik mum sayılır (ör. 17:45'te 16:45–17:45); model saat başına hizalı mumlarla
+  eğitildi, kaydırılmış mumlarla geçmişte ölçülmedi (kullanıcı isteği, 27 Ekim 2026). Aynı paritede aynı dönemin
+  sinyaliyle ikinci kez girilmez; dönem --ml-every dakikadır.
 - Yeni girişte ham ML yön güveni en az %55 (--min-ml-confidence); %65 hedef ulaşma oranından ayrı bir kontroldür.
 - Yeni girişte maliyet / (stop + maliyet) en fazla %10 (--max-cost-share); deney kipinde de uygulanır.
 - Stop: kapanmış 15M mumlarında ATR14 × 1,5; lot bu stop ve zarar bütçesinden. Hedef: dolar hedefinden.
@@ -75,6 +78,8 @@ COMMENT = "karar-bot"
 MANAGE_SECONDS = 5  # açık pozisyon kontrolü
 SCAN_SECONDS = 60  # yeni fırsat taraması
 ML_CHECK_DELAY_SECONDS = 60  # saatlik mum kapandıktan sonra ML yön kontrolü
+ML_ROLLING_DAYS = 90  # --ml-every < 60: kayan saatlik mumlar için 5M geçmişi (≈ 1.500 saatlik mum)
+MIN_LAST_HOUR_BARS = 10  # son kayan saatte en az bu kadar 5M mum; brokerın günlük arası bir mum düşürür
 MAX_TICK_AGE_SECONDS = 180  # daha eski tick: piyasa kapalı
 DEVIATION_POINTS = 10
 EARLY_EXIT_SHARE = 0.5  # stop mesafesinin bu kadarında çık
@@ -190,14 +195,56 @@ def own_positions(mt5) -> list:
     return [p for p in (mt5.positions_get() or ()) if p.magic == MAGIC]
 
 
-def ml_probability(mt5, name: str, now: pd.Timestamp) -> Optional[float]:
+def closed_bars(bars5: pd.DataFrame, anchor: pd.Timestamp) -> pd.DataFrame:
+    """anchor'a kadar kapanmış, OHLC'si geçerli, zamanı yinelenmeyen 5M mumlar."""
+    closed = bars5[bars5.index + pd.Timedelta(minutes=5) <= anchor][["Open", "High", "Low", "Close"]].dropna()
+    return closed[~closed.index.duplicated(keep="last")].sort_index()
+
+
+def rolling_hourly(bars5: pd.DataFrame, anchor: pd.Timestamp) -> pd.DataFrame:
+    """anchor'da biten 60 dakikalık mumlar: son mum [anchor − 60 dk, anchor).
+
+    Broker H1 gibi boşluklu saatler korunur; yalnız yüklemenin başında kesilmiş ilk saat atılır.
+    """
+    closed = closed_bars(bars5, anchor)
+    if closed.empty:
+        return closed
+    hourly = closed.resample("60min", origin=anchor, label="left", closed="left").agg(
+        {"Open": "first", "High": "max", "Low": "min", "Close": "last"}).dropna()
+    return hourly[hourly.index >= closed.index[0]]
+
+
+def last_hour_complete(bars5: pd.DataFrame, anchor: pd.Timestamp) -> bool:
+    """Son kayan saat güncel ve yeterli mi; sayı kontrolü, saatin sonundaki kısa kesintiyi yakalamaz."""
+    closed = closed_bars(bars5, anchor)
+    return int((closed.index >= anchor - pd.Timedelta(hours=1)).sum()) >= MIN_LAST_HOUR_BARS
+
+
+_ML_CACHE: dict[tuple[str, pd.Timestamp], Optional[float]] = {}
+
+
+def ml_probability(mt5, name: str, now: pd.Timestamp, every: int = 60) -> Optional[float]:
+    """ML yön olasılığı. every=60: kapanmış saatlik mumlar; daha kısa: her `every` dakikada kayan 60 dakikalık mumlar."""
     end = now.to_pydatetime()
-    hourly = rates_utc(mt5, name, mt5.TIMEFRAME_H1, end - timedelta(days=150), end)
-    prediction = build_research_prediction(name, bars=hourly, now=now, max_age=ML_MAX_AGE) if not hourly.empty else {}
-    return float(prediction["probability_up"]) if prediction.get("status") == "ready" else None
+    if every >= 60:
+        hourly = rates_utc(mt5, name, mt5.TIMEFRAME_H1, end - timedelta(days=150), end)
+        prediction = build_research_prediction(name, bars=hourly, now=now, max_age=ML_MAX_AGE) if not hourly.empty else {}
+        return float(prediction["probability_up"]) if prediction.get("status") == "ready" else None
+    anchor = now.floor(f"{every}min")
+    if (name, anchor) not in _ML_CACHE:
+        bars5 = rates_utc(mt5, name, mt5.TIMEFRAME_M5, end - timedelta(days=ML_ROLLING_DAYS), end)
+        prediction = (build_research_prediction(name, bars=rolling_hourly(bars5, anchor), now=anchor, max_age=ML_MAX_AGE)
+                      if not bars5.empty and last_hour_complete(bars5, anchor) else {})
+        probability = float(prediction["probability_up"]) if prediction.get("status") == "ready" else None
+        # Geçici veri eksikliğini dönem boyunca sabitleme; sonraki taramada yeniden dene.
+        if probability is not None:
+            _ML_CACHE[(name, anchor)] = probability
+        for key in [k for k in _ML_CACHE if k[1] < anchor]:
+            del _ML_CACHE[key]
+    return _ML_CACHE.get((name, anchor))
 
 
-def pair_inputs(mt5, symbol: str) -> dict:
+def pair_inputs(mt5, symbol: str, ml_every: int = 60) -> dict:
     """Karar için canlı girdiler: fiyat, ML yön olasılığı, 15M ATR, maliyet ve broker pip değeri."""
     name = symbol.replace("=X", "")
     if not mt5.symbol_select(name, True):
@@ -210,7 +257,7 @@ def pair_inputs(mt5, symbol: str) -> dict:
     m15 = rates_utc(mt5, name, mt5.TIMEFRAME_M15, end - timedelta(days=10), end)
     if len(m15) < 40:
         return {"reasons": ["15M geçmiş alınamadı."]}
-    probability_up = ml_probability(mt5, name, now)
+    probability_up = ml_probability(mt5, name, now, ml_every)
     if probability_up is None:
         return {"reasons": ["ML tahmini yok."]}
     row = latest_valid_row(add_indicators(m15.iloc[:-1]))
@@ -460,8 +507,6 @@ def close_position(mt5, conn, position, reason: str) -> bool:
     tick = mt5.symbol_info_tick(position.symbol)
     info = mt5.symbol_info(position.symbol)
     buy = position.type == mt5.POSITION_TYPE_BUY
-    conn.execute("UPDATE trades SET close_reason=? WHERE ticket=?", (reason, position.ticket))
-    conn.commit()
     result = mt5.order_send({
         "action": mt5.TRADE_ACTION_DEAL, "symbol": position.symbol, "volume": position.volume,
         "type": mt5.ORDER_TYPE_SELL if buy else mt5.ORDER_TYPE_BUY, "position": position.ticket,
@@ -469,6 +514,9 @@ def close_position(mt5, conn, position, reason: str) -> bool:
         "comment": COMMENT, "type_time": mt5.ORDER_TIME_GTC, "type_filling": filling(mt5, info),
     })
     ok = result is not None and result.retcode == mt5.TRADE_RETCODE_DONE
+    if ok:
+        conn.execute("UPDATE trades SET close_reason=? WHERE ticket=?", (reason, position.ticket))
+        conn.commit()
     log(f"{'✓' if ok else '✗'} {position.symbol} kapatma ({reason}): "
         f"{'tamam' if ok else (mt5.last_error() if result is None else result.comment)}")
     return ok
@@ -588,7 +636,8 @@ def basket_check(mt5, conn, watch: BasketWatch, arm_usd: float, now: pd.Timestam
     return True
 
 
-def manage(mt5, conn, check_ml: bool, watch: Optional[BasketWatch] = None, arm_usd: float = 0.0) -> None:
+def manage(mt5, conn, check_ml: bool, watch: Optional[BasketWatch] = None, arm_usd: float = 0.0,
+           ml_every: int = 60) -> None:
     """Açık pozisyonları yönetir ve kapananların sonucunu günlüğe yazar."""
     now = pd.Timestamp.now(tz="UTC")
     if watch is not None and basket_check(mt5, conn, watch, arm_usd, now):
@@ -631,7 +680,7 @@ def manage(mt5, conn, check_ml: bool, watch: Optional[BasketWatch] = None, arm_u
         elif now - opened >= pd.Timedelta(hours=HOLD_HOURS):
             close_position(mt5, conn, position, "SÜRE")
         elif check_ml:
-            probability_up = ml_probability(mt5, position.symbol, now)
+            probability_up = ml_probability(mt5, position.symbol, now, ml_every)
             if probability_up is not None and probability_up != 0.5 and (probability_up > 0.5) != (sign == 1):
                 close_position(mt5, conn, position, "ML YÖN DÖNDÜ")
     sync_closed(mt5, conn)
@@ -677,7 +726,7 @@ def scan(mt5, conn, args, calendar: NewsCalendar, quiet: bool = False) -> None:
     balance = virtual_balance(conn, args.balance)
     target_usd, loss_usd = budget(balance, args)
     now = pd.Timestamp.now(tz="UTC")
-    scanned_at, signal_hour = now.floor("s"), now.floor("h")
+    scanned_at, signal_hour = now.floor("s"), now.floor(f"{min(args.ml_every, 60)}min")
     held = {p.symbol for p in own_positions(mt5)}
     entered = {r["symbol"] for r in conn.execute("SELECT symbol FROM trades WHERE signal_hour=?", (str(signal_hour),))}
     pool = [] if args.dry_run else swap_pool(mt5, conn, args, now)
@@ -689,7 +738,7 @@ def scan(mt5, conn, args, calendar: NewsCalendar, quiet: bool = False) -> None:
         if not has_research_model(name, "direction") or name in held or name in entered:
             continue
         try:
-            item = pair_inputs(mt5, symbol)
+            item = pair_inputs(mt5, symbol, args.ml_every)
             if "name" in item:
                 item = decide(item, target_usd, loss_usd, balance, stats, args.experiment, args.min_ml_confidence)
                 item.update(target_usd=target_usd, loss_usd=loss_usd)
@@ -762,8 +811,8 @@ def report() -> None:
     print(f"Sanal hesap: {start:.2f} $ → {start + result:.2f} $ ({result / start * 100:+.1f}%)")
     if closed.empty:
         return
-    reached = closed["trailing"].astype(bool).mean()
-    print(f"Hedefe (takip başlangıcına) gelen: %{reached * 100:.0f} · ölçümün beklediği: tam stopa göre "
+    reached = (closed["trailing"].fillna(0).astype(bool) | closed["outcome"].eq("HEDEF")).mean()
+    print(f"Hedefe (sabit TP veya takip başlangıcına) gelen: %{reached * 100:.0f} · ölçümün beklediği: tam stopa göre "
           f"%{closed['hit'].mean() * 100:.0f}, yarım stopa göre %{closed['hit_half_stop'].mean() * 100:.0f}")
     print(f"Net sonuç: {result:+.2f} $ · işlem başına {closed['profit_usd'].mean():+.2f} $")
     by_outcome = closed.groupby("outcome")["profit_usd"].agg(["count", "mean", "sum"]).round(2)
@@ -787,6 +836,8 @@ def parse_args(argv: Optional[list[str]] = None):
     parser.add_argument("--loss-usd", type=float, help="Sabit stop zararı $ (verilirse --risk-pct yerine)")
     parser.add_argument("--leverage", type=float, help="Gerçek hesabın kaldıracı (teminat için; varsayılan demo)")
     parser.add_argument("--max-positions", type=int, default=3, help="Aynı anda en fazla açık pozisyon")
+    parser.add_argument("--ml-every", type=int, default=60, choices=(5, 10, 15, 20, 30, 60),
+                        help="ML yönünü kaç dakikada bir yenile: 60 kapanmış saatlik mum, daha kısa kayan 60 dk mum")
     parser.add_argument("--max-currency", type=int, default=1,
                         help="Bir para biriminde aynı yönde en fazla bu kadar pozisyon")
     parser.add_argument("--stale-hours", type=float, default=4.0,
@@ -826,23 +877,26 @@ def main() -> None:
         f"ML yön güveni ≥ %{args.min_ml_confidence * 100:.0f} · çıkış {args.exit_mode} · kaldıraç 1:"
         f"{args.leverage or account.leverage:.0f} · en fazla {args.max_positions} pozisyon"
         f" · hedef ulaşma ≥ %{MIN_HIT * 100:.0f} · maliyet/risk ≤ %{args.max_cost_share * 100:.0f}"
+        f" · ML her {args.ml_every} dk"
         + (f" · sepet kârı {args.basket_r * loss_usd:.2f} $'dan sonra izlenir" if args.basket_r > 0 else "")
         + (" · DENEY: başabaş/ölçüm engelleri atlanıyor" if args.experiment else "")
         + (" · DENEME (emir yok)" if args.dry_run else ""))
-    last_scan, last_ml_hour = None, pd.Timestamp.now(tz="UTC").floor("h")
+    period = f"{args.ml_every}min"
+    last_scan, last_ml_hour = None, pd.Timestamp.now(tz="UTC").floor(period)
     calendar = NewsCalendar()
     watch = BasketWatch()
     try:
         while True:
             now = pd.Timestamp.now(tz="UTC")
             hour = now.floor("h")
-            check_ml = hour > last_ml_hour and (now - hour).total_seconds() >= ML_CHECK_DELAY_SECONDS
+            ml_period = now.floor(period)
+            check_ml = ml_period > last_ml_hour and (now - ml_period).total_seconds() >= ML_CHECK_DELAY_SECONDS
             if not args.dry_run:
                 beat(conn, os.getpid())
                 arm_usd = args.basket_r * budget(virtual_balance(conn, args.balance), args)[1]
-                manage(mt5, conn, check_ml, watch, arm_usd)
+                manage(mt5, conn, check_ml, watch, arm_usd, args.ml_every)
             if check_ml:
-                last_ml_hour = hour
+                last_ml_hour = ml_period
             if last_scan is None or (now - last_scan).total_seconds() >= SCAN_SECONDS:
                 scan(mt5, conn, args, calendar, quiet=last_scan is not None and last_scan.floor("h") == hour)
                 last_scan = now
