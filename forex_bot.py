@@ -8,8 +8,8 @@ yarısını geçmez; --leverage gerçek hesabın kaldıracıyla teminatı yenide
 Giriş (Özet'teki Karar kutusuyla aynı hesap, forex_trade_plan + forex_decision):
 - Yön: ML 4 saatlik yön modeli (son kapanmış saatlik mum; yön yalnız saat başında değişebilir). --ml-every 5:
   her 5 dakikada son 60 dakika saatlik mum sayılır (ör. 17:45'te 16:45–17:45); model saat başına hizalı mumlarla
-  eğitildi, kaydırılmış mumlarla geçmişte ölçülmedi (kullanıcı isteği, 27 Ekim 2026). Aynı paritede aynı dönemin
-  sinyaliyle ikinci kez girilmez; dönem --ml-every dakikadır.
+  eğitildi, kaydırılmış mumlarla geçmişte ölçülmedi (kullanıcı isteği, 27 Ekim 2026). Hızlı yenileme yeniden girişi
+  sıklaştırmaz: parite başına --entry-every dakikalık takvim döneminde (varsayılan saatlik) tek giriş.
 - Yeni girişte ham ML yön güveni en az %55 (--min-ml-confidence); %65 hedef ulaşma oranından ayrı bir kontroldür.
 - Yeni girişte maliyet / (stop + maliyet) en fazla %10 (--max-cost-share); deney kipinde de uygulanır.
 - Stop: kapanmış 15M mumlarında ATR14 × 1,5; lot bu stop ve zarar bütçesinden. Hedef: dolar hedefinden.
@@ -242,6 +242,11 @@ def ml_probability(mt5, name: str, now: pd.Timestamp, every: int = 60) -> Option
         for key in [k for k in _ML_CACHE if k[1] < anchor]:
             del _ML_CACHE[key]
     return _ML_CACHE.get((name, anchor))
+
+
+def entry_period(now: pd.Timestamp, minutes: int) -> pd.Timestamp:
+    """Parite başına tek giriş dönemi: ML yenilemesinden bağımsız takvim sınırı, girişten sonra bekleme süresi değil."""
+    return now.floor(f"{minutes}min")
 
 
 def pair_inputs(mt5, symbol: str, ml_every: int = 60) -> dict:
@@ -726,7 +731,7 @@ def scan(mt5, conn, args, calendar: NewsCalendar, quiet: bool = False) -> None:
     balance = virtual_balance(conn, args.balance)
     target_usd, loss_usd = budget(balance, args)
     now = pd.Timestamp.now(tz="UTC")
-    scanned_at, signal_hour = now.floor("s"), now.floor(f"{min(args.ml_every, 60)}min")
+    scanned_at, signal_hour = now.floor("s"), entry_period(now, args.entry_every)
     held = {p.symbol for p in own_positions(mt5)}
     entered = {r["symbol"] for r in conn.execute("SELECT symbol FROM trades WHERE signal_hour=?", (str(signal_hour),))}
     pool = [] if args.dry_run else swap_pool(mt5, conn, args, now)
@@ -838,6 +843,8 @@ def parse_args(argv: Optional[list[str]] = None):
     parser.add_argument("--max-positions", type=int, default=3, help="Aynı anda en fazla açık pozisyon")
     parser.add_argument("--ml-every", type=int, default=60, choices=(5, 10, 15, 20, 30, 60),
                         help="ML yönünü kaç dakikada bir yenile: 60 kapanmış saatlik mum, daha kısa kayan 60 dk mum")
+    parser.add_argument("--entry-every", type=int, default=60, choices=(5, 10, 15, 20, 30, 60),
+                        help="Parite başına bu kadar dakikalık takvim döneminde tek giriş (--ml-every'den bağımsız)")
     parser.add_argument("--max-currency", type=int, default=1,
                         help="Bir para biriminde aynı yönde en fazla bu kadar pozisyon")
     parser.add_argument("--stale-hours", type=float, default=4.0,
@@ -877,7 +884,7 @@ def main() -> None:
         f"ML yön güveni ≥ %{args.min_ml_confidence * 100:.0f} · çıkış {args.exit_mode} · kaldıraç 1:"
         f"{args.leverage or account.leverage:.0f} · en fazla {args.max_positions} pozisyon"
         f" · hedef ulaşma ≥ %{MIN_HIT * 100:.0f} · maliyet/risk ≤ %{args.max_cost_share * 100:.0f}"
-        f" · ML her {args.ml_every} dk"
+        f" · ML her {args.ml_every} dk · parite başına {args.entry_every} dk'da tek giriş"
         + (f" · sepet kârı {args.basket_r * loss_usd:.2f} $'dan sonra izlenir" if args.basket_r > 0 else "")
         + (" · DENEY: başabaş/ölçüm engelleri atlanıyor" if args.experiment else "")
         + (" · DENEME (emir yok)" if args.dry_run else ""))

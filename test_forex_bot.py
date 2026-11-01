@@ -440,6 +440,39 @@ class ForexBotTests(unittest.TestCase):
             forex_bot.report()
         self.assertIn("Hedefe (sabit TP veya takip başlangıcına) gelen: %67", output.getvalue())
 
+    def test_entry_period_is_a_calendar_limit_independent_of_ml_refresh(self):
+        pd = forex_bot.pd
+        at = lambda clock: pd.Timestamp(f"2026-10-27 {clock}", tz="UTC")
+        args = forex_bot.parse_args(["--ml-every", "5"])
+        self.assertEqual((args.ml_every, args.entry_every), (5, 60))
+        self.assertEqual(forex_bot.entry_period(at("14:05"), args.entry_every),
+                         forex_bot.entry_period(at("14:50"), args.entry_every))
+        # Dönem sınırıdır: 14:59'dan sonra yeni saatte giriş 60 dk beklemez.
+        self.assertNotEqual(forex_bot.entry_period(at("14:59"), args.entry_every),
+                            forex_bot.entry_period(at("15:00"), args.entry_every))
+
+    def test_faster_ml_does_not_reopen_the_pair_inside_the_entry_period(self):
+        pd = forex_bot.pd
+        args = forex_bot.parse_args(["--ml-every", "5"])
+        period = forex_bot.entry_period(pd.Timestamp.now(tz="UTC"), args.entry_every)
+        for entered, calls in ((True, 0), (False, 1)):
+            conn = sqlite3.connect(":memory:")
+            conn.row_factory = sqlite3.Row
+            conn.execute(f"CREATE TABLE trades ({forex_bot.TRADE_COLUMNS})")
+            if entered:  # sonraki dönem de yazılır: test saat başına denk gelse de sonuç değişmez
+                conn.executemany("INSERT INTO trades (ticket,symbol,signal_hour) VALUES (?,'EURUSD',?)",
+                                 [(1, str(period)), (2, str(period + pd.Timedelta(hours=1)))])
+            with patch.object(forex_bot, "SYMBOL_LIST", ["EURUSD=X"]), \
+                 patch.object(forex_bot, "has_research_model", return_value=True), \
+                 patch.object(forex_bot, "load_plan_stats", return_value={}), \
+                 patch.object(forex_bot, "own_positions", return_value=[]), \
+                 patch.object(forex_bot, "swap_pool", return_value=[]), \
+                 patch.object(forex_bot, "position_sides", return_value=[]), \
+                 patch.object(forex_bot, "pair_inputs", return_value={"reasons": []}) as inputs:
+                forex_bot.scan(None, conn, args, SimpleNamespace(current=lambda _: []), quiet=True)
+            self.assertEqual(inputs.call_count, calls)
+            conn.close()
+
     def test_budget_follows_virtual_balance(self):
         args = SimpleNamespace(loss_usd=None, target_usd=None, risk_pct=1.0, target_r=0.3)
         self.assertEqual(forex_bot.budget(500.0, args), (1.5, 5.0))
