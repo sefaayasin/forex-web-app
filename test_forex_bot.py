@@ -49,7 +49,7 @@ class ForexBotTests(unittest.TestCase):
             with patch.object(forex_bot, "DB_PATH", path):
                 conn = forex_bot.db()
                 row = conn.execute("SELECT * FROM trades WHERE ticket=123").fetchone()
-                self.assertEqual((row["exit_mode"], row["lot"]), ("trailing", .14))
+                self.assertEqual((row["exit_mode"], row["lot"], row["run_id"]), ("trailing", .14, None))
                 conn.close()
 
     def test_new_order_has_server_target_and_persists_its_exit_policy(self):
@@ -69,14 +69,14 @@ class ForexBotTests(unittest.TestCase):
                 "plan": {"side": "LONG", "lot": .04, "entry": 1.1, "stop": 1.0991,
                          "target": 1.1004, "stop_pips": 9.}}
             with patch.object(forex_bot, "log"):
-                ticket = forex_bot.open_position(mt5, conn, item, SimpleNamespace(exit_mode=mode),
+                ticket = forex_bot.open_position(mt5, conn, item, SimpleNamespace(exit_mode=mode, run_id=7),
                     forex_bot.pd.Timestamp("2026-10-27 13:00", tz="UTC"))
             self.assertEqual(ticket, 123)
             self.assertEqual(sent[0]["tp"], expected_tp)
             self.assertEqual(sent[0]["sl"], 1.09955)  # yarım stop; bot kapalıyken de broker uygular
             self.assertEqual(len(sent), 1)  # kayma yoksa ikinci istek gönderilmez
-            row = conn.execute("SELECT exit_mode,stop,early_exit FROM trades WHERE ticket=123").fetchone()
-            self.assertEqual(row[0], mode)
+            row = conn.execute("SELECT exit_mode,stop,early_exit,run_id FROM trades WHERE ticket=123").fetchone()
+            self.assertEqual((row[0], row[3]), (mode, 7))
             self.assertAlmostEqual(row[1], row[2])
             conn.close()
 
@@ -102,7 +102,7 @@ class ForexBotTests(unittest.TestCase):
             "plan": {"side": side, "lot": .04, "entry": 1.1, "stop": 1.1 - sign * .0009,
                      "target": 1.1 + sign * .0004, "stop_pips": 9.}}
         with patch.object(forex_bot, "log"):
-            forex_bot.open_position(mt5, conn, item, SimpleNamespace(exit_mode="fixed"),
+            forex_bot.open_position(mt5, conn, item, SimpleNamespace(exit_mode="fixed", run_id=None),
                                     forex_bot.pd.Timestamp("2026-10-27 13:00", tz="UTC"))
         row = dict(conn.execute("SELECT * FROM trades WHERE ticket=123").fetchone())
         conn.close()
@@ -431,14 +431,41 @@ class ForexBotTests(unittest.TestCase):
         self.addCleanup(conn.close)
         conn.execute(f"CREATE TABLE trades ({forex_bot.TRADE_COLUMNS})")
         conn.execute("CREATE TABLE decisions (action TEXT)")
+        conn.execute(f"CREATE TABLE runs ({forex_bot.RUN_COLUMNS})")
         conn.executemany("""INSERT INTO trades
-            (ticket,sizing_balance,closed_at,profit_usd,outcome,trailing,hit,hit_half_stop)
-            VALUES (?,500,'2026-10-27',1,?,?,.67,.55)""",
+            (ticket,sizing_balance,closed_at,profit_usd,outcome,trailing,hit,hit_half_stop,run_id)
+            VALUES (?,500,'2026-10-27',1,?,?,.67,.55,1)""",
             [(1, "HEDEF", 0), (2, "TAKİP STOPU", 1), (3, "STOP", 0)])
+        forex_bot.record_run(conn, forex_bot.parse_args(["--min-ml-confidence", "0.52", "--ml-every", "5"]), 321, "abc1234")
         output = StringIO()
         with patch.object(forex_bot, "db", return_value=conn), redirect_stdout(output):
             forex_bot.report()
         self.assertIn("Hedefe (sabit TP veya takip başlangıcına) gelen: %67", output.getvalue())
+        self.assertIn("kod abc1234 · ML ≥ %52, her 5 dk · giriş dönemi 60 dk · çıkış fixed · risk %1 · 3 işlem, +3.00 $",
+                      output.getvalue())
+
+    def test_run_keeps_effective_settings_and_code_version(self):
+        import json
+        conn = sqlite3.connect(":memory:")
+        self.addCleanup(conn.close)
+        conn.execute(f"CREATE TABLE runs ({forex_bot.RUN_COLUMNS})")
+        args = forex_bot.parse_args(["--min-ml-confidence", "0.52", "--ml-every", "5"])
+        args.run_id = forex_bot.record_run(conn, args, 321, "abc1234+değişiklik")
+        self.assertEqual(args.run_id, 1)
+        pid, code, params = conn.execute("SELECT pid, code, params FROM runs").fetchone()
+        params = json.loads(params)
+        self.assertEqual((pid, code), (321, "abc1234+değişiklik"))
+        self.assertEqual((params["min_ml_confidence"], params["ml_every"], params["entry_every"]), (.52, 5, 60))
+        self.assertNotIn("run_id", params)
+
+    def test_code_version_marks_local_changes_and_survives_missing_git(self):
+        done = lambda code=0: SimpleNamespace(stdout="abc1234\n", returncode=code)
+        with patch.object(forex_bot.subprocess, "run", side_effect=[done(), done(1)]):
+            self.assertEqual(forex_bot.code_version(), "abc1234+değişiklik")
+        with patch.object(forex_bot.subprocess, "run", side_effect=[done(), done(0)]):
+            self.assertEqual(forex_bot.code_version(), "abc1234")
+        with patch.object(forex_bot.subprocess, "run", side_effect=OSError):
+            self.assertEqual(forex_bot.code_version(), "bilinmiyor")
 
     def test_entry_period_is_a_calendar_limit_independent_of_ml_refresh(self):
         pd = forex_bot.pd

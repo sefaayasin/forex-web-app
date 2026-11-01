@@ -40,7 +40,7 @@ Yönetim (27 Ekim 2026):
   kuralı 26 Ekim'de 2023–2026'da zarar etti (research/bot_backtest/REPORT.md).
 
 Yalnız DEMO hesapta çalışır; gerçek hesaba bağlıysa emir göndermeden çıkar. Emir için MT5'te
-"Algo Trading" açık olmalıdır. Kararlar ve işlemler data/bot_journal.db'ye yazılır.
+"Algo Trading" açık olmalıdır. Kararlar, işlemler ve her çalıştırmanın ayarları data/bot_journal.db'ye yazılır.
 
   python forex_bot.py --dry-run --once   # emir göndermeden tek tarama
   python forex_bot.py                    # sürekli çalış (Ctrl+C ile dur)
@@ -55,6 +55,7 @@ import json
 import math
 import os
 import sqlite3
+import subprocess
 import time
 from datetime import timedelta
 from pathlib import Path
@@ -112,7 +113,8 @@ TRADE_COLUMNS = (
     " fill REAL, stop REAL, target REAL, early_exit REAL, atr REAL, pip REAL, cost_pips REAL, spread_pips REAL,"
     " probability REAL, hit REAL, hit_half_stop REAL, target_usd REAL, loss_usd REAL, best REAL,"
     " trailing INTEGER DEFAULT 0, close_reason TEXT, closed_at TEXT, exit_price REAL, profit_usd REAL, outcome TEXT,"
-    " sizing_balance REAL, margin REAL, exit_mode TEXT DEFAULT 'trailing'")
+    " sizing_balance REAL, margin REAL, exit_mode TEXT DEFAULT 'trailing', run_id INTEGER")
+RUN_COLUMNS = "id INTEGER PRIMARY KEY AUTOINCREMENT, started_at TEXT, pid INTEGER, code TEXT, params TEXT"
 
 
 def db() -> sqlite3.Connection:
@@ -125,6 +127,7 @@ def db() -> sqlite3.Connection:
         cost_pips REAL, lot REAL, action TEXT)""")
     conn.execute(f"CREATE TABLE IF NOT EXISTS trades ({TRADE_COLUMNS})")
     conn.execute("CREATE TABLE IF NOT EXISTS heartbeat (id INTEGER PRIMARY KEY CHECK (id = 1), pid INTEGER, at TEXT)")
+    conn.execute(f"CREATE TABLE IF NOT EXISTS runs ({RUN_COLUMNS})")
     present = {r["name"] for r in conn.execute("PRAGMA table_info(trades)")}
     for column in TRADE_COLUMNS.split(","):  # eski günlüğe yeni sütunları ekle
         name = column.split()[0]
@@ -164,6 +167,28 @@ def beat(conn, pid: int) -> None:
     conn.execute("INSERT OR REPLACE INTO heartbeat (id, pid, at) VALUES (1, ?, ?)",
                  (pid, str(pd.Timestamp.now(tz="UTC"))))
     conn.commit()
+
+
+def code_version() -> str:
+    """Çalışan kodun commit'i; forex_*.py dosyalarında kaydedilmemiş değişiklik varsa işaretli."""
+    root = Path(__file__).resolve().parent
+    try:
+        commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=root, capture_output=True, text=True,
+                                timeout=10).stdout.strip()
+        changed = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", "forex_*.py"], cwd=root, capture_output=True,
+                                 timeout=10).returncode != 0
+    except (OSError, subprocess.SubprocessError):
+        return "bilinmiyor"
+    return (commit + ("+değişiklik" if changed else "")) or "bilinmiyor"
+
+
+def record_run(conn, args, pid: int, code: str) -> int:
+    """Bu çalıştırmanın etkin ayarları; işlemler run_id ile buna bağlanır."""
+    params = {k: v for k, v in vars(args).items() if k != "run_id"}
+    cursor = conn.execute("INSERT INTO runs (started_at, pid, code, params) VALUES (?,?,?,?)",
+                          (str(pd.Timestamp.now(tz="UTC")), pid, code, json.dumps(params, ensure_ascii=False)))
+    conn.commit()
+    return int(cursor.lastrowid)
 
 
 def record_decision(conn, scanned_at, symbol, item: dict, action: str) -> None:
@@ -496,11 +521,12 @@ def open_position(mt5, conn, item: dict, args, signal_hour: pd.Timestamp) -> Opt
     conn.execute(
         "INSERT OR REPLACE INTO trades (ticket, symbol, side, opened_at, signal_hour, lot, entry, fill, stop, target,"
         " early_exit, atr, pip, cost_pips, spread_pips, probability, hit, hit_half_stop, target_usd, loss_usd, best,"
-        " sizing_balance, margin, exit_mode) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        " sizing_balance, margin, exit_mode, run_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (ticket, item["name"], plan["side"], str(pd.Timestamp.now(tz="UTC")), str(signal_hour), request["volume"],
          entry, float(result.price), sl, target, early_exit, item["atr"], item["pip"],
          item["cost_pips"], item["spread_pips"], item["probability_up"], item["check"]["hit"],
-         item["check_half"].get("hit"), item["target_usd"], item["loss_usd"], float(result.price), balance, margin, exit_mode))
+         item["check_half"].get("hit"), item["target_usd"], item["loss_usd"], float(result.price), balance, margin, exit_mode,
+         args.run_id))
     conn.commit()
     log(f"✓ {item['name']} {plan['side']} {request['volume']:.2f} lot @ {result.price} · yarım stop {sl} · "
         f"{'sabit hedef' if exit_mode == 'fixed' else 'takip başlangıcı'} {round(target, info.digits)} · "
@@ -822,6 +848,15 @@ def report() -> None:
     print(f"Net sonuç: {result:+.2f} $ · işlem başına {closed['profit_usd'].mean():+.2f} $")
     by_outcome = closed.groupby("outcome")["profit_usd"].agg(["count", "mean", "sum"]).round(2)
     print("\nKapanış sebebi (adet · ortalama $ · toplam $):\n" + by_outcome.to_string())
+    runs = pd.read_sql("SELECT r.id, r.started_at, r.code, r.params, COUNT(t.ticket) n, COALESCE(SUM(t.profit_usd), 0) net "
+                       "FROM runs r LEFT JOIN trades t ON t.run_id = r.id GROUP BY r.id ORDER BY r.id DESC LIMIT 5", conn)
+    if not runs.empty:
+        print("\nSon çalıştırmalar:")
+    for run in runs.itertuples():
+        params = json.loads(run.params)
+        print(f"  #{run.id} {run.started_at[:16]} · kod {run.code} · ML ≥ %{params['min_ml_confidence'] * 100:g}, "
+              f"her {params['ml_every']} dk · giriş dönemi {params['entry_every']} dk · çıkış {params['exit_mode']} · "
+              f"risk %{params['risk_pct']:g} · {run.n} işlem, {run.net:+.2f} $")
     if len(closed) < 100:
         print(f"\nNot: {len(closed)} işlem az; oran ±{100 / math.sqrt(len(closed)):.0f} puan kadar oynayabilir.")
 
@@ -876,10 +911,13 @@ def main() -> None:
     conn = db()
     if not args.dry_run:
         claim_heartbeat(conn, os.getpid())
+    sync_closed(mt5, conn)  # bot kapalıyken kapananlar sanal bakiyeye girsin
+    code = code_version()
+    args.run_id = None if args.dry_run else record_run(conn, args, os.getpid(), code)
     account = mt5.account_info()
     balance = virtual_balance(conn, args.balance)
     target_usd, loss_usd = budget(balance, args)
-    log(f"Bot başladı · {account.server} #{account.login} (DEMO) · sanal bakiye {balance:,.2f} $ · "
+    log(f"Bot başladı · kod {code} · {account.server} #{account.login} (DEMO) · sanal bakiye {balance:,.2f} $ · "
         f"stop zararı {loss_usd:.2f} $ / net hedef {target_usd:.2f} $ · risk %{args.risk_pct:g} · "
         f"ML yön güveni ≥ %{args.min_ml_confidence * 100:.0f} · çıkış {args.exit_mode} · kaldıraç 1:"
         f"{args.leverage or account.leverage:.0f} · en fazla {args.max_positions} pozisyon"
