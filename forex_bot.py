@@ -20,8 +20,10 @@ Yönetim (27 Ekim 2026):
 - Yeni işlemlerde varsayılan sabit hedef (--exit-mode fixed): hedef broker TP emrine yazılır, hedefte çıkılır.
   --exit-mode trailing eski takip kuralını seçer: hedefte stop en iyi fiyatın 1 ATR gerisine, tabanı girişin
   0,5 ATR altına taşınır. Önceden açık işlemler kayıtlı çıkış kuralıyla yönetilir; lotları değiştirilmez.
-- Fiyat stop mesafesinin yarısına gelirse çıkar; saat başında ML yönü dönerse çıkar (takip başlamadıysa).
-- Takip başlamamış pozisyon 24 saatte kapanır. Tam stop sunucuda güvenlik olarak durur.
+- Fiyat stop mesafesinin yarısına gelirse çıkar: yeni işlemlerde bu seviye broker stop emrine yazılır, bot kapalıyken
+  de çalışır (1 Kasım 2026); lot yine tam stoptan hesaplanır. Saat başında ML yönü dönerse çıkar (takip başlamadıysa).
+- Emir dolunca giriş, stop ve hedef gerçek dolum fiyatına kaydırılır; tarama ile emir arasındaki kayma hedefi küçültmez.
+- Takip başlamamış pozisyon 24 saatte kapanır. Süre, ML yön ve takip kuralları bot açıkken çalışır.
 - Girmeden önce (26 Ekim 2026): anlık spread normalin 2 katını (en az +0,5 pip) aşıyorsa, New York gün sonu
   spread saatinde, piyasa kapanırken ya da paritenin para birimlerinde yüksek etkili haberden 60 dk önce ile
   15 dk sonrası arasında girmez (haber takvimi alınamazsa hiç girmez). Aynı para biriminde aynı yönde en fazla
@@ -41,6 +43,7 @@ Yalnız DEMO hesapta çalışır; gerçek hesaba bağlıysa emir göndermeden ç
   python forex_bot.py                    # sürekli çalış (Ctrl+C ile dur)
   python forex_bot.py --deney --risk-pct 1 --min-ml-confidence 0.55 --exit-mode fixed --max-cost-share 0.10
   python forex_bot.py --report           # sonuçlar
+  powershell -ExecutionPolicy Bypass -File run_forex_bot.ps1 --deney   # hatayla durursa yeniden başlatır
 """
 from __future__ import annotations
 
@@ -414,11 +417,12 @@ def open_position(mt5, conn, item: dict, args, signal_hour: pd.Timestamp) -> Opt
     volume = volume_for(info, plan["lot"])
     balance, margin = item["balance"], item["margin"]
     exit_mode = args.exit_mode
+    early_exit = plan["entry"] - sign * plan["stop_pips"] * EARLY_EXIT_SHARE * item["pip"]
     request = {
         "action": mt5.TRADE_ACTION_DEAL, "symbol": item["name"], "volume": volume,
         "type": mt5.ORDER_TYPE_BUY if buy else mt5.ORDER_TYPE_SELL,
         "price": float(tick.ask if buy else tick.bid),
-        "sl": round(plan["stop"], info.digits), "tp": round(plan["target"], info.digits) if exit_mode == "fixed" else 0.0,
+        "sl": round(early_exit, info.digits), "tp": round(plan["target"], info.digits) if exit_mode == "fixed" else 0.0,
         "deviation": DEVIATION_POINTS, "magic": MAGIC, "comment": COMMENT,
         "type_time": mt5.ORDER_TIME_GTC, "type_filling": filling(mt5, info),
     }
@@ -428,18 +432,26 @@ def open_position(mt5, conn, item: dict, args, signal_hour: pd.Timestamp) -> Opt
         log(f"✗ {item['name']} {plan['side']} emri reddedildi: {detail}")
         return None
     ticket = int(result.order)
-    early_exit = plan["entry"] - sign * plan["stop_pips"] * EARLY_EXIT_SHARE * item["pip"]
+    entry, target, sl = plan["entry"], plan["target"], request["sl"]
+    drift = fill_drift(plan["side"], float(result.price), float(tick.bid), float(tick.ask), entry)
+    if abs(drift) >= MIN_SL_STEP_PIPS * item["pip"]:
+        moved_sl = round(early_exit + drift, info.digits)
+        moved_tp = round(target + drift, info.digits) if exit_mode == "fixed" else 0.0
+        if set_levels(mt5, item["name"], ticket, moved_sl, moved_tp):
+            entry, target, early_exit, sl = entry + drift, target + drift, early_exit + drift, moved_sl
+        else:
+            log(f"✗ {item['name']} stop/hedef dolum fiyatına taşınamadı; plandaki seviyeler kaldı.")
     conn.execute(
         "INSERT OR REPLACE INTO trades (ticket, symbol, side, opened_at, signal_hour, lot, entry, fill, stop, target,"
         " early_exit, atr, pip, cost_pips, spread_pips, probability, hit, hit_half_stop, target_usd, loss_usd, best,"
         " sizing_balance, margin, exit_mode) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (ticket, item["name"], plan["side"], str(pd.Timestamp.now(tz="UTC")), str(signal_hour), request["volume"],
-         plan["entry"], float(result.price), request["sl"], plan["target"], early_exit, item["atr"], item["pip"],
+         entry, float(result.price), sl, target, early_exit, item["atr"], item["pip"],
          item["cost_pips"], item["spread_pips"], item["probability_up"], item["check"]["hit"],
          item["check_half"].get("hit"), item["target_usd"], item["loss_usd"], float(result.price), balance, margin, exit_mode))
     conn.commit()
-    log(f"✓ {item['name']} {plan['side']} {request['volume']:.2f} lot @ {result.price} · stop {request['sl']} · "
-        f"{'sabit hedef' if exit_mode == 'fixed' else 'takip başlangıcı'} {round(plan['target'], info.digits)} · erken çıkış {round(early_exit, info.digits)} · "
+    log(f"✓ {item['name']} {plan['side']} {request['volume']:.2f} lot @ {result.price} · yarım stop {sl} · "
+        f"{'sabit hedef' if exit_mode == 'fixed' else 'takip başlangıcı'} {round(target, info.digits)} · "
         f"ulaşma ≈%{item['check']['hit'] * 100:.0f}")
     return ticket
 
@@ -460,6 +472,17 @@ def close_position(mt5, conn, position, reason: str) -> bool:
     log(f"{'✓' if ok else '✗'} {position.symbol} kapatma ({reason}): "
         f"{'tamam' if ok else (mt5.last_error() if result is None else result.comment)}")
     return ok
+
+
+def fill_drift(side: str, fill: float, bid: float, ask: float, planned_mid: float) -> float:
+    """Dolumun orta fiyatı ile planın orta fiyatı arasındaki fark; spreadin yarısı maliyete dahil, kayma sayılmaz."""
+    half_spread = (ask - bid) / 2
+    return fill - (half_spread if side == "LONG" else -half_spread) - planned_mid
+
+
+def set_levels(mt5, symbol: str, ticket: int, sl: float, tp: float) -> bool:
+    result = mt5.order_send({"action": mt5.TRADE_ACTION_SLTP, "symbol": symbol, "position": ticket, "sl": sl, "tp": tp})
+    return result is not None and result.retcode == mt5.TRADE_RETCODE_DONE
 
 
 def move_stop(mt5, position, new_sl: float, digits: int) -> bool:
@@ -614,9 +637,18 @@ def manage(mt5, conn, check_ml: bool, watch: Optional[BasketWatch] = None, arm_u
     sync_closed(mt5, conn)
 
 
+def server_stop_outcome(row) -> str:
+    """Broker stopuyla kapanış: takip stopu, yarım stop ya da eski işlemlerdeki tam stop."""
+    if row["trailing"]:
+        return "TAKİP STOPU"
+    half = row["early_exit"] is not None and row["stop"] is not None and abs(row["stop"] - row["early_exit"]) < row["pip"]
+    return "YARIM STOP" if half else "STOP"
+
+
 def sync_closed(mt5, conn) -> None:
     open_tickets = {p.ticket for p in own_positions(mt5)}
-    for row in conn.execute("SELECT ticket, close_reason, trailing FROM trades WHERE closed_at IS NULL").fetchall():
+    for row in conn.execute("SELECT ticket, close_reason, trailing, stop, early_exit, pip FROM trades "
+                            "WHERE closed_at IS NULL").fetchall():
         if row["ticket"] in open_tickets:
             continue
         deals = mt5.history_deals_get(position=row["ticket"]) or ()
@@ -627,7 +659,7 @@ def sync_closed(mt5, conn) -> None:
         if last.reason == mt5.DEAL_REASON_TP:
             outcome = "HEDEF"
         elif last.reason == mt5.DEAL_REASON_SL:
-            outcome = "TAKİP STOPU" if row["trailing"] else "STOP"
+            outcome = server_stop_outcome(row)
         elif last.reason == mt5.DEAL_REASON_EXPERT and row["close_reason"]:
             outcome = row["close_reason"]
         else:
@@ -818,7 +850,7 @@ def main() -> None:
                     break
             time.sleep(MANAGE_SECONDS)
     except KeyboardInterrupt:
-        log("Bot durduruldu. Açık pozisyonların stopu sunucuda durur; takip ve erken çıkış bot açıkken çalışır.")
+        log("Bot durduruldu. Açık pozisyonların stopu ve hedefi sunucuda durur; süre, ML yön ve takip bot açıkken çalışır.")
     finally:
         mt5.shutdown()
 

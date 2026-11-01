@@ -73,8 +73,67 @@ class ForexBotTests(unittest.TestCase):
                     forex_bot.pd.Timestamp("2026-10-27 13:00", tz="UTC"))
             self.assertEqual(ticket, 123)
             self.assertEqual(sent[0]["tp"], expected_tp)
-            self.assertEqual(conn.execute("SELECT exit_mode FROM trades WHERE ticket=123").fetchone()[0], mode)
+            self.assertEqual(sent[0]["sl"], 1.09955)  # yarım stop; bot kapalıyken de broker uygular
+            self.assertEqual(len(sent), 1)  # kayma yoksa ikinci istek gönderilmez
+            row = conn.execute("SELECT exit_mode,stop,early_exit FROM trades WHERE ticket=123").fetchone()
+            self.assertEqual(row[0], mode)
+            self.assertAlmostEqual(row[1], row[2])
             conn.close()
+
+    def open_with_fill(self, side, fill, modify_ok=True):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        conn.execute(f"CREATE TABLE trades ({forex_bot.TRADE_COLUMNS})")
+        sent = []
+
+        def order_send(request):
+            sent.append(request)
+            retcode = 10009 if request["action"] == 1 or modify_ok else 10016
+            return SimpleNamespace(retcode=retcode, order=123, price=fill, comment="")
+
+        mt5 = SimpleNamespace(TRADE_ACTION_DEAL=1, TRADE_ACTION_SLTP=6, ORDER_TYPE_BUY=0, ORDER_TYPE_SELL=1,
+            ORDER_TIME_GTC=0, TRADE_RETCODE_DONE=10009, ORDER_FILLING_FOK=0, order_send=order_send,
+            symbol_info_tick=lambda _: SimpleNamespace(bid=1.09999, ask=1.10001))
+        sign = 1 if side == "LONG" else -1
+        item = {"name": "EURUSD", "info": SimpleNamespace(digits=5, volume_step=.01, volume_min=.01, volume_max=10,
+            filling_mode=1), "balance": 400., "margin": 30., "pip": .0001, "atr": .0006, "cost_pips": .7,
+            "spread_pips": .2, "probability_up": .56, "target_usd": 1.2, "loss_usd": 4.,
+            "check": {"hit": .67}, "check_half": {"hit": .53},
+            "plan": {"side": side, "lot": .04, "entry": 1.1, "stop": 1.1 - sign * .0009,
+                     "target": 1.1 + sign * .0004, "stop_pips": 9.}}
+        with patch.object(forex_bot, "log"):
+            forex_bot.open_position(mt5, conn, item, SimpleNamespace(exit_mode="fixed"),
+                                    forex_bot.pd.Timestamp("2026-10-27 13:00", tz="UTC"))
+        row = dict(conn.execute("SELECT * FROM trades WHERE ticket=123").fetchone())
+        conn.close()
+        return sent, row
+
+    def test_levels_follow_the_real_fill_for_both_sides(self):
+        for side, sign, fill in (("LONG", 1, 1.10011), ("SHORT", -1, 1.09989)):
+            sent, row = self.open_with_fill(side, fill)  # 1 pip aleyhe kayma (spread hariç)
+            self.assertEqual(len(sent), 2)
+            self.assertEqual(sent[1]["action"], 6)
+            self.assertEqual(sent[1]["position"], 123)
+            self.assertAlmostEqual(sent[1]["sl"], 1.1 + sign * (.0001 - .00045))
+            self.assertAlmostEqual(sent[1]["tp"], 1.1 + sign * (.0001 + .0004))
+            self.assertAlmostEqual(row["entry"], 1.1 + sign * .0001)
+            self.assertAlmostEqual(row["target"], sent[1]["tp"])
+            self.assertAlmostEqual(row["early_exit"], sent[1]["sl"])
+            self.assertAlmostEqual(row["stop"], sent[1]["sl"])
+            self.assertEqual(row["fill"], fill)
+
+    def test_failed_level_move_keeps_journal_equal_to_the_broker(self):
+        sent, row = self.open_with_fill("LONG", 1.10011, modify_ok=False)
+        self.assertEqual(len(sent), 2)
+        self.assertEqual((row["entry"], row["target"]), (1.1, 1.1004))
+        self.assertEqual(row["stop"], sent[0]["sl"])
+
+    def test_server_stop_is_named_after_its_level(self):
+        row = {"trailing": 0, "stop": 1.09955, "early_exit": 1.0995512, "pip": .0001}
+        self.assertEqual(forex_bot.server_stop_outcome(row), "YARIM STOP")
+        self.assertEqual(forex_bot.server_stop_outcome({**row, "stop": 1.0991}), "STOP")
+        self.assertEqual(forex_bot.server_stop_outcome({**row, "trailing": 1}), "TAKİP STOPU")
+        self.assertEqual(forex_bot.server_stop_outcome({**row, "early_exit": None, "pip": None}), "STOP")
 
     def test_fixed_exit_takes_target_and_keeps_half_stop_for_both_sides(self):
         for side, sign in (("LONG", 1), ("SHORT", -1)):
